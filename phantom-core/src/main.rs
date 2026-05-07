@@ -5,12 +5,14 @@ use tracing::{info, warn};
 use tracing_subscriber::EnvFilter;
 
 mod ai;
+mod api;
 mod config;
 mod crdt;
 mod hotkey;
 mod injector;
 mod uia;
 
+use api::ApiState;
 use config::PhantomConfig;
 use crdt::CrdtSession;
 use hotkey::HotkeyWatcher;
@@ -61,13 +63,23 @@ async fn main() -> Result<()> {
     info!("⌨️  Hotkey listener active ({})", config.hotkey);
 
     // UIA Reader (Windows only — reads text from active app)
-    let uia_reader = UiaReader::new();
+    let uia_reader = Arc::new(UiaReader::new());
 
     // AI backend
     let ai_backend = ai::build_backend(&config)?;
 
-    // Injector (ghost types into active app)
-    let injector = Injector::new(config.typing_delay_ms);
+    let injector = Arc::new(Injector::new(config.typing_delay_ms));
+
+    // Start HTTP API Server for Tauri Overlay
+    let api_state = ApiState {
+        crdt: crdt.clone(),
+        uia: uia_reader.clone(),
+        injector: injector.clone(),
+        ai: ai_backend.clone(),
+    };
+    tokio::spawn(async move {
+        api::start_api_server(api_state).await;
+    });
 
     info!("✅ Kairo Phantom ready — press {} to materialize", config.hotkey);
 

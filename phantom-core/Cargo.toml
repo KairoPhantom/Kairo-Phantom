@@ -55,6 +55,15 @@ futures-util = "0.3"
 # String similarity for Human Precedence detection
 strsim = "0.11"
 
+# Async trait support
+async-trait = "0.1"
+
+# Home directory resolution for config path
+dirs = "5.0"
+
+# Web server for IPC with Tauri overlay
+axum = "0.7"
+
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.58", features = [
     "Win32_UI_Accessibility",

@@ -1,7 +1,7 @@
 [workspace]
 members = [
     "phantom-core",
-    "phantom-overlay",
+    "phantom-overlay/src-tauri",
 ]
 resolver = "2"
 
