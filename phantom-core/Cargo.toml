@@ -1,0 +1,67 @@
+[package]
+name = "phantom-core"
+version = "0.1.0"
+edition = "2021"
+description = "Kairo Phantom — Rust-native AI ghost writer core engine"
+
+[[bin]]
+name = "kairo-phantom"
+path = "src/main.rs"
+
+[dependencies]
+# Async runtime
+tokio = { version = "1.44", features = ["full"] }
+
+# Windows UI Automation — reads text from any focused app
+uiautomation = "0.25"
+
+# Keyboard simulation — ghost types AI text into any app
+enigo = "0.2"
+
+# Pure Rust CRDT (Yjs port) — CRDT state for AI peer session
+yrs = "0.21"
+
+# Ollama local AI client
+ollama-rs = { version = "0.2", features = ["stream"] }
+
+# HTTP client for OpenAI/Anthropic/Gemini adapters
+reqwest = { version = "0.12", features = ["json", "stream"] }
+
+# Global hotkey listener
+rdev = "0.5"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Config file
+toml = "0.8"
+
+# Error handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Channel utilities
+crossbeam-channel = "0.5"
+
+# Futures stream for SSE/streaming AI responses
+futures = "0.3"
+futures-util = "0.3"
+
+# String similarity for Human Precedence detection
+strsim = "0.11"
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.58", features = [
+    "Win32_UI_Accessibility",
+    "Win32_System_Com",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_Foundation",
+    "Win32_Graphics_Gdi",
+    "Win32_Security",
+    "Win32_System_Threading",
+] }
