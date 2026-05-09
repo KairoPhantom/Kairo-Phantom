@@ -16,11 +16,14 @@ mod image_pipeline; // Image generation pipeline (Phase 1)
 mod ghost_session; // Ghost Session UX — streaming cancel, undo, Yjs (Phase 3)
 mod governance; // Enterprise audit logging + plugin permissions (Phase 4)
 // ── Advancement modules (v5.0) ──────────────────────────────────────────────
-mod yjs_peer; // Advancement 1: Yjs CRDT peer for collaborative docs
-mod identity; // Advancement 6: Ed25519 agent identity + RBAC
+mod yjs_peer;    // Advancement 1: Yjs CRDT peer for collaborative docs
+mod identity;    // Advancement 6: Ed25519 agent identity + RBAC
 mod wasm_sandbox; // Advancement 7: Wasmtime WASM plugin sandbox
-mod extractors; // Advancement 3: Kreuzberg universal document parser
+mod extractors;  // Advancement 3: Kreuzberg universal document parser
 // platform/macos.rs and platform/linux.rs are submodules of platform
+
+use identity::IdentityManager;
+use wasm_sandbox::WasmPluginRegistry;
 
 use ghost_session::ConfidenceBand;
 use governance::{AuditLogger, AuditEvent, AuditOutcome};
@@ -86,6 +89,35 @@ async fn main() -> Result<()> {
 
     if args.iter().any(|a| a == "--version" || a == "-V") {
         println!("kairo-phantom v{}", env!("CARGO_PKG_VERSION"));
+        return Ok(());
+    }
+
+    // kairo export --format revealjs --input <json> --output <path>
+    if args.len() >= 2 && args[1] == "export" {
+        let format = args.iter().position(|a| a == "--format")
+            .and_then(|i| args.get(i + 1))
+            .map(|s| s.as_str())
+            .unwrap_or("revealjs");
+        let output = args.iter().position(|a| a == "--output")
+            .and_then(|i| args.get(i + 1))
+            .cloned()
+            .unwrap_or_else(|| "output.html".to_string());
+        match format {
+            "revealjs" => {
+                println!("🎨 Kairo Export → Reveal.js: {}", output);
+                let status = std::process::Command::new("python")
+                    .args(["-m", "revealjs_export", "--output", &output])
+                    .current_dir("mcp-servers/office-pptx-bridge")
+                    .status()
+                    .map_err(|e| anyhow::anyhow!("revealjs_export.py error: {}", e))?;
+                if !status.success() {
+                    println!("❌ Reveal.js export failed. Check Python dependencies.");
+                } else {
+                    println!("✅ Exported to: {}", output);
+                }
+            }
+            f => println!("❌ Unknown export format: {}. Supported: revealjs", f),
+        }
         return Ok(());
     }
 
@@ -212,6 +244,23 @@ async fn main() -> Result<()> {
     let context_engine = Arc::new(context_engine_obj);
     let extractor_registry = Arc::new(ExtractorRegistry::with_defaults());
 
+    // ── Advancement 6: Enterprise Agent Identity ─────────────────────────────
+    let kairo_config_dir = dirs::home_dir().unwrap_or_default().join(".kairo-phantom");
+    let identity_manager = IdentityManager::load(&kairo_config_dir);
+    info!("🔑 Agent identity loaded: {}", &identity_manager.identity.agent_id[..16]);
+
+    // ── Advancement 7: WASM Plugin Sandbox ───────────────────────────────────
+    let wasm_plugin_dir = kairo_config_dir.join("plugins");
+    let mut wasm_registry = WasmPluginRegistry::new(wasm_plugin_dir, None);
+    wasm_registry.scan_and_load();
+    if wasm_registry.plugin_count() > 0 {
+        info!("🔌 WASM plugins loaded: {}", wasm_registry.plugin_count());
+        for name in wasm_registry.list_plugins() {
+            info!("   • {}", name);
+        }
+    }
+    let _wasm_registry = Arc::new(wasm_registry);
+
     // Create CRDT session (AI peer with fixed clientID 999)
     let crdt_session = Arc::new(CrdtSession::new(999));
     info!("📄 CRDT session initialized (AI clientID: 999)");
@@ -322,11 +371,21 @@ async fn main() -> Result<()> {
 
                 // E. Swarm Brain Routing
                 let (target_backend, agent_profile) = swarm_engine.route(&doc_ctx).await;
-                let agent_id = agent_profile.agent_type.clone();
+                let _agent_id = agent_profile.agent_type.clone();
+
+                // Advancement 6: RBAC check — verify this agent is allowed on this document
+                let kairo_agent_id = &identity_manager.identity.agent_id;
+                let doc_path_str = doc_ctx.file_path.as_ref()
+                    .map(|p| p.to_string_lossy().to_string())
+                    .unwrap_or_default();
+                if !identity_manager.check_permission(kairo_agent_id, &doc_path_str) {
+                    warn!("⚠️  RBAC: agent '{}' denied access to '{}'", &kairo_agent_id[..8], doc_path_str);
+                    continue;
+                }
                 let system_prompt = agent_profile.system_directive;
                 let prompt_text = doc_ctx.prompt_text.clone();
                 let prompt_char_count = doc_ctx.prompt_char_count;
-                let original_prompt = prompt_text.clone();
+                let _original_prompt = prompt_text.clone();
 
                 // F. Phase 3: Create Ghost Session with CancellationToken
                 let confidence = ConfidenceBand::compute(
@@ -335,12 +394,13 @@ async fn main() -> Result<()> {
                 );
                 info!("👻 Ghost Session starting | Confidence: {}", confidence.label());
 
-                // Phase 4: Audit log — session started
+                // Phase 4: Audit log — session started (now with agent identity)
+                let kairo_agent_id_for_log = identity_manager.identity.agent_id.clone();
                 audit_logger.log_ghost_session(
                     AuditEvent::GhostSessionStarted,
                     AuditOutcome::Pending,
                     &app_label,
-                    "auto",
+                    &kairo_agent_id_for_log,
                     &config.model.model_name.as_deref().unwrap_or("default"),
                     prompt_char_count,
                 );

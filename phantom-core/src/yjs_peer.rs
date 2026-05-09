@@ -5,9 +5,8 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use yrs::{Doc, GetString, Options, Text, Transact, WriteTxn, ReadTxn};
 use yrs::updates::decoder::Decode;
-use yrs::updates::encoder::Encode;
 use serde::{Deserialize, Serialize};
-use tracing::{debug, info, warn};
+use tracing::{debug, info};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AwarenessState {
@@ -207,4 +206,10 @@ impl YjsGhostBridge {
         self.peer.insert_text(token, pos)?;
         Ok(pos + token.len() as u32)
     }
+}
+
+/// Module-level helper: detect if window title/URL indicates a Yjs-powered app.
+/// Returns the app identifier (e.g. "google_docs", "notion") or None.
+pub fn detect_yjs_app(title: &str, url: Option<&str>) -> Option<String> {
+    YjsPeer::detect_yjs_app(title, url)
 }

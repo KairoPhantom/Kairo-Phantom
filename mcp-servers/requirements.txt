@@ -1,0 +1,19 @@
+# Kairo Phantom — Python MCP Server Dependencies
+# Install with: pip install -r requirements.txt
+
+# PPTX bridge (office-pptx-bridge)
+python-pptx>=0.6.23
+pillow>=10.0.0
+
+# Universal document parsing (Advancement 3 — kreuzberg_ext)
+kreuzberg>=0.4.0
+pypdf>=4.0.0
+
+# Effects engine (Advancement 4)
+# Node.js/Puppeteer also required: cd mcp-servers/kairo-effects && npm install
+
+# Reveal.js export (Advancement 5)
+# Uses python-pptx + built-in stdlib only
+
+# MCP protocol
+# All servers use stdlib json + asyncio (no extra deps)

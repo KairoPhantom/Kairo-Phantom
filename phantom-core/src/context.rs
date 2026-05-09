@@ -26,6 +26,12 @@ pub enum AppEnvironment {
     Notion,
     Figma,
     Canva,
+    // Yjs-powered collaborative apps (Advancement 1)
+    GoogleDocs,
+    GoogleSlides,
+    LinearApp,
+    TiptapEditor,
+    Liveblocks,
     // Code / Dev
     VSCode,
     WindowsTerminal,
@@ -79,8 +85,26 @@ impl AppEnvironment {
             AppEnvironment::Slack => "Slack".into(),
             AppEnvironment::Teams => "Teams".into(),
             AppEnvironment::Discord => "Discord".into(),
+            // Yjs apps
+            AppEnvironment::GoogleDocs => "Google Docs".into(),
+            AppEnvironment::GoogleSlides => "Google Slides".into(),
+            AppEnvironment::LinearApp => "Linear".into(),
+            AppEnvironment::TiptapEditor => "Tiptap Editor".into(),
+            AppEnvironment::Liveblocks => "Liveblocks".into(),
             AppEnvironment::Unknown(name) => name.clone(),
         }
+    }
+
+    /// Returns true if this app is Yjs-powered — triggers CRDT peer injection.
+    pub fn is_yjs_app(&self) -> bool {
+        matches!(self,
+            AppEnvironment::GoogleDocs |
+            AppEnvironment::GoogleSlides |
+            AppEnvironment::Notion |
+            AppEnvironment::LinearApp |
+            AppEnvironment::TiptapEditor |
+            AppEnvironment::Liveblocks
+        )
     }
 
     /// Convert to the canonical DocKind for structured document context.
@@ -90,7 +114,10 @@ impl AppEnvironment {
             AppEnvironment::MicrosoftWord | AppEnvironment::MicrosoftOutlook => DocKind::WordDocument,
             AppEnvironment::MicrosoftPowerPoint => DocKind::PowerPoint,
             AppEnvironment::MicrosoftExcel => DocKind::ExcelSpreadsheet,
-            AppEnvironment::Notion => DocKind::NotionPage,
+            AppEnvironment::Notion | AppEnvironment::TiptapEditor | AppEnvironment::Liveblocks => DocKind::NotionPage,
+            AppEnvironment::GoogleDocs => DocKind::YjsDocument,
+            AppEnvironment::GoogleSlides => DocKind::YjsDocument,
+            AppEnvironment::LinearApp => DocKind::YjsDocument,
             AppEnvironment::Figma => DocKind::FigmaDesign,
             AppEnvironment::Canva => DocKind::CanvaDesign,
             AppEnvironment::VSCode | AppEnvironment::Vim | AppEnvironment::NotepadPlusPlus => DocKind::CodeFile,
@@ -151,10 +178,23 @@ impl AppFingerprinter for DefaultFingerprinter {
         if proc.contains("powershell") || title.contains("powershell") { return Some(AppEnvironment::PowerShell); }
         if proc.contains("cmd") || title.contains("command prompt") { return Some(AppEnvironment::CommandPrompt); }
 
-        // Browsers & Web Apps
+        // Browsers & Web Apps — check title for Yjs apps FIRST (before generic browser)
         if title.contains("notion") || proc.contains("notion") { return Some(AppEnvironment::Notion); }
         if title.contains("figma") || proc.contains("figma") { return Some(AppEnvironment::Figma); }
         if title.contains("canva") || proc.contains("canva") { return Some(AppEnvironment::Canva); }
+
+        // Yjs-powered collaborative apps (Advancement 1)
+        if title.contains("google docs") || title.contains("docs.google.com") {
+            return Some(AppEnvironment::GoogleDocs);
+        }
+        if title.contains("google slides") || title.contains("slides.google.com") {
+            return Some(AppEnvironment::GoogleSlides);
+        }
+        if title.contains("linear") && (proc.contains("linear") || title.contains("linear.app")) {
+            return Some(AppEnvironment::LinearApp);
+        }
+        if title.contains("tiptap") { return Some(AppEnvironment::TiptapEditor); }
+        if title.contains("liveblocks") { return Some(AppEnvironment::Liveblocks); }
 
         if proc.contains("chrome") || proc.contains("chromium") { return Some(AppEnvironment::Chrome); }
         if proc.contains("firefox") { return Some(AppEnvironment::Firefox); }

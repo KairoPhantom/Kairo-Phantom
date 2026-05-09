@@ -1,0 +1,22 @@
+{
+  "name": "kairo-effects",
+  "version": "1.0.0",
+  "description": "Kairo Phantom — Cinematic Physics Transitions Engine (ADV4)",
+  "main": "effects_engine.js",
+  "scripts": {
+    "start": "node effects_server.js",
+    "install-deps": "npm install",
+    "test": "node -e \"const e = require('./effects_engine'); e.listEffects().then(r => console.log('Effects available:', r))\""
+  },
+  "dependencies": {
+    "puppeteer": "^22.0.0",
+    "gl-transitions": "^1.0.0",
+    "express": "^4.18.0"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": ["kairo", "phantom", "transitions", "cinematic", "webgl"],
+  "license": "MIT"
+}

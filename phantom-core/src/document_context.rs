@@ -33,6 +33,8 @@ pub enum DocKind {
     NotionPage,
     FigmaDesign,
     Terminal,
+    /// Yjs CRDT-powered collaborative document (Google Docs, Linear, Tiptap)
+    YjsDocument,
     UnknownApp,
 }
 
@@ -54,6 +56,7 @@ impl DocKind {
             DocKind::NotionPage => "Notion page",
             DocKind::FigmaDesign => "Figma design",
             DocKind::Terminal => "terminal / shell",
+            DocKind::YjsDocument => "collaborative Yjs document (Google Docs / Linear / Tiptap)",
             DocKind::UnknownApp => "application",
         }
     }
@@ -656,10 +659,16 @@ pub struct ExtractorRegistry {
 }
 
 impl ExtractorRegistry {
-    /// Create a registry with the built-in extractors.
+    /// Create a registry with the built-in extractors (priority order).
+    /// 1. OfficeExtractor (DOCX/PPTX/XLSX — ZIP/OOXML native)
+    /// 2. KreuzbergExtractor (88+ formats via Python kreuzberg — Advancement 3)
+    /// 3. PdfSpatialExtractor (PDF spatial/column-aware — Advancement 3)
+    /// 4. PlainTextExtractor (txt, md, rst — always last fallback)
     pub fn with_defaults() -> Self {
         let mut r = Self { extractors: vec![] };
         r.register(Box::new(OfficeExtractor));
+        r.register(Box::new(crate::extractors::kreuzberg_ext::KreuzbergExtractorAdapter));
+        r.register(Box::new(crate::extractors::kreuzberg_ext::PdfExtractorAdapter));
         r.register(Box::new(PlainTextExtractor));
         r
     }

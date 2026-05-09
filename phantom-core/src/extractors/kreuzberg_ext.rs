@@ -5,7 +5,8 @@
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use serde::{Deserialize, Serialize};
-use tracing::{debug, info, warn};
+use tracing::{info, warn};
+use crate::document_context::{DocumentContext, DocumentContextExtractor, DocKind, OutlineItem, FormatMetadata};
 
 // ─── Extraction Result ────────────────────────────────────────────────────────
 
@@ -313,5 +314,98 @@ impl UniversalExtractor {
         }
         // Try current directory / recent files
         None
+    }
+}
+
+// ─── DocumentContextExtractor Adapters ────────────────────────────────────────
+// These bridge the Python-based extractors to the Rust ExtractorRegistry trait.
+
+/// Adapter: wraps KreuzbergExtractor to implement DocumentContextExtractor.
+pub struct KreuzbergExtractorAdapter;
+
+impl DocumentContextExtractor for KreuzbergExtractorAdapter {
+    fn supported_extensions(&self) -> &[&str] {
+        &["odt", "rtf", "html", "htm", "epub",
+          "csv", "xml", "eml", "msg", "wpd", "pages", "numbers", "key"]
+    }
+
+    fn extract(
+        &self,
+        path: &std::path::Path,
+        prompt_text: &str,
+        _active_slide: Option<usize>,
+    ) -> Option<DocumentContext> {
+        match KreuzbergExtractor::extract(path) {
+            Ok(doc) => {
+                let outline: Vec<OutlineItem> = doc.headings.iter().enumerate()
+                    .map(|(i, h)| OutlineItem {
+                        level: 1,
+                        text: h.clone(),
+                        position: i * 100,
+                    }).collect();
+
+                let doc_kind = match path.extension().and_then(|e| e.to_str()).unwrap_or("") {
+                    "html" | "htm" => DocKind::PlainText,
+                    "epub" => DocKind::PlainText,
+                    _ => DocKind::PlainText,
+                };
+
+                Some(DocumentContext::from_parsed(
+                    doc_kind,
+                    path.to_path_buf(),
+                    doc.text,
+                    prompt_text.to_string(),
+                    outline,
+                    vec![],
+                    None, None, false,
+                    FormatMetadata {
+                        original_format: doc.mime_type.unwrap_or_default(),
+                        style_names: vec![],
+                        slide_layout: None,
+                    },
+                ))
+            }
+            Err(e) => {
+                warn!("[KreuzbergAdapter] Failed: {}", e);
+                None
+            }
+        }
+    }
+}
+
+/// Adapter: wraps PdfSpatialExtractor to implement DocumentContextExtractor.
+pub struct PdfExtractorAdapter;
+
+impl DocumentContextExtractor for PdfExtractorAdapter {
+    fn supported_extensions(&self) -> &[&str] { &["pdf"] }
+
+    fn extract(
+        &self,
+        path: &std::path::Path,
+        prompt_text: &str,
+        _active_slide: Option<usize>,
+    ) -> Option<DocumentContext> {
+        match PdfSpatialExtractor::extract(path) {
+            Ok(doc) => Some(DocumentContext::from_parsed(
+                DocKind::PdfDocument,
+                path.to_path_buf(),
+                doc.text,
+                prompt_text.to_string(),
+                vec![],
+                vec![],
+                None,
+                doc.page_count,
+                false,
+                FormatMetadata {
+                    original_format: "application/pdf".into(),
+                    style_names: vec![],
+                    slide_layout: None,
+                },
+            )),
+            Err(e) => {
+                warn!("[PdfAdapter] Failed: {}", e);
+                None
+            }
+        }
     }
 }

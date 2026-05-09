@@ -136,7 +136,7 @@ fn base64_encode(data: &[u8]) -> String {
         let b0 = chunk[0] as usize;
         let b1 = chunk.get(1).copied().unwrap_or(0) as usize;
         let b2 = chunk.get(2).copied().unwrap_or(0) as usize;
-        out.push(CHARS[(b0 >> 2)] as char);
+        out.push(CHARS[b0 >> 2] as char);
         out.push(CHARS[((b0 & 3) << 4) | (b1 >> 4)] as char);
         out.push(if chunk.len() > 1 { CHARS[((b1 & 15) << 2) | (b2 >> 6)] as char } else { '=' });
         out.push(if chunk.len() > 2 { CHARS[b2 & 63] as char } else { '=' });
@@ -212,7 +212,7 @@ pub struct SessionIdentity {
 }
 
 impl SessionIdentity {
-    pub fn new(identity: &AgentIdentity, agent_name: &str, scope: &str) -> Self {
+    pub fn new(identity: &AgentIdentity, _agent_name: &str, scope: &str) -> Self {
         let user_id = std::env::var("USERNAME")
             .or_else(|_| std::env::var("USER"))
             .unwrap_or_else(|_| "local".into());

@@ -235,7 +235,7 @@ impl WasmPluginRegistry {
         let manifest: WasmPluginManifest = serde_json::from_str(&manifest_str).ok()?;
 
         // Signature verification (simplified — in production use ed25519-dalek)
-        if let (Some(sig), Some(key)) = (&manifest.signature, &manifest.publisher_key) {
+        if let (Some(sig), Some(_key)) = (&manifest.signature, &manifest.publisher_key) {
             info!("[WasmRegistry] Signature present for '{}': {}...{}", manifest.name, &sig[..8], &sig[56..]);
             // TODO: verify Ed25519 sig over wasm_bytes using publisher_key
         } else {
@@ -246,7 +246,7 @@ impl WasmPluginRegistry {
     }
 
     /// Find plugins that can handle the given input.
-    pub fn find_matching(&self, input: &PluginCallInput) -> Vec<Arc<WasmPlugin>> {
+    pub fn find_matching(&self, _input: &PluginCallInput) -> Vec<Arc<WasmPlugin>> {
         self.plugins.iter()
             .filter(|p| p.manifest.has_capability(&WasmCapability::WriteSuggestion))
             .cloned()

@@ -177,9 +177,52 @@ impl Injector {
         Ok(())
     }
 
-    #[cfg(not(windows))]
+    #[cfg(target_os = "macos")]
+    pub fn write_to_clipboard(&self, text: &str) -> Result<()> {
+        use std::process::{Command, Stdio};
+        use std::io::Write;
+        let mut child = Command::new("pbcopy")
+            .stdin(Stdio::piped())
+            .spawn()
+            .map_err(|e| anyhow::anyhow!("pbcopy failed: {}", e))?;
+        if let Some(stdin) = child.stdin.as_mut() {
+            stdin.write_all(text.as_bytes())
+                .map_err(|e| anyhow::anyhow!("pbcopy stdin write failed: {}", e))?;
+        }
+        child.wait().map_err(|e| anyhow::anyhow!("pbcopy wait failed: {}", e))?;
+        Ok(())
+    }
+
+    #[cfg(target_os = "linux")]
+    pub fn write_to_clipboard(&self, text: &str) -> Result<()> {
+        use std::process::{Command, Stdio};
+        use std::io::Write;
+        // Try Wayland first (wl-copy)
+        if std::env::var("WAYLAND_DISPLAY").is_ok() {
+            if let Ok(mut child) = Command::new("wl-copy").stdin(Stdio::piped()).spawn() {
+                if let Some(stdin) = child.stdin.as_mut() {
+                    let _ = stdin.write_all(text.as_bytes());
+                }
+                if child.wait().is_ok() { return Ok(()); }
+            }
+        }
+        // X11 fallback: xclip
+        let mut child = Command::new("xclip")
+            .args(["-selection", "clipboard"])
+            .stdin(Stdio::piped())
+            .spawn()
+            .map_err(|e| anyhow::anyhow!("xclip not found: {}. Install: sudo apt install xclip", e))?;
+        if let Some(stdin) = child.stdin.as_mut() {
+            stdin.write_all(text.as_bytes())
+                .map_err(|e| anyhow::anyhow!("xclip stdin write: {}", e))?;
+        }
+        child.wait().map_err(|e| anyhow::anyhow!("xclip wait: {}", e))?;
+        Ok(())
+    }
+
+    #[cfg(not(any(windows, target_os = "macos", target_os = "linux")))]
     pub fn write_to_clipboard(&self, _text: &str) -> Result<()> {
-        anyhow::bail!("Clipboard injection only supported on Windows")
+        anyhow::bail!("Clipboard injection not supported on this platform")
     }
 
     /// Phase 999.1: Integrate Adeu MCP server for DOCX Track Changes injection.

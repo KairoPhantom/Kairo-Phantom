@@ -4,11 +4,10 @@
 /// confidence bands (High/Medium/Low), and Yjs CRDT peer mode.
 
 use std::sync::Arc;
-use tokio::sync::{mpsc, Mutex};
+use tokio::sync::Mutex;
 use tokio_util::sync::CancellationToken;
-use tracing::{debug, info, warn};
+use tracing::{debug, info};
 
-use crate::injector::Injector;
 
 // ─── Session State ────────────────────────────────────────────────────────────
 
