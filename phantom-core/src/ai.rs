@@ -4,9 +4,9 @@
 
 use anyhow::{Context, Result};
 use reqwest::Client;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::sync::Arc;
-use tracing::{debug, info, warn};
+use tracing::info;
 
 use crate::config::ModelConfig;
 

@@ -70,7 +70,7 @@ pub fn run() {
             }
 
             // Register global Ctrl+Space hotkey
-            let app_handle = app.handle().clone();
+            let _app_handle = app.handle().clone();
             let shortcut = Shortcut::new(Some(Modifiers::CONTROL), Code::Space);
 
             app.global_shortcut().on_shortcut(shortcut, move |app, _shortcut, _event| {

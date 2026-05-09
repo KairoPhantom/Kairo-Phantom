@@ -8,17 +8,16 @@ use axum::{
     routing::{get, post},
     Router,
 };
+use tokio::net::TcpListener;
+use tracing::info;
+
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use tokio::net::TcpListener;
-use tracing::{info, warn};
-use serde_json::json;
-
 use crate::crdt::CrdtSession;
 use crate::injector::Injector;
 use crate::uia::UiaReader;
 use crate::ai::AiBackend;
-use crate::context::{ContextEngine, AppContext};
+use crate::context::ContextEngine;
 use crate::document_context::{DocumentContext, ExtractorRegistry};
 use crate::swarm::{SwarmOrchestrator, AgentType};
 use crate::platform::AccessibilityReader;
@@ -56,11 +55,13 @@ pub struct HealthResponse {
 }
 
 #[derive(Serialize)]
+/*
 pub struct ContextResponse {
     pub process_name: String,
     pub window_title: String,
     pub extracted_text: String,
 }
+*/
 
 #[derive(Deserialize)]
 pub struct InjectRequest {
@@ -183,7 +184,7 @@ async fn ask(
         
     let injector = state.injector.clone();
     let text = resp.clone();
-    tokio::task::spawn_blocking(move || injector.type_text(&text));
+    let _ = tokio::task::spawn_blocking(move || injector.type_text(&text));
     
     Ok(Json(AskResponse { response: resp }))
 }

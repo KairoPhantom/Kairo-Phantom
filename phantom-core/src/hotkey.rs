@@ -2,13 +2,13 @@
 /// Enhanced with Diagnostic Logging and Admin-check awareness.
 
 use tokio::sync::mpsc::Sender;
-use tracing::{info, warn, debug, error};
+use tracing::{info, debug};
 use std::sync::Mutex;
 use once_cell::sync::Lazy;
 use windows::Win32::UI::WindowsAndMessaging::{
     SetWindowsHookExW, UnhookWindowsHookEx, CallNextHookEx, GetMessageW, 
     WH_KEYBOARD_LL, KBDLLHOOKSTRUCT, WM_KEYDOWN, WM_SYSKEYDOWN, MSG, HC_ACTION,
-    WM_KEYUP, WM_SYSKEYUP, DispatchMessageW, TranslateMessage
+    DispatchMessageW, TranslateMessage
 };
 use windows::Win32::Foundation::{LPARAM, LRESULT, WPARAM};
 use windows::Win32::UI::Input::KeyboardAndMouse::{VK_MENU, VK_LMENU, VK_RMENU};
@@ -46,7 +46,7 @@ impl HotkeyWatcher {
                 let mut msg = MSG::default();
                 // Standard Win32 Message Loop
                 while GetMessageW(&mut msg, None, 0, 0).as_bool() {
-                    TranslateMessage(&msg);
+                    let _ = TranslateMessage(&msg);
                     DispatchMessageW(&msg);
                 }
 
@@ -62,7 +62,7 @@ unsafe extern "system" fn low_level_keyboard_proc(code: i32, wparam: WPARAM, lpa
         let msg = wparam.0 as u32;
 
         let is_down = msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN;
-        let is_up = msg == WM_KEYUP || msg == WM_SYSKEYUP;
+        // let is_up = msg == WM_KEYUP || msg == WM_SYSKEYUP;
 
         // Diagnostic: Log keys in DEBUG
         // 0x4D is 'M'

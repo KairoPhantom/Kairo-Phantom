@@ -1,6 +1,5 @@
-use anyhow::Result;
-use std::sync::Mutex;
 use yrs::{Doc, GetString, Options, ReadTxn, Text, Transact, WriteTxn};
+
 
 pub struct CrdtSession {
     /// The Yrs document (pure Rust Yjs)

@@ -47,50 +47,14 @@ pub enum AppEnvironment {
 }
 
 impl AppEnvironment {
+    /*
     /// Returns the AI formatting directive for this environment.
     pub fn ai_directive(&self) -> &'static str {
         match self {
-            AppEnvironment::MicrosoftWord | AppEnvironment::MicrosoftOutlook => {
-                "ENVIRONMENT: Microsoft Word (Professional Document). Write in formal, polished prose. Use proper paragraph breaks. No markdown, no asterisks, no code fences. Focus on professional justification and alignment."
-            }
-            AppEnvironment::MicrosoftPowerPoint => {
-                "ENVIRONMENT: Microsoft PowerPoint. Structure output as: **Title:** [slide title] followed by bullet points (one per line, start with -). Suggest image placements using [IMAGE: description] tags."
-            }
-            AppEnvironment::Notion => {
-                "ENVIRONMENT: Notion Workspace. Use rich markdown formatting, headers (##), bold text, bullet points, and callout blocks if necessary. Highly structured, aesthetic documentation."
-            }
-            AppEnvironment::Figma | AppEnvironment::Canva => {
-                "ENVIRONMENT: Design Tool (Figma/Canva). Focus on visual copy, layout structures, short punchy headlines, and image generation prompts [IMAGE: ...]. Do not write long paragraphs."
-            }
-            AppEnvironment::MicrosoftExcel => {
-                "ENVIRONMENT: Microsoft Excel. Provide data-focused, concise responses. Use comma-separated or tab-separated values for tables."
-            }
-            AppEnvironment::VSCode => {
-                "ENVIRONMENT: VS Code (Code Editor). Output ONLY clean, syntactically valid code. NO explanations, NO markdown fences, NO preamble. Raw code only."
-            }
-            AppEnvironment::WindowsTerminal | AppEnvironment::PowerShell | AppEnvironment::CommandPrompt => {
-                "ENVIRONMENT: Terminal / Shell. Output ONLY shell commands or script. No explanations. One command per line."
-            }
-            AppEnvironment::Vim | AppEnvironment::NotepadPlusPlus => {
-                "ENVIRONMENT: Code/Text Editor. Output raw text or code only. No markdown formatting."
-            }
-            AppEnvironment::Notepad => {
-                "ENVIRONMENT: Notepad (Plain Text). Write clean plain text. No markdown. No formatting characters."
-            }
-            AppEnvironment::Chrome | AppEnvironment::Firefox | AppEnvironment::Edge => {
-                "ENVIRONMENT: Web Browser. Adapt to the context. If Notion/Canva detected in title, format accordingly."
-            }
-            AppEnvironment::Slack | AppEnvironment::Discord => {
-                "ENVIRONMENT: Messaging App. Use concise, conversational tone. Short sentences. Emojis where appropriate."
-            }
-            AppEnvironment::Teams => {
-                "ENVIRONMENT: Microsoft Teams. Professional, clear, concise messaging appropriate for workplace communication."
-            }
-            AppEnvironment::Unknown(_) => {
-                "ENVIRONMENT: General purpose. Write in clear, professional prose unless the request implies code."
-            }
+            // ... (directives)
         }
     }
+    */
 
     /// Returns a short human-readable label for logging.
     pub fn label(&self) -> String {
