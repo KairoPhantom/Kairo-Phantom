@@ -102,6 +102,32 @@ system_directive = "You are a world-class designer. Focus on visual copy and lay
 
 ---
 
+## 🔌 Plugin System
+Kairo Phantom v3.0 introduces a powerful plugin architecture. You can extend the engine with custom application fingerprinters and specialized AI agents without recompiling.
+
+### 1. Add plugins to `config.toml`
+```toml
+plugins = ["C:/path/to/finance_plugin.toml"]
+```
+
+### 2. Define your plugin (`plugin.toml`)
+```toml
+name = "Finance Specialist"
+
+[[fingerprinters]]
+process = "calc.exe"
+env_label = "Calculator"
+
+[[agents]]
+id = "finance"
+name = "Finance Expert"
+system_prompt = "You are a senior accounting specialist..."
+match_pattern = "invoice|billing|tax"
+default_score = 5
+```
+
+---
+
 ## 📜 License
 Distributed under the **MIT License**. Built for the open-source community by **Kartik Hulmukh**.
 

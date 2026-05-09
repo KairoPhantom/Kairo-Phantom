@@ -2,9 +2,9 @@ name: CI — Build & Test
 
 on:
   push:
-    branches: ["engine-v2", "main"]
+    branches: ["master", "main", "phantom-engine"]
   pull_request:
-    branches: ["engine-v2", "main"]
+    branches: ["master", "main", "phantom-engine"]
 
 env:
   CARGO_TERM_COLOR: always
@@ -34,12 +34,9 @@ jobs:
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Build phantom-core
-        run: cargo build --release -p phantom-core
+      - name: Build Workspace
+        run: cargo build --release
 
-      - name: Build MCP server (when available)
-        run: cargo build --release -p kairo-phantom-mcp 2>/dev/null || echo "kairo-mcp not yet built"
-        shell: bash
 
   lint:
     name: Lint
@@ -50,6 +47,7 @@ jobs:
         with:
           components: clippy, rustfmt
       - name: Check formatting
-        run: cargo fmt --check -p phantom-core
+        run: cargo fmt --check
       - name: Clippy (warnings as errors)
-        run: cargo clippy -p phantom-core -- -D warnings
+        run: cargo clippy -- -D warnings
+
