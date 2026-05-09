@@ -15,9 +15,32 @@ pub struct PhantomConfig {
     #[serde(default = "default_typing_delay")]
     pub typing_delay_ms: u64,
 
-    /// AI model configuration
+    /// Legacy single model config (used as fallback if swarm is not configured)
     #[serde(default)]
     pub model: ModelConfig,
+
+    /// The Multi-Agent Swarm Configuration
+    #[serde(default)]
+    pub swarm: SwarmConfig,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct SwarmConfig {
+    /// Enables the multi-agent LLM routing pipeline.
+    #[serde(default)]
+    pub enabled: bool,
+    
+    /// The Brain: analyzes the context and delegates.
+    pub brain: Option<ModelConfig>,
+    
+    /// Content & Prose Specialist
+    pub content_agent: Option<ModelConfig>,
+    
+    /// Reasoning & Code Specialist
+    pub reasoning_agent: Option<ModelConfig>,
+    
+    /// Design & Layout Specialist
+    pub design_agent: Option<ModelConfig>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -57,6 +80,7 @@ impl Default for PhantomConfig {
             hotkey: default_hotkey(),
             typing_delay_ms: default_typing_delay(),
             model: ModelConfig::default(),
+            swarm: SwarmConfig::default(),
         }
     }
 }

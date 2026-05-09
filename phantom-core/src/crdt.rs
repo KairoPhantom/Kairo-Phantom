@@ -1,10 +1,6 @@
-/// CRDT Session — Pure Rust Yjs session via yrs crate.
-/// Maintains a shared document with the AI as a named peer (clientID 999).
-/// Binary-protocol compatible with @docscode/core on the JS side.
-
 use anyhow::Result;
 use std::sync::Mutex;
-use yrs::{Doc, GetString, Options, Text, Transact};
+use yrs::{Doc, GetString, Options, ReadTxn, Text, Transact, WriteTxn};
 
 pub struct CrdtSession {
     /// The Yrs document (pure Rust Yjs)
@@ -28,55 +24,47 @@ impl CrdtSession {
     /// Insert human-typed text into the CRDT document.
     /// This represents the "human peer" state — used as AI context.
     pub fn insert_human_text(&self, text: &str) {
-        let content = self.doc.get_or_insert_text("content");
         let mut txn = self.doc.transact_mut();
-
-        // Replace entire human context with new snapshot
-        // (In production this would be a delta, but for MVP we replace)
+        let content = txn.get_or_insert_text("content");
+        
         let current_len = content.get_string(&txn).len() as u32;
         if current_len > 0 {
             content.remove_range(&mut txn, 0, current_len);
         }
         content.insert(&mut txn, 0, text);
+        drop(txn);
     }
 
-    /// Insert AI-generated suggestion text as the AI peer.
     pub fn insert_ai_text(&self, suggestion: &str) {
-        let ai_response = self.doc.get_or_insert_text("ai_suggestion");
         let mut txn = self.doc.transact_mut();
+        let ai_response = txn.get_or_insert_text("ai_suggestion");
 
-        // Clear previous AI suggestion
         let current_len = ai_response.get_string(&txn).len() as u32;
         if current_len > 0 {
             ai_response.remove_range(&mut txn, 0, current_len);
         }
         ai_response.insert(&mut txn, 0, suggestion);
+        drop(txn);
     }
 
-    /// Get current human text content
     pub fn get_human_text(&self) -> String {
+        let content = self.doc.get_or_insert_text("content");
         let txn = self.doc.transact();
-        self.doc.get_or_insert_text("content").get_string(&txn)
+        let s = content.get_string(&txn);
+        drop(txn);
+        s
     }
 
-    /// Get last AI suggestion from CRDT
-    pub fn get_ai_suggestion(&self) -> String {
-        let txn = self.doc.transact();
-        self.doc.get_or_insert_text("ai_suggestion").get_string(&txn)
+    /// Returns the Kairo system persona — sent as the system message to the AI.
+    /// This defines WHO the AI is, not what the user wants.
+    pub fn get_system_prompt(&self) -> &'static str {
+        crate::ai::KAIRO_SYSTEM_PROMPT
     }
 
-    /// Build an AI prompt from the current CRDT state.
-    /// This is what gets sent to Ollama/OpenAI/etc.
-    pub fn build_prompt(&self) -> String {
-        let human_text = self.get_human_text();
-
-        format!(
-            "You are a ghost writer AI. The user is currently writing the following text:\n\n\
-            ---\n{}\n---\n\n\
-            Continue this text naturally. Write only the continuation (no explanation, no preamble). \
-            Keep it concise — 1-3 sentences maximum. Match the user's tone and style exactly.",
-            human_text
-        )
+    /// Returns the user context — sent as the user message to the AI.
+    /// This is the raw text the user wants processed.
+    pub fn get_user_context(&self) -> String {
+        self.get_human_text()
     }
 
     /// Get word count of current document

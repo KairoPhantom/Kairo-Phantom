@@ -11,7 +11,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::net::TcpListener;
-use tracing::info;
+use tracing::{info, warn};
 
 use crate::crdt::CrdtSession;
 use crate::injector::Injector;
@@ -70,17 +70,20 @@ async fn materialize(
         return Err((StatusCode::BAD_REQUEST, "No text context available".into()));
     }
 
-    // 2. Push to CRDT
+    info!("📝 Pushing context to CRDT...");
     state.crdt.insert_human_text(&context);
 
-    // 3. Build prompt and call AI
-    let prompt = state.crdt.build_prompt();
-    let suggestion = state.ai.complete(&prompt).await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    // 3. Build system + user context (Claude-parity)
+    info!("🔮 Calling AI backend for suggestion...");
+    let system = state.crdt.get_system_prompt();
+    let user = state.crdt.get_user_context();
+    let suggestion = state.ai.complete(system, &user).await
+        .map_err(|e| {
+            warn!("❌ AI call failed: {}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+        })?;
 
-    if suggestion.is_empty() {
-        return Err((StatusCode::NO_CONTENT, "AI returned empty suggestion".into()));
-    }
+    info!("✅ AI suggestion received, materializing...");
 
     // 4. Push AI suggestion to CRDT
     state.crdt.insert_ai_text(&suggestion);

@@ -1,130 +1,54 @@
-# Kairo Phantom 👻
+# Kairo Phantom
 
-> The first open-source, Rust-native AI ghost writer for any Windows app.
+LLMs are currently trapped in chat boxes. Kairo Phantom liberates them into your operating system.
 
-Press `Ctrl+Space` anywhere — in Word, a PDF reader, your browser, VS Code, Notepad — and Kairo Phantom reads what you are writing, sends it to your local AI, and **ghost-types the completion directly into your document** at human-like speed.
+Kairo Phantom is a lightweight, high-performance native engine (written in Rust) that enables AI to "haunt" your OS—reading your intent across any application (Word, VS Code, Canva, Browser) and materializing intelligence exactly where you type.
 
-No copy-paste. No drag-and-drop. No browser extension. A true AI peer writing alongside you at the OS level.
+### How it works
 
----
+The engine operates on a few simple, deterministic primitives:
 
-## How It Works
+1. **Global Hooking**: We use a low-level Win32 keyboard hook (`WH_KEYBOARD_LL`) to listen for a specific hotkey (`Alt + M`).
+2. **Context Fingerprinting**: Upon trigger, we use UI Automation (UIA) to extract the text from the currently focused element. We don't just read the text; we fingerprint the process (`WINWORD.EXE`, `Code.exe`) to understand the user's environment.
+3. **The Swarm Brain**: We don't send a raw prompt to a single LLM. A "Brain" orchestrator first analyzes the context and prompt to delegate the task to a specialized agent (Design, Reasoning, or Content).
+4. **SSE Streaming**: Responses are streamed via Server-Sent Events for real-time responsiveness.
+5. **Atomic Injection**: Instead of slow character simulation, we use a "Clipboard-First" strategy to atomically substitute the user's prompt with the AI's response via `Ctrl+V`.
 
-```
-You type in Word/Chrome/VS Code/Notepad
-         ↓
-[Ctrl+Space]
-         ↓
-Kairo reads your text via Windows UI Automation
-         ↓
-Text streams into a CRDT session (yrs — pure Rust Yjs)
-         ↓  
-Local Ollama LLM generates continuation
-         ↓
-Ghost-types the suggestion back into your app
-character by character at 15ms/char
-```
+### Project Structure
 
-## Quick Start
+- `phantom-core/`: The Rust backend responsible for OS hooks, UIA reading, and AI orchestration.
+- `phantom-overlay/`: A glassmorphic Tauri-based UI that provides visual feedback on AI status.
+- `src/swarm.rs`: The multi-agent routing logic.
+- `src/context.rs`: Environmental awareness and app fingerprinting.
 
-### Prerequisites
-- Windows 10/11
-- [Ollama](https://ollama.com/) running locally with `ollama pull llama3`
-- [Rust](https://rustup.rs/) installed
+### Setup
 
-### Run from source
+Prerequisites: Rust, Admin privileges (for hooks).
+
 ```bash
-git clone https://github.com/Kartik24Hulmukh/KairoPhantom
-cd KairoPhantom
-cargo run --release -p phantom-core
+# Clone the repository
+git clone https://github.com/Kartik24Hulmukh/KairoPhantom.git
+cd KairoPhantom/phantom-core
+
+# Build and run
+cargo run --release
 ```
 
-### Usage
-1. Open any text editor (Word, Notepad, VS Code, your browser)
-2. Start typing something
-3. Press `Ctrl+Space`
-4. Watch the Ghost write alongside you
-
-## Configuration
-
-Config lives at `~/.kairo-phantom/config.toml` (auto-created on first run):
+Configure your agents in `~/.kairo-phantom/config.toml`:
 
 ```toml
-hotkey = "ctrl+space"
-typing_delay_ms = 15
+[swarm]
+enabled = true
 
-[model]
-provider = "ollama"           # "ollama" | "openai" | "anthropic" | "gemini"
-model_name = "llama3"
-base_url = "http://localhost:11434"
-
-# For cloud providers:
-# provider = "openai"
-# model_name = "gpt-4o-mini"
-# api_key = "sk-..."
+[swarm.brain]
+provider = "openai"
+model_name = "gpt-4o-mini"
+api_key = "..."
 ```
 
-## Architecture
+### Philosophy
 
-```
-┌─────────────────────────────────────────────────┐
-│          Kairo Phantom Core (Rust)               │
-│                                                  │
-│  UIA Reader    ──→  CRDT Session (yrs)           │
-│  (any app)          (AI peer: clientID 999)      │
-│                           ↓                      │
-│                    AI Backend                    │
-│                    (Ollama/OpenAI/etc.)          │
-│                           ↓                      │
-│  Injector      ←──  Suggestion text              │
-│  (enigo — ghost typing into active app)         │
-└─────────────────────────────────────────────────┘
-```
+No bloat. No complex abstractions. Just a direct pipe between LLM intelligence and your keyboard.
 
-### Core Crates
-| Crate | Version | Purpose |
-|-------|---------|---------|
-| `uiautomation` | 0.25 | Read text from any Windows app |
-| `enigo` | 0.2 | Ghost-type into any Windows app |
-| `yrs` | 0.21 | Pure Rust CRDT (Yjs port) — AI peer state |
-| `rdev` | 0.5 | Global hotkey listener |
-| `tokio` | 1.44 | Async runtime |
-
-### AI Providers
-- **Ollama** (default, local, private)
-- **OpenAI** (GPT-4o-mini etc.)
-- **Anthropic** (Claude Haiku etc.)
-- **Google Gemini** (Gemini 1.5 Flash etc.)
-
-## Why Rust?
-
-- Sub-millisecond hotkey response
-- ~8MB binary (vs 270MB for Electron apps)
-- No JavaScript runtime embedded — pure native
-- Zero GC pauses during ghost typing
-- Binary-compatible CRDT state with `@docscode/core` (TypeScript)
-
-## Companion Library
-
-Kairo Phantom is the desktop runtime of the [Kairo](https://github.com/Kartik24Hulmukh/Kairo) ecosystem.
-The CRDT state it maintains is binary-compatible with `@docscode/core` — enabling seamless sync between desktop ghost writing and web-based collaborative editing.
-
-```bash
-npm install @docscode/core
-```
-
-## Roadmap
-
-- [x] UIA text reader (Windows)
-- [x] Ghost typing via enigo
-- [x] CRDT session via yrs
-- [x] Ollama / OpenAI / Anthropic / Gemini adapters
-- [x] Ctrl+Space global hotkey
-- [ ] Tauri glassmorphic overlay
-- [ ] macOS support (Accessibility API)
-- [ ] MCP server mode (Claude Code / Cursor integration)
-- [ ] Autocomplete / Summarize behavior plugins
-
-## License
-
+### License
 MIT
