@@ -172,9 +172,13 @@ async fn ask(
         let agent_type = match agent_name.to_lowercase().as_str() {
             "design" => AgentType::DesignAndMedia,
             "reasoning" => AgentType::ReasoningAndLogic,
+            "student" => AgentType::StudentTutor,
+            "engineer" => AgentType::Engineer,
+            "data" => AgentType::DataAnalyst,
             _ => AgentType::ContentAndAllRounder,
         };
         state.swarm_engine.get_backend_and_profile_by_type(&agent_type, &doc_ctx)
+
     } else {
         state.swarm_engine.route(&doc_ctx).await
     };

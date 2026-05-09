@@ -92,6 +92,11 @@ pub struct DynamicFingerprinter {
 
 impl AppFingerprinter for DynamicFingerprinter {
     fn fingerprint(&self, process_name: &str, window_title: &str) -> Option<AppEnvironment> {
+        // Guard: if no criteria specified, never match (avoids silent catch-all)
+        if self.process.is_none() && self.title_contains.is_none() {
+            return None;
+        }
+
         let mut matches = true;
         if let Some(ref p) = self.process {
             if !process_name.to_lowercase().contains(&p.to_lowercase()) { matches = false; }
@@ -107,6 +112,7 @@ impl AppFingerprinter for DynamicFingerprinter {
         }
     }
 }
+
 
 /// Dynamic agent loaded from TOML.
 #[derive(Deserialize, Clone)]

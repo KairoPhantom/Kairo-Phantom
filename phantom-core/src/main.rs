@@ -66,14 +66,46 @@ async fn main() -> Result<()> {
 
     info!("👻 Kairo Phantom (Production Engine) starting...");
 
-    // Check for --init-config flag
-    if std::env::args().any(|arg| arg == "--init-config") {
+    // --- CLI Subcommand Routing ---
+    let args: Vec<String> = std::env::args().collect();
+
+    if args.iter().any(|a| a == "--version" || a == "-V") {
+        println!("kairo-phantom v{}", env!("CARGO_PKG_VERSION"));
+        return Ok(());
+    }
+
+    if args.iter().any(|a| a == "--init-config") {
         let _ = PhantomConfig::load_or_default()?;
         println!("✅ Generated default config at: {}", PhantomConfig::config_path().display());
         println!("\nTo run Kairo Phantom offline with Ollama (default):");
         println!("1. Install Ollama: https://ollama.com/download");
         println!("2. Run: ollama pull qwen2.5-coder:14b");
         println!("3. Start Kairo: kairo-phantom");
+        return Ok(());
+    }
+
+    // kairo plugin list — show registered plugins from config + auto-discovered ones
+    if args.len() >= 3 && args[1] == "plugin" && args[2] == "list" {
+        let config = PhantomConfig::load_or_default()?;
+        println!("📦 Registered plugins (from config.toml):");
+        if config.plugins.is_empty() {
+            println!("   (none)");
+        }
+        for p in &config.plugins { println!("   {}", p); }
+        println!("\n📂 Auto-discovered plugins (~/.kairo-phantom/plugins/):");
+        let plugin_dir = dirs::home_dir()
+            .unwrap_or_default()
+            .join(".kairo-phantom")
+            .join("plugins");
+        if plugin_dir.exists() {
+            for entry in std::fs::read_dir(&plugin_dir).into_iter().flatten().flatten() {
+                if entry.path().extension().and_then(|e| e.to_str()) == Some("toml") {
+                    println!("   {}", entry.path().display());
+                }
+            }
+        } else {
+            println!("   (directory does not exist — create it to add plugins)");
+        }
         return Ok(());
     }
 
@@ -114,7 +146,29 @@ async fn main() -> Result<()> {
     let mut context_engine_obj = ContextEngine::new();
     
     // Load plugins from config
-    for plugin_path in &config.plugins {
+    let mut all_plugin_paths: Vec<String> = config.plugins.clone();
+
+    // Auto-discover plugins from ~/.kairo-phantom/plugins/*.toml
+    let auto_plugin_dir = dirs::home_dir()
+        .unwrap_or_default()
+        .join(".kairo-phantom")
+        .join("plugins");
+    if auto_plugin_dir.exists() {
+        if let Ok(entries) = std::fs::read_dir(&auto_plugin_dir) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.extension().and_then(|e| e.to_str()) == Some("toml") {
+                    let path_str = path.to_string_lossy().to_string();
+                    if !all_plugin_paths.contains(&path_str) {
+                        info!("🔍 Auto-discovered plugin: {}", path_str);
+                        all_plugin_paths.push(path_str);
+                    }
+                }
+            }
+        }
+    }
+
+    for plugin_path in &all_plugin_paths {
         match std::fs::read_to_string(plugin_path) {
             Ok(content) => {
                 match toml::from_str::<crate::plugin::PluginConfig>(&content) {
@@ -137,6 +191,7 @@ async fn main() -> Result<()> {
             Err(e) => warn!("❌ Failed to read plugin file {}: {}", plugin_path, e),
         }
     }
+
 
     let swarm_engine = Arc::new(swarm_engine_obj);
     let context_engine = Arc::new(context_engine_obj);
