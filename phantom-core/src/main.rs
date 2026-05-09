@@ -21,6 +21,9 @@ mod identity;    // Advancement 6: Ed25519 agent identity + RBAC
 mod wasm_sandbox; // Advancement 7: Wasmtime WASM plugin sandbox
 mod extractors;  // Advancement 3: Kreuzberg universal document parser
 // platform/macos.rs and platform/linux.rs are submodules of platform
+// ── V6 Optimization modules ──────────────────────────────────────────────────
+mod perf_engine;  // A1-A3+B1-B3: SIMD, zero-alloc SSE, MCP cache, parallel swarm
+mod wgpu_effects; // C1-C2: Native GPU rendering via WGPU (replaces Puppeteer)
 
 use identity::IdentityManager;
 use wasm_sandbox::WasmPluginRegistry;
