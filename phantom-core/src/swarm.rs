@@ -12,10 +12,60 @@ pub enum AgentType {
     ContentAndAllRounder,
 }
 
+use crate::plugin::{SwarmAgent, AgentRegistry};
+
+pub struct DesignAgent;
+impl SwarmAgent for DesignAgent {
+    fn id(&self) -> &str { "design" }
+    fn name(&self) -> &str { "Design & Media Specialist" }
+    fn build_system_prompt(&self, doc_ctx: &DocumentContext) -> String {
+        let base = crate::ai::KAIRO_SYSTEM_PROMPT;
+        let doc_fragment = doc_ctx.to_system_prompt_fragment();
+        format!("{}\n\n[DOCUMENT INTELLIGENCE]\n{}\n\n*** SWARM ROLE: DESIGN & MEDIA AGENT ***\nSuggest layouts, slide structures, and visual elements. Use [IMAGE: prompt] for visuals. Keep copy punchy.", base, doc_fragment)
+    }
+    fn match_score(&self, doc_ctx: &DocumentContext) -> u8 {
+        use crate::document_context::DocKind;
+        match doc_ctx.doc_kind {
+            DocKind::PowerPoint | DocKind::OpenDocumentPresentation | DocKind::CanvaDesign | DocKind::FigmaDesign => 100,
+            _ => 0,
+        }
+    }
+}
+
+pub struct ReasoningAgent;
+impl SwarmAgent for ReasoningAgent {
+    fn id(&self) -> &str { "reasoning" }
+    fn name(&self) -> &str { "Reasoning & Logic Specialist" }
+    fn build_system_prompt(&self, doc_ctx: &DocumentContext) -> String {
+        let base = crate::ai::KAIRO_SYSTEM_PROMPT;
+        let doc_fragment = doc_ctx.to_system_prompt_fragment();
+        format!("{}\n\n[DOCUMENT INTELLIGENCE]\n{}\n\n*** SWARM ROLE: REASONING & LOGIC AGENT ***\nBe precise. Output valid code or terminal commands. No fluff.", base, doc_fragment)
+    }
+    fn match_score(&self, doc_ctx: &DocumentContext) -> u8 {
+        use crate::document_context::DocKind;
+        if matches!(doc_ctx.doc_kind, DocKind::CodeFile | DocKind::Terminal) { return 100; }
+        let p = doc_ctx.prompt_text.to_lowercase();
+        if p.contains("code") || p.contains("calculate") || p.contains("debug") { 80 } else { 0 }
+    }
+}
+
+pub struct ContentAgent;
+impl SwarmAgent for ContentAgent {
+    fn id(&self) -> &str { "content" }
+    fn name(&self) -> &str { "Content & All-Rounder Specialist" }
+    fn build_system_prompt(&self, doc_ctx: &DocumentContext) -> String {
+        let base = crate::ai::KAIRO_SYSTEM_PROMPT;
+        let doc_fragment = doc_ctx.to_system_prompt_fragment();
+        format!("{}\n\n[DOCUMENT INTELLIGENCE]\n{}\n\n*** SWARM ROLE: CONTENT AGENT ***\nPerfect formatting. Rich structure. Professional tone.", base, doc_fragment)
+    }
+    fn match_score(&self, _doc_ctx: &DocumentContext) -> u8 { 10 } // Default fallback score
+}
+
 pub struct AgentProfile {
     pub agent_type: AgentType,
     pub system_directive: String,
 }
+
 
 use crate::ai::{build_backend, AiBackend};
 use crate::config::SwarmConfig;
@@ -24,74 +74,84 @@ use std::sync::Arc;
 
 pub struct SwarmOrchestrator {
     pub config: SwarmConfig,
+    pub registry: AgentRegistry,
     pub brain: Option<Arc<dyn AiBackend>>,
-    pub design_agent: Option<Arc<dyn AiBackend>>,
-    pub reasoning_agent: Option<Arc<dyn AiBackend>>,
-    pub content_agent: Option<Arc<dyn AiBackend>>,
+    pub design_backend: Option<Arc<dyn AiBackend>>,
+    pub reasoning_backend: Option<Arc<dyn AiBackend>>,
+    pub content_backend: Option<Arc<dyn AiBackend>>,
     pub fallback_agent: Arc<dyn AiBackend>,
 }
+
 
 impl SwarmOrchestrator {
     pub fn new(config: SwarmConfig, fallback_agent: Arc<dyn AiBackend>) -> Self {
         let brain = config.brain.as_ref().and_then(|c| build_backend(c).ok());
-        let design_agent = config.design_agent.as_ref().and_then(|c| build_backend(c).ok());
-        let reasoning_agent = config.reasoning_agent.as_ref().and_then(|c| build_backend(c).ok());
-        let content_agent = config.content_agent.as_ref().and_then(|c| build_backend(c).ok());
+        let design_backend = config.design_agent.as_ref().and_then(|c| build_backend(c).ok());
+        let reasoning_backend = config.reasoning_agent.as_ref().and_then(|c| build_backend(c).ok());
+        let content_backend = config.content_agent.as_ref().and_then(|c| build_backend(c).ok());
+
+        let mut registry = AgentRegistry::new();
+        registry.register(Arc::new(DesignAgent));
+        registry.register(Arc::new(ReasoningAgent));
+        registry.register(Arc::new(ContentAgent));
 
         Self {
             config,
+            registry,
             brain,
-            design_agent,
-            reasoning_agent,
-            content_agent,
+            design_backend,
+            reasoning_backend,
+            content_backend,
             fallback_agent,
         }
     }
 
+
     /// The Brain: Analyzes context via LLM (or deterministic fallback) to select the right agent.
     pub async fn route(&self, doc_ctx: &DocumentContext) -> (Arc<dyn AiBackend>, AgentProfile) {
-        let mut agent_type = self.deterministic_route(doc_ctx);
+        let mut selected_agent = self.registry.select_best(doc_ctx).unwrap();
+        let mut agent_id = selected_agent.id().to_string();
 
         // If the multi-agent brain is enabled and configured, ask the Brain LLM to decide
         if self.config.enabled && self.brain.is_some() {
             if let Some(brain_llm) = &self.brain {
                 let brain_prompt = format!(
-                    "You are the Swarm Brain. The user typed: '{}'. Document type: '{}'. Environment: '{}'. \
-                    Decide the best specialized agent. Reply ONLY with one word: 'design', 'reasoning', or 'content'.",
+                    "You are the Swarm Brain. The user typed: '{}'. Document type: '{}'. \
+                    Decide the best specialized agent. Reply ONLY with the agent ID: {}.",
                     doc_ctx.prompt_text,
                     doc_ctx.doc_kind.human_name(),
-                    doc_ctx.file_path.as_ref()
-                        .and_then(|p| p.file_name())
-                        .and_then(|n| n.to_str())
-                        .unwrap_or("unknown")
+                    self.registry.list_agents().iter().map(|a| a.id()).collect::<Vec<_>>().join(", ")
                 );
                 
                 info!("🧠 Brain is thinking...");
-                if let Ok(decision) = brain_llm.complete("You are a router. Reply with exactly one word.", &brain_prompt).await {
-                    let d = decision.to_lowercase();
-                    if d.contains("design") {
-                        agent_type = AgentType::DesignAndMedia;
-                    } else if d.contains("reasoning") {
-                        agent_type = AgentType::ReasoningAndLogic;
-                    } else if d.contains("content") {
-                        agent_type = AgentType::ContentAndAllRounder;
+                if let Ok(decision) = brain_llm.complete("You are a router. Reply with exactly one ID.", &brain_prompt).await {
+                    let d = decision.trim().to_lowercase();
+                    if let Some(agent) = self.registry.get_agent(&d) {
+                        selected_agent = agent;
+                        agent_id = d;
                     }
                 }
             }
         }
 
-        info!("🧠 Swarm routed to: {:?} | doc={}", agent_type, doc_ctx.doc_kind.human_name());
+        info!("🧠 Swarm routed to: {} | doc={}", agent_id, doc_ctx.doc_kind.human_name());
 
-        let system_directive = Self::build_agent_prompt(&agent_type, doc_ctx);
+        let system_directive = selected_agent.build_system_prompt(doc_ctx);
+        let agent_type = match agent_id.as_str() {
+            "design" => AgentType::DesignAndMedia,
+            "reasoning" => AgentType::ReasoningAndLogic,
+            _ => AgentType::ContentAndAllRounder,
+        };
+
         let profile = AgentProfile {
-            agent_type: agent_type.clone(),
+            agent_type,
             system_directive,
         };
 
-        let backend = match agent_type {
-            AgentType::DesignAndMedia => self.design_agent.clone().unwrap_or_else(|| self.fallback_agent.clone()),
-            AgentType::ReasoningAndLogic => self.reasoning_agent.clone().unwrap_or_else(|| self.fallback_agent.clone()),
-            AgentType::ContentAndAllRounder => self.content_agent.clone().unwrap_or_else(|| self.fallback_agent.clone()),
+        let backend = match agent_id.as_str() {
+            "design" => self.design_backend.clone().unwrap_or_else(|| self.fallback_agent.clone()),
+            "reasoning" => self.reasoning_backend.clone().unwrap_or_else(|| self.fallback_agent.clone()),
+            _ => self.content_backend.clone().unwrap_or_else(|| self.fallback_agent.clone()),
         };
 
         (backend, profile)
@@ -99,83 +159,26 @@ impl SwarmOrchestrator {
 
     /// Exposes a direct backend and profile getter for the MCP /agent override
     pub fn get_backend_and_profile_by_type(&self, agent_type: &AgentType, doc_ctx: &DocumentContext) -> (Arc<dyn AiBackend>, AgentProfile) {
-        let system_directive = Self::build_agent_prompt(agent_type, doc_ctx);
+        let agent_id = match agent_type {
+            AgentType::DesignAndMedia => "design",
+            AgentType::ReasoningAndLogic => "reasoning",
+            AgentType::ContentAndAllRounder => "content",
+        };
+
+        let agent = self.registry.get_agent(agent_id).unwrap();
+        let system_directive = agent.build_system_prompt(doc_ctx);
+
         let profile = AgentProfile {
             agent_type: agent_type.clone(),
             system_directive,
         };
 
-        let backend = match agent_type {
-            AgentType::DesignAndMedia => self.design_agent.clone().unwrap_or_else(|| self.fallback_agent.clone()),
-            AgentType::ReasoningAndLogic => self.reasoning_agent.clone().unwrap_or_else(|| self.fallback_agent.clone()),
-            AgentType::ContentAndAllRounder => self.content_agent.clone().unwrap_or_else(|| self.fallback_agent.clone()),
+        let backend = match agent_id {
+            "design" => self.design_backend.clone().unwrap_or_else(|| self.fallback_agent.clone()),
+            "reasoning" => self.reasoning_backend.clone().unwrap_or_else(|| self.fallback_agent.clone()),
+            _ => self.content_backend.clone().unwrap_or_else(|| self.fallback_agent.clone()),
         };
 
         (backend, profile)
-    }
-
-    fn deterministic_route(&self, doc_ctx: &DocumentContext) -> AgentType {
-        use crate::document_context::DocKind;
-        match &doc_ctx.doc_kind {
-            DocKind::PowerPoint | DocKind::OpenDocumentPresentation
-            | DocKind::CanvaDesign | DocKind::FigmaDesign => AgentType::DesignAndMedia,
-            DocKind::CodeFile => AgentType::ReasoningAndLogic,
-            DocKind::Terminal => AgentType::ReasoningAndLogic,
-            _ => {
-                let p = doc_ctx.prompt_text.to_lowercase();
-                if p.contains("code") || p.contains("calculate") || p.contains("debug") {
-                    AgentType::ReasoningAndLogic
-                } else {
-                    AgentType::ContentAndAllRounder
-                }
-            }
-        }
-    }
-
-    fn build_agent_prompt(agent_type: &AgentType, doc_ctx: &DocumentContext) -> String {
-        let base_persona = crate::ai::KAIRO_SYSTEM_PROMPT;
-
-        // v3.0: Structured document context fragment (headings, tables, slide position)
-        let doc_fragment = doc_ctx.to_system_prompt_fragment();
-
-        let agent_specialty = match agent_type {
-            AgentType::DesignAndMedia => {
-                r#"
-*** SWARM ROLE: DESIGN & MEDIA AGENT ***
-You are the Design & Media Specialist. The user is in a visual tool (PowerPoint, Canva, Figma).
-YOUR DIRECTIVES:
-1. THINK VISUALLY: Suggest layouts, slide structures, and UI elements.
-2. ADD IMAGES: Wherever a visual is required to make the document professional, insert an image prompt using the exact format: [IMAGE: highly detailed prompt for image generation]
-3. KEEP COPY PUNCHY: Visual tools require short, impactful text. Do not write walls of text.
-"#
-            }
-            AgentType::ReasoningAndLogic => {
-                r#"
-*** SWARM ROLE: REASONING & COMPLEX TASKS AGENT ***
-You are the Reasoning & Logic Specialist. The user requires deep thought, coding, or complex logic.
-YOUR DIRECTIVES:
-1. BE PRECISE: Output perfectly valid code or terminal commands.
-2. NO FLUFF: Do not explain unless asked. If writing code for an IDE, output ONLY the raw code.
-3. LOGICAL STRUCTURE: If asked a complex question, break it down step-by-step.
-"#
-            }
-            AgentType::ContentAndAllRounder => {
-                r#"
-*** SWARM ROLE: CONTENT & ALL-ROUNDER AGENT ***
-You are the Content Specialist. The user is in a document tool (Word, Notion, etc).
-YOUR DIRECTIVES:
-1. PERFECT FORMATTING: Ensure the text is highly professional, perfectly justified, and aligned to the context.
-2. RICH STRUCTURE: Use appropriate headings, bullet points, and paragraph breaks.
-3. TONE MATCH: Match the exact professional standard expected for high-end corporate documents.
-"#
-            }
-        };
-
-        format!(
-            "{}\n\n[DOCUMENT INTELLIGENCE]\n{}\n\n{}",
-            base_persona,
-            doc_fragment,
-            agent_specialty,
-        )
     }
 }

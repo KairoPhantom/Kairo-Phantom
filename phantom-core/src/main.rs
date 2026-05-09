@@ -9,6 +9,8 @@ mod context;
 mod swarm;
 mod platform; // Cross-platform accessibility layer (v3.0)
 mod document_context; // Structured document understanding (v3.0)
+mod plugin; // Plugin system (v3.0)
+
 
 
 use anyhow::Result;
@@ -106,11 +108,40 @@ async fn main() -> Result<()> {
         None
     };
     
-    let swarm_engine = Arc::new(swarm::SwarmOrchestrator::new(config.swarm.clone(), fallback_backend.clone()));
+    let mut swarm_engine_obj = swarm::SwarmOrchestrator::new(config.swarm.clone(), fallback_backend.clone());
     let injector = Arc::new(Injector::new(config.typing_delay_ms));
     let uia_reader = Arc::new(UiaReader::new());
-    let context_engine = Arc::new(ContextEngine::new());
+    let mut context_engine_obj = ContextEngine::new();
+    
+    // Load plugins from config
+    for plugin_path in &config.plugins {
+        match std::fs::read_to_string(plugin_path) {
+            Ok(content) => {
+                match toml::from_str::<crate::plugin::PluginConfig>(&content) {
+                    Ok(plugin_cfg) => {
+                        info!("🔌 Loading plugin: {}", plugin_cfg.name);
+                        if let Some(fingerprinters) = plugin_cfg.fingerprinters {
+                            for f in fingerprinters {
+                                context_engine_obj.registry.register(Box::new(f));
+                            }
+                        }
+                        if let Some(agents) = plugin_cfg.agents {
+                            for a in agents {
+                                swarm_engine_obj.registry.register(Arc::new(a));
+                            }
+                        }
+                    }
+                    Err(e) => warn!("❌ Failed to parse plugin TOML at {}: {}", plugin_path, e),
+                }
+            }
+            Err(e) => warn!("❌ Failed to read plugin file {}: {}", plugin_path, e),
+        }
+    }
+
+    let swarm_engine = Arc::new(swarm_engine_obj);
+    let context_engine = Arc::new(context_engine_obj);
     let extractor_registry = Arc::new(ExtractorRegistry::with_defaults());
+
     
     // Create CRDT session (AI peer with fixed clientID 999)
     let crdt_session = Arc::new(CrdtSession::new(999));

@@ -26,7 +26,12 @@ pub struct PhantomConfig {
     /// The Multi-Agent Swarm Configuration
     #[serde(default)]
     pub swarm: SwarmConfig,
+
+    /// List of paths to plugin TOML files
+    #[serde(default)]
+    pub plugins: Vec<String>,
 }
+
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct SwarmConfig {
@@ -86,9 +91,11 @@ impl Default for PhantomConfig {
             model: ModelConfig::default(),
             fallback: None,
             swarm: SwarmConfig::default(),
+            plugins: Vec::new(),
         }
     }
 }
+
 
 impl PhantomConfig {
     /// Load config from ~/.kairo-phantom/config.toml or return defaults

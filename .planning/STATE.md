@@ -11,12 +11,14 @@
 | 1 | Cross-Platform Accessibility Foundation | ✅ COMPLETE | 1-2 |
 | 2 | Deep Document Understanding | ✅ COMPLETE | 3-4 |
 | 3 | Offline Mode — Ollama First | ✅ COMPLETE | 5-6 |
-| 4 | MCP Server — kairo-mcp | 📋 PLANNED | 7-8 |
-| 5 | Plugin System + Trait Extraction | 📋 PLANNED | 9-10 |
+| 4 | MCP Server — kairo-mcp | ✅ COMPLETE | 7-8 |
+| 5 | Plugin System + Trait Extraction | ✅ COMPLETE | 9-10 |
 | 6 | Distribution + One-Liner Install | 📋 PLANNED | 11-12 |
 
 ## Next Action
-Run `/gsd-execute-phase 4` to implement the MCP Server.
+Run Phase 6: Distribution + One-Liner Install.
+
+
 
 ## Architecture Decisions Made
 1. **No xa11y dependency** — we implement the `AccessibilityReader` trait natively using each platform's official APIs

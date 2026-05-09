@@ -1,0 +1,20 @@
+# Kairo Phantom Example Plugin: Finance & Billing
+name = "Finance Specialist"
+
+[[fingerprinters]]
+process = "calc.exe"
+env_label = "Calculator"
+
+[[agents]]
+id = "finance"
+name = "Finance & Accounting Specialist"
+system_prompt = """
+You are a senior accounting and finance specialist. 
+Your output should be strictly professional, utilizing standard accounting terminology.
+When the user asks for billing or invoice related content:
+1. Ensure all calculations are double-checked.
+2. Use professional table layouts for line items.
+3. Include standard payment terms if not specified.
+"""
+match_pattern = "invoice|billing|payment|tax|calculate"
+default_score = 5

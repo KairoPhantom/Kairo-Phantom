@@ -125,17 +125,70 @@ pub struct AppContext {
     pub active_slide: Option<usize>,
 }
 
-pub struct ContextEngine;
+use crate::plugin::{AppFingerprinter, FingerprinterRegistry};
+
+pub struct DefaultFingerprinter;
+
+impl AppFingerprinter for DefaultFingerprinter {
+    fn fingerprint(&self, process_name: &str, window_title: &str) -> Option<AppEnvironment> {
+        let proc = process_name.to_lowercase();
+        let title = window_title.to_lowercase();
+
+        // Office Suite
+        if proc.contains("winword") { return Some(AppEnvironment::MicrosoftWord); }
+        if proc.contains("powerpnt") { return Some(AppEnvironment::MicrosoftPowerPoint); }
+        if proc.contains("excel") { return Some(AppEnvironment::MicrosoftExcel); }
+        if proc.contains("outlook") { return Some(AppEnvironment::MicrosoftOutlook); }
+
+        // Code Editors
+        if proc.contains("code") && !proc.contains("discord") { return Some(AppEnvironment::VSCode); }
+        if proc.contains("notepad++") || proc.contains("notepadplusplus") { return Some(AppEnvironment::NotepadPlusPlus); }
+        if proc.contains("notepad") { return Some(AppEnvironment::Notepad); }
+        if proc.contains("vim") || proc.contains("nvim") { return Some(AppEnvironment::Vim); }
+
+        // Terminals
+        if proc.contains("windowsterminal") { return Some(AppEnvironment::WindowsTerminal); }
+        if proc.contains("powershell") || title.contains("powershell") { return Some(AppEnvironment::PowerShell); }
+        if proc.contains("cmd") || title.contains("command prompt") { return Some(AppEnvironment::CommandPrompt); }
+
+        // Browsers & Web Apps
+        if title.contains("notion") || proc.contains("notion") { return Some(AppEnvironment::Notion); }
+        if title.contains("figma") || proc.contains("figma") { return Some(AppEnvironment::Figma); }
+        if title.contains("canva") || proc.contains("canva") { return Some(AppEnvironment::Canva); }
+
+        if proc.contains("chrome") || proc.contains("chromium") { return Some(AppEnvironment::Chrome); }
+        if proc.contains("firefox") { return Some(AppEnvironment::Firefox); }
+        if proc.contains("msedge") { return Some(AppEnvironment::Edge); }
+
+        // Communication
+        if proc.contains("slack") { return Some(AppEnvironment::Slack); }
+        if proc.contains("teams") { return Some(AppEnvironment::Teams); }
+        if proc.contains("discord") { return Some(AppEnvironment::Discord); }
+
+        None
+    }
+}
+
+pub struct ContextEngine {
+    pub registry: FingerprinterRegistry,
+}
+
 
 impl ContextEngine {
     pub fn new() -> Self {
-        ContextEngine
+        let mut registry = FingerprinterRegistry::new();
+        registry.register(Box::new(DefaultFingerprinter));
+        
+        ContextEngine { registry }
     }
+
 
     /// Captures the complete application context at hotkey press time.
     pub fn capture(&self, full_text: &str) -> AppContext {
         let (process_name, window_title) = self.get_active_app_info();
-        let environment = Self::classify_environment(&process_name, &window_title);
+        let environment = self.registry.identify(&process_name, &window_title)
+            .unwrap_or(AppEnvironment::Unknown(process_name.clone()));
+
 
         // Extract just the last paragraph (user's actual prompt — what gets erased)
         let prompt_text = Self::extract_last_paragraph(full_text);
@@ -237,44 +290,8 @@ impl ContextEngine {
         }
     }
 
-    /// Classify the app environment from process name and window title.
-    pub fn classify_environment(process_name: &str, window_title: &str) -> AppEnvironment {
-        let proc = process_name.to_lowercase();
-        let title = window_title.to_lowercase();
+    // classify_environment removed in favor of FingerprinterRegistry
 
-        // Office Suite
-        if proc.contains("winword") { return AppEnvironment::MicrosoftWord; }
-        if proc.contains("powerpnt") { return AppEnvironment::MicrosoftPowerPoint; }
-        if proc.contains("excel") { return AppEnvironment::MicrosoftExcel; }
-        if proc.contains("outlook") { return AppEnvironment::MicrosoftOutlook; }
-
-        // Code Editors
-        if proc.contains("code") && !proc.contains("discord") { return AppEnvironment::VSCode; }
-        if proc.contains("notepad++") || proc.contains("notepadplusplus") { return AppEnvironment::NotepadPlusPlus; }
-        if proc.contains("notepad") { return AppEnvironment::Notepad; }
-        if proc.contains("vim") || proc.contains("nvim") { return AppEnvironment::Vim; }
-
-        // Terminals
-        if proc.contains("windowsterminal") { return AppEnvironment::WindowsTerminal; }
-        if proc.contains("powershell") || title.contains("powershell") { return AppEnvironment::PowerShell; }
-        if proc.contains("cmd") || title.contains("command prompt") { return AppEnvironment::CommandPrompt; }
-
-        // Browsers & Web Apps
-        if title.contains("notion") || proc.contains("notion") { return AppEnvironment::Notion; }
-        if title.contains("figma") || proc.contains("figma") { return AppEnvironment::Figma; }
-        if title.contains("canva") || proc.contains("canva") { return AppEnvironment::Canva; }
-
-        if proc.contains("chrome") || proc.contains("chromium") { return AppEnvironment::Chrome; }
-        if proc.contains("firefox") { return AppEnvironment::Firefox; }
-        if proc.contains("msedge") { return AppEnvironment::Edge; }
-
-        // Communication
-        if proc.contains("slack") { return AppEnvironment::Slack; }
-        if proc.contains("teams") { return AppEnvironment::Teams; }
-        if proc.contains("discord") { return AppEnvironment::Discord; }
-
-        AppEnvironment::Unknown(process_name.to_string())
-    }
 
     /// Extract the last non-empty paragraph (the user's actual prompt).
     /// This is what Kairo will erase and replace with AI output.
