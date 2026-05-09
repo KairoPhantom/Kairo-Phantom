@@ -1,54 +1,109 @@
-# Kairo Phantom
+# 👻 Kairo Phantom
 
-LLMs are currently trapped in chat boxes. Kairo Phantom liberates them into your operating system.
+**Intelligence is currently trapped in chat boxes. Kairo Phantom liberates it into your operating system.**
 
-Kairo Phantom is a lightweight, high-performance native engine (written in Rust) that enables AI to "haunt" your OS—reading your intent across any application (Word, VS Code, Canva, Browser) and materializing intelligence exactly where you type.
+Kairo Phantom is a professional-grade, high-performance native engine (written in Rust) that enables AI to "haunt" your OS—reading document structure across any application (Word, PowerPoint, VS Code, Canva, Notion) and materializing intelligence exactly where you type.
 
-### How it works
+> [!IMPORTANT]
+> **Ghost Writing vs. Copilots**: Unlike typical AI copilots that live in sidebars, Kairo operates directly on your document surface. It reads your intent, analyzes the document structure, and "ghost-types" the response into your editor via a high-speed injection bridge.
 
-The engine operates on a few simple, deterministic primitives:
+---
 
-1. **Global Hooking**: We use a low-level Win32 keyboard hook (`WH_KEYBOARD_LL`) to listen for a specific hotkey (`Alt + M`).
-2. **Context Fingerprinting**: Upon trigger, we use UI Automation (UIA) to extract the text from the currently focused element. We don't just read the text; we fingerprint the process (`WINWORD.EXE`, `Code.exe`) to understand the user's environment.
-3. **The Swarm Brain**: We don't send a raw prompt to a single LLM. A "Brain" orchestrator first analyzes the context and prompt to delegate the task to a specialized agent (Design, Reasoning, or Content).
-4. **SSE Streaming**: Responses are streamed via Server-Sent Events for real-time responsiveness.
-5. **Atomic Injection**: Instead of slow character simulation, we use a "Clipboard-First" strategy to atomically substitute the user's prompt with the AI's response via `Ctrl+V`.
+## 🚀 Key Features
 
-### Project Structure
+- **Structured Document Awareness**: Not just raw text. Kairo understands Word headings, PowerPoint slide positions, Excel tables, and Markdown hierarchies.
+- **The Swarm Brain**: A multi-agent orchestrator that routes your requests to specialized agents (Design, Reasoning, or Content) based on the application environment.
+- **MCP Integration**: Fully compliant with the Model Context Protocol (MCP). Use Kairo as a local intelligence server for **Claude Code**, **Cursor**, or **Goose**.
+- **Offline-First**: Default support for **Ollama** (Qwen2.5-Coder/Llama3). Cloud fallbacks available for OpenAI/Anthropic.
+- **Glassmorphic Overlay**: A minimalist, non-intrusive Tauri-based UI that provides real-time status feedback.
+- **Atomic Injection**: Uses a "Clipboard-First" strategy to atomically substitute your prompt with AI output, preserving your flow.
 
-- `phantom-core/`: The Rust backend responsible for OS hooks, UIA reading, and AI orchestration.
-- `phantom-overlay/`: A glassmorphic Tauri-based UI that provides visual feedback on AI status.
-- `src/swarm.rs`: The multi-agent routing logic.
-- `src/context.rs`: Environmental awareness and app fingerprinting.
+---
 
-### Setup
+## 🛠️ Project Structure
 
-Prerequisites: Rust, Admin privileges (for hooks).
+| Component | Description |
+| :--- | :--- |
+| `phantom-core` | The Rust heart. Handles Win32 hooks, UIA reading, document extraction, and the Swarm Brain. |
+| `kairo-mcp` | The MCP Server bridge. Exposes Kairo's "Ghost Writing" tools to external AI assistants. |
+| `phantom-overlay` | A glassmorphic Tauri interface for visual feedback and state management. |
 
+---
+
+## ⚙️ Setup & Installation
+
+### 1. Prerequisites
+- **Rust** (stable)
+- **Ollama** (optional, for offline mode): `ollama pull qwen2.5-coder:14b`
+- **Windows** (Win32/UIA support required)
+
+### 2. Build from Source
 ```bash
 # Clone the repository
 git clone https://github.com/Kartik24Hulmukh/KairoPhantom.git
-cd KairoPhantom/phantom-core
+cd KairoPhantom
 
-# Build and run
-cargo run --release
+# Build the core engine
+cargo build --release
 ```
 
-Configure your agents in `~/.kairo-phantom/config.toml`:
+### 3. Usage
+1. Run `kairo-phantom.exe`.
+2. Open any document (Word, Notion, VS Code).
+3. Type a prompt (e.g., "Write a professional summary of this report").
+4. Press `Alt + M`.
+5. Watch the AI "materialize" the text directly into your document.
+
+---
+
+## 🔌 MCP Integration (Claude Code / Cursor)
+
+Add Kairo as an MCP server to your favorite tool to give it "OS Hands":
+
+**Claude Code:**
+```bash
+claude mcp add kairo -- cargo run --bin kairo-mcp
+```
+
+**Cursor / Custom Config:**
+```json
+{
+  "mcpServers": {
+    "kairo": {
+      "command": "cargo",
+      "args": ["run", "--bin", "kairo-mcp", "--manifest-path", "C:/path/to/KairoPhantom/Cargo.toml"]
+    }
+  }
+}
+```
+
+### Available Tools:
+- `kairo_read_context`: Fetches rich document structure (headings, tables, slides).
+- `kairo_ghost_write`: Injects text directly into the focused application.
+- `kairo_ask`: Runs a prompt through the Swarm Brain.
+- `kairo_detect_app`: Identifies the current environment.
+
+---
+
+## 🧠 Swarm Configuration
+Customize your agents in `~/.kairo-phantom/config.toml`:
 
 ```toml
 [swarm]
 enabled = true
 
 [swarm.brain]
-provider = "openai"
-model_name = "gpt-4o-mini"
-api_key = "..."
+provider = "ollama"
+model_name = "qwen2.5-coder:14b"
+
+[swarm.agents.design]
+system_directive = "You are a world-class designer. Focus on visual copy and layout..."
 ```
 
-### Philosophy
+---
 
-No bloat. No complex abstractions. Just a direct pipe between LLM intelligence and your keyboard.
+## 📜 License
+Distributed under the **MIT License**. Built for the open-source community by **Kartik Hulmukh**.
 
-### License
-MIT
+---
+*"The best interface is the one that disappears."*

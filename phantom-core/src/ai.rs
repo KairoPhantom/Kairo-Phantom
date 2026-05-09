@@ -102,19 +102,7 @@ pub struct OpenAiBackend {
     base_url: String,
 }
 
-#[derive(Serialize)]
-struct OpenAiRequest {
-    model: String,
-    messages: Vec<OpenAiMessage>,
-    max_tokens: u32,
-    temperature: f32,
-}
 
-#[derive(Serialize)]
-struct OpenAiMessage {
-    role: String,
-    content: String,
-}
 
 #[derive(Deserialize)]
 struct OpenAiResponse {
@@ -259,17 +247,19 @@ impl OllamaBackend {
 #[async_trait::async_trait]
 impl AiBackend for OllamaBackend {
     async fn complete(&self, system: &str, user: &str) -> Result<String> {
-        let url = format!("{}/api/generate", self.base_url);
+        let url = format!("{}/api/chat", self.base_url);
         let req = serde_json::json!({
             "model": self.model,
-            "system": system,
-            "prompt": user,
+            "messages": [
+                {"role": "system", "content": system},
+                {"role": "user", "content": user}
+            ],
             "stream": false
         });
 
         let resp = self.client.post(&url).json(&req).send().await?;
         let body: serde_json::Value = resp.json().await?;
-        Ok(body["response"].as_str().unwrap_or("").trim().to_string())
+        Ok(body["message"]["content"].as_str().unwrap_or("").trim().to_string())
     }
 
     async fn stream_complete(
@@ -279,23 +269,37 @@ impl AiBackend for OllamaBackend {
         tx: tokio::sync::mpsc::Sender<String>,
     ) -> Result<()> {
         use futures_util::StreamExt;
-        let url = format!("{}/api/generate", self.base_url);
+        let url = format!("{}/api/chat", self.base_url);
         let req = serde_json::json!({
             "model": self.model,
-            "system": system,
-            "prompt": user,
+            "messages": [
+                {"role": "system", "content": system},
+                {"role": "user", "content": user}
+            ],
             "stream": true
         });
 
         let mut stream = self.client.post(&url).json(&req).send().await?.bytes_stream();
+        let mut buf = String::new();
+
         while let Some(item) = stream.next().await {
             let chunk = item?;
-            let text = String::from_utf8_lossy(&chunk);
-            for line in text.lines() {
-                if let Ok(val) = serde_json::from_str::<serde_json::Value>(line) {
-                    if let Some(token) = val["response"].as_str() {
-                        if !token.is_empty() {
-                            let _ = tx.send(token.to_string()).await;
+            buf.push_str(&String::from_utf8_lossy(&chunk));
+            
+            while let Some(nl) = buf.find('\n') {
+                let line = buf[..nl].trim().to_string();
+                buf = buf[nl + 1..].to_string();
+                
+                if line.is_empty() {
+                    continue;
+                }
+                
+                if let Ok(val) = serde_json::from_str::<serde_json::Value>(&line) {
+                    if let Some(msg) = val.get("message") {
+                        if let Some(token) = msg.get("content").and_then(|c| c.as_str()) {
+                            if !token.is_empty() {
+                                let _ = tx.send(token.to_string()).await;
+                            }
                         }
                     }
                     if val["done"].as_bool().unwrap_or(false) {

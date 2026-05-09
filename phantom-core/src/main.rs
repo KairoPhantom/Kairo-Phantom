@@ -43,6 +43,18 @@ pub enum PhantomEvent {
     Shutdown,
 }
 
+/// Checks if Ollama is running at the given base URL.
+async fn check_ollama_health(base_url: &str) -> bool {
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(5))
+        .build()
+        .unwrap_or_default();
+    client.get(&format!("{}/api/tags", base_url))
+        .send().await
+        .map(|r| r.status().is_success())
+        .unwrap_or(false)
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     // Initialize logging (use RUST_LOG=debug for verbose output)
@@ -52,12 +64,48 @@ async fn main() -> Result<()> {
 
     info!("👻 Kairo Phantom (Production Engine) starting...");
 
+    // Check for --init-config flag
+    if std::env::args().any(|arg| arg == "--init-config") {
+        let _ = PhantomConfig::load_or_default()?;
+        println!("✅ Generated default config at: {}", PhantomConfig::config_path().display());
+        println!("\nTo run Kairo Phantom offline with Ollama (default):");
+        println!("1. Install Ollama: https://ollama.com/download");
+        println!("2. Run: ollama pull qwen2.5-coder:14b");
+        println!("3. Start Kairo: kairo-phantom");
+        return Ok(());
+    }
+
     // Load config from ~/.kairo-phantom/config.toml
     let config = PhantomConfig::load_or_default()?;
     info!("⚙️  Config loaded: provider={} model={}", config.model.provider, config.model.model_name.as_deref().unwrap_or("default"));
 
+    // Phase 3: Ollama Health Check
+    if config.model.provider == "ollama" {
+        let base_url = config.model.base_url.as_deref().unwrap_or("http://localhost:11434");
+        if !check_ollama_health(base_url).await {
+            println!("⚠  Ollama not detected. Get offline AI in 2 commands:");
+            println!("   winget install Ollama.Ollama   (Windows)");
+            println!("   brew install ollama            (macOS)");
+            println!("   curl -fsSL https://ollama.ai/install.sh | sh  (Linux)");
+            println!("   Then: ollama pull qwen2.5-coder:14b");
+            println!();
+            println!("   Or add an API key to ~/.kairo-phantom/config.toml for cloud mode.");
+            println!("   Kairo will retry Ollama every 30s...");
+        } else {
+            info!("✅ Ollama running at {}. Offline mode active.", base_url);
+        }
+    }
+
     // Initialize Core Components
     let fallback_backend = build_backend(&config.model)?;
+    
+    // Build optional cloud fallback
+    let cloud_fallback = if let Some(ref fb_conf) = config.fallback {
+        build_backend(fb_conf).ok()
+    } else {
+        None
+    };
+    
     let swarm_engine = Arc::new(swarm::SwarmOrchestrator::new(config.swarm.clone(), fallback_backend.clone()));
     let injector = Arc::new(Injector::new(config.typing_delay_ms));
     let uia_reader = Arc::new(UiaReader::new());
@@ -81,12 +129,18 @@ async fn main() -> Result<()> {
 
     info!("👀 Kairo Phantom ready — press configured hotkey to materialize");
 
-    // Start background HTTP API (for visual overlay)
+    // Start background HTTP API (for visual overlay and MCP tools)
+    let mcp_agent_override = Arc::new(std::sync::Mutex::new(None));
+    
     let api_state = ApiState {
         crdt: Arc::clone(&crdt_session),
         uia: Arc::clone(&uia_reader),
         injector: Arc::clone(&injector),
         ai: Arc::clone(&fallback_backend),
+        context_engine: Arc::clone(&context_engine),
+        extractor_registry: Arc::clone(&extractor_registry),
+        swarm_engine: Arc::clone(&swarm_engine),
+        mcp_agent_override: Arc::clone(&mcp_agent_override),
     };
     tokio::spawn(async move {
         api::start_api_server(api_state).await;
@@ -165,11 +219,19 @@ async fn main() -> Result<()> {
                 let (token_tx, mut token_rx) = mpsc::channel::<String>(100);
                 
                 let prompt_clone = prompt_text.clone();
+                let cloud_fallback_clone = cloud_fallback.clone();
                 
                 // Spawn AI Request using the dynamically routed backend
                 tokio::spawn(async move {
-                    if let Err(e) = target_backend.stream_complete(&system_prompt, &prompt_clone, token_tx).await {
+                    if let Err(e) = target_backend.stream_complete(&system_prompt, &prompt_clone, token_tx.clone()).await {
                         warn!("🤖 Streaming error: {}", e);
+                        
+                        if let Some(fallback) = cloud_fallback_clone {
+                            warn!("🔄 Retrying with fallback provider...");
+                            if let Err(e2) = fallback.stream_complete(&system_prompt, &prompt_clone, token_tx).await {
+                                warn!("🤖 Fallback streaming error: {}", e2);
+                            }
+                        }
                     }
                 });
 

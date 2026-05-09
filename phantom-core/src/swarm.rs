@@ -97,6 +97,23 @@ impl SwarmOrchestrator {
         (backend, profile)
     }
 
+    /// Exposes a direct backend and profile getter for the MCP /agent override
+    pub fn get_backend_and_profile_by_type(&self, agent_type: &AgentType, doc_ctx: &DocumentContext) -> (Arc<dyn AiBackend>, AgentProfile) {
+        let system_directive = Self::build_agent_prompt(agent_type, doc_ctx);
+        let profile = AgentProfile {
+            agent_type: agent_type.clone(),
+            system_directive,
+        };
+
+        let backend = match agent_type {
+            AgentType::DesignAndMedia => self.design_agent.clone().unwrap_or_else(|| self.fallback_agent.clone()),
+            AgentType::ReasoningAndLogic => self.reasoning_agent.clone().unwrap_or_else(|| self.fallback_agent.clone()),
+            AgentType::ContentAndAllRounder => self.content_agent.clone().unwrap_or_else(|| self.fallback_agent.clone()),
+        };
+
+        (backend, profile)
+    }
+
     fn deterministic_route(&self, doc_ctx: &DocumentContext) -> AgentType {
         use crate::document_context::DocKind;
         match &doc_ctx.doc_kind {

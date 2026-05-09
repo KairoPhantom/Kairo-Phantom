@@ -2,6 +2,7 @@
 members = [
     "phantom-core",
     "phantom-overlay/src-tauri",
+    "kairo-mcp",
 ]
 resolver = "2"
 

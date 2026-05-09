@@ -19,6 +19,10 @@ pub struct PhantomConfig {
     #[serde(default)]
     pub model: ModelConfig,
 
+    /// Optional cloud fallback when Ollama is unavailable
+    #[serde(default)]
+    pub fallback: Option<ModelConfig>,
+
     /// The Multi-Agent Swarm Configuration
     #[serde(default)]
     pub swarm: SwarmConfig,
@@ -63,7 +67,7 @@ impl Default for ModelConfig {
     fn default() -> Self {
         ModelConfig {
             provider: default_provider(),
-            model_name: Some("llama3".into()),
+            model_name: Some("qwen2.5-coder:14b".into()),
             api_key: None,
             base_url: Some("http://localhost:11434".into()),
         }
@@ -80,6 +84,7 @@ impl Default for PhantomConfig {
             hotkey: default_hotkey(),
             typing_delay_ms: default_typing_delay(),
             model: ModelConfig::default(),
+            fallback: None,
             swarm: SwarmConfig::default(),
         }
     }
