@@ -13,10 +13,11 @@
 | 3 | Offline Mode — Ollama First | ✅ COMPLETE | 5-6 |
 | 4 | MCP Server — kairo-mcp | ✅ COMPLETE | 7-8 |
 | 5 | Plugin System + Trait Extraction | ✅ COMPLETE | 9-10 |
-| 6 | Distribution + One-Liner Install | 📋 PLANNED | 11-12 |
+| 6 | Distribution + One-Liner Install | ✅ COMPLETE | 11-12 |
 
 ## Next Action
-Run Phase 6: Distribution + One-Liner Install.
+v3.0 SHIPPED. Monitor feedback and plan v4.0.
+
 
 
 
