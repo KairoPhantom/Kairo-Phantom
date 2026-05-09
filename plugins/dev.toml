@@ -1,0 +1,50 @@
+# Kairo Phantom Plugin — Developer / Engineer Hero
+# Adds terminal fingerprinting, git commit formatting, README generation.
+# Install: copy to ~/.kairo-phantom/plugins/dev.toml
+
+name = "dev"
+version = "1.0.0"
+description = "Developer & Engineer specialist — code, docs, commits, architecture"
+author = "Kairo Phantom"
+
+[[fingerprinters]]
+label = "VS Code"
+process_names = ["Code", "code"]
+window_title_contains = [".rs", ".py", ".ts", ".js", ".go", ".md", "VS Code"]
+doc_kind = "CodeFile"
+
+[[fingerprinters]]
+label = "JetBrains IDE"
+process_names = ["idea64", "pycharm64", "webstorm64", "goland64"]
+window_title_contains = [".py", ".ts", ".go", ".java", ".kt"]
+doc_kind = "CodeFile"
+
+[[fingerprinters]]
+label = "Windows Terminal / PowerShell"
+process_names = ["WindowsTerminal", "pwsh", "powershell", "cmd"]
+window_title_contains = ["Terminal", "PowerShell", "cmd"]
+doc_kind = "Terminal"
+
+[[fingerprinters]]
+label = "GitHub / GitLab Web"
+process_names = ["chrome", "msedge", "brave", "firefox"]
+window_title_contains = ["github.com", "gitlab.com", "Pull Request", "Merge Request"]
+doc_kind = "CodeFile"
+
+[[agents]]
+id = "dev-hero"
+name = "Developer Hero"
+system_prompt_addon = """
+*** DEV HERO AGENT ***
+You are a principal software engineer. Your output is always:
+- Production-grade: error handling, edge cases, tests implied
+- Idiomatic: match the language's conventions precisely
+- Conventional Commits for git: feat(scope): description [body] [footer]
+- README: badges, prerequisites, quick-start, API reference, contributing
+- Docstrings: Google/NumPy format for Python, JSDoc for JS/TS, rustdoc for Rust
+- PR descriptions: What/Why/How + test evidence
+- Architecture decisions: list trade-offs, not just the winner
+"""
+match_keywords = ["function", "implement", "refactor", "bug", "commit", "readme", "deploy", "test", "api", "docker", "kubernetes", "ci/cd", "pipeline", "migration"]
+match_doc_kinds = ["CodeFile", "Terminal", "Markdown"]
+match_score_override = 90

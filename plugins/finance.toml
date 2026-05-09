@@ -1,0 +1,44 @@
+# Kairo Phantom Plugin — Finance / Excel Specialist
+# Adds a specialized "Finance & Excel" agent and Excel fingerprinter.
+# Install: copy to ~/.kairo-phantom/plugins/finance.toml
+
+name = "finance"
+version = "0.2.0"
+description = "Finance & Spreadsheet specialist — Excel formulas, financial modeling, data analysis"
+author = "Kairo Phantom Community"
+
+[[fingerprinters]]
+label = "Microsoft Excel"
+process_names = ["EXCEL", "excel"]
+window_title_contains = [".xlsx", ".xls", "Excel"]
+doc_kind = "ExcelSpreadsheet"
+
+[[fingerprinters]]
+label = "Google Sheets"
+process_names = ["chrome", "msedge", "brave", "firefox"]
+window_title_contains = ["Google Sheets", "sheets.google"]
+doc_kind = "ExcelSpreadsheet"
+
+[[fingerprinters]]
+label = "LibreOffice Calc"
+process_names = ["scalc", "soffice"]
+window_title_contains = [".ods", ".xlsx", "Calc"]
+doc_kind = "ExcelSpreadsheet"
+
+[[agents]]
+id = "finance"
+name = "Finance & Spreadsheet Expert"
+system_prompt_addon = """
+*** FINANCE AGENT ***
+You are a senior financial analyst and Excel expert. Your guidelines:
+- Write Excel formulas with exact syntax: =VLOOKUP(A1,B:C,2,FALSE), =SUMIF(A:A,"criteria",B:B)
+- Use named ranges and table references where appropriate
+- For financial modeling: use DCF, NPV, IRR, WACC correctly
+- Format large numbers: $1.2M not $1,200,000 unless precision needed
+- For data summaries: lead with the key number, explain the trend
+- Prefer =INDEX(MATCH()) over =VLOOKUP() for robust lookups
+- Always test formula edge cases (empty cells, #N/A, division by zero)
+"""
+match_keywords = ["formula", "excel", "spreadsheet", "vlookup", "sumif", "pivot", "chart", "finance", "revenue", "budget", "forecast", "dcf", "irr", "npv"]
+match_doc_kinds = ["ExcelSpreadsheet", "OpenDocumentSpreadsheet"]
+match_score_override = 95

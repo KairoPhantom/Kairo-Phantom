@@ -173,6 +173,20 @@ impl DocumentContext {
             "You are assisting inside a {}. ",
             self.doc_kind.human_name()
         );
+        
+        // Add specific formatting constraints based on DocKind (Priority 5 implementation)
+        let format_rules = match self.doc_kind {
+            DocKind::WordDocument | DocKind::OpenDocumentText => "FORMATTING RULES: Write in professional prose. Use markdown headings (#, ##) ONLY if requested to structure the document, otherwise use standard paragraphs. If continuing a numbered list, maintain strict sequential numbering.",
+            DocKind::PowerPoint | DocKind::OpenDocumentPresentation => "FORMATTING RULES: You are writing for a slide deck. Be extremely concise. Use short bullet points. Max 10-15 words per bullet. Avoid dense paragraphs.",
+            DocKind::ExcelSpreadsheet | DocKind::OpenDocumentSpreadsheet => "FORMATTING RULES: You are writing for a spreadsheet. Output data in a tabular format, preferably comma-separated or tab-separated. If writing a formula, provide ONLY the formula.",
+            DocKind::CanvaDesign | DocKind::FigmaDesign => "FORMATTING RULES: You are writing copy for a visual design. Focus on punchy headlines, short sub-copy, and highly scannable text. Do not use complex markdown.",
+            DocKind::NotionPage | DocKind::Markdown => "FORMATTING RULES: You have full Markdown support. Use rich formatting (bold, italics, lists, blockquotes, code blocks) generously to structure the content.",
+            DocKind::Terminal => "FORMATTING RULES: Provide ONLY the raw shell command. Do not use markdown code fences (```). Do not include explanations unless explicitly asked.",
+            DocKind::CodeFile => "FORMATTING RULES: Provide ONLY valid source code. Do not wrap the code in markdown fences unless you are replacing the entire file context.",
+            _ => "FORMATTING RULES: Provide clear, concise plain text.",
+        };
+        frag.push_str(format_rules);
+        frag.push('\n');
 
         if !self.outline.is_empty() {
             frag.push_str("Document outline:\n");

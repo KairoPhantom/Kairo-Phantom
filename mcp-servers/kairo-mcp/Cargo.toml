@@ -1,0 +1,18 @@
+[package]
+name = "kairo-mcp"
+version = "0.3.0"
+edition = "2021"
+description = "Kairo Phantom MCP Server — expose ghost-writing to Claude Code, Cursor, Goose, Windsurf"
+
+[[bin]]
+name = "kairo-mcp"
+path = "src/main.rs"
+
+[dependencies]
+tokio = { version = "1.44", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+anyhow = "1.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+reqwest = { version = "0.12", features = ["json"] }

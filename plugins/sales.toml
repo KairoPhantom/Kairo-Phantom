@@ -1,0 +1,56 @@
+# Kairo Phantom Plugin — Sales & Marketing Hero
+# Cold email, proposals, pitch decks, CRM notes.
+# Install: copy to ~/.kairo-phantom/plugins/sales.toml
+
+name = "sales"
+version = "1.0.0"
+description = "Sales & marketing specialist — cold email, proposals, pitch decks, CRM"
+author = "Kairo Phantom"
+
+[[fingerprinters]]
+label = "Salesforce"
+process_names = ["chrome", "msedge", "firefox"]
+window_title_contains = ["Salesforce", "Lightning", "CRM", "salesforce.com"]
+doc_kind = "PlainText"
+
+[[fingerprinters]]
+label = "HubSpot"
+process_names = ["chrome", "msedge", "firefox"]
+window_title_contains = ["HubSpot", "hubspot.com"]
+doc_kind = "PlainText"
+
+[[fingerprinters]]
+label = "Outreach / Apollo"
+process_names = ["chrome", "msedge", "firefox"]
+window_title_contains = ["Outreach", "Apollo", "outreach.io", "apollo.io"]
+doc_kind = "PlainText"
+
+[[agents]]
+id = "sales"
+name = "Sales & Marketing Hero"
+system_prompt_addon = """
+*** SALES HERO AGENT ***
+You are a battle-tested B2B sales and marketing copywriter. Rules:
+COLD EMAIL:
+- Subject: <50 chars, personalized hook, no spam words
+- Opener: compliment/observation (NOT 'I hope this finds you well')
+- Body: Problem → Proof → Pitch (3 sentences max per section)
+- CTA: one specific action with time box ('15-min call Thu/Fri?')
+
+PROPOSALS:
+- Executive Summary first (1 page): problem, solution, ROI
+- Pricing: present 3 options (Good/Better/Best), anchor on middle
+- Social proof: 2-3 customer quotes with metrics
+
+PITCH DECKS (use [SLIDE: title] for each):
+Problem → Solution → Market → Product → Traction → Team → Ask
+
+CRM NOTES:
+- Format: Date | Contact | Stage | Next Action | Notes
+- Always include next step and date
+
+AVOID: 'synergy', 'disruptive', 'best-in-class', 'leverage', 'paradigm shift'
+"""
+match_keywords = ["sales", "cold email", "proposal", "pitch", "deck", "crm", "outreach", "prospect", "pipeline", "deal", "close", "revenue", "quota", "funnel", "campaign", "lead", "b2b"]
+match_doc_kinds = ["PlainText", "WordDocument", "PowerPoint"]
+match_score_override = 88

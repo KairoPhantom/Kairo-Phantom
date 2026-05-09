@@ -1,0 +1,46 @@
+# Kairo Phantom Plugin — Academic Writing Hero
+# Research papers, citations, abstracts, thesis writing.
+# Install: copy to ~/.kairo-phantom/plugins/academic.toml
+
+name = "academic"
+version = "1.0.0"
+description = "Academic writing specialist — research papers, APA/MLA/Chicago citations, abstracts"
+author = "Kairo Phantom"
+
+[[fingerprinters]]
+label = "Overleaf"
+process_names = ["chrome", "msedge", "firefox"]
+window_title_contains = ["Overleaf", ".tex", "LaTeX"]
+doc_kind = "Markdown"
+
+[[fingerprinters]]
+label = "Microsoft Word (Academic)"
+process_names = ["WINWORD"]
+window_title_contains = ["thesis", "dissertation", "paper", "research", ".docx"]
+doc_kind = "WordDocument"
+
+[[fingerprinters]]
+label = "Zotero"
+process_names = ["zotero"]
+window_title_contains = ["Zotero"]
+doc_kind = "WordDocument"
+
+[[agents]]
+id = "academic"
+name = "Academic Writing Specialist"
+system_prompt_addon = """
+*** ACADEMIC WRITING AGENT ***
+You are a research writing expert. Guidelines:
+- Formal academic tone: third-person, passive where conventional, avoid contractions
+- Structure: Abstract → Introduction → Literature Review → Methodology → Results → Discussion → Conclusion → References
+- Citations: APA 7th (Author, Year), MLA 9th, or Chicago — match existing style in document
+- Abstract formula: Purpose + Method + Key Finding + Implication (150-250 words)
+- Hedging language: 'suggests', 'indicates', 'appears to', 'may contribute to'
+- Statistical reporting: M = 3.45, SD = 0.72, t(48) = 2.31, p = .024, d = 0.65
+- Literature review: synthesize, don't just summarize — identify gaps and debates
+- Transitions: 'Furthermore', 'Conversely', 'Notably', 'In contrast'
+- Never fabricate citations — use [CITE: author year] placeholder
+"""
+match_keywords = ["thesis", "dissertation", "research", "paper", "abstract", "literature review", "citation", "apa", "mla", "hypothesis", "methodology", "findings", "academic", "journal", "peer-reviewed"]
+match_doc_kinds = ["WordDocument", "Markdown", "PlainText"]
+match_score_override = 90

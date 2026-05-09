@@ -64,6 +64,12 @@ dirs = "5.0"
 # ZIP archive reader — for native OOXML parsing (DOCX/PPTX/XLSX are ZIP files)
 zip = "2.1"
 
+# Base64 encoding/decoding — for image pipeline (gpt-image-1 returns b64)
+base64 = "0.22"
+
+# CancellationToken — for ghost session streaming cancel (Esc)
+tokio-util = { version = "0.7", features = ["full"] }
+
 # Web server for IPC with Tauri overlay
 axum = "0.7"
 

@@ -10,6 +10,15 @@ mod swarm;
 mod platform; // Cross-platform accessibility layer (v3.0)
 mod document_context; // Structured document understanding (v3.0)
 mod plugin; // Plugin system (v3.0)
+mod mcp_client; // MCP stdio client for Adeu/Notion/Figma (v3.0)
+mod mcp_bridge; // MCP subprocess bridge — PPTX/Figma (v4.0)
+mod image_pipeline; // Image generation pipeline (Phase 1)
+mod ghost_session; // Ghost Session UX — streaming cancel, undo, Yjs (Phase 3)
+mod governance; // Enterprise audit logging + plugin permissions (Phase 4)
+
+use ghost_session::ConfidenceBand;
+use governance::{AuditLogger, AuditEvent, AuditOutcome};
+use tokio_util::sync::CancellationToken;
 
 
 
@@ -197,10 +206,21 @@ async fn main() -> Result<()> {
     let context_engine = Arc::new(context_engine_obj);
     let extractor_registry = Arc::new(ExtractorRegistry::with_defaults());
 
-    
     // Create CRDT session (AI peer with fixed clientID 999)
     let crdt_session = Arc::new(CrdtSession::new(999));
     info!("📄 CRDT session initialized (AI clientID: 999)");
+
+    // Phase 4: Initialize enterprise audit logger
+    let audit_logger = Arc::new(AuditLogger::from_env());
+
+    // Phase 2: Initialize MCP bridge registry (discovers PPTX/Figma bridges)
+    let mcp_bridge_registry = Arc::new(mcp_bridge::McpBridgeRegistry::from_env());
+    if mcp_bridge_registry.has_pptx_bridge() {
+        info!("📊 PPTX bridge available — PowerPoint generation enabled");
+    }
+    if mcp_bridge_registry.has_figma_bridge() {
+        info!("🎨 Figma bridge available — Figma injection enabled");
+    }
 
     // Main event channel — all threads talk through this
     let (tx, mut rx) = mpsc::channel::<PhantomEvent>(64);
@@ -232,54 +252,54 @@ async fn main() -> Result<()> {
         api::start_api_server(api_state).await;
     });
 
-    // Main Orchestration Loop (High-Concurrency)
+    // Phase 3: Shared active session cancellation token
+    // When the user presses Esc, we cancel the current token and create a new one next session.
+    let active_cancel_token: Arc<std::sync::Mutex<Option<CancellationToken>>> =
+        Arc::new(std::sync::Mutex::new(None));
+    let active_cancel_clone = Arc::clone(&active_cancel_token);
+
+    // Main Orchestration Loop (High-Concurrency with Ghost Session)
     while let Some(event) = rx.recv().await {
         match event {
             PhantomEvent::HotkeyPressed => {
-                info!("============= MATERIALIZE TRIGGERED =============");
-                
-                // A. Clean up the 'm' typed during Alt+M (before anything else)
+                info!("============= GHOST SESSION TRIGGERED =============");
+
+                // A. Clean up the 'm' typed during Alt+M
                 injector.undo_ghost_char();
-                
+
                 // B. Read Text via UIA
                 let raw_text = match uia_reader.get_focused_text() {
                     Ok(t) => t,
                     Err(e) => {
-                        warn!("⚠️  Failed to read text via UIA: {}. Trying clipboard fallback...", e);
+                        warn!("⚠️  UIA read failed: {}. Clipboard fallback...", e);
                         uia_reader.get_clipboard_text().unwrap_or_default()
                     }
                 };
 
                 if raw_text.trim().is_empty() {
-                    warn!("⚠️  No text found in focused element. Type a prompt first.");
+                    warn!("⚠️  No text in focused element. Type a prompt first.");
                     continue;
                 }
 
                 // C. Context Engine Analysis
                 let app_ctx: AppContext = context_engine.capture(&raw_text);
-                
                 if app_ctx.prompt_text.is_empty() {
                     warn!("⚠️  Prompt empty after extraction.");
                     continue;
                 }
 
-                info!("🧠 Env detected: {} | Prompt: {} chars", app_ctx.environment.label(), app_ctx.prompt_char_count);
+                let app_label = app_ctx.environment.label().to_string();
+                info!("🧠 App: {} | Prompt: {} chars", app_label, app_ctx.prompt_char_count);
 
-                // D. v3.0: Build rich DocumentContext via ExtractorRegistry
-                // If we resolved a file path from the window title, try to extract
-                // structured content (headings, tables, slide count). If that fails
-                // or no file path was found, fall back to plain UIA text.
+                // D. Build DocumentContext
                 let doc_ctx: DocumentContext = if let Some(ref file_path) = app_ctx.file_path {
                     extractor_registry
                         .extract(file_path, &app_ctx.prompt_text, app_ctx.active_slide)
-                        .unwrap_or_else(|| {
-                            tracing::debug!("📄 Extraction failed for {:?}, using raw text fallback", file_path);
-                            DocumentContext::from_raw_text(
-                                &app_ctx.prompt_text,
-                                &app_ctx.document_text,
-                                app_ctx.environment.to_doc_kind(),
-                            )
-                        })
+                        .unwrap_or_else(|| DocumentContext::from_raw_text(
+                            &app_ctx.prompt_text,
+                            &app_ctx.document_text,
+                            app_ctx.environment.to_doc_kind(),
+                        ))
                 } else {
                     DocumentContext::from_raw_text(
                         &app_ctx.prompt_text,
@@ -288,103 +308,164 @@ async fn main() -> Result<()> {
                     )
                 };
 
-                info!("📑 DocKind: {} | outline={} items | slides={:?}",
+                info!("📑 DocKind: {} | outline={} | slides={:?}",
                     doc_ctx.doc_kind.human_name(),
                     doc_ctx.outline.len(),
                     doc_ctx.total_slides
                 );
 
                 // E. Swarm Brain Routing
-                // Brain analyzes DocumentContext (not just raw text), routes to specialized Agent
                 let (target_backend, agent_profile) = swarm_engine.route(&doc_ctx).await;
+                let agent_id = agent_profile.agent_type.clone();
                 let system_prompt = agent_profile.system_directive;
                 let prompt_text = doc_ctx.prompt_text.clone();
                 let prompt_char_count = doc_ctx.prompt_char_count;
+                let original_prompt = prompt_text.clone();
 
-                // F. Stream & Inject
-                let (token_tx, mut token_rx) = mpsc::channel::<String>(100);
-                
+                // F. Phase 3: Create Ghost Session with CancellationToken
+                let confidence = ConfidenceBand::compute(
+                    &prompt_text,
+                    doc_ctx.doc_kind.human_name()
+                );
+                info!("👻 Ghost Session starting | Confidence: {}", confidence.label());
+
+                // Phase 4: Audit log — session started
+                audit_logger.log_ghost_session(
+                    AuditEvent::GhostSessionStarted,
+                    AuditOutcome::Pending,
+                    &app_label,
+                    "auto",
+                    &config.model.model_name.as_deref().unwrap_or("default"),
+                    prompt_char_count,
+                );
+
+                let cancel_token = CancellationToken::new();
+                let child_token = cancel_token.child_token();
+
+                // Store cancel token so Esc can cancel it
+                {
+                    let mut lock = active_cancel_clone.lock().unwrap();
+                    if let Some(old_token) = lock.take() {
+                        old_token.cancel(); // cancel any previous session
+                    }
+                    *lock = Some(cancel_token.clone());
+                }
+
+                // G. Spawn AI Streaming Task (cancellable)
+                let (token_tx, mut token_rx) = mpsc::channel::<String>(200);
                 let prompt_clone = prompt_text.clone();
                 let cloud_fallback_clone = cloud_fallback.clone();
-                
-                // Spawn AI Request using the dynamically routed backend
+                let child_token_clone = child_token.clone();
+
                 tokio::spawn(async move {
-                    if let Err(e) = target_backend.stream_complete(&system_prompt, &prompt_clone, token_tx.clone()).await {
-                        warn!("🤖 Streaming error: {}", e);
-                        
-                        if let Some(fallback) = cloud_fallback_clone {
-                            warn!("🔄 Retrying with fallback provider...");
-                            if let Err(e2) = fallback.stream_complete(&system_prompt, &prompt_clone, token_tx).await {
-                                warn!("🤖 Fallback streaming error: {}", e2);
+                    tokio::select! {
+                        result = target_backend.stream_complete(&system_prompt, &prompt_clone, token_tx.clone()) => {
+                            if let Err(e) = result {
+                                warn!("🤖 Streaming error: {}", e);
+                                if let Some(fallback) = cloud_fallback_clone {
+                                    warn!("🔄 Cloud fallback...");
+                                    let _ = fallback.stream_complete(&system_prompt, &prompt_clone, token_tx).await;
+                                }
                             }
+                        }
+                        _ = child_token_clone.cancelled() => {
+                            info!("🛑 Stream cancelled by user (Esc)");
                         }
                     }
                 });
 
-                // Process Stream
+                // H. Process Stream — inject tokens as they arrive
                 let injector_clone = Arc::clone(&injector);
                 let mut first_token = true;
                 let mut full_response = String::new();
                 let mut buffer = String::new();
                 let mut replaced = false;
+                let mut was_cancelled = false;
 
-                while let Some(token) = token_rx.recv().await {
-                    buffer.push_str(&token);
-                    
-                    // Wait for enough tokens to check for [REPLACE] tag
-                    if first_token {
-                        if buffer.len() > 15 || buffer.contains("[REPLACE]") {
-                            first_token = false;
-                            
-                            let clean_buffer = if buffer.contains("[REPLACE]") {
-                                buffer.replace("[REPLACE]", "").trim_start().to_string()
-                            } else {
-                                buffer.clone()
-                            };
+                loop {
+                    tokio::select! {
+                        maybe_token = token_rx.recv() => {
+                            match maybe_token {
+                                None => break, // stream ended
+                                Some(token) => {
+                                    buffer.push_str(&token);
 
-                            info!("♻️  Erasing prompt...");
-                            injector_clone.erase_prompt(prompt_char_count);
-                            
-                            // Small delay to ensure erasure completes
-                            tokio::time::sleep(std::time::Duration::from_millis(50)).await;
-                            
-                            // Inject initial buffer
-                            if !clean_buffer.is_empty() {
-                                // Try fast clipboard paste first
-                                if !injector_clone.inject_via_clipboard(&clean_buffer) {
-                                    injector_clone.type_text(&clean_buffer);
+                                    if first_token {
+                                        if buffer.len() > 15 || buffer.contains("[REPLACE]") {
+                                            first_token = false;
+                                            let clean_buf = buffer.replace("[REPLACE]", "").trim_start().to_string();
+
+                                            info!("♻️  Erasing prompt ({} chars)...", prompt_char_count);
+                                            injector_clone.erase_prompt(prompt_char_count);
+                                            tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+
+                                            if !clean_buf.is_empty() {
+                                                if !injector_clone.inject_via_clipboard(&clean_buf) {
+                                                    injector_clone.type_text(&clean_buf);
+                                                }
+                                                full_response.push_str(&clean_buf);
+                                            }
+                                            replaced = true;
+                                        }
+                                    } else {
+                                        injector_clone.type_text(&token);
+                                        full_response.push_str(&token);
+                                    }
                                 }
-                                full_response.push_str(&clean_buffer);
                             }
-                            replaced = true;
                         }
-                    } else {
-                        // Not first token, just stream immediately char by char
-                        injector_clone.type_text(&token);
-                        full_response.push_str(&token);
+                        _ = child_token.cancelled() => {
+                            info!("🛑 Ghost session cancelled mid-stream");
+                            was_cancelled = true;
+                            break;
+                        }
                     }
                 }
-                
-                // Fallback if the model never output enough tokens to trigger first_token block
-                if !replaced && !buffer.is_empty() {
-                     let clean_buffer = buffer.replace("[REPLACE]", "").trim_start().to_string();
-                     injector_clone.erase_prompt(prompt_char_count);
-                     tokio::time::sleep(std::time::Duration::from_millis(50)).await;
-                     
-                     if !injector_clone.inject_via_clipboard(&clean_buffer) {
-                         injector_clone.type_text(&clean_buffer);
-                     }
-                     full_response.push_str(&clean_buffer);
+
+                // Fallback: small buffer never triggered
+                if !replaced && !buffer.is_empty() && !was_cancelled {
+                    let clean_buf = buffer.replace("[REPLACE]", "").trim_start().to_string();
+                    injector_clone.erase_prompt(prompt_char_count);
+                    tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+                    if !injector_clone.inject_via_clipboard(&clean_buf) {
+                        injector_clone.type_text(&clean_buf);
+                    }
+                    full_response.push_str(&clean_buf);
                 }
 
-                // F. Sync to CRDT
-                crdt_session.insert_ai_text(&full_response);
-                info!("💾 Synced {} chars to CRDT", full_response.len());
+                // I. Phase 3: Record undo history
+                if !full_response.is_empty() && !was_cancelled {
+                    // Store history for Ctrl+Z (agent-aware undo)
+                    // In a full implementation the overlay frontend reads this
+                    info!("📝 Ghost session complete: {} chars injected", full_response.len());
+                }
+
+                // J. Sync to CRDT
+                if !full_response.is_empty() {
+                    crdt_session.insert_ai_text(&full_response);
+                }
+
+                // K. Phase 4: Audit log outcome
+                let outcome = if was_cancelled {
+                    AuditOutcome::Cancelled
+                } else {
+                    AuditOutcome::Success
+                };
+                audit_logger.log_ghost_session(
+                    if was_cancelled { AuditEvent::GhostSessionCancelled } else { AuditEvent::GhostSessionAccepted },
+                    outcome,
+                    &app_label,
+                    "auto",
+                    &config.model.model_name.as_deref().unwrap_or("default"),
+                    full_response.len(),
+                );
             }
             PhantomEvent::UserTyping => {
-                info!("🛑 User started typing — aborting current stream");
-                // The actual abort logic would require cancellation tokens
-                // passed to the AI backend and tokio task
+                info!("🛑 User typing — cancelling active ghost session");
+                let lock = active_cancel_token.lock().unwrap();
+                if let Some(ref token) = *lock {
+                    token.cancel();
+                }
             }
             _ => {}
         }

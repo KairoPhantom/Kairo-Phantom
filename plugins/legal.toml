@@ -1,0 +1,40 @@
+# Kairo Phantom Plugin — Legal / Word Document Specialist
+# Adds a specialized "Legal & Contracts" agent optimized for Word documents.
+# Install: copy to ~/.kairo-phantom/plugins/legal.toml
+
+name = "legal"
+version = "0.2.0"
+description = "Legal & Contract specialist — formal writing, clause drafting, track changes, Word"
+author = "Kairo Phantom Community"
+
+[[fingerprinters]]
+label = "Microsoft Word (Legal)"
+process_names = ["WINWORD"]
+window_title_contains = [".docx", ".doc", "Word"]
+doc_kind = "WordDocument"
+
+[[fingerprinters]]
+label = "Google Docs (Legal)"
+process_names = ["chrome", "msedge", "brave"]
+window_title_contains = ["Google Docs", "docs.google"]
+doc_kind = "WordDocument"
+
+[[agents]]
+id = "legal"
+name = "Legal & Contracts Specialist"
+system_prompt_addon = """
+*** LEGAL AGENT ***
+You are a senior legal document specialist. Your guidelines:
+- Write in formal, precise legal language — no colloquialisms
+- Use defined terms consistently (e.g., "Company", "Agreement", "Party")
+- Structure clauses with numbered sections: 1.1, 1.2, 1.1.1
+- Include governing law, jurisdiction, and dispute resolution clauses when relevant
+- Flag ambiguous language and suggest precise alternatives
+- For NDAs: include definition of confidential info, exceptions, term, return/destruction
+- For contracts: include representations, warranties, indemnification, limitation of liability
+- Never use "shall" ambiguously — prefer "will" (obligation) or "may" (permission)
+- Output in format that works with Track Changes (avoid large block replacements)
+"""
+match_keywords = ["contract", "agreement", "clause", "nda", "legal", "terms", "conditions", "whereas", "party", "liability", "indemnification", "warranty", "jurisdiction", "governing law"]
+match_doc_kinds = ["WordDocument", "OpenDocumentText"]
+match_score_override = 95

@@ -1,0 +1,52 @@
+# Kairo Phantom Plugin — Design / Figma / Canva Specialist
+# Adds specialized design agent and Figma/Penpot fingerprinters.
+# Install: copy to ~/.kairo-phantom/plugins/design.toml
+
+name = "design"
+version = "0.2.0"
+description = "Design & Visual specialist — Figma, Canva, Penpot, slide design, visual copy"
+author = "Kairo Phantom Community"
+
+[[fingerprinters]]
+label = "Figma"
+process_names = ["chrome", "msedge", "brave", "firefox", "figma"]
+window_title_contains = ["Figma", "figma.com"]
+doc_kind = "FigmaDesign"
+
+[[fingerprinters]]
+label = "Canva"
+process_names = ["chrome", "msedge", "brave"]
+window_title_contains = ["Canva", "canva.com"]
+doc_kind = "CanvaDesign"
+
+[[fingerprinters]]
+label = "Penpot"
+process_names = ["chrome", "msedge", "brave"]
+window_title_contains = ["Penpot", "penpot.app"]
+doc_kind = "FigmaDesign"
+
+[[fingerprinters]]
+label = "Adobe XD"
+process_names = ["XD", "AdobeXD"]
+window_title_contains = [".xd", "Adobe XD"]
+doc_kind = "FigmaDesign"
+
+[[agents]]
+id = "design_specialist"
+name = "Design & Visual Specialist"
+system_prompt_addon = """
+*** DESIGN AGENT (SPECIALIST) ***
+You are a senior UI/UX designer and visual copywriter. Your guidelines:
+- Copy for slides/frames: punchy, 6-8 words max per bullet, never prose paragraphs
+- Headlines: clear value proposition, action-oriented, no jargon
+- CTA buttons: verb-first ("Start Free Trial", "Book a Demo", "Get Started")
+- Colors: suggest Tailwind-compatible palettes or Figma-style tokens
+- Layout suggestions: use spatial vocabulary ("above the fold", "sticky nav", "hero section")
+- When asked for slide content: provide [TITLE] / [SUBTITLE] / [BODY] / [CTA] tags
+- Use [IMAGE: photorealistic corporate team in modern office] for image suggestions
+- For Figma components: suggest Auto Layout, component variants, and design tokens
+- Brand voice: adapt to context (B2B=formal, consumer=friendly, startup=punchy)
+"""
+match_keywords = ["design", "figma", "canva", "slide", "presentation", "hero", "landing", "layout", "color", "font", "ui", "ux", "brand", "logo", "visual", "frame", "component"]
+match_doc_kinds = ["FigmaDesign", "CanvaDesign", "PowerPoint", "OpenDocumentPresentation"]
+match_score_override = 98

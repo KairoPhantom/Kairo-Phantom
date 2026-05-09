@@ -62,7 +62,7 @@ impl SwarmAgent for ContentAgent {
     fn build_system_prompt(&self, doc_ctx: &DocumentContext) -> String {
         let base = crate::ai::KAIRO_SYSTEM_PROMPT;
         let doc_fragment = doc_ctx.to_system_prompt_fragment();
-        format!("{}\n\n[DOCUMENT INTELLIGENCE]\n{}\n\n*** SWARM ROLE: CONTENT AGENT ***\nPerfect formatting. Rich structure. Professional tone. Adapt voice to the document context.", base, doc_fragment)
+        format!("{}\n\n[DOCUMENT INTELLIGENCE]\n{}\n\n*** SWARM ROLE: CONTENT AGENT ***\nPerfect formatting. Rich structure. Professional tone. Adapt voice to the document context. If writing or continuing a list, ensure numbering is strictly sequential (1, 2, 3). DO NOT repeat characters, duplicate list numbers, or hallucinate text. Keep output crisp, concise, and logically justified.", base, doc_fragment)
     }
     fn match_score(&self, _doc_ctx: &DocumentContext) -> u8 { 10 } // Default fallback score
 }
@@ -143,7 +143,122 @@ impl SwarmAgent for DataAnalystAgent {
     }
 }
 
+/// Image Generation Agent — specialized in [IMAGE: prompt] generation for the image pipeline.
+pub struct ImageAgent;
+impl SwarmAgent for ImageAgent {
+    fn id(&self) -> &str { "image" }
+    fn name(&self) -> &str { "Image Generation Specialist" }
+    fn build_system_prompt(&self, doc_ctx: &DocumentContext) -> String {
+        let base = crate::ai::KAIRO_SYSTEM_PROMPT;
+        let doc_fragment = doc_ctx.to_system_prompt_fragment();
+        format!("{}\n\n[DOCUMENT INTELLIGENCE]\n{}\n\n*** SWARM ROLE: IMAGE GENERATION AGENT ***\n\
+            You generate and optimize prompts for AI image generation.\n\
+            When asked to add/create/generate an image:\n\
+            1. Output exactly: [IMAGE: <detailed photorealistic prompt>] on its own line\n\
+            2. For presentations (16:9): wide cinematic hero images with strong composition\n\
+            3. For icons: 'flat vector icon, minimal, single color, white background'\n\
+            4. For diagrams: 'clean technical diagram, labeled arrows, white background'\n\
+            5. For infographics: 'modern data visualization, brand colors, clean layout'\n\
+            6. For portraits/headshots: 'professional headshot, studio lighting, sharp focus'\n\
+            Always follow [IMAGE: ...] with one brief caption sentence.", base, doc_fragment)
+    }
+    fn match_score(&self, doc_ctx: &DocumentContext) -> u8 {
+        let p = doc_ctx.prompt_text.to_lowercase();
+        if p.contains("[image") || p.contains("generate image") || p.contains("create image") {
+            return 100;
+        }
+        if p.contains("image") || p.contains("picture") || p.contains("photo")
+            || p.contains("icon") || p.contains("illustration") || p.contains("diagram")
+            || p.contains("visual") || p.contains("infographic") || p.contains("chart image")
+            || p.contains("banner") || p.contains("thumbnail") { 90 } else { 0 }
+    }
+}
+
+/// Sales & Marketing Agent — persuasive copy, CRM, proposals.
+pub struct SalesAgent;
+impl SwarmAgent for SalesAgent {
+    fn id(&self) -> &str { "sales" }
+    fn name(&self) -> &str { "Sales & Marketing Specialist" }
+    fn build_system_prompt(&self, doc_ctx: &DocumentContext) -> String {
+        let base = crate::ai::KAIRO_SYSTEM_PROMPT;
+        let doc_fragment = doc_ctx.to_system_prompt_fragment();
+        format!("{}\n\n[DOCUMENT INTELLIGENCE]\n{}\n\n*** SWARM ROLE: SALES AGENT ***\n\
+            You are a senior sales and marketing copywriter. Your guidelines:\n\
+            - Write with conviction and urgency, not desperation\n\
+            - Lead with value, not features: 'you get X' not 'we have Y'\n\
+            - Use AIDA (Attention, Interest, Desire, Action) for cold outreach\n\
+            - Subject lines: under 50 chars, curiosity-driven, no spam triggers\n\
+            - CTAs: one clear action, time-boxed if possible ('schedule a 15-min call this week')\n\
+            - Social proof: weave in results ('saved $2M', 'cut onboarding by 40%') naturally\n\
+            - Remove corporate jargon; replace with plain, powerful English", base, doc_fragment)
+    }
+    fn match_score(&self, doc_ctx: &DocumentContext) -> u8 {
+        let p = doc_ctx.prompt_text.to_lowercase();
+        if p.contains("sales") || p.contains("proposal") || p.contains("pitch")
+            || p.contains("outreach") || p.contains("email") && p.contains("cold")
+            || p.contains("crm") || p.contains("marketing") || p.contains("campaign")
+            || p.contains("copy") || p.contains("cta") || p.contains("funnel") { 85 } else { 0 }
+    }
+}
+
+/// Medical Documentation Agent — clinical notes, patient summaries, SOAP format.
+pub struct MedicalAgent;
+impl SwarmAgent for MedicalAgent {
+    fn id(&self) -> &str { "medical" }
+    fn name(&self) -> &str { "Medical Documentation Specialist" }
+    fn build_system_prompt(&self, doc_ctx: &DocumentContext) -> String {
+        let base = crate::ai::KAIRO_SYSTEM_PROMPT;
+        let doc_fragment = doc_ctx.to_system_prompt_fragment();
+        format!("{}\n\n[DOCUMENT INTELLIGENCE]\n{}\n\n*** SWARM ROLE: MEDICAL AGENT ***\n\
+            You assist with medical documentation (NOT diagnosis). Your guidelines:\n\
+            - Use standard clinical terminology (ICD-10 codes where appropriate)\n\
+            - SOAP format for clinical notes: Subjective, Objective, Assessment, Plan\n\
+            - Medication documentation: drug name (brand/generic), dose, route, frequency\n\
+            - Always flag: 'This is documentation assistance only — verify with licensed professional'\n\
+            - Patient summaries: concise, chronological, include chief complaint first\n\
+            - Use standard abbreviations: c/o (complains of), h/o (history of), PMH, HPI, ROS\n\
+            - Lab values: include units and reference ranges", base, doc_fragment)
+    }
+    fn match_score(&self, doc_ctx: &DocumentContext) -> u8 {
+        let p = doc_ctx.prompt_text.to_lowercase();
+        if p.contains("patient") || p.contains("diagnosis") || p.contains("clinical")
+            || p.contains("soap") || p.contains("medication") || p.contains("prescription")
+            || p.contains("medical") || p.contains("doctor") || p.contains("hospital")
+            || p.contains("symptom") || p.contains("treatment") { 90 } else { 0 }
+    }
+}
+
+/// Legal+ Agent — contracts, legal analysis, precise language.
+pub struct LegalPlusAgent;
+impl SwarmAgent for LegalPlusAgent {
+    fn id(&self) -> &str { "legal" }
+    fn name(&self) -> &str { "Legal Document Specialist" }
+    fn build_system_prompt(&self, doc_ctx: &DocumentContext) -> String {
+        let base = crate::ai::KAIRO_SYSTEM_PROMPT;
+        let doc_fragment = doc_ctx.to_system_prompt_fragment();
+        format!("{}\n\n[DOCUMENT INTELLIGENCE]\n{}\n\n*** SWARM ROLE: LEGAL AGENT ***\n\
+            You assist with legal document drafting (NOT legal advice). Guidelines:\n\
+            - Use precise, unambiguous language — avoid 'may', prefer 'shall' or 'must'\n\
+            - Define terms on first use: 'the Service Provider (hereinafter \"Provider\")'\n\
+            - Structure: Recitals → Definitions → Obligations → Representations → Remedies → Governing Law\n\
+            - Indemnification clauses: specify scope, exclusions, caps clearly\n\
+            - Jurisdiction: always specify governing law and dispute resolution\n\
+            - NDA/Confidentiality: define what IS confidential, not just what isn't\n\
+            - Always append: 'This draft is for reference only — review with qualified legal counsel'\n\
+            - Common patterns: 'notwithstanding', 'in perpetuity', 'licensee', 'licensor', 'assignable'",
+            base, doc_fragment)
+    }
+    fn match_score(&self, doc_ctx: &DocumentContext) -> u8 {
+        let p = doc_ctx.prompt_text.to_lowercase();
+        if p.contains("contract") || p.contains("agreement") || p.contains("legal")
+            || p.contains("nda") || p.contains("clause") || p.contains("indemnif")
+            || p.contains("license") || p.contains("liability") || p.contains("terms of service")
+            || p.contains("privacy policy") { 92 } else { 0 }
+    }
+}
+
 pub struct AgentProfile {
+
     pub agent_type: AgentType,
     pub system_directive: String,
 }
@@ -181,6 +296,10 @@ impl SwarmOrchestrator {
         registry.register(Arc::new(StudentTutorAgent));
         registry.register(Arc::new(EngineerAgent));
         registry.register(Arc::new(DataAnalystAgent));
+        registry.register(Arc::new(ImageAgent));
+        registry.register(Arc::new(SalesAgent));
+        registry.register(Arc::new(MedicalAgent));
+        registry.register(Arc::new(LegalPlusAgent));
 
 
         Self {

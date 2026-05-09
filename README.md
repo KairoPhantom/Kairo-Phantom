@@ -1,135 +1,256 @@
-# 👻 Kairo Phantom
+# Kairo Phantom
 
-**Intelligence is currently trapped in chat boxes. Kairo Phantom liberates it into your operating system.**
+> **The AI ghost-writer that lives inside your apps.**
+> Press Alt+M anywhere. Kairo reads your document, routes to the right specialist agent, and types the answer directly into your window.
 
-Kairo Phantom is a professional-grade, high-performance native engine (written in Rust) that enables AI to "haunt" your OS—reading document structure across any application (Word, PowerPoint, VS Code, Canva, Notion) and materializing intelligence exactly where you type.
-
-> [!IMPORTANT]
-> **Ghost Writing vs. Copilots**: Unlike typical AI copilots that live in sidebars, Kairo operates directly on your document surface. It reads your intent, analyzes the document structure, and "ghost-types" the response into your editor via a high-speed injection bridge.
-
----
-
-## 🚀 Key Features
-
-- **Structured Document Awareness**: Not just raw text. Kairo understands Word headings, PowerPoint slide positions, Excel tables, and Markdown hierarchies.
-- **The Swarm Brain**: A multi-agent orchestrator that routes your requests to specialized agents (Design, Reasoning, or Content) based on the application environment.
-- **MCP Integration**: Fully compliant with the Model Context Protocol (MCP). Use Kairo as a local intelligence server for **Claude Code**, **Cursor**, or **Goose**.
-- **Offline-First**: Default support for **Ollama** (Qwen2.5-Coder/Llama3). Cloud fallbacks available for OpenAI/Anthropic.
-- **Glassmorphic Overlay**: A minimalist, non-intrusive Tauri-based UI that provides real-time status feedback.
-- **Atomic Injection**: Uses a "Clipboard-First" strategy to atomically substitute your prompt with AI output, preserving your flow.
+[![Build](https://github.com/your-org/kairo-phantom/actions/workflows/ci.yml/badge.svg)](https://github.com/your-org/kairo-phantom/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Rust](https://img.shields.io/badge/rust-1.78%2B-orange.svg)](https://www.rust-lang.org)
+[![MCP Compatible](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io)
 
 ---
 
-## 🛠️ Project Structure
+## ⚡ Quick Install
 
-| Component | Description |
-| :--- | :--- |
-| `phantom-core` | The Rust heart. Handles Win32 hooks, UIA reading, document extraction, and the Swarm Brain. |
-| `kairo-mcp` | The MCP Server bridge. Exposes Kairo's "Ghost Writing" tools to external AI assistants. |
-| `phantom-overlay` | A glassmorphic Tauri interface for visual feedback and state management. |
-
----
-
-## ⚙️ Setup & Installation
-
-### 1. Prerequisites
-- **Rust** (stable)
-- **Ollama** (optional, for offline mode): `ollama pull qwen2.5-coder:14b`
-- **Windows** (Win32/UIA support required)
-
-### 2. Build from Source
-```bash
-# Clone the repository
-git clone https://github.com/Kartik24Hulmukh/KairoPhantom.git
-cd KairoPhantom
-
-# Build the core engine
-cargo build --release
+**Windows (one-liner):**
+```powershell
+irm https://raw.githubusercontent.com/your-org/kairo-phantom/main/install.ps1 | iex
 ```
 
-### 3. Usage
-1. Run `kairo-phantom.exe`.
-2. Open any document (Word, Notion, VS Code).
-3. Type a prompt (e.g., "Write a professional summary of this report").
-4. Press `Alt + M`.
-5. Watch the AI "materialize" the text directly into your document.
+**macOS / Linux:**
+```bash
+curl -sSL https://raw.githubusercontent.com/your-org/kairo-phantom/main/install.sh | bash
+```
+
+Then add your API key to `~/.kairo-phantom/config.toml` and press **Alt+M** in any app.
 
 ---
 
-## 🔌 MCP Integration (Claude Code / Cursor)
+## 🎯 What It Does
 
-Add Kairo as an MCP server to your favorite tool to give it "OS Hands":
+| Press | In | Kairo does |
+|-------|-----|------------|
+| `Alt+M` | Word | Reads your doc → streams AI prose → types it in |
+| `Alt+M` | PowerPoint | Detects slide → suggests layout + content → types it |
+| `Alt+M` | Excel | Detects data → writes formula → injects it |
+| `Alt+M` | VS Code | Reads code → writes completion → types it |
+| `Alt+M` | Terminal | Reads command history → suggests next command |
+| `Alt+M` | Any app | Clipboard fallback → ghost types the response |
 
-**Claude Code:**
-```bash
-claude mcp add kairo -- cargo run --bin kairo-mcp
+---
+
+## 🤖 Swarm Agents (15 Specialists)
+
+Kairo automatically routes to the best agent based on what you're writing:
+
+| Agent | Triggers On |
+|-------|-------------|
+| 🎨 Design & Media | PowerPoint, Figma, Canva, visual prompts |
+| 🧠 Reasoning & Logic | Code, terminal, calculations |
+| ✍️ Content All-Rounder | Word docs, general writing (default) |
+| 🖼️ Image Generation | "generate image", "create icon", "diagram" |
+| 💰 Finance & Spreadsheet | Excel, Google Sheets, formulas |
+| ⚖️ Legal Documents | Contracts, NDAs, agreements |
+| 🏥 Medical Documentation | SOAP notes, ICD-10, clinical summaries |
+| 🎓 Academic Writing | Research papers, APA/MLA citations |
+| 📈 Sales & Marketing | Cold email, proposals, pitch decks |
+| 👥 HR & Talent | Job descriptions, performance reviews |
+| 📣 Marketing Content | Blog posts, SEO, ad copy, landing pages |
+| 📋 Product Management | PRDs, user stories, OKRs, roadmaps |
+| 👨‍💻 Engineer | README, commits, architecture docs |
+| 📚 Student Tutor | Beginner-friendly explanations |
+| 📊 Data Analyst | Pivot tables, data summaries |
+
+---
+
+## 🏗️ Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Kairo Phantom Core                        │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌────────────┐ │
+│  │  Global  │  │    UIA   │  │  Swarm   │  │   Ghost    │ │
+│  │  Hotkey  │→ │  Reader  │→ │  Brain   │→ │  Session   │ │
+│  │  Alt+M   │  │ (Win32)  │  │ (Router) │  │  (Stream)  │ │
+│  └──────────┘  └──────────┘  └──────────┘  └────────────┘ │
+│                                    ↓              ↓         │
+│                              ┌──────────┐  ┌────────────┐ │
+│                              │   Image  │  │  Injector  │ │
+│                              │ Pipeline │  │  (Enigo)   │ │
+│                              └──────────┘  └────────────┘ │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │          HTTP API (localhost:7437)                   │   │
+│  │  /health /materialize /ask /inject /generate_image  │   │
+│  └─────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+         ↕ JSON-RPC stdio                    ↕ JSON-RPC stdio
+┌──────────────────┐              ┌─────────────────────────┐
+│ MCP Bridge: PPTX │              │   Kairo MCP Server      │
+│  14 tools        │              │   8 tools               │
+│  (python-pptx)   │              │   (Claude/Cursor/Wind.) │
+└──────────────────┘              └─────────────────────────┘
 ```
 
-**Cursor / Custom Config:**
+---
+
+## 🖼️ Image Generation
+
+Kairo routes image generation to the best available backend:
+
+| Backend | Quality | Speed | Cost | Setup |
+|---------|---------|-------|------|-------|
+| OpenAI gpt-image-1 | ⭐⭐⭐⭐⭐ | ~15s | $0.04/img | `openai_api_key` |
+| Google Imagen 3 | ⭐⭐⭐⭐⭐ | ~10s | Free tier | `gemini_api_key` |
+| Ollama (local) | ⭐⭐⭐ | ~30–120s | FREE | Ollama installed |
+
+Generated images are automatically:
+- Copied to clipboard (Ctrl+V in any app)
+- Injected directly into PPTX slides (via python-pptx)
+- Inserted into Word documents (via python-docx)
+
+---
+
+## 🔌 MCP Integration (Claude Code / Cursor / Windsurf)
+
+Add to your MCP config:
+
 ```json
 {
   "mcpServers": {
     "kairo": {
-      "command": "cargo",
-      "args": ["run", "--bin", "kairo-mcp", "--manifest-path", "C:/path/to/KairoPhantom/Cargo.toml"]
+      "command": "kairo-mcp",
+      "args": []
     }
   }
 }
 ```
 
-### Available Tools:
-- `kairo_read_context`: Fetches rich document structure (headings, tables, slides).
-- `kairo_ghost_write`: Injects text directly into the focused application.
-- `kairo_ask`: Runs a prompt through the Swarm Brain.
-- `kairo_detect_app`: Identifies the current environment.
+Available MCP tools:
+
+| Tool | Description |
+|------|-------------|
+| `kairo_read_context` | Read focused window text |
+| `kairo_ghost_write` | Type text into active window |
+| `kairo_ask` | Full AI round-trip (read → route → inject) |
+| `kairo_generate_image` | Generate image via image pipeline |
+| `kairo_generate_image_inject` | Generate + auto-inject into doc |
+| `kairo_generate_slide` | Generate full PPTX from topic |
+| `kairo_detect_app` | Detect active application |
+| `kairo_list_agents` | List all 15 swarm agents |
 
 ---
 
-## 🧠 Swarm Configuration
-Customize your agents in `~/.kairo-phantom/config.toml`:
+## ⚙️ Configuration
+
+`~/.kairo-phantom/config.toml`:
 
 ```toml
+[ai]
+# Choose one (or all — Kairo falls back gracefully):
+openai_api_key = "sk-..."           # OpenAI GPT-4o
+gemini_api_key = "AIza..."          # Google Gemini
+ollama_base_url = "http://localhost:11434"  # Offline/local
+
+[image]
+openai_api_key = "sk-..."           # gpt-image-1
+gemini_api_key = "AIza..."          # Imagen 3
+# offline_only = true               # Force local Ollama
+
 [swarm]
-enabled = true
+enabled = true                      # Multi-agent routing
 
-[swarm.brain]
-provider = "ollama"
-model_name = "qwen2.5-coder:14b"
-
-[swarm.agents.design]
-system_directive = "You are a world-class designer. Focus on visual copy and layout..."
+[mcp]
+# canva_access_token = "..."        # Canva Connect API
 ```
 
 ---
 
-## 🔌 Plugin System
-Kairo Phantom v3.0 introduces a powerful plugin architecture. You can extend the engine with custom application fingerprinters and specialized AI agents without recompiling.
+## 🧩 Plugin System
 
-### 1. Add plugins to `config.toml`
-```toml
-plugins = ["C:/path/to/finance_plugin.toml"]
+Install hero plugins to extend Kairo's capabilities:
+
+```bash
+# Copy plugins to installation directory
+cp plugins/*.toml ~/.kairo-phantom/plugins/
 ```
 
-### 2. Define your plugin (`plugin.toml`)
-```toml
-name = "Finance Specialist"
+**Available hero plugins** (`plugins/`):
+- `finance.toml` — Excel formulas, DCF, financial modeling
+- `legal.toml` — Contracts, NDAs, legal drafting  
+- `design.toml` — PowerPoint, Figma, visual design
+- `dev.toml` — Code, README, git commits, architecture
+- `medical.toml` — SOAP notes, ICD-10, clinical docs
+- `academic.toml` — Research papers, APA/MLA citations
+- `sales.toml` — Cold email, proposals, CRM
+- `hr.toml` — Job descriptions, performance reviews
+- `marketing.toml` — Blogs, SEO, ad copy
+- `product.toml` — PRDs, user stories, OKRs
 
-[[fingerprinters]]
-process = "calc.exe"
-env_label = "Calculator"
+---
 
-[[agents]]
-id = "finance"
-name = "Finance Expert"
-system_prompt = "You are a senior accounting specialist..."
-match_pattern = "invoice|billing|tax"
-default_score = 5
+## 🎮 Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Alt+M` | Activate Kairo / submit prompt |
+| `Esc` | Cancel streaming (immediately) |
+| `Tab` | Accept full suggestion |
+| `Ctrl+Right` | Accept next word |
+| `Alt+1` / `Alt+2` | Switch between alternatives A/B |
+| `Ctrl+/` | Re-prompt (inline correction) |
+| `Ctrl+Z` | Agent-aware undo (restores pre-Kairo state) |
+| `Alt+Shift+M` | Replay last session |
+
+---
+
+## 🔑 API Keys Reference
+
+After installation, you'll need at least one of these:
+
+| Service | Key | Get it at | Used for |
+|---------|-----|-----------|----------|
+| **OpenAI** | `openai_api_key` | [platform.openai.com](https://platform.openai.com) | GPT-4o text + gpt-image-1 |
+| **Google Gemini** | `gemini_api_key` | [aistudio.google.com](https://aistudio.google.com) | Gemini text + Imagen 3 |
+| **Anthropic** | `anthropic_api_key` | [console.anthropic.com](https://console.anthropic.com) | Claude Sonnet |
+| **Canva** | `canva_access_token` | [canva.com/developers](https://www.canva.com/developers) | Canva Connect API |
+| **Ollama** | *(none)* | [ollama.ai](https://ollama.ai) | 100% local/offline |
+
+> **Minimum to start:** Just Ollama (free, local). Add cloud keys for higher quality.
+
+---
+
+## 🏗️ Build from Source
+
+```bash
+git clone https://github.com/your-org/kairo-phantom
+cd kairo-phantom
+
+# Build core
+cd phantom-core && cargo build --release
+
+# Build MCP server  
+cd ../mcp-servers/kairo-mcp && cargo build --release
+
+# Install Python bridges
+pip install python-pptx pillow requests
+
+# Run
+./target/release/kairo-phantom
 ```
 
 ---
 
-## 📜 License
-Distributed under the **MIT License**. Built for the open-source community by **Kartik Hulmukh**.
+## 📄 License
+
+MIT License — see [LICENSE](LICENSE)
 
 ---
-*"The best interface is the one that disappears."*
+
+## 🌟 Contributing
+
+1. Fork the repo
+2. Create a feature branch: `git checkout -b feat/my-feature`
+3. Commit with Conventional Commits: `feat(swarm): add new agent`
+4. Open a PR — describe What/Why/How
+
+Hero plugin contributions especially welcome! See `plugins/finance.toml` as a template.

@@ -7,6 +7,8 @@ use anyhow::Result;
 use enigo::{Enigo, Keyboard, Settings, Key, Direction};
 use std::time::Duration;
 use tracing::{debug, info, warn};
+use crate::mcp_client::McpClient;
+
 
 #[cfg(windows)]
 use windows::Win32::UI::WindowsAndMessaging::GetForegroundWindow;
@@ -124,11 +126,11 @@ impl Injector {
         }
         let _ = enigo.key(Key::Shift, Direction::Release);
         
-        // Single delete to remove entire selection
-        std::thread::sleep(Duration::from_millis(15));
+        // Single delete to remove entire selection (longer delay to ensure Shift is fully released)
+        std::thread::sleep(Duration::from_millis(50));
         let _ = enigo.key(Key::Delete, Direction::Click);
         
-        std::thread::sleep(Duration::from_millis(15));
+        std::thread::sleep(Duration::from_millis(50));
     }
 
     /// Simple backspace N times (for minor corrections)
@@ -178,5 +180,55 @@ impl Injector {
     #[cfg(not(windows))]
     pub fn write_to_clipboard(&self, _text: &str) -> Result<()> {
         anyhow::bail!("Clipboard injection only supported on Windows")
+    }
+
+    /// Phase 999.1: Integrate Adeu MCP server for DOCX Track Changes injection.
+    pub async fn inject_via_mcp_adeu(&self, text: &str, file_path: &str) -> Result<()> {
+        info!("📝 Injecting via Adeu MCP for DOCX track changes: {}", file_path);
+        let mcp = McpClient::new("adeu", &["--stdio"]);
+        let args = serde_json::json!({
+            "file": file_path,
+            "text": text,
+            "track_changes": true
+        });
+        mcp.call_tool("write_docx", args).await?;
+        Ok(())
+    }
+
+    /// Phase 999.2: Integrate easy-notion-mcp for Notion round-trip fidelity.
+    pub async fn inject_via_mcp_notion(&self, text: &str, block_id: &str) -> Result<()> {
+        info!("📝 Injecting via easy-notion-mcp for Notion: {}", block_id);
+        let mcp = McpClient::new("npx", &["-y", "@modelcontextprotocol/server-notion"]);
+        let args = serde_json::json!({
+            "block_id": block_id,
+            "content": text
+        });
+        mcp.call_tool("append_block", args).await?;
+        Ok(())
+    }
+
+    /// Phase 999.3: Add litchi document creation path for new-document generation.
+    pub async fn create_litchi_doc(&self, text: &str, output_path: &str, doc_type: &str) -> Result<()> {
+        info!("📝 Creating new document via litchi: {}", output_path);
+        let mcp = McpClient::new("litchi-mcp", &["--stdio"]);
+        let args = serde_json::json!({
+            "path": output_path,
+            "content": text,
+            "format": doc_type
+        });
+        mcp.call_tool("create_document", args).await?;
+        Ok(())
+    }
+
+    /// Phase 999.4: Ship Kairo Figma plugin based on figma-mcp-write-bridge.
+    pub async fn inject_via_mcp_figma(&self, text: &str, node_id: &str) -> Result<()> {
+        info!("📝 Injecting via Figma MCP for node: {}", node_id);
+        let mcp = McpClient::new("figma-mcp", &["--stdio"]);
+        let args = serde_json::json!({
+            "node_id": node_id,
+            "text": text
+        });
+        mcp.call_tool("update_text_node", args).await?;
+        Ok(())
     }
 }

@@ -19,6 +19,13 @@ Kairo Phantom v4.0 transforms from a text-only ghost-writer into a full **multim
 - `VisionCodeAgent`: Reads terminal screenshots, diagnoses errors visually
 - `VisionFormAgent`: Reads PDF/form images, fills in structured data
 
+### Phase 8.5: Professional Formatting & Injection Bridges
+**Goal:** Move beyond clipboard paste to high-fidelity, native document manipulation.
+- Integrate `Adeu` MCP Server: Write Track Changes natively into DOCX without breaking formatting.
+- Integrate `easy-notion-mcp`: True round-trip fidelity across 25 Markdown block types.
+- Add `litchi` document creation path: Greenfield DOCX/PPTX/XLSX generation bypassing clipboard.
+- Ship Kairo Figma Plugin: Native text injection via `figma-mcp-write-bridge` architecture.
+
 ### Phase 9: Cross-Platform Expansion
 **Goal:** macOS (Accessibility API) + Linux (AT-SPI2) support
 - Implement `MacOSAccessibilityReader` using `AXUIElement` APIs

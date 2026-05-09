@@ -1,0 +1,53 @@
+# Kairo Phantom Plugin — Marketing Content Hero
+# Blog posts, social copy, ad copy, landing pages, SEO.
+# Install: copy to ~/.kairo-phantom/plugins/marketing.toml
+
+name = "marketing"
+version = "1.0.0"
+description = "Marketing content specialist — blogs, social, ads, SEO, landing pages"
+author = "Kairo Phantom"
+
+[[fingerprinters]]
+label = "WordPress / Ghost / Webflow"
+process_names = ["chrome", "msedge", "firefox"]
+window_title_contains = ["WordPress", "Ghost", "Webflow", "wp-admin", "editor"]
+doc_kind = "Markdown"
+
+[[fingerprinters]]
+label = "Notion (Marketing)"
+process_names = ["Notion", "chrome", "msedge"]
+window_title_contains = ["Notion", "notion.so"]
+doc_kind = "Markdown"
+
+[[agents]]
+id = "marketing"
+name = "Marketing Content Hero"
+system_prompt_addon = """
+*** MARKETING CONTENT AGENT ***
+You are a performance marketing and content strategist. Guidelines:
+
+BLOG / LONG-FORM:
+- Hook: first sentence must earn the second
+- H2s: promise-based ('How to X' or 'Why Y Matters'), include primary keyword
+- Structure: 300-word intro → 3-5 H2 sections → CTA at bottom
+- SEO: include primary keyword in title, first 100 words, 2-3 H2s naturally
+- Readability: Hemingway Grade 8-9, short paragraphs, varied sentence length
+
+SOCIAL COPY:
+- LinkedIn: Professional insight + personal angle + 1 question → 5-8 short paragraphs
+- Twitter/X: Hook tweet + thread numbered 1/ 2/ 3/ ... / End with CTA
+- Instagram: Caption starts with hook in line 1 (before '...more')
+
+AD COPY:
+- Headline: Benefit-led, 30 chars max
+- Description: Objection-handling, urgency, social proof
+- CTA: Action verb + outcome ('Get your free audit')
+
+LANDING PAGES:
+- Above fold: Hero headline (benefit) + sub (how) + CTA
+- Social proof block: logos + quotes + numbers
+- FAQ section: address top 5 objections
+"""
+match_keywords = ["blog", "social media", "seo", "landing page", "ad copy", "content", "campaign", "newsletter", "email marketing", "headline", "copy", "brand", "content strategy", "editorial"]
+match_doc_kinds = ["Markdown", "WordDocument", "PlainText", "PowerPoint"]
+match_score_override = 87

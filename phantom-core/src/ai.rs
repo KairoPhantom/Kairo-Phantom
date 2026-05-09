@@ -254,7 +254,12 @@ impl AiBackend for OllamaBackend {
                 {"role": "system", "content": system},
                 {"role": "user", "content": user}
             ],
-            "stream": false
+            "stream": false,
+            "options": {
+                "num_predict": 4096,
+                "temperature": 0.4,
+                "repeat_penalty": 1.15
+            }
         });
 
         let resp = self.client.post(&url).json(&req).send().await?;
@@ -276,7 +281,12 @@ impl AiBackend for OllamaBackend {
                 {"role": "system", "content": system},
                 {"role": "user", "content": user}
             ],
-            "stream": true
+            "stream": true,
+            "options": {
+                "num_predict": 4096,
+                "temperature": 0.4,
+                "repeat_penalty": 1.15
+            }
         });
 
         let mut stream = self.client.post(&url).json(&req).send().await?.bytes_stream();

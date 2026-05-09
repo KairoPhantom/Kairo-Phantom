@@ -89,6 +89,21 @@ pub struct AgentRequest {
     pub agent: String,
 }
 
+#[derive(Deserialize)]
+pub struct ImageGenerateRequest {
+    pub prompt: String,
+    #[serde(default)]
+    pub backend: String,
+}
+
+#[derive(Serialize)]
+pub struct ImageGenerateResponse {
+    pub status: String,
+    pub base64_data: String,
+    pub mime_type: String,
+    pub backend_used: String,
+}
+
 /// GET /health
 async fn health() -> Json<HealthResponse> {
     Json(HealthResponse { status: "ok", version: env!("CARGO_PKG_VERSION") })
@@ -251,6 +266,39 @@ async fn materialize(
     }))
 }
 
+/// POST /generate_image — MCP Tool: generate image via image pipeline
+async fn generate_image(
+    State(state): State<ApiState>,
+    Json(req): Json<ImageGenerateRequest>,
+) -> Result<Json<ImageGenerateResponse>, (StatusCode, String)> {
+    use crate::image_pipeline::{ImageRouter, ImageGenerationConfig};
+    use crate::document_context::DocumentContext;
+    
+    // Build a default doc context for routing
+    let raw_text = state.uia.get_focused_text()
+        .or_else(|_| state.uia.get_clipboard_text())
+        .unwrap_or_default();
+    let app_ctx = state.context_engine.capture(&raw_text);
+    let doc_ctx = DocumentContext::from_raw_text(
+        &app_ctx.prompt_text,
+        &app_ctx.document_text,
+        app_ctx.environment.to_doc_kind(),
+    );
+
+    let config = ImageGenerationConfig::default();
+    let router = ImageRouter::new(config);
+
+    match router.generate(&req.prompt, &doc_ctx).await {
+        Ok(result) => Ok(Json(ImageGenerateResponse {
+            status: "ok".into(),
+            base64_data: result.base64_data,
+            mime_type: result.mime_type,
+            backend_used: result.backend_used,
+        })),
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Image generation failed: {}", e))),
+    }
+}
+
 pub async fn start_api_server(state: ApiState) {
     let app = Router::new()
         .route("/health", get(health))
@@ -260,6 +308,7 @@ pub async fn start_api_server(state: ApiState) {
         .route("/ask", post(ask))
         .route("/app", get(get_app))
         .route("/agent", post(set_agent))
+        .route("/generate_image", post(generate_image))
         .with_state(state);
 
     let addr = format!("127.0.0.1:{}", PORT);

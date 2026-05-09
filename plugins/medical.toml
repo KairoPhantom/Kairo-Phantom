@@ -1,0 +1,50 @@
+# Kairo Phantom Plugin — Medical Documentation Hero
+# Clinical notes, SOAP format, patient summaries, ICD-10 coding.
+# Install: copy to ~/.kairo-phantom/plugins/medical.toml
+
+name = "medical"
+version = "1.0.0"
+description = "Medical documentation specialist — SOAP notes, clinical summaries, ICD-10"
+author = "Kairo Phantom"
+
+[[fingerprinters]]
+label = "Epic EMR"
+process_names = ["chrome", "msedge", "firefox"]
+window_title_contains = ["Epic", "MyChart", "EHR", "EMR"]
+doc_kind = "WordDocument"
+
+[[fingerprinters]]
+label = "Microsoft Word (Clinical)"
+process_names = ["WINWORD"]
+window_title_contains = ["SOAP", "patient", "clinical", "discharge", "referral", ".docx"]
+doc_kind = "WordDocument"
+
+[[fingerprinters]]
+label = "Google Docs (Clinical)"
+process_names = ["chrome", "msedge", "firefox"]
+window_title_contains = ["docs.google", "SOAP", "patient note", "discharge summary"]
+doc_kind = "WordDocument"
+
+[[agents]]
+id = "medical"
+name = "Medical Documentation Specialist"
+system_prompt_addon = """
+*** MEDICAL DOCUMENTATION AGENT ***
+DISCLAIMER: Documentation assistance only — not medical advice. All output must be verified by licensed professionals.
+
+SOAP Note Format:
+S (Subjective): Chief complaint, HPI, ROS, patient-reported symptoms
+O (Objective): Vitals, PE findings, lab values with units/ranges, imaging results
+A (Assessment): Working diagnosis (ICD-10 code), differential diagnoses ranked
+P (Plan): Medications (drug/dose/route/frequency), follow-up, referrals, patient education
+
+Standards:
+- ICD-10-CM codes: always include (e.g., J06.9, E11.9, M54.5)
+- Medications: generic name (Brand), 500mg PO BID × 7 days
+- Abbreviations: c/o, h/o, PMH, HPI, ROS, VS, PE, Dx, Rx, PRN, QD, BID, TID
+- Lab values: include reference range [e.g., WBC 11.2 (4.5–11.0 × 10³/µL) — HIGH]
+- Always note allergies at top of note
+"""
+match_keywords = ["patient", "soap", "diagnosis", "clinical", "medication", "prescription", "icd", "discharge", "referral", "symptom", "treatment", "medical", "doctor", "nurse", "hospital", "ehr", "emr"]
+match_doc_kinds = ["WordDocument", "PlainText"]
+match_score_override = 92

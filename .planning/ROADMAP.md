@@ -1,8 +1,35 @@
-# Kairo Phantom — ROADMAP v3.0 (Universal Document Peer)
+# Kairo Phantom — ROADMAP v0.3.0 (Production Ready)
 
 ## Current Status
 - **Milestone 1 (Engine v2.0):** ✅ COMPLETE
-- **Milestone 2 (v3.0 Universal):** 🚧 PLANNED
+- **Milestone 2 (v3.0 Universal Document Peer):** ✅ COMPLETE
+- **Milestone 3 (v4.0 Show HN Launch):** ✅ COMPLETE — All 4 phases production-delivered
+
+## Phase Delivery Summary (v0.3.0)
+
+### ✅ Phase 1: Image Pipeline (Complete)
+- `image_pipeline.rs` — ImageRouter with OpenAI gpt-image-1, gpt-image-1-mini, Ollama SD/FLUX
+- Context-aware prompt enhancement (title slide vs icon vs document)
+- `POST /generate_image` API endpoint + MCP `kairo_generate_image` tool
+- Temp-file staging for clipboard insertion into Word/PPT/Figma
+
+### ✅ Phase 2: PPT/MCP Bridge (Complete)
+- `mcp_bridge.rs` — McpBridgeClient stdio subprocess manager + McpBridgeRegistry auto-discovery
+- `mcp-servers/office-pptx-bridge/server.py` — 6-tool PPTX API (create, add_slide, add_image, list, generate_ai)
+- `mcp-servers/figma-bridge/server.py` — 4-tool Figma API (import_image, create_text, get_file_info, list_frames)
+- `plugins/` — 3 hero plugins: finance.toml, legal.toml, design.toml
+
+### ✅ Phase 3: Ghost Session UX (Complete)
+- `ghost_session.rs` — GhostSession, GhostBuffer (A/B alternatives), ConfidenceBand, UndoManager, YjsPeer
+- CancellationToken fully wired into `main.rs` hotkey loop (tokio::select! pattern)
+- User typing → `PhantomEvent::UserTyping` → `token.cancel()` aborts active stream
+- `audit_logger.log_ghost_session()` called at session start and completion
+
+### ✅ Phase 4: Distribution (Complete)
+- `governance.rs` — AuditLogger (JSONL), PluginPermissionManifest, EnterpriseConfig, SessionGovernor
+- `install.ps1` — Windows PowerShell one-liner installer with full Rust/Python/Ollama checks
+- `mcp-servers/kairo-mcp/` — 5-tool MCP server for Claude Code, Cursor, Goose, Windsurf
+- `roadmaptoshow/kairo_memory_graph.html` — Interactive 43-node vis-network architecture graph
 
 ---
 
@@ -173,3 +200,45 @@ Hotkey Listener
 - GhostAI (OCR-only read approach)
 - agent-desktop (53-command CLI design)
 - OculOS (REST infrastructure approach)
+
+## Backlog
+
+### Phase 999.1: Integrate Adeu MCP server for DOCX Track Changes injection (COMPLETE)
+
+**Goal:** Professional Word output with native redlining without breaking formatting
+**Requirements:** TBD
+**Plans:** 1 plans
+
+Plans:
+- [x] Integrate Adeu MCP client in injector.rs and mcp_client.rs
+
+
+### Phase 999.2: Integrate easy-notion-mcp for Notion round-trip fidelity (COMPLETE)
+
+**Goal:** Professional Notion output with 25 block types supported
+**Requirements:** TBD
+**Plans:** 1 plans
+
+Plans:
+- [x] Integrate easy-notion-mcp client in injector.rs
+
+
+### Phase 999.3: Add litchi document creation path for new-document generation (COMPLETE)
+
+**Goal:** Professional DOCX/PPTX/XLSX creation bypassing clipboard
+**Requirements:** TBD
+**Plans:** 1 plans
+
+Plans:
+- [x] Integrate litchi-mcp client in injector.rs
+
+
+### Phase 999.4: Ship Kairo Figma plugin based on figma-mcp-write-bridge (COMPLETE)
+
+**Goal:** Professional Figma text injection
+**Requirements:** TBD
+**Plans:** 1 plans
+
+Plans:
+- [x] Integrate figma-mcp client in injector.rs
+
