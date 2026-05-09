@@ -1,96 +1,100 @@
-# Kairo Phantom
+# Kairo Phantom — PROJECT.md
 
-## What This Is
+## Mission
+Kairo Phantom is the **universal document AI peer** for Windows, macOS, and Linux.
+It is the only open-source tool that simultaneously:
+1. Reads document structure (not just selected text) from Word, PPT, Excel, ODT, PDF
+2. Fingerprints the host application (VS Code, Canva, Notion, Figma, Terminal) via UIA/accessibility APIs
+3. Routes prompts to a specialized multi-agent swarm (Design, Reasoning, Content, Terminal agents)
+4. Streams AI output via SSE and injects it atomically via Clipboard-First injection
+5. Runs **offline-first** via Ollama (cloud providers as fallback)
+6. Exposes itself as an **MCP server** so any Claude Code / Cursor / Goose user can invoke it
 
-Kairo Phantom is the first open-source, Rust-native "Ghost AI Writer" for the Windows desktop. It is a system-level AI peer that:
+## What We Are NOT Building
+- We do NOT copy external repos. We **reference** them, understand their design decisions, and build our own superior implementation from scratch.
+- We do NOT build another clipboard copilot (ClipboardConqueror's design flaw).
+- We do NOT build a code agent (Goose's design focus — wrong product).
+- We do NOT build an OCR reader (GhostAI's design — read-only, no AI peer).
 
-1. **Reads** text from ANY active Windows application (Word, PDF viewers, browsers, VS Code, Notepad) using the Windows UI Automation (UIA) API via `uiautomation-rs`.
-2. **Streams** the captured text into a pure-Rust CRDT session (`yrs` — Rust port of Yjs) maintaining full collaborative state with an AI as a named peer.
-3. **Gets AI suggestions** from a local or cloud LLM (Ollama first, then OpenAI/Anthropic/Gemini adapters) that are aware of the full document context via the CRDT state.
-4. **Ghost-types** the AI suggestion back into the active application character-by-character via `enigo` input simulation, creating the illusion of a "ghost" typing alongside the user.
-5. **Overlays** a borderless, semi-transparent glassmorphic Tauri UI widget that floats above all windows, showing AI activity, suggestion previews, and presence indicators. Invisible to screen capture via `SetWindowDisplayAffinity`.
+## Competitive Landscape (Why Kairo Wins)
+| Competitor | Stars | What It Does | Why We Win |
+|---|---|---|---|
+| ClipboardConqueror | 433★ | Copy-paste delimiter AI | No UIA, no app awareness, no injection |
+| Goose | 41.6k★ | General code agent | Not a document peer, no context routing |
+| GhostAI | — | OCR local brain | Read-only, no LLM injection |
+| agent-desktop | 125★ | 53-command CLI via a11y tree | No AI, no multi-agent, no injection |
+| OculOS | 200★ | REST/MCP desktop control | No AI intelligence layer |
+| mouseless | — | macOS MCP desktop control | macOS-only, no document AI |
 
-## Activation
-- **Hotkey**: `Ctrl+Space` (or configurable) to trigger AI suggestion materialization.
-- The ghost types at human-like speed (15ms per character) directly into whatever app is focused.
-- No drag-and-drop. No copy-paste. The AI peer types for you.
+**The exact gap Kairo fills:** No project combines UIA reading + app fingerprinting + swarm routing + streaming + clipboard injection into a single Rust binary across all platforms.
 
-## Core Value
-"Your AI writes with you, not for you — in any app, at any time, invisibly."
-
-This is NOT a clipboard tool (like ClipboardConqueror). This is NOT a meeting assistant (like Cluely/Pluely). This is NOT a browser extension. This is a desktop-native AI peer that operates at the OS level.
-
-## Technical Stack
-- **Language**: Rust (100% — no JavaScript runtime embedded)
-- **CRDT**: `yrs` crate (pure Rust Yjs port by Anysphere, binary protocol compatible with Kairo's `@docscode/core`)
-- **UIA Reader**: `uiautomation-rs` (Windows UI Automation wrapper)
-- **Input Injection**: `enigo` crate (keyboard simulation, cross-platform fallback)
-- **Overlay UI**: Tauri v2 (glassmorphic, always-on-top, screen-share invisible)
-- **Hotkey**: `rdev` or `global-hotkey` crate
-- **AI Backends**: Ollama (local, default), OpenAI, Anthropic, Gemini (via HTTP adapters in Rust)
-- **Screen Context (optional)**: `xcap` crate for screenshot-based context
-
-## Architecture
+## Technology Stack (v3.0 Architecture)
 ```
-┌─────────────────────────────────────────────────┐
-│          Tauri Overlay (Glassmorphic UI)          │
-│  - Always-on-top transparent window               │
-│  - Screen-share invisible                         │
-│  - Hotkey activation                              │
-└──────────────────────┬────────────────────────────┘
-                       │ Tauri commands (IPC)
-┌──────────────────────┴────────────────────────────┐
-│           Kairo Phantom Core (Rust)                │
-│                                                    │
-│  UIA Reader  │  Enigo Writer  │  xcap (optional)   │
-│      ↓               ↑                            │
-│         CRDT Session (yrs)                        │
-│              ↓                                    │
-│         AI Peer Engine                            │
-│   (Ollama/OpenAI/Anthropic adapters)              │
-└───────────────────────────────────────────────────┘
+Hotkey Listener (WH_KEYBOARD_LL / CGEventTap / XInput)
+    │
+    ▼
+xa11y Cross-Platform Accessibility Layer
+    │  Windows: UIAutomation │ macOS: AXUIElement │ Linux: AT-SPI2
+    │
+    ▼
+Context Engine + Document Understanding
+    │  office_oxide → DOCX/XLSX/PPTX structure
+    │  litchi       → ODT/ODF/iWork (.pages, .key, .numbers)
+    │  mdkit        → PDF/Markdown/universal fallback
+    │  Plugin trait: AppFingerprinter
+    │
+    ▼
+Swarm Brain (Multi-Agent Orchestrator)
+    │  Brain LLM picks agent deterministically or via LLM routing
+    │  Design Agent | Prose Agent | Code Agent | Terminal Agent | Data Agent
+    │
+    ▼
+LLM Backend (Ollama-first, cloud-fallback)
+    │  Ollama (offline) → OpenAI → Anthropic → Gemini → NVIDIA NIM
+    │
+    ▼
+Injector (Clipboard-First, multi-strategy)
+    │  Clipboard Ctrl+V → UIA SetValue → SendInput → Fallback
+    │
+    ├── MCP Server (kairo-mcp) — exposes tools to Claude/Cursor/Goose
+    └── Tauri Overlay — glassmorphic status layer
 ```
 
-## Key Decisions
+## Milestone History
 
-| Decision | Rationale | Outcome |
-|----------|-----------|---------|
-| yrs over neon/deno_core | Pure Rust, no JS runtime, binary-compatible with @docscode/core | Eliminates JavaScript entirely |
-| enigo for injection | Universal — works on Chromium, custom controls, elevated apps | Clipboard fallback for edge cases |
-| Tauri over Electron | 27x smaller binary, native Rust backend, same JS/TS frontend | ~10MB vs 270MB |
-| Ollama as default AI | Local, private, no API key needed for first run | Reduces friction for initial users |
-| uiautomation-rs | Battle-tested Windows UIA wrapper in Rust | Read from Word, Chrome, VSCode, Notepad |
+### Milestone 1: Production Engine v2.0 (COMPLETE)
+- ✅ Global hotkey hook (WH_KEYBOARD_LL)
+- ✅ UIA text extraction and clipboard-first injection
+- ✅ App fingerprinting via process name + window title
+- ✅ Multi-agent swarm (Design / Reasoning / Content agents)
+- ✅ SSE streaming for OpenAI, Anthropic, Gemini, NVIDIA NIM, Ollama
+- ✅ SwarmConfig in config.toml for per-agent API keys
+- ✅ Context detection for: Word, PowerPoint, VS Code, Terminal, Notion, Figma, Canva, Slack, Teams
 
-## Requirements
+### Milestone 2: Kairo v3.0 — Universal Document Peer (IN PROGRESS)
+**Goal:** Make Kairo the #1 trending open-source AI tool by becoming the only cross-platform, document-intelligent, offline-capable, MCP-distributed ghost-writing engine.
 
-### Validated
-(None yet — greenfield)
+**5 Pillars:**
+1. **Cross-Platform Core** — swap to xa11y for Windows + macOS + Linux (3x market expansion)
+2. **Deep Document Understanding** — office_oxide + litchi + mdkit for structural context
+3. **Offline Mode** — Ollama as the DEFAULT provider, cloud as fallback
+4. **MCP Server** — distribute Kairo to every Claude Code / Cursor / Goose user instantly
+5. **Plugin System + One-Liner Install** — community extensibility + cargo install
 
-### Active
-- [ ] Read focused element text from any Windows app via UIA
-- [ ] Integrity-level detection + clipboard fallback for elevated processes
-- [ ] Pure Rust CRDT session via `yrs` with AI as named peer
-- [ ] Ollama HTTP adapter for local AI inference
-- [ ] OpenAI/Anthropic/Gemini HTTP adapters
-- [ ] Character-by-character ghost typing via enigo (15ms delay)
-- [ ] Configurable hotkey to trigger materialization
-- [ ] Tauri v2 glassmorphic overlay (always-on-top, semi-transparent)
-- [ ] Screen-share invisibility via SetWindowDisplayAffinity
-- [ ] Autocomplete behavior plugin (complete current sentence)
-- [ ] Summarize behavior plugin (summarize active document)
-- [ ] MCP server integration (Claude Code / Cursor / Windsurf trigger)
-- [ ] TOML config file (~/.kairo-phantom/config.toml)
-- [ ] GitHub releases with pre-built Windows .exe installer
-- [ ] 20-second demo video for HN/X launch
+## Key Source Files
+- `phantom-core/src/main.rs` — Tokio event loop orchestrator
+- `phantom-core/src/swarm.rs` — Multi-agent routing (Brain + 3 agents)
+- `phantom-core/src/context.rs` — App fingerprinting and prompt extraction
+- `phantom-core/src/ai.rs` — All LLM backends (SSE streaming)
+- `phantom-core/src/injector.rs` — Clipboard-first text injection
+- `phantom-core/src/config.rs` — PhantomConfig + SwarmConfig structs
+- `phantom-core/src/hotkey.rs` — Global keyboard hook
+- `phantom-core/src/uia.rs` — Windows UIA reader
+- `phantom-overlay/` — Tauri glassmorphic UI overlay
 
-### Out of Scope
-- macOS/Linux support in v1 — Windows UIA is the priority
-- Browser extension — native OS approach is the differentiator
-- Direct UIA SetValue injection — enigo keyboard simulation is more universal
-
-## Evolution
-
-This document evolves at phase transitions and milestone boundaries.
-
----
-*Last updated: 2026-05-07 after initialization*
+## Design Principles
+1. **Single binary** — `cargo install kairo-phantom` must install everything
+2. **Zero config for offline use** — Ollama + Qwen2.5 must work with zero API keys
+3. **Trait-based extensibility** — AppContext + SwarmAgent traits enable community plugins
+4. **We build, not copy** — Reference external repos for design inspiration only; every line is original
+5. **Production first** — No experimental features in the main binary; all unstable behind feature flags

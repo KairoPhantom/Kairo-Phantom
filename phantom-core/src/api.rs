@@ -17,6 +17,7 @@ use crate::crdt::CrdtSession;
 use crate::injector::Injector;
 use crate::uia::UiaReader;
 use crate::ai::AiBackend;
+use crate::platform::AccessibilityReader; // needed for get_focused_text / get_clipboard_text methods
 
 pub const PORT: u16 = 7437;
 

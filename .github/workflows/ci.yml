@@ -1,0 +1,55 @@
+name: CI — Build & Test
+
+on:
+  push:
+    branches: ["engine-v2", "main"]
+  pull_request:
+    branches: ["engine-v2", "main"]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build — ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build phantom-core
+        run: cargo build --release -p phantom-core
+
+      - name: Build MCP server (when available)
+        run: cargo build --release -p kairo-phantom-mcp 2>/dev/null || echo "kairo-mcp not yet built"
+        shell: bash
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - name: Check formatting
+        run: cargo fmt --check -p phantom-core
+      - name: Clippy (warnings as errors)
+        run: cargo clippy -p phantom-core -- -D warnings

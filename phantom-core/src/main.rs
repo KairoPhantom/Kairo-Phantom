@@ -7,6 +7,8 @@ mod injector;
 mod uia;
 mod context;
 mod swarm;
+mod platform; // Cross-platform accessibility layer (v3.0)
+
 
 use anyhow::Result;
 use std::sync::Arc;
@@ -22,6 +24,8 @@ use injector::Injector;
 use uia::UiaReader;
 use context::ContextEngine;
 use ai::build_backend;
+use platform::AccessibilityReader; // trait must be in scope to call methods
+
 
 /// Message bus between all threads
 #[derive(Debug, Clone)]
