@@ -1,6 +1,8 @@
 /// Context Engine — The brain of Kairo's document awareness.
 /// Extracts the user's EXACT prompt (last paragraph/selection) and
 /// identifies the precise application environment for context-aware AI responses.
+/// v3.0: Also resolves the active document file path and slide number
+/// from the window title for structured document extraction.
 
 #[cfg(windows)]
 use windows::Win32::UI::WindowsAndMessaging::{
@@ -116,11 +118,31 @@ impl AppEnvironment {
             AppEnvironment::Unknown(name) => name.clone(),
         }
     }
+
+    /// Convert to the canonical DocKind for structured document context.
+    pub fn to_doc_kind(&self) -> crate::document_context::DocKind {
+        use crate::document_context::DocKind;
+        match self {
+            AppEnvironment::MicrosoftWord | AppEnvironment::MicrosoftOutlook => DocKind::WordDocument,
+            AppEnvironment::MicrosoftPowerPoint => DocKind::PowerPoint,
+            AppEnvironment::MicrosoftExcel => DocKind::ExcelSpreadsheet,
+            AppEnvironment::Notion => DocKind::NotionPage,
+            AppEnvironment::Figma => DocKind::FigmaDesign,
+            AppEnvironment::Canva => DocKind::CanvaDesign,
+            AppEnvironment::VSCode | AppEnvironment::Vim | AppEnvironment::NotepadPlusPlus => DocKind::CodeFile,
+            AppEnvironment::WindowsTerminal | AppEnvironment::PowerShell | AppEnvironment::CommandPrompt => DocKind::Terminal,
+            AppEnvironment::Notepad => DocKind::PlainText,
+            _ => DocKind::UnknownApp,
+        }
+    }
 }
 
-/// Full context snapshot captured at the moment Alt+M is pressed.
+/// Raw capture snapshot from the hotkey moment.
+/// This is the intermediate struct before DocumentContext enrichment.
+/// v3.0: Renamed from DocumentContext to AppContext to avoid collision
+/// with the canonical document_context::DocumentContext.
 #[derive(Debug, Clone)]
-pub struct DocumentContext {
+pub struct AppContext {
     /// The process name (e.g., "WINWORD.EXE")
     pub process_name: String,
     /// The window title (e.g., "Document1 - Microsoft Word")
@@ -131,8 +153,12 @@ pub struct DocumentContext {
     pub prompt_text: String,
     /// Character count of prompt (used for exact erasure)
     pub prompt_char_count: usize,
-    /// Full document context (for AI understanding — not erased)
+    /// Full document text from UIA
     pub document_text: String,
+    /// Resolved file path (from window title parsing)
+    pub file_path: Option<std::path::PathBuf>,
+    /// Active slide number (parsed from PowerPoint window title)
+    pub active_slide: Option<usize>,
 }
 
 pub struct ContextEngine;
@@ -142,30 +168,108 @@ impl ContextEngine {
         ContextEngine
     }
 
-    /// Captures the complete document context at hotkey press time.
-    pub fn capture(&self, full_text: &str) -> DocumentContext {
+    /// Captures the complete application context at hotkey press time.
+    pub fn capture(&self, full_text: &str) -> AppContext {
         let (process_name, window_title) = self.get_active_app_info();
         let environment = Self::classify_environment(&process_name, &window_title);
 
-        // Extract just the last paragraph (user's actual prompt)
-        // This is the segment we'll erase and replace
+        // Extract just the last paragraph (user's actual prompt — what gets erased)
         let prompt_text = Self::extract_last_paragraph(full_text);
         let prompt_char_count = prompt_text.chars().count();
 
+        // v3.0: Resolve file path + slide number from window title
+        let file_path = Self::resolve_file_path(&window_title, &process_name);
+        let active_slide = Self::extract_slide_number(&window_title);
+
         tracing::info!(
-            "📍 Context: env={} | prompt='{}...' ({} chars)",
+            "📍 Context: env={} | file={:?} | slide={:?} | prompt='{}...' ({} chars)",
             environment.label(),
+            file_path.as_ref().and_then(|p| p.file_name()).and_then(|n| n.to_str()),
+            active_slide,
             &prompt_text.chars().take(30).collect::<String>(),
             prompt_char_count
         );
 
-        DocumentContext {
+        AppContext {
             process_name,
             window_title,
             environment,
             prompt_char_count,
             document_text: full_text.to_string(),
             prompt_text,
+            file_path,
+            active_slide,
+        }
+    }
+
+    /// Resolve the document file path from the window title.
+    ///
+    /// Strategies:
+    /// 1. Parse "filename.ext - App Name" pattern from window title
+    /// 2. Check if parsed filename exists in common document locations
+    /// 3. Return None if unresolvable (graceful fallback to UIA text)
+    pub fn resolve_file_path(window_title: &str, _process_name: &str) -> Option<std::path::PathBuf> {
+        // Pattern: "Document.docx - Microsoft Word" or "Report.pptx - PowerPoint"
+        // Split on " - " and take the first segment
+        let parts: Vec<&str> = window_title.splitn(2, " - ").collect();
+        let candidate = parts.first()?.trim();
+
+        // Strip common suffixes like "[Read-Only]", "[Compatibility Mode]"
+        let clean = candidate
+            .trim_end_matches(']')
+            .rsplitn(2, '[')
+            .last()
+            .unwrap_or(candidate)
+            .trim();
+
+        // Must have a recognized office extension
+        let ext = std::path::Path::new(clean)
+            .extension()
+            .and_then(|e| e.to_str())
+            .map(|e| e.to_lowercase());
+
+        let known_ext = matches!(
+            ext.as_deref(),
+            Some("docx") | Some("doc") | Some("pptx") | Some("ppt")
+            | Some("xlsx") | Some("xls") | Some("odt") | Some("odp")
+            | Some("pdf") | Some("md") | Some("txt")
+        );
+
+        if !known_ext {
+            return None;
+        }
+
+        // Search common document locations
+        let search_dirs = [
+            dirs::document_dir(),
+            dirs::desktop_dir(),
+            dirs::download_dir(),
+        ];
+
+        for dir_opt in &search_dirs {
+            if let Some(dir) = dir_opt {
+                let candidate_path = dir.join(clean);
+                if candidate_path.exists() {
+                    return Some(candidate_path);
+                }
+            }
+        }
+
+        // Return a relative path as a hint even if not yet located on disk
+        // (the extractor will return None if the file doesn't exist)
+        Some(std::path::PathBuf::from(clean))
+    }
+
+    /// Extract the current slide number from a PowerPoint window title.
+    /// Handles: "Deck.pptx - PowerPoint [Slide 3 of 12]"
+    pub fn extract_slide_number(window_title: &str) -> Option<usize> {
+        let title_lower = window_title.to_lowercase();
+        if let Some(slide_pos) = title_lower.find("slide ") {
+            let after = &window_title[slide_pos + 6..];
+            let num_str: String = after.chars().take_while(|c| c.is_ascii_digit()).collect();
+            num_str.parse().ok()
+        } else {
+            None
         }
     }
 

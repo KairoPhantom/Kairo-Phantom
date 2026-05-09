@@ -1,5 +1,6 @@
-use crate::context::{AppEnvironment, DocumentContext};
+use crate::document_context::DocumentContext;
 use tracing::info;
+
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum AgentType {
@@ -48,17 +49,21 @@ impl SwarmOrchestrator {
     }
 
     /// The Brain: Analyzes context via LLM (or deterministic fallback) to select the right agent.
-    pub async fn route(&self, ctx: &DocumentContext) -> (Arc<dyn AiBackend>, AgentProfile) {
-        let mut agent_type = self.deterministic_route(ctx);
+    pub async fn route(&self, doc_ctx: &DocumentContext) -> (Arc<dyn AiBackend>, AgentProfile) {
+        let mut agent_type = self.deterministic_route(doc_ctx);
 
         // If the multi-agent brain is enabled and configured, ask the Brain LLM to decide
         if self.config.enabled && self.brain.is_some() {
             if let Some(brain_llm) = &self.brain {
                 let brain_prompt = format!(
-                    "You are the Swarm Brain. The user typed: '{}'. Environment: '{}'. \
+                    "You are the Swarm Brain. The user typed: '{}'. Document type: '{}'. Environment: '{}'. \
                     Decide the best specialized agent. Reply ONLY with one word: 'design', 'reasoning', or 'content'.",
-                    ctx.prompt_text,
-                    ctx.environment.label()
+                    doc_ctx.prompt_text,
+                    doc_ctx.doc_kind.human_name(),
+                    doc_ctx.file_path.as_ref()
+                        .and_then(|p| p.file_name())
+                        .and_then(|n| n.to_str())
+                        .unwrap_or("unknown")
                 );
                 
                 info!("🧠 Brain is thinking...");
@@ -75,9 +80,9 @@ impl SwarmOrchestrator {
             }
         }
 
-        info!("🧠 Swarm Orchestrator routed task to: {:?}", agent_type);
+        info!("🧠 Swarm routed to: {:?} | doc={}", agent_type, doc_ctx.doc_kind.human_name());
 
-        let system_directive = Self::build_agent_prompt(&agent_type, ctx);
+        let system_directive = Self::build_agent_prompt(&agent_type, doc_ctx);
         let profile = AgentProfile {
             agent_type: agent_type.clone(),
             system_directive,
@@ -92,19 +97,16 @@ impl SwarmOrchestrator {
         (backend, profile)
     }
 
-    fn deterministic_route(&self, ctx: &DocumentContext) -> AgentType {
-        match ctx.environment {
-            AppEnvironment::MicrosoftPowerPoint | AppEnvironment::Figma | AppEnvironment::Canva => {
-                AgentType::DesignAndMedia
-            }
-            AppEnvironment::VSCode
-            | AppEnvironment::WindowsTerminal
-            | AppEnvironment::PowerShell
-            | AppEnvironment::CommandPrompt
-            | AppEnvironment::Vim
-            | AppEnvironment::NotepadPlusPlus => AgentType::ReasoningAndLogic,
+    fn deterministic_route(&self, doc_ctx: &DocumentContext) -> AgentType {
+        use crate::document_context::DocKind;
+        match &doc_ctx.doc_kind {
+            DocKind::PowerPoint | DocKind::OpenDocumentPresentation
+            | DocKind::CanvaDesign | DocKind::FigmaDesign => AgentType::DesignAndMedia,
+            DocKind::CodeFile => AgentType::ReasoningAndLogic,
+            DocKind::Terminal => AgentType::ReasoningAndLogic,
             _ => {
-                if ctx.prompt_text.to_lowercase().contains("code") || ctx.prompt_text.to_lowercase().contains("calculate") {
+                let p = doc_ctx.prompt_text.to_lowercase();
+                if p.contains("code") || p.contains("calculate") || p.contains("debug") {
                     AgentType::ReasoningAndLogic
                 } else {
                     AgentType::ContentAndAllRounder
@@ -113,9 +115,11 @@ impl SwarmOrchestrator {
         }
     }
 
-    fn build_agent_prompt(agent_type: &AgentType, ctx: &DocumentContext) -> String {
+    fn build_agent_prompt(agent_type: &AgentType, doc_ctx: &DocumentContext) -> String {
         let base_persona = crate::ai::KAIRO_SYSTEM_PROMPT;
-        let env_directive = ctx.environment.ai_directive();
+
+        // v3.0: Structured document context fragment (headings, tables, slide position)
+        let doc_fragment = doc_ctx.to_system_prompt_fragment();
 
         let agent_specialty = match agent_type {
             AgentType::DesignAndMedia => {
@@ -151,13 +155,10 @@ YOUR DIRECTIVES:
         };
 
         format!(
-            "{}\n\n{}\n\n[DETECTED CONTEXT]\nEnvironment: {}\nProcess: {}\nWindow Title: {}\n\n{}",
+            "{}\n\n[DOCUMENT INTELLIGENCE]\n{}\n\n{}",
             base_persona,
+            doc_fragment,
             agent_specialty,
-            ctx.environment.label(),
-            ctx.process_name,
-            ctx.window_title,
-            env_directive
         )
     }
 }

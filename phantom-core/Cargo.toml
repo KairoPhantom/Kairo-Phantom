@@ -61,6 +61,9 @@ async-trait = "0.1"
 # Home directory resolution for config path
 dirs = "5.0"
 
+# ZIP archive reader — for native OOXML parsing (DOCX/PPTX/XLSX are ZIP files)
+zip = "2.1"
+
 # Web server for IPC with Tauri overlay
 axum = "0.7"
 

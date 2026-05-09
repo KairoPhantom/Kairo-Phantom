@@ -8,6 +8,7 @@ mod uia;
 mod context;
 mod swarm;
 mod platform; // Cross-platform accessibility layer (v3.0)
+mod document_context; // Structured document understanding (v3.0)
 
 
 use anyhow::Result;
@@ -22,10 +23,10 @@ use crdt::CrdtSession;
 use hotkey::HotkeyWatcher;
 use injector::Injector;
 use uia::UiaReader;
-use context::ContextEngine;
+use context::{ContextEngine, AppContext};
 use ai::build_backend;
 use platform::AccessibilityReader; // trait must be in scope to call methods
-
+use document_context::{DocumentContext, ExtractorRegistry};
 
 /// Message bus between all threads
 #[derive(Debug, Clone)]
@@ -61,6 +62,7 @@ async fn main() -> Result<()> {
     let injector = Arc::new(Injector::new(config.typing_delay_ms));
     let uia_reader = Arc::new(UiaReader::new());
     let context_engine = Arc::new(ContextEngine::new());
+    let extractor_registry = Arc::new(ExtractorRegistry::with_defaults());
     
     // Create CRDT session (AI peer with fixed clientID 999)
     let crdt_session = Arc::new(CrdtSession::new(999));
@@ -114,25 +116,55 @@ async fn main() -> Result<()> {
                 }
 
                 // C. Context Engine Analysis
-                let ctx = context_engine.capture(&raw_text);
+                let app_ctx: AppContext = context_engine.capture(&raw_text);
                 
-                if ctx.prompt_text.is_empty() {
+                if app_ctx.prompt_text.is_empty() {
                     warn!("⚠️  Prompt empty after extraction.");
                     continue;
                 }
 
-                info!("🧠 Env detected: {} | Prompt: {} chars", ctx.environment.label(), ctx.prompt_char_count);
+                info!("🧠 Env detected: {} | Prompt: {} chars", app_ctx.environment.label(), app_ctx.prompt_char_count);
 
-                // D. Swarm Brain Routing
-                // The Brain analyzes the context and prompt, then delegates to a specialized Agent
-                let (target_backend, agent_profile) = swarm_engine.route(&ctx).await;
+                // D. v3.0: Build rich DocumentContext via ExtractorRegistry
+                // If we resolved a file path from the window title, try to extract
+                // structured content (headings, tables, slide count). If that fails
+                // or no file path was found, fall back to plain UIA text.
+                let doc_ctx: DocumentContext = if let Some(ref file_path) = app_ctx.file_path {
+                    extractor_registry
+                        .extract(file_path, &app_ctx.prompt_text, app_ctx.active_slide)
+                        .unwrap_or_else(|| {
+                            tracing::debug!("📄 Extraction failed for {:?}, using raw text fallback", file_path);
+                            DocumentContext::from_raw_text(
+                                &app_ctx.prompt_text,
+                                &app_ctx.document_text,
+                                app_ctx.environment.to_doc_kind(),
+                            )
+                        })
+                } else {
+                    DocumentContext::from_raw_text(
+                        &app_ctx.prompt_text,
+                        &app_ctx.document_text,
+                        app_ctx.environment.to_doc_kind(),
+                    )
+                };
+
+                info!("📑 DocKind: {} | outline={} items | slides={:?}",
+                    doc_ctx.doc_kind.human_name(),
+                    doc_ctx.outline.len(),
+                    doc_ctx.total_slides
+                );
+
+                // E. Swarm Brain Routing
+                // Brain analyzes DocumentContext (not just raw text), routes to specialized Agent
+                let (target_backend, agent_profile) = swarm_engine.route(&doc_ctx).await;
                 let system_prompt = agent_profile.system_directive;
+                let prompt_text = doc_ctx.prompt_text.clone();
+                let prompt_char_count = doc_ctx.prompt_char_count;
 
-                // E. Stream & Inject
-
+                // F. Stream & Inject
                 let (token_tx, mut token_rx) = mpsc::channel::<String>(100);
                 
-                let prompt_clone = ctx.prompt_text.clone();
+                let prompt_clone = prompt_text.clone();
                 
                 // Spawn AI Request using the dynamically routed backend
                 tokio::spawn(async move {
@@ -163,7 +195,7 @@ async fn main() -> Result<()> {
                             };
 
                             info!("♻️  Erasing prompt...");
-                            injector_clone.erase_prompt(ctx.prompt_char_count);
+                            injector_clone.erase_prompt(prompt_char_count);
                             
                             // Small delay to ensure erasure completes
                             tokio::time::sleep(std::time::Duration::from_millis(50)).await;
@@ -188,7 +220,7 @@ async fn main() -> Result<()> {
                 // Fallback if the model never output enough tokens to trigger first_token block
                 if !replaced && !buffer.is_empty() {
                      let clean_buffer = buffer.replace("[REPLACE]", "").trim_start().to_string();
-                     injector_clone.erase_prompt(ctx.prompt_char_count);
+                     injector_clone.erase_prompt(prompt_char_count);
                      tokio::time::sleep(std::time::Duration::from_millis(50)).await;
                      
                      if !injector_clone.inject_via_clipboard(&clean_buffer) {
