@@ -17,8 +17,11 @@ import os
 import base64
 import io
 import tempfile
+import subprocess
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+_BRIDGE_DIR = Path(__file__).parent
 
 try:
     from pptx import Presentation
@@ -621,7 +624,97 @@ TOOLS = [
             "required": ["topic"]
         }
     }
+    ,
+    {
+        "name": "export_revealjs",
+        "description": "Export slide data as an interactive Reveal.js HTML presentation (dual export alongside PPTX)",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "slides": {"type": "array", "items": {"type": "object"}, "description": "Array of slide objects with title/content/image/notes/layout"},
+                "output_path": {"type": "string"},
+                "title": {"type": "string"},
+                "theme": {"type": "string", "enum": ["black", "white", "moon", "sky", "beige", "night", "serif", "simple", "solarized"]},
+                "transition": {"type": "string", "enum": ["none", "fade", "slide", "convex", "zoom"]}
+            },
+            "required": ["slides", "output_path"]
+        }
+    },
+    {
+        "name": "render_transition_video",
+        "description": "Render a cinematic physics transition between two slide images as MP4",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "from_image": {"type": "string"},
+                "to_image": {"type": "string"},
+                "effect": {"type": "string", "enum": ["cloth_tear", "glitch_reveal", "gl_wipe_left", "gl_crosszoom", "gl_cube", "gl_ripple", "particle_disintegrate", "cinema_fade", "ascii_dissolve"]},
+                "output_path": {"type": "string"}
+            },
+            "required": ["from_image", "to_image", "effect", "output_path"]
+        }
+    }
 ]
+
+
+def export_revealjs(args: Dict) -> Dict:
+    """Export slides as Reveal.js HTML (Advancement 5)."""
+    slides = args.get("slides", [])
+    output_path = args.get("output_path", "")
+    title = args.get("title", "Kairo Presentation")
+    theme = args.get("theme", "black")
+    transition = args.get("transition", "fade")
+
+    if not slides:
+        return {"error": "No slides provided"}
+    if not output_path:
+        output_path = str(Path(tempfile.mkdtemp()) / "presentation.html")
+
+    export_script = _BRIDGE_DIR / "revealjs_export.py"
+    if not export_script.exists():
+        return {"error": f"revealjs_export.py not found at {export_script}"}
+
+    import json as _json
+    slides_json = _json.dumps(slides)
+    # Call the export module directly
+    try:
+        import sys as _sys
+        sys_path_backup = _sys.path[:]
+        _sys.path.insert(0, str(_BRIDGE_DIR))
+        from revealjs_export import export_revealjs as _export
+        result = _export(slides, output_path, title=title, theme=theme, transition=transition)
+        _sys.path = sys_path_backup
+        return result
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def render_transition_video(args: Dict) -> Dict:
+    """Render cinematic transition between two slides (Advancement 4)."""
+    from_img = args.get("from_image", "")
+    to_img = args.get("to_image", "")
+    effect = args.get("effect", "cinema_fade")
+    output = args.get("output_path", "")
+
+    if not output:
+        output = str(Path(tempfile.mkdtemp()) / f"{effect}.mp4")
+
+    effects_script = _BRIDGE_DIR.parent / "kairo-effects" / "effects_engine.py"
+    if not effects_script.exists():
+        return {"error": f"effects_engine.py not found at {effects_script}"}
+
+    try:
+        result = subprocess.run(
+            ["python", str(effects_script), "render",
+             "--effect", effect, "--from", from_img, "--to", to_img, "--out", output],
+            capture_output=True, text=True, timeout=120
+        )
+        if result.returncode == 0:
+            return {"success": True, "output": output, "effect": effect}
+        return {"error": result.stderr[-500:]}
+    except Exception as e:
+        return {"error": str(e)}
+
 
 TOOL_FNS = {
     "create_presentation": create_presentation,
@@ -637,6 +730,8 @@ TOOL_FNS = {
     "export_speaker_notes": export_speaker_notes,
     "set_slide_notes": set_slide_notes,
     "canva_autofill": canva_autofill_stub,
+    "export_revealjs": export_revealjs,
+    "render_transition_video": render_transition_video,
 }
 
 # ─── JSON-RPC Server ──────────────────────────────────────────────────────────

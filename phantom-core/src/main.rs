@@ -15,6 +15,12 @@ mod mcp_bridge; // MCP subprocess bridge — PPTX/Figma (v4.0)
 mod image_pipeline; // Image generation pipeline (Phase 1)
 mod ghost_session; // Ghost Session UX — streaming cancel, undo, Yjs (Phase 3)
 mod governance; // Enterprise audit logging + plugin permissions (Phase 4)
+// ── Advancement modules (v5.0) ──────────────────────────────────────────────
+mod yjs_peer; // Advancement 1: Yjs CRDT peer for collaborative docs
+mod identity; // Advancement 6: Ed25519 agent identity + RBAC
+mod wasm_sandbox; // Advancement 7: Wasmtime WASM plugin sandbox
+mod extractors; // Advancement 3: Kreuzberg universal document parser
+// platform/macos.rs and platform/linux.rs are submodules of platform
 
 use ghost_session::ConfidenceBand;
 use governance::{AuditLogger, AuditEvent, AuditOutcome};
