@@ -12,17 +12,27 @@
 
 ## ⚡ Quick Install
 
-**Windows (one-liner):**
+**The Developer Way:**
+```bash
+cargo install kairo-phantom
+```
+
+**Windows (Pre-built binary):**
 ```powershell
 irm https://raw.githubusercontent.com/your-org/kairo-phantom/main/install.ps1 | iex
 ```
 
-**macOS / Linux:**
+**macOS / Linux (Pre-built binary):**
 ```bash
 curl -sSL https://raw.githubusercontent.com/your-org/kairo-phantom/main/install.sh | bash
 ```
 
-Then add your API key to `~/.kairo-phantom/config.toml` and press **Alt+M** in any app.
+### 🏁 First-Run Experience
+
+What happens after you run `kairo-phantom` for the first time?
+1. Kairo will **auto-detect** if you have Ollama installed and running. If it finds it, you are ready to go—100% offline!
+2. If you want higher quality or image generation, it will prompt you to add your `openai_api_key` or `gemini_api_key` to `~/.kairo-phantom/config.toml`.
+3. An overlay will appear. Just switch to any app (Word, VS Code, Chrome) and press **Alt+M** to start ghost-writing.
 
 ---
 
@@ -240,17 +250,37 @@ pip install python-pptx pillow requests
 
 ---
 
-## 📄 License
+## 🚑 Troubleshooting
 
-MIT License — see [LICENSE](LICENSE)
+If Kairo Phantom isn't working as expected, it's usually one of these three things:
+
+1. **"Ollama connection refused"**
+   - *Fix:* Ensure Ollama is running in the background (`ollama serve`) and the model is pulled (`ollama run llama3`).
+2. **macOS: "Failed to read context"**
+   - *Fix:* Grant Accessibility permissions. Go to System Settings -> Privacy & Security -> Accessibility and toggle on your Terminal or Kairo.
+3. **Linux: "Clipboard not accessible"**
+   - *Fix:* On X11, Kairo requires `xclip` or `xsel` as a fallback. Run `sudo apt install xclip`.
 
 ---
 
-## 🌟 Contributing
+## 🌟 Contributing & Community
 
-1. Fork the repo
+Kairo is a living community. We'd love your help!
+
+1. Check out our [**CONTRIBUTORS.md**](CONTRIBUTORS.md) for "Good First Issues" you can pick up in under an hour.
+2. Read the [**ROADMAP.md**](ROADMAP.md) to see where we're heading in the next 6 months.
+3. Join the discussion on **GitHub Discussions** or our **Discord server**.
+
+**Quick Contribution Guide:**
+1. Fork the repo and clone it locally.
 2. Create a feature branch: `git checkout -b feat/my-feature`
 3. Commit with Conventional Commits: `feat(swarm): add new agent`
-4. Open a PR — describe What/Why/How
+4. Open a PR — describe What/Why/How.
 
-Hero plugin contributions especially welcome! See `plugins/finance.toml` as a template.
+See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for our dependency attributions.
+
+---
+
+## 📄 License
+
+MIT License — see [LICENSE](LICENSE)

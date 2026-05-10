@@ -195,29 +195,14 @@ impl AiBackend for OpenAiBackend {
             .await?
             .bytes_stream();
 
-        let mut buffer = String::new();
+        let mut parser = crate::perf_engine::ZeroAllocSseParser::new();
 
         while let Some(item) = stream.next().await {
             let chunk = item?;
-            let text = String::from_utf8_lossy(&chunk);
-            buffer.push_str(&text);
-
-            // Process complete SSE lines
-            while let Some(newline_pos) = buffer.find('\n') {
-                let line = buffer[..newline_pos].trim().to_string();
-                buffer = buffer[newline_pos + 1..].to_string();
-
-                if line.starts_with("data: ") {
-                    let data = line.trim_start_matches("data: ").trim();
-                    if data == "[DONE]" { return Ok(()); }
-
-                    if let Ok(val) = serde_json::from_str::<serde_json::Value>(data) {
-                        if let Some(content) = val["choices"][0]["delta"]["content"].as_str() {
-                            if !content.is_empty() {
-                                let _ = tx.send(content.to_string()).await;
-                            }
-                        }
-                    }
+            for s in parser.feed(&chunk) {
+                if s == "[DONE]" { return Ok(()); }
+                if let Some(content) = crate::perf_engine::ZeroAllocSseParser::extract_token_fast(s.as_bytes()) {
+                    let _ = tx.send(content).await;
                 }
             }
         }
@@ -397,24 +382,12 @@ impl AiBackend for AnthropicBackend {
             .await?
             .bytes_stream();
 
-        let mut buf = String::new();
+        let mut parser = crate::perf_engine::ZeroAllocSseParser::new();
         while let Some(item) = stream.next().await {
             let chunk = item?;
-            buf.push_str(&String::from_utf8_lossy(&chunk));
-            while let Some(nl) = buf.find('\n') {
-                let line = buf[..nl].trim().to_string();
-                buf = buf[nl + 1..].to_string();
-                if line.starts_with("data: ") {
-                    let data = line.trim_start_matches("data: ").trim();
-                    if let Ok(val) = serde_json::from_str::<serde_json::Value>(data) {
-                        if val["type"] == "content_block_delta" {
-                            if let Some(text) = val["delta"]["text"].as_str() {
-                                if !text.is_empty() {
-                                    let _ = tx.send(text.to_string()).await;
-                                }
-                            }
-                        }
-                    }
+            for s in parser.feed(&chunk) {
+                if let Some(content) = crate::perf_engine::ZeroAllocSseParser::extract_token_fast(s.as_bytes()) {
+                    let _ = tx.send(content).await;
                 }
             }
         }
@@ -485,23 +458,12 @@ impl AiBackend for GeminiBackend {
         });
 
         let mut stream = self.client.post(&url).json(&req).send().await?.bytes_stream();
-        let mut buf = String::new();
-
+        let mut parser = crate::perf_engine::ZeroAllocSseParser::new();
         while let Some(item) = stream.next().await {
             let chunk = item?;
-            buf.push_str(&String::from_utf8_lossy(&chunk));
-            while let Some(nl) = buf.find('\n') {
-                let line = buf[..nl].trim().to_string();
-                buf = buf[nl + 1..].to_string();
-                if line.starts_with("data: ") {
-                    let data = line.trim_start_matches("data: ").trim();
-                    if let Ok(val) = serde_json::from_str::<serde_json::Value>(data) {
-                        if let Some(text) = val["candidates"][0]["content"]["parts"][0]["text"].as_str() {
-                            if !text.is_empty() {
-                                let _ = tx.send(text.to_string()).await;
-                            }
-                        }
-                    }
+            for s in parser.feed(&chunk) {
+                if let Some(content) = crate::perf_engine::ZeroAllocSseParser::extract_token_fast(s.as_bytes()) {
+                    let _ = tx.send(content).await;
                 }
             }
         }

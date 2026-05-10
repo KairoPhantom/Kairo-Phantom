@@ -139,6 +139,20 @@ impl DocumentContext {
         }
     }
 
+    /// Test helper: Build context from plain text strings, auto-detecting doc kind from app name.
+    /// Used by the stress testing gauntlet to avoid requiring real file paths.
+    pub fn from_plain_text(app_name: &str, full_text: &str, prompt: &str) -> Self {
+        let doc_kind = match app_name.to_lowercase().as_str() {
+            n if n.contains("powerpoint") || n.contains("impress") => DocKind::PowerPoint,
+            n if n.contains("word") || n.contains("writer") => DocKind::WordDocument,
+            n if n.contains("excel") || n.contains("calc") => DocKind::ExcelSpreadsheet,
+            n if n.contains("visual studio code") || n.contains("nvim") || n.contains("vim") => DocKind::CodeFile,
+            n if n.contains("terminal") || n.contains("cmd") || n.contains("powershell") => DocKind::Terminal,
+            _ => DocKind::UnknownApp,
+        };
+        Self::from_raw_text(prompt, full_text, doc_kind)
+    }
+
     /// Build a context from a parsed file (DOCX/PPTX/XLSX) with structure.
     pub fn from_parsed(
         doc_kind: DocKind,

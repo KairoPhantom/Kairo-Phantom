@@ -412,3 +412,39 @@ impl SwarmOrchestrator {
         (backend, profile)
     }
 }
+
+/// ── Test helpers ──────────────────────────────────────────────────────────────
+pub struct TestFallbackBackend;
+
+#[async_trait::async_trait]
+impl AiBackend for TestFallbackBackend {
+    async fn complete(&self, _system: &str, _prompt: &str) -> anyhow::Result<String> {
+        Ok("test response".to_string())
+    }
+    async fn stream_complete(
+        &self,
+        _system: &str,
+        _prompt: &str,
+        _tx: tokio::sync::mpsc::Sender<String>,
+    ) -> anyhow::Result<()> {
+        Ok(())
+    }
+}
+
+impl SwarmOrchestrator {
+    /// Creates a minimal SwarmOrchestrator for unit/integration tests.
+    /// Does NOT require a running Ollama instance.
+    pub fn new_for_test() -> Self {
+        let fallback: Arc<dyn AiBackend> = Arc::new(TestFallbackBackend);
+        Self::new(SwarmConfig::default(), fallback)
+    }
+
+    /// Returns the agent ID that would be selected for the given context.
+    /// Synchronous (deterministic match_score only — no LLM brain call).
+    pub fn select_agent(&mut self, doc_ctx: &DocumentContext) -> String {
+        self.registry
+            .select_best(doc_ctx)
+            .map(|a| a.id().to_string())
+            .unwrap_or_else(|| "content".to_string())
+    }
+}

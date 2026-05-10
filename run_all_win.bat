@@ -1,0 +1,3 @@
+@echo off
+echo Starting Windows Gauntlet...
+node agent_runner.js win all

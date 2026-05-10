@@ -7,24 +7,21 @@ mod injector;
 mod uia;
 mod context;
 mod swarm;
-mod platform; // Cross-platform accessibility layer (v3.0)
-mod document_context; // Structured document understanding (v3.0)
-mod plugin; // Plugin system (v3.0)
-mod mcp_client; // MCP stdio client for Adeu/Notion/Figma (v3.0)
-mod mcp_bridge; // MCP subprocess bridge — PPTX/Figma (v4.0)
-mod image_pipeline; // Image generation pipeline (Phase 1)
-mod ghost_session; // Ghost Session UX — streaming cancel, undo, Yjs (Phase 3)
-mod governance; // Enterprise audit logging + plugin permissions (Phase 4)
-// ── Advancement modules (v5.0) ──────────────────────────────────────────────
-mod yjs_peer;    // Advancement 1: Yjs CRDT peer for collaborative docs
-mod identity;    // Advancement 6: Ed25519 agent identity + RBAC
-mod wasm_sandbox; // Advancement 7: Wasmtime WASM plugin sandbox
-mod extractors;  // Advancement 3: Kreuzberg universal document parser
-// platform/macos.rs and platform/linux.rs are submodules of platform
-// ── V6 Optimization modules ──────────────────────────────────────────────────
-mod perf_engine;  // A1-A3+B1-B3: SIMD, zero-alloc SSE, MCP cache, parallel swarm
-mod wgpu_effects; // C1-C2: Native GPU rendering via WGPU (replaces Puppeteer)
-
+mod platform;
+mod document_context;
+mod plugin;
+mod mcp_client;
+mod mcp_bridge;
+mod image_pipeline;
+mod ghost_session;
+mod governance;
+mod yjs_peer;
+mod identity;
+mod wasm_sandbox;
+mod extractors;
+mod perf_engine;
+mod wgpu_effects;
+pub mod chaos;
 use identity::IdentityManager;
 use wasm_sandbox::WasmPluginRegistry;
 
@@ -78,11 +75,22 @@ async fn check_ollama_health(base_url: &str) -> bool {
         .unwrap_or(false)
 }
 
-#[tokio::main]
-async fn main() -> Result<()> {
+fn main() -> Result<()> {
+    // Run everything on the pre-allocated global runtime to avoid guard generation overhead
+    crate::perf_engine::global_runtime().block_on(async_main())
+}
+
+async fn async_main() -> Result<()> {
     // Initialize logging (use RUST_LOG=debug for verbose output)
-    tracing_subscriber::fmt()
-        .with_env_filter(EnvFilter::from_default_env().add_directive("kairo_phantom=info".parse()?))
+    use tracing_subscriber::{fmt, prelude::*, EnvFilter};
+    tracing_subscriber::registry()
+        .with(if std::env::var("KAIRO_JSON_LOGS").is_ok() {
+            fmt::layer().with_target(true).json().boxed()
+        } else {
+            fmt::layer().with_target(true).boxed()
+        })
+        .with(EnvFilter::try_from_default_env()
+            .unwrap_or_else(|_| EnvFilter::new("kairo_phantom=info,info")))
         .init();
 
     info!("👻 Kairo Phantom (Production Engine) starting...");

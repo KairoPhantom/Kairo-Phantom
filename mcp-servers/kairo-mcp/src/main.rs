@@ -90,6 +90,53 @@ async fn kairo_detect_app(id: Value, _args: &Value) {
     }
 }
 
+/// Tool: kairo_batch_execute — chain multiple operations (MCP Infrastructure B2)
+async fn kairo_batch_execute(id: Value, args: &Value) {
+    let operations = args.get("operations").and_then(|v| v.as_array());
+    if operations.is_none() {
+        err(id, "operations array required");
+        return;
+    }
+    
+    let mut results = Vec::new();
+    let client = reqwest::Client::new();
+    
+    for op in operations.unwrap() {
+        let op_name = op.get("op").and_then(|v| v.as_str()).unwrap_or("");
+        let op_args = op.get("args").unwrap_or(&Value::Null);
+        
+        // Execute operation sequentially via HTTP but in a single MCP round trip
+        let res = match op_name {
+            "read_context" => {
+                client.get("http://localhost:7437/context").send().await
+                    .and_then(|r| r.error_for_status())
+                    .map(|_| json!({"status": "ok"}))
+                    .map_err(|e| e.to_string())
+            },
+            "detect_app" => {
+                client.get("http://localhost:7437/app").send().await
+                    .and_then(|r| r.error_for_status())
+                    .map(|_| json!({"status": "ok"}))
+                    .map_err(|e| e.to_string())
+            },
+            "ghost_write" => {
+                client.post("http://localhost:7437/inject").json(op_args).send().await
+                    .and_then(|r| r.error_for_status())
+                    .map(|_| json!({"status": "ok"}))
+                    .map_err(|e| e.to_string())
+            },
+            _ => Err("unknown op".to_string()),
+        };
+        
+        match res {
+            Ok(v) => results.push(json!({"op": op_name, "success": true, "result": v})),
+            Err(e) => results.push(json!({"op": op_name, "success": false, "error": e.to_string()})),
+        }
+    }
+    
+    ok(id, json!({"batch_results": results}));
+}
+
 /// Tool: kairo_ask — full Alt+M round-trip programmatically
 async fn kairo_ask(id: Value, args: &Value) {
     let prompt = args.get("prompt").and_then(|v| v.as_str()).unwrap_or("");
@@ -367,6 +414,27 @@ fn list_tools() -> Value {
                 }
             },
             {
+                "name": "kairo_batch_execute",
+                "description": "Execute multiple Kairo operations in a single round-trip (e.g. read_context + detect_app + ghost_write)",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "operations": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "op": {"type": "string", "description": "Operation: read_context, detect_app, ghost_write"},
+                                    "args": {"type": "object", "description": "Arguments for the operation"}
+                                },
+                                "required": ["op"]
+                            }
+                        }
+                    },
+                    "required": ["operations"]
+                }
+            },
+            {
                 "name": "kairo_list_agents",
                 "description": "List all available Kairo swarm agents with their IDs and descriptions",
                 "inputSchema": {
@@ -427,6 +495,7 @@ async fn main() {
                     "kairo_generate_image" => kairo_generate_image(id, &args).await,
                     "kairo_generate_slide" => kairo_generate_slide(id, &args).await,
                     "kairo_generate_image_inject" => kairo_generate_image_inject(id, &args).await,
+                    "kairo_batch_execute" => kairo_batch_execute(id, &args).await,
                     "kairo_list_agents" => kairo_list_agents(id, &args).await,
                     other => err(id, &format!("Unknown tool: {}", other)),
                 }

@@ -1,0 +1,29 @@
+{
+  "name": "kairophantom",
+  "version": "1.0.0",
+  "description": "> **The AI ghost-writer that lives inside your apps.** > Press Alt+M anywhere. Kairo reads your document, routes to the right specialist agent, and types the answer directly into your window.",
+  "main": "agent_runner.js",
+  "directories": {
+    "example": "examples",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kartik24Hulmukh/Kairo.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Kartik24Hulmukh/Kairo/issues"
+  },
+  "homepage": "https://github.com/Kartik24Hulmukh/Kairo#readme",
+  "dependencies": {
+    "agent-browser": "file:../agent-browser/agent-browser",
+    "playwright": "^1.59.1"
+  }
+}

@@ -1,0 +1,38 @@
+[package]
+name = "phantom-core-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+serde_json = "1.0"
+toml = "0.8"
+
+[dependencies.phantom-core]
+path = ".."
+
+# Prevent this from interfering with host build
+[profile.release]
+debug = true
+
+[[bin]]
+name = "uia_text_parser"
+path = "fuzz_targets/uia_text_parser.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "mcp_json_parser"
+path = "fuzz_targets/mcp_json_parser.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "toml_plugin_loader"
+path = "fuzz_targets/toml_plugin_loader.rs"
+test = false
+doc = false

@@ -1,0 +1,85 @@
+name: Kairo Phantom E2E Chaos Gauntlet
+
+on:
+  workflow_dispatch:
+    inputs:
+      iterations:
+        description: 'Number of consecutive iterations per test'
+        required: true
+        default: '10'
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  deterministic-sim:
+    name: Deterministic Simulation (5000 Seeds)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Run Layer 5 Sim Tests
+        run: cargo test --test layer5_sim_tests --release -- --nocapture
+        working-directory: phantom-core
+        env:
+          KAIRO_SIM_SEEDS: "5000"
+
+  e2e-matrix:
+    name: E2E Gauntlet (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    needs: deterministic-sim
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Linux Dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xclip xsel libx11-dev libxtst-dev
+
+      - name: Build Kairo Phantom (Release)
+        run: cargo build --release
+        working-directory: phantom-core
+
+      - name: Install E2E Automation Dependencies
+        run: |
+          pip install pywinauto keyboard playwright
+          playwright install chromium
+
+      - name: Execute E2E Desktop Automation Matrix
+        shell: bash
+        run: |
+          echo "Starting Kairo Phantom in background..."
+          ./phantom-core/target/release/kairo-phantom &
+          KAIRO_PID=$!
+          
+          sleep 5 # Wait for engine to start
+          
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            echo "Generating Fixtures..."
+            python scripts/setup_fixtures.py
+            
+            echo "Starting Advanced Windows Chaos Monkey..."
+            pwsh ./scripts/chaos_windows_advanced.ps1 &
+            CHAOS_PID=$!
+            
+            echo "Running T1 (Word UI Automation)..."
+            python scripts/e2e_windows_t1_word.py
+            
+            echo "Killing Chaos Monkey..."
+            kill $CHAOS_PID || true
+          fi
+          
+          echo "Running T4 (Browser Yjs Automation)..."
+          python scripts/e2e_yjs_t4.py
+          
+          echo "Shutting down Kairo Phantom..."
+          kill $KAIRO_PID || true
+

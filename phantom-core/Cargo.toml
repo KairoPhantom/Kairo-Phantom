@@ -43,7 +43,7 @@ thiserror = "1.0"
 
 # Logging
 tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 
 # Channel utilities
 crossbeam-channel = "0.5"
@@ -111,3 +111,12 @@ windows = { version = "0.58", features = [
 [target.'cfg(target_os = "macos")'.dependencies]
 core-foundation = "0.10"
 core-graphics = "0.23"
+macos-accessibility-client = "0.0.2"
+
+
+[dev-dependencies]
+proptest = "1.4"
+madsim = "0.2"
+autopilot = "0.4.0"
+tempfile = "3.27.0"
+hex = "0.4.3"
