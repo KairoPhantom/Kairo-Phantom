@@ -214,16 +214,29 @@ async fn ask(
         state.swarm_engine.route(&doc_ctx, &mode).await
     };
     
-    let final_prompt = if prompt.is_empty() { &req.prompt } else { &prompt };
-    let resp = target_backend.complete(&profile.system_directive, final_prompt).await
+    let final_prompt = if prompt.is_empty() { req.prompt.as_str() } else { prompt.as_str() };
+    
+    // Use a clear, helpful system directive for API callers
+    // (not the internal swarm directive which is designed for ghost-session GUI injection)
+    let api_system = format!(
+        "{} You are a helpful AI assistant. Answer the user's request directly and completely. \
+         Do not ask for clarification unless the request is genuinely ambiguous. \
+         Output only the requested content — no meta-commentary, no preamble.",
+        profile.system_directive
+    );
+    
+    let resp = target_backend.complete(&api_system, final_prompt).await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    
+    // Strip [REPLACE] prefix if present (artifact from WritingPipeline)
+    let clean_resp = resp.strip_prefix("[REPLACE]").unwrap_or(&resp).trim().to_string();
         
     let injector = state.injector.clone();
-    let text = resp.clone();
+    let text = clean_resp.clone();
     #[allow(clippy::let_underscore_future)]
     let _ = tokio::task::spawn_blocking(move || injector.type_text(&text));
     
-    Ok(Json(AskResponse { response: resp }))
+    Ok(Json(AskResponse { response: clean_resp }))
 }
 
 /// GET /app — MCP Tool: detect app
