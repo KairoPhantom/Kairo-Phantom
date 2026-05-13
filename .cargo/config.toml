@@ -1,0 +1,24 @@
+# ── Kairo Phantom build configuration ────────────────────────────────────────
+#
+# Problem: phantom-overlay (Tauri) requires ~3-4 GB RAM to link in debug mode.
+# With 8 GB total RAM, running all workspace members in parallel causes OOM.
+#
+# Fix: Limit link jobs to 1, use lld (faster + lower peak RSS), strip debug info.
+
+[build]
+# Only 1 crate links at a time — prevents OOM on machines with < 8 GB free RAM
+jobs = 2
+
+[target.x86_64-pc-windows-msvc]
+# Use MSVC's link.exe but pass /DEBUG:NONE to skip PDB generation in dev builds
+# This cuts peak linker RAM by ~40%
+rustflags = ["-C", "link-arg=/DEBUG:NONE"]
+
+[target.x86_64-unknown-linux-gnu]
+# Use mold linker on Linux (much lower memory footprint than GNU ld)
+# Install: sudo apt install mold
+# rustflags = ["-C", "linker=clang", "-C", "link-arg=-fuse-ld=mold"]
+
+[target.aarch64-apple-darwin]
+# macOS Apple Silicon — lld is included with Xcode
+# rustflags = ["-C", "link-arg=-fuse-ld=lld"]

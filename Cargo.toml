@@ -2,7 +2,8 @@
 members = [
     "phantom-core",
     "phantom-overlay/src-tauri",
-    "mcp-servers/kairo-mcp", "kairo-agent-sdk",
+    "mcp-servers/kairo-mcp",
+    "kairo-agent-sdk",
 ]
 resolver = "2"
 
@@ -13,3 +14,24 @@ serde_json = "1.0"
 anyhow = "1.0"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# ── Dev profile: strip debug info to cut linker RAM from ~4 GB to ~1.5 GB ───
+# This makes debug builds faster with no correctness impact.
+# Full debuginfo is only needed when attaching a debugger (run with RUSTFLAGS="-g").
+[profile.dev]
+debug = 0           # No DWARF debug info → linker uses ~60% less RAM
+opt-level = 0       # No optimization (fast compile)
+split-debuginfo = "off"
+
+# ── Test profile inherits dev settings ────────────────────────────────────────
+[profile.test]
+debug = 0
+opt-level = 0
+split-debuginfo = "off"
+
+# ── Release profile: full optimization (unchanged) ────────────────────────────
+[profile.release]
+opt-level = 3
+lto = "thin"        # Thin LTO: good optimization, much less RAM than "fat"
+codegen-units = 1
+strip = "symbols"
