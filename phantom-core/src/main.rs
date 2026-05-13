@@ -22,6 +22,24 @@ mod extractors;
 mod perf_engine;
 mod wgpu_effects;
 pub mod chaos;
+mod sentinel;
+mod persona;
+mod memory;
+mod guardrails;
+mod context7;
+mod command_protocol;
+mod pii_guard;
+mod response_validator;
+mod retry_policy;
+mod memory_store;
+mod verify;
+mod quality_gate;
+mod writing_pipeline;
+mod kami_export;
+mod context_optimizer;
+mod background_worker;
+mod aws_emulation;
+mod skills;
 use identity::IdentityManager;
 use wasm_sandbox::WasmPluginRegistry;
 
@@ -35,7 +53,6 @@ use anyhow::Result;
 use std::sync::Arc;
 use tokio::sync::mpsc;
 use tracing::{info, warn};
-use tracing_subscriber::EnvFilter;
 
 use api::ApiState;
 use config::PhantomConfig;
@@ -132,6 +149,19 @@ async fn async_main() -> Result<()> {
         return Ok(());
     }
 
+    // kairo verify
+    if args.len() >= 2 && args[1] == "verify" {
+        println!("🔍 Running Kairo Facts Verification...");
+        match crate::verify::FactsVerifier::verify_all() {
+            Ok(true) => std::process::exit(0),
+            Ok(false) => std::process::exit(1),
+            Err(e) => {
+                println!("❌ Error: {}", e);
+                std::process::exit(1);
+            }
+        }
+    }
+
     if args.iter().any(|a| a == "--init-config") {
         let _ = PhantomConfig::load_or_default()?;
         println!("✅ Generated default config at: {}", PhantomConfig::config_path().display());
@@ -197,6 +227,16 @@ async fn async_main() -> Result<()> {
     } else {
         None
     };
+    
+    // ── Production Modules: Memory, Context7, PII Guard ──────────────────────────
+    let mem_store = memory_store::MemoryStore::from_env();
+    let kairo_memory = mem_store.load();
+    let context7 = Arc::new(context7::Context7::new());
+    let pii_guard = pii_guard::PiiGuard::new();
+    info!("🧠 Memory loaded: {} preferences | 📚 Context7 ready | 🛡️ PII Guard active",
+        kairo_memory.preferences.len());
+    // Share memory store for session recording
+    let mem_store = Arc::new(std::sync::Mutex::new((mem_store, kairo_memory)));
     
     let mut swarm_engine_obj = swarm::SwarmOrchestrator::new(config.swarm.clone(), fallback_backend.clone());
     let injector = Arc::new(Injector::new(config.typing_delay_ms));
@@ -318,6 +358,12 @@ async fn async_main() -> Result<()> {
         api::start_api_server(api_state).await;
     });
 
+    // Phase 5: Start background document worker
+    let mem_store_for_worker = Arc::clone(&mem_store);
+    tokio::spawn(async move {
+        crate::background_worker::start_document_scanner(mem_store_for_worker).await;
+    });
+
     // Phase 3: Shared active session cancellation token
     // When the user presses Esc, we cancel the current token and create a new one next session.
     let active_cancel_token: Arc<std::sync::Mutex<Option<CancellationToken>>> =
@@ -330,7 +376,8 @@ async fn async_main() -> Result<()> {
             PhantomEvent::HotkeyPressed => {
                 info!("============= GHOST SESSION TRIGGERED =============");
 
-                // A. Clean up the 'm' typed during Alt+M
+                // A. Escape Ribbon and Clean up the 'm' typed during Alt+M
+                injector.escape_ribbon_mode();
                 injector.undo_ghost_char();
 
                 // B. Read Text via UIA
@@ -358,6 +405,7 @@ async fn async_main() -> Result<()> {
                 info!("🧠 App: {} | Prompt: {} chars", app_label, app_ctx.prompt_char_count);
 
                 // D. Build DocumentContext
+                println!("🔍 Reading document structure...");
                 let doc_ctx: DocumentContext = if let Some(ref file_path) = app_ctx.file_path {
                     extractor_registry
                         .extract(file_path, &app_ctx.prompt_text, app_ctx.active_slide)
@@ -380,11 +428,43 @@ async fn async_main() -> Result<()> {
                     doc_ctx.total_slides
                 );
 
-                // E. Swarm Brain Routing
-                let (target_backend, agent_profile) = swarm_engine.route(&doc_ctx).await;
+                // E. Swarm Brain Routing & Command Handling
+                println!("🧠 Initializing specialist swarm...");
+                let (command_mode, clean_prompt) = crate::command_protocol::CommandMode::from_prompt(&doc_ctx.prompt_text);
+                
+                // Handle System Commands Immediately
+                match command_mode {
+                    crate::command_protocol::CommandMode::Health => {
+                        let lock = mem_store.lock().unwrap();
+                        let (_, ref memory) = *lock;
+                        let report = format!(
+                            "🏥 Kairo Health Report\n- Preferences: {}\n- Interactions: {}\n- Patterns: {}\n- User Model (Word): {} entries\n- User Model (PPT): {} entries",
+                            memory.preferences.len(),
+                            memory.interactions.len(),
+                            memory.skill.reusable_patterns.len(),
+                            memory.user_model.word_preferences.len(),
+                            memory.user_model.ppt_preferences.len()
+                        );
+                        injector.erase_prompt(doc_ctx.prompt_char_count);
+                        injector.type_text(&report);
+                        continue;
+                    },
+                    crate::command_protocol::CommandMode::Kami => {
+                        let result = crate::kami_export::KamiExport::export_markdown(&doc_ctx.full_text, "kairo_export.md");
+                        injector.erase_prompt(doc_ctx.prompt_char_count);
+                        match result {
+                            Ok(_) => injector.type_text("✅ Document exported via Kami to kairo_export.md"),
+                            Err(e) => injector.type_text(&format!("❌ Kami export failed: {}", e)),
+                        }
+                        continue;
+                    },
+                    _ => {}
+                }
+
+                let (target_backend, agent_profile) = swarm_engine.route(&doc_ctx, &command_mode).await;
                 let _agent_id = agent_profile.agent_type.clone();
 
-                // Advancement 6: RBAC check — verify this agent is allowed on this document
+                // Advancement 6: RBAC check
                 let kairo_agent_id = &identity_manager.identity.agent_id;
                 let doc_path_str = doc_ctx.file_path.as_ref()
                     .map(|p| p.to_string_lossy().to_string())
@@ -393,10 +473,49 @@ async fn async_main() -> Result<()> {
                     warn!("⚠️  RBAC: agent '{}' denied access to '{}'", &kairo_agent_id[..8], doc_path_str);
                     continue;
                 }
-                let system_prompt = agent_profile.system_directive;
-                let prompt_text = doc_ctx.prompt_text.clone();
+                let mut system_prompt = agent_profile.system_directive;
+                let prompt_text = clean_prompt.clone();
                 let prompt_char_count = doc_ctx.prompt_char_count;
                 let _original_prompt = prompt_text.clone();
+
+                // Security: Wrap system prompt with Sentinel
+                let sentinel = crate::sentinel::SentinelSanitizer::new();
+                let guard = crate::guardrails::PromptGuard::new();
+                let response_validator = crate::response_validator::ResponseValidator::new();
+                
+                // PII guard
+                let (clean_prompt_for_llm, pii_was_redacted) = pii_guard.redact(&prompt_text);
+                if pii_was_redacted {
+                    warn!("🛡️  PII Guard: redacted PII from prompt before LLM call");
+                }
+                
+                // Injection guard
+                if guard.detect_injection(&clean_prompt_for_llm).is_injection {
+                    warn!("🔒 PromptGuard: Potential injection detected — blocking session");
+                    audit_logger.log_ghost_session(
+                        AuditEvent::GhostSessionBlocked,
+                        AuditOutcome::Blocked,
+                        &app_label,
+                        kairo_agent_id,
+                        &config.model.model_name.as_deref().unwrap_or("default"),
+                        prompt_char_count,
+                    );
+                    continue;
+                }
+                
+                // Context7
+                println!("📚 Grounding in Context7 documentation...");
+                let context7_hint = context7.fetch_ground_truth(&clean_prompt_for_llm).await;
+                let enriched_system = if let Some(ref docs) = context7_hint {
+                    info!("📚 Context7: injecting {} chars of ground-truth docs", docs.len());
+                    format!("{system_prompt}\n\n<context7_docs>\n{docs}\n</context7_docs>")
+                } else {
+                    system_prompt.clone()
+                };
+                system_prompt = sentinel.wrap_system_prompt(&enriched_system);
+
+                // Add Command Mode Hint
+                system_prompt = format!("{}\n\n{}", system_prompt, command_mode.system_hint());
 
                 // F. Phase 3: Create Ghost Session with CancellationToken
                 let confidence = ConfidenceBand::compute(
@@ -404,8 +523,9 @@ async fn async_main() -> Result<()> {
                     doc_ctx.doc_kind.human_name()
                 );
                 info!("👻 Ghost Session starting | Confidence: {}", confidence.label());
+                println!("✨ Generating response...");
 
-                // Phase 4: Audit log — session started (now with agent identity)
+                // Phase 4: Audit log — session started
                 let kairo_agent_id_for_log = identity_manager.identity.agent_id.clone();
                 audit_logger.log_ghost_session(
                     AuditEvent::GhostSessionStarted,
@@ -433,12 +553,41 @@ async fn async_main() -> Result<()> {
                 let prompt_clone = prompt_text.clone();
                 let cloud_fallback_clone = cloud_fallback.clone();
                 let child_token_clone = child_token.clone();
-
                 tokio::spawn(async move {
                     tokio::select! {
-                        result = target_backend.stream_complete(&system_prompt, &prompt_clone, token_tx.clone()) => {
+                        result = async {
+                            if command_mode == crate::command_protocol::CommandMode::None {
+                                target_backend.stream_complete(&system_prompt, &prompt_clone, token_tx.clone()).await
+                            } else {
+                                // For Waza skills, use the WritingPipeline
+                                match crate::writing_pipeline::WritingPipeline::execute(
+                                    &system_prompt,
+                                    &doc_ctx.full_text,
+                                    &prompt_clone,
+                                    |p: String| {
+                                        let backend = target_backend.clone();
+                                        let sys = system_prompt.clone();
+                                        async move {
+                                            let (tx, mut rx) = mpsc::channel(200);
+                                            let _ = backend.stream_complete(&sys, &p, tx).await;
+                                            let mut res = String::new();
+                                            while let Some(t) = rx.recv().await {
+                                                res.push_str(&t);
+                                            }
+                                            res
+                                        }
+                                    }
+                                ).await {
+                                    Ok(res) => {
+                                        let _ = token_tx.send(format!("[REPLACE]{}", res)).await;
+                                        Ok(())
+                                    },
+                                    Err(e) => Err(anyhow::anyhow!("Pipeline error: {}", e))
+                                }
+                            }
+                        } => {
                             if let Err(e) = result {
-                                warn!("🤖 Streaming error: {}", e);
+                                warn!("🤖 Pipeline/Streaming error: {}", e);
                                 if let Some(fallback) = cloud_fallback_clone {
                                     warn!("🔄 Cloud fallback...");
                                     let _ = fallback.stream_complete(&system_prompt, &prompt_clone, token_tx).await;
@@ -517,25 +666,67 @@ async fn async_main() -> Result<()> {
                     info!("📝 Ghost session complete: {} chars injected", full_response.len());
                 }
 
+                // I. Finalization & Audit
+                if !was_cancelled {
+                    // Layer 4: Validate response (hallucination / roleplay detection)
+                    let val_result = response_validator.validate(&prompt_text, &full_response);
+                    if !val_result.is_valid() {
+                        warn!("⚠️  [RESPONSE VALIDATOR] {}", val_result.reason());
+                        // Log but don't block — validator is advisory for now
+                    }
+
+                    // Sanitize the final response through sentinel
+                    let sanitized = sentinel.sanitize(&full_response);
+                    if sanitized == "[BLOCKED: SECURITY POLICY VIOLATION]" {
+                        warn!("❌ RESPONSE BLOCKED: Instruction leakage detected.");
+                        injector.type_text("\n[SECURITY ALERT: RESPONSE BLOCKED]");
+                        audit_logger.log_ghost_session(
+                            AuditEvent::GhostSessionBlocked,
+                            AuditOutcome::Blocked,
+                            &app_label,
+                            &kairo_agent_id_for_log,
+                            &config.model.model_name.as_deref().unwrap_or("default"),
+                            full_response.len(),
+                        );
+                    } else {
+                        info!("✅ Ghost session completed ({} chars injected)", full_response.len());
+                        
+                        // Record interaction in persistent memory (accepted = true)
+                        if let Ok(mut store_lock) = mem_store.lock() {
+                            let (ref store, ref mut memory) = *store_lock;
+                            store.record_interaction(
+                                memory,
+                                &app_label,
+                                &prompt_text,
+                                &full_response,
+                                true, // accepted
+                            );
+                        }
+                        
+                        audit_logger.log_ghost_session(
+                            AuditEvent::GhostSessionCompleted,
+                            AuditOutcome::Success,
+                            &app_label,
+                            &kairo_agent_id_for_log,
+                            &config.model.model_name.as_deref().unwrap_or("default"),
+                            full_response.len(),
+                        );
+                    }
+                } else {
+                    audit_logger.log_ghost_session(
+                        AuditEvent::GhostSessionCancelled,
+                        AuditOutcome::Aborted,
+                        &app_label,
+                        &kairo_agent_id_for_log,
+                        &config.model.model_name.as_deref().unwrap_or("default"),
+                        full_response.len(),
+                    );
+                }
+
                 // J. Sync to CRDT
                 if !full_response.is_empty() {
                     crdt_session.insert_ai_text(&full_response);
                 }
-
-                // K. Phase 4: Audit log outcome
-                let outcome = if was_cancelled {
-                    AuditOutcome::Cancelled
-                } else {
-                    AuditOutcome::Success
-                };
-                audit_logger.log_ghost_session(
-                    if was_cancelled { AuditEvent::GhostSessionCancelled } else { AuditEvent::GhostSessionAccepted },
-                    outcome,
-                    &app_label,
-                    "auto",
-                    &config.model.model_name.as_deref().unwrap_or("default"),
-                    full_response.len(),
-                );
             }
             PhantomEvent::UserTyping => {
                 info!("🛑 User typing — cancelling active ghost session");

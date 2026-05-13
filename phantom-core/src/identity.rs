@@ -337,6 +337,39 @@ impl IdentityManager {
     }
 }
 
+// ─── Tier 8: Enterprise OIDC & Cloud Sync ────────────────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OidcConfig {
+    pub issuer: String,
+    pub client_id: String,
+    pub authorized_domains: Vec<String>,
+}
+
+pub struct OidcClient {
+    pub config: OidcConfig,
+}
+
+impl OidcClient {
+    pub fn verify_token(&self, token: &str) -> bool {
+        info!("🔐 [Tier 8] Verifying OIDC token via issuer: {}", self.config.issuer);
+        // Mock verification logic
+        !token.is_empty() && token.starts_with("eyJ") 
+    }
+}
+
+pub struct CloudSyncManager {
+    pub surreal_endpoint: String,
+}
+
+impl CloudSyncManager {
+    pub async fn sync_to_cloud(&self, data: &str) -> Result<(), String> {
+        info!("☁️  [Tier 8] Syncing memory nexus to SurrealDB Cloud: {}", self.surreal_endpoint);
+        // Mock sync logic
+        Ok(())
+    }
+}
+
 // ─── Crypto Helpers ───────────────────────────────────────────────────────────
 
 fn sha256_hex(data: &[u8]) -> String {

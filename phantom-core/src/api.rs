@@ -21,6 +21,7 @@ use crate::context::ContextEngine;
 use crate::document_context::{DocumentContext, ExtractorRegistry};
 use crate::swarm::{SwarmOrchestrator, AgentType};
 use crate::platform::AccessibilityReader;
+use crate::command_protocol::CommandMode;
 
 pub const PORT: u16 = 7437;
 
@@ -183,6 +184,8 @@ async fn ask(
         lock.take() // Use it once and clear it
     };
     
+    let (mode, prompt) = CommandMode::from_prompt(&doc_ctx.prompt_text);
+    
     let (target_backend, profile) = if let Some(agent_name) = override_agent {
         let agent_type = match agent_name.to_lowercase().as_str() {
             "design" => AgentType::DesignAndMedia,
@@ -195,10 +198,11 @@ async fn ask(
         state.swarm_engine.get_backend_and_profile_by_type(&agent_type, &doc_ctx)
 
     } else {
-        state.swarm_engine.route(&doc_ctx).await
+        state.swarm_engine.route(&doc_ctx, &mode).await
     };
     
-    let resp = target_backend.complete(&profile.system_directive, &req.prompt).await
+    let final_prompt = if prompt.is_empty() { &req.prompt } else { &prompt };
+    let resp = target_backend.complete(&profile.system_directive, final_prompt).await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
         
     let injector = state.injector.clone();
@@ -299,6 +303,38 @@ async fn generate_image(
     }
 }
 
+/// POST /bedrock/invoke — Tier 8 AWS Emulation
+async fn aws_bedrock_invoke(
+    State(_state): State<ApiState>,
+    Json(req): Json<crate::aws_emulation::BedrockInvokeRequest>,
+) -> Json<crate::aws_emulation::BedrockInvokeResponse> {
+    Json(crate::aws_emulation::AwsEmulation::handle_invoke(req).await)
+}
+
+#[derive(Deserialize)]
+pub struct KamiExportRequest {
+    pub content: String,
+    pub format: String,
+    pub output_path: String,
+}
+
+async fn kami_export(
+    State(_state): State<ApiState>,
+    Json(req): Json<KamiExportRequest>,
+) -> (StatusCode, Json<()>) {
+    let res = match req.format.as_str() {
+        "markdown" => crate::kami_export::KamiExport::export_markdown(&req.content, &req.output_path),
+        "pdf" => crate::kami_export::KamiExport::export_pdf(&req.content, &req.output_path),
+        "reveal" => crate::kami_export::KamiExport::export_reveal_js(&req.content, &req.output_path),
+        _ => Err("Unsupported format".to_string()),
+    };
+
+    match res {
+        Ok(_) => (StatusCode::OK, Json(())),
+        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(())),
+    }
+}
+
 pub async fn start_api_server(state: ApiState) {
     let app = Router::new()
         .route("/health", get(health))
@@ -309,6 +345,8 @@ pub async fn start_api_server(state: ApiState) {
         .route("/app", get(get_app))
         .route("/agent", post(set_agent))
         .route("/generate_image", post(generate_image))
+        .route("/bedrock/invoke", post(aws_bedrock_invoke))
+        .route("/kami/export", post(kami_export))
         .with_state(state);
 
     let addr = format!("127.0.0.1:{}", PORT);

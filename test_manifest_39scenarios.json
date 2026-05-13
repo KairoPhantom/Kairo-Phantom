@@ -1,0 +1,124 @@
+{
+  "version": "2.0",
+  "totalScenarios": 39,
+  "agents": [
+    {
+      "agentId": "agent_word",
+      "application": "Word",
+      "executablePath": "c:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+      "orchestratorCmd": "python scripts/win/orchestrator_word.py",
+      "scenarios": [
+        {"id": "W1", "name": "BLANK PAGE: Write from scratch", "timeout": 30},
+        {"id": "W2", "name": "PRE-WRITTEN: Improve formatting and justification", "timeout": 30},
+        {"id": "W3", "name": "PRE-WRITTEN: Grammar, style, and tone correction", "timeout": 30},
+        {"id": "W4", "name": "TABLE MANIPULATION: Summarize table data", "timeout": 35},
+        {"id": "W5", "name": "TRACKED CHANGES: AI with revision tracking", "timeout": 30},
+        {"id": "W6", "name": "LARGE DOCUMENT: 40+ page section rewrite", "timeout": 45},
+        {"id": "W7", "name": "MULTI-STYLE: Mixed content preservation", "timeout": 35},
+        {"id": "W8", "name": "TONE SHIFT: Formal to conversational", "timeout": 30},
+        {"id": "W9", "name": "STRUCTURAL RESTRUCTURING: Reorder sections", "timeout": 35},
+        {"id": "W10", "name": "BROKEN FORMATTING REPAIR: Style corruption fix", "timeout": 30}
+      ]
+    },
+    {
+      "agentId": "agent_ppt",
+      "application": "PowerPoint",
+      "executablePath": "c:\\Program Files\\Microsoft Office\\root\\Office16\\POWERPNT.EXE",
+      "orchestratorCmd": "python scripts/win/orchestrator_ppt.py",
+      "scenarios": [
+        {"id": "P1", "name": "BLANK DECK: Create presentation from scratch", "timeout": 40},
+        {"id": "P2", "name": "EXISTING DECK: Improve visual design and consistency", "timeout": 35},
+        {"id": "P3", "name": "TEXT CONDENSING: Paragraph to bullet points", "timeout": 30},
+        {"id": "P4", "name": "IMAGE GENERATION: AI-generated slide imagery", "timeout": 50},
+        {"id": "P5", "name": "SPEAKER NOTES: Generate presentation talking points", "timeout": 40},
+        {"id": "P6", "name": "SLIDE RESTRUCTURING: Merge and reorder", "timeout": 35},
+        {"id": "P7", "name": "THEME APPLICATION: Apply consistent theme", "timeout": 30}
+      ]
+    },
+    {
+      "agentId": "agent_excel",
+      "application": "Excel",
+      "executablePath": "c:\\Program Files\\Microsoft Office\\root\\Office16\\EXCEL.EXE",
+      "orchestratorCmd": "python scripts/win/orchestrator_excel.py",
+      "scenarios": [
+        {"id": "E1", "name": "FORMULA DEBUG: Fix broken formulas", "timeout": 30},
+        {"id": "E2", "name": "DATA ANALYSIS: Generate insights from raw data", "timeout": 35},
+        {"id": "E3", "name": "CHART CREATION: AI-assisted visualization", "timeout": 35},
+        {"id": "E4", "name": "FORMULA GENERATION: Complex calculation assistance", "timeout": 30},
+        {"id": "E5", "name": "DATA CLEANING: Standardize inconsistent data", "timeout": 40}
+      ]
+    },
+    {
+      "agentId": "agent_vscode",
+      "application": "VS Code",
+      "executablePath": "c:\\Users\\SANDIP\\AppData\\Local\\Programs\\Microsoft VS Code\\code.exe",
+      "orchestratorCmd": "python scripts/win/orchestrator_vscode.py",
+      "scenarios": [
+        {"id": "V1", "name": "CODE GENERATION: From natural language comment", "timeout": 30},
+        {"id": "V2", "name": "CODE REFACTORING: Improve existing function", "timeout": 35},
+        {"id": "V3", "name": "BUG FIXING: Identify and fix issues", "timeout": 30},
+        {"id": "V4", "name": "MCP SERVER INTEGRATION: Kairo invoked via MCP", "timeout": 40},
+        {"id": "V5", "name": "MULTI-FILE CONTEXT: Project-wide understanding", "timeout": 35},
+        {"id": "V6", "name": "TEST GENERATION: Write unit tests", "timeout": 40}
+      ]
+    },
+    {
+      "agentId": "agent_browser",
+      "application": "Browser (Chrome/Google Docs)",
+      "executablePath": "c:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "orchestratorCmd": "node scripts/browser/orchestrator_browser.js",
+      "scenarios": [
+        {"id": "G1", "name": "YJS COLLABORATIVE PEER: AI joins as document collaborator", "timeout": 40},
+        {"id": "G2", "name": "AI AWARENESS VISIBILITY: Collaborators see AI status", "timeout": 35},
+        {"id": "G3", "name": "AI UNDO IN COLLABORATIVE CONTEXT: Single Ctrl+Z reverts", "timeout": 30},
+        {"id": "G4", "name": "CONCURRENT HUMAN + AI EDITING: No conflicts", "timeout": 45}
+      ]
+    },
+    {
+      "agentId": "agent_notepad",
+      "application": "Notepad",
+      "executablePath": "c:\\Windows\\System32\\notepad.exe",
+      "orchestratorCmd": "python scripts/win/orchestrator_notepad.py",
+      "scenarios": [
+        {"id": "N1", "name": "QUICK NOTE: Fast AI-assisted writing", "timeout": 25},
+        {"id": "N2", "name": "OFFLINE MODE: AI works without internet", "timeout": 30},
+        {"id": "N3", "name": "TEXT TRANSFORMATION: Encoding and format conversion", "timeout": 25}
+      ]
+    },
+    {
+      "agentId": "agent_terminal",
+      "application": "Windows Terminal / PowerShell",
+      "executablePath": "c:\\Windows\\System32\\WindowsTerminal.exe",
+      "orchestratorCmd": "python scripts/win/orchestrator_terminal.py",
+      "scenarios": [
+        {"id": "T1", "name": "COMMAND GENERATION: AI writes shell commands", "timeout": 25},
+        {"id": "T2", "name": "SCRIPT GENERATION: AI writes deployment scripts", "timeout": 35},
+        {"id": "T3", "name": "ERROR EXPLANATION: AI diagnoses command failures", "timeout": 30},
+        {"id": "T4", "name": "MULTI-STEP WORKFLOW: AI orchestrates complex operations", "timeout": 40}
+      ]
+    },
+    {
+      "agentId": "agent_chaos",
+      "application": "Background Chaos/Fault Injection",
+      "executablePath": "powershell.exe",
+      "orchestratorCmd": "powershell -File scripts/win/chaos_advanced.ps1",
+      "backgroundAgent": true,
+      "scenarios": [
+        {"id": "CHAOS", "name": "Continuous fault injection during all tests", "timeout": 0}
+      ]
+    }
+  ],
+  "globalSettings": {
+    "platform": "Windows",
+    "Kairo_daemon": "kairo --json-logs",
+    "kairo_daemon_port": 9000,
+    "test_fixtures_dir": "C:\\tests",
+    "test_logs_dir": "C:\\tests\\logs",
+    "test_screenshots_dir": "C:\\tests\\screenshots",
+    "parallel_agent_count": 8,
+    "gate_enforcement": true,
+    "screenshot_on_failure": true,
+    "max_retries_per_scenario": 3,
+    "timeout_buffer_seconds": 10
+  }
+}

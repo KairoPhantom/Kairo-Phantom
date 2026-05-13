@@ -6,24 +6,13 @@ const path = require('path');
 const PLATFORM = process.argv[2] || 'win'; // 'win', 'mac', 'lin'
 const TESTS = (process.argv[3] || 'all').split(',');
 
-function runScript(scriptPath) {
-  console.log(`[${PLATFORM}] Running: ${scriptPath}`);
+function runCommand(command) {
+  console.log(`[${PLATFORM}] Running: ${command}`);
   try {
-    execSync(`python ${scriptPath}`, { stdio: 'inherit' });
+    execSync(command, { stdio: 'inherit', shell: true });
     return true;
   } catch (e) {
-    console.error(`[${PLATFORM}] FAILED: ${scriptPath}`);
-    return false;
-  }
-}
-
-function runBrowserScript(scriptPath) {
-  console.log(`[${PLATFORM}] Running browser: ${scriptPath}`);
-  try {
-    execSync(`node ${scriptPath}`, { stdio: 'inherit' });
-    return true;
-  } catch (e) {
-    console.error(`[${PLATFORM}] FAILED: ${scriptPath}`);
+    console.error(`[${PLATFORM}] FAILED: ${command}`);
     return false;
   }
 }
@@ -32,12 +21,17 @@ function runBrowserScript(scriptPath) {
 const fixtureSetupPath = path.join(__dirname, 'tests', 'scripts', 'setup_fixtures.py');
 if (fs.existsSync(fixtureSetupPath)) {
     console.log(`[${PLATFORM}] Setting up fixtures...`);
-    runScript(fixtureSetupPath);
+    runCommand(`python ${fixtureSetupPath}`);
 }
+
+const manifestPath = path.join(__dirname, 'test_manifest.json');
+const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+const platformManifest = manifest[PLATFORM] || [];
+const manifestById = new Map(platformManifest.map((entry) => [entry.id.toLowerCase(), entry.cmd]));
 
 // Start chaos
 const chaosCmd = PLATFORM === 'win' 
-    ? 'powershell tests/scripts/win/chaos_advanced.ps1' 
+  ? 'powershell -File tests/scripts/win/chaos_advanced.ps1' 
     : `bash tests/scripts/${PLATFORM}/chaos_advanced.sh`;
 
 const chaos = spawn(chaosCmd, [], { shell: true, detached: true });
@@ -46,21 +40,22 @@ console.log(`[${PLATFORM}] Chaos monkey started.`);
 const BASE = `tests/scripts/${PLATFORM}`;
 const results = [];
 
-const testsToRun = TESTS[0] === 'all' ? ['t1', 't4'] : TESTS; // Default to currently implemented
+const testsToRun = TESTS[0] === 'all'
+  ? platformManifest.map((entry) => entry.id)
+  : TESTS;
 
 for (const testId of testsToRun) {
   let passed = false;
   const id = testId.trim().toLowerCase();
-  
-  if (id === 't1') {
-      const ext = PLATFORM === 'win' ? 'word' : PLATFORM === 'mac' ? 'pages' : 'lowriter';
-      passed = runScript(`${BASE}/t1_${ext}.py`);
-  } else if (id === 't4') {
-      passed = runBrowserScript('tests/scripts/browser/t4_yjs_google_docs.js');
-  } else {
-      console.log(`[${PLATFORM}] Test ${id} not yet implemented for physical runner.`);
+
+  const command = manifestById.get(id);
+  if (!command) {
+      console.log(`[${PLATFORM}] Test ${id} not present in ${manifestPath}.`);
+      results.push({ test: id, passed: false, skipped: true });
       continue;
   }
+
+  passed = runCommand(command);
   
   results.push({ test: id, passed });
 }

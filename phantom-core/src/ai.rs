@@ -6,7 +6,9 @@ use anyhow::{Context, Result};
 use reqwest::Client;
 use serde::Deserialize;
 use std::sync::Arc;
-use tracing::info;
+use tracing::{info, error};
+use crate::sentinel::SentinelSanitizer;
+use crate::guardrails::PromptGuard;
 
 use crate::config::ModelConfig;
 
@@ -62,35 +64,92 @@ pub trait AiBackend: Send + Sync {
     ) -> Result<()>;
 }
 
+// ─── Safe AI Wrapper ────────────────────────────────────────────────────────
+pub struct SafeAiBackend {
+    inner: Arc<dyn AiBackend>,
+}
+
+impl SafeAiBackend {
+    pub fn new(inner: Arc<dyn AiBackend>) -> Self {
+        Self { inner }
+    }
+}
+
+#[async_trait::async_trait]
+impl AiBackend for SafeAiBackend {
+    async fn complete(&self, system: &str, user: &str) -> Result<String> {
+        let guard = PromptGuard::new();
+        if guard.detect_injection(user).is_injection {
+            return Err(anyhow::anyhow!("Security violation: Potential prompt injection detected"));
+        }
+
+        let sanitizer = SentinelSanitizer::new();
+        let wrapped_system = sanitizer.wrap_system_prompt(system);
+        
+        let response = self.inner.complete(&wrapped_system, user).await?;
+        
+        if !sanitizer.scan_output(&response) {
+            error!("System prompt leakage detected in complete()!");
+            return Err(anyhow::anyhow!("Security violation: System prompt leaked"));
+        }
+
+        if !sanitizer.verify_response(user, &response).await {
+            error!("NLI verification failed for response!");
+            return Err(anyhow::anyhow!("Security violation: Response failed NLI verification"));
+        }
+        
+        Ok(response)
+    }
+
+    async fn stream_complete(
+        &self,
+        system: &str,
+        user: &str,
+        tx: tokio::sync::mpsc::Sender<String>,
+    ) -> Result<()> {
+        let guard = PromptGuard::new();
+        if guard.detect_injection(user).is_injection {
+            return Err(anyhow::anyhow!("Security violation: Potential prompt injection detected"));
+        }
+
+        let sanitizer = SentinelSanitizer::new();
+        let wrapped_system = sanitizer.wrap_system_prompt(system);
+        
+        self.inner.stream_complete(&wrapped_system, user, tx).await
+    }
+}
+
 pub fn build_backend(config: &ModelConfig) -> Result<Arc<dyn AiBackend>> {
-    match config.provider.as_str() {
-        "ollama" => Ok(Arc::new(OllamaBackend::new(
+    let inner: Arc<dyn AiBackend> = match config.provider.as_str() {
+        "ollama" => Arc::new(OllamaBackend::new(
             config.base_url.clone().unwrap_or_else(|| "http://localhost:11434".into()),
             config.model_name.clone().unwrap_or_else(|| "llama3".into()),
-        ))),
-        "openai" => Ok(Arc::new(OpenAiBackend::new(
+        )),
+        "openai" => Arc::new(OpenAiBackend::new(
             config.api_key.clone().unwrap_or_default(),
             config.model_name.clone().unwrap_or_else(|| "gpt-4o".into()),
             config.base_url.clone().unwrap_or_else(|| "https://api.openai.com/v1/chat/completions".into()),
-        ))),
-        "nim" => Ok(Arc::new(OpenAiBackend::new(
+        )),
+        "nim" => Arc::new(OpenAiBackend::new(
             config.api_key.clone().unwrap_or_default(),
             config.model_name.clone().unwrap_or_else(|| "meta/llama-3.1-70b-instruct".into()),
             config.base_url.clone().unwrap_or_else(|| "https://integrate.api.nvidia.com/v1/chat/completions".into()),
-        ))),
-        "anthropic" => Ok(Arc::new(AnthropicBackend::new(
+        )),
+        "anthropic" => Arc::new(AnthropicBackend::new(
             config.api_key.clone().unwrap_or_default(),
             config.model_name.clone().unwrap_or_else(|| "claude-3-5-sonnet-20241022".into()),
-        ))),
-        "gemini" => Ok(Arc::new(GeminiBackend::new(
+        )),
+        "gemini" => Arc::new(GeminiBackend::new(
             config.api_key.clone().unwrap_or_default(),
             config.model_name.clone().unwrap_or_else(|| "gemini-1.5-pro".into()),
-        ))),
+        )),
         unknown => anyhow::bail!(
             "Unknown AI provider: '{}'. Supported: ollama, openai, nim, anthropic, gemini",
             unknown
         ),
-    }
+    };
+
+    Ok(Arc::new(SafeAiBackend::new(inner)))
 }
 
 // ─── OpenAI / NIM ────────────────────────────────────────────────────────────

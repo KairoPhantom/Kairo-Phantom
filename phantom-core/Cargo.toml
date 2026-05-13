@@ -41,6 +41,15 @@ toml = "0.8"
 anyhow = "1.0"
 thiserror = "1.0"
 
+# UUID for sentinels
+uuid = { version = "1.10", features = ["v4"] }
+
+# Document Intelligence (Step 2)
+# Note: kreuzberg is currently a git dependency as per roadmap
+# kreuzberg = { git = "https://github.com/kreuzberg-dev/kreuzberg", features = ["rust-bindings"] }
+text-splitter = "0.18"
+unicode-normalization = "0.1"
+
 # Logging
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
@@ -92,6 +101,8 @@ rand = "0.8"
 
 # C1: WGPU native GPU rendering — replaces Node.js/Puppeteer (10-100x faster)
 wgpu = { version = "22", features = ["vulkan-portability"] }
+regex = "1.12.3"
+rusqlite = { version = "0.39.0", features = ["bundled"] }
 
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.58", features = [

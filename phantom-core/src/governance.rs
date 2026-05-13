@@ -39,6 +39,8 @@ pub enum AuditEvent {
     GhostSessionAccepted,
     GhostSessionRejected,
     GhostSessionCancelled,
+    GhostSessionCompleted,
+    GhostSessionBlocked,
     GhostSessionCorrected,
     ImageGenerated,
     McpToolCalled { tool_name: String },
@@ -53,6 +55,8 @@ pub enum AuditOutcome {
     Success,
     Rejected,
     Cancelled,
+    Aborted,
+    Blocked,
     Error { message: String },
     Pending,
 }

@@ -9,7 +9,7 @@ use tokio::sync::Mutex;
 use yrs::{Doc, GetString, Options, Text, Transact, WriteTxn, ReadTxn};
 use yrs::updates::decoder::Decode;
 use serde::{Deserialize, Serialize};
-use tracing::{debug, info, warn};
+use tracing::{debug, info};
 use std::time::{Duration, Instant};
 
 // ─── Awareness State ──────────────────────────────────────────────────────────

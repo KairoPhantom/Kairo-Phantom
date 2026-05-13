@@ -22,6 +22,25 @@ pub mod extractors;
 pub mod perf_engine;
 pub mod wgpu_effects;
 pub mod chaos;
+pub mod sentinel;
+pub mod persona;
+pub mod memory;
+pub mod guardrails;
+pub mod context7;
+pub mod command_protocol;
+pub mod pii_guard;
+pub mod response_validator;
+pub mod retry_policy;
+pub mod memory_store;
+pub mod quality_gate;
+pub mod writing_pipeline;
+pub mod verify;
+pub mod kami_export;
+pub mod context_optimizer;
+pub mod background_worker;
+pub mod aws_emulation;
+pub mod skills;
+
 
 /// Message bus between all threads
 #[derive(Debug, Clone)]

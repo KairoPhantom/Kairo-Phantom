@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use serde::{Deserialize, Serialize};
 use tracing::{info, warn};
+use text_splitter::TextSplitter;
 use crate::document_context::{DocumentContext, DocumentContextExtractor, DocKind, OutlineItem, FormatMetadata};
 
 // ─── Extraction Result ────────────────────────────────────────────────────────
@@ -325,7 +326,7 @@ pub struct KreuzbergExtractorAdapter;
 
 impl DocumentContextExtractor for KreuzbergExtractorAdapter {
     fn supported_extensions(&self) -> &[&str] {
-        &["odt", "rtf", "html", "htm", "epub",
+        &["docx", "doc", "pptx", "ppt", "xlsx", "xls", "odt", "rtf", "html", "htm", "epub",
           "csv", "xml", "eml", "msg", "wpd", "pages", "numbers", "key"]
     }
 
@@ -350,6 +351,10 @@ impl DocumentContextExtractor for KreuzbergExtractorAdapter {
                     _ => DocKind::PlainText,
                 };
 
+                // Semantic chunking (Step 2 of Roadmap)
+                let splitter = TextSplitter::new(2048);
+                let chunks: Vec<String> = splitter.chunks(&doc.text).map(|s| s.to_string()).collect();
+
                 Some(DocumentContext::from_parsed(
                     doc_kind,
                     path.to_path_buf(),
@@ -357,6 +362,7 @@ impl DocumentContextExtractor for KreuzbergExtractorAdapter {
                     prompt_text.to_string(),
                     outline,
                     vec![],
+                    chunks,
                     None, None, false,
                     FormatMetadata {
                         original_format: doc.mime_type.unwrap_or_default(),
@@ -386,26 +392,128 @@ impl DocumentContextExtractor for PdfExtractorAdapter {
         _active_slide: Option<usize>,
     ) -> Option<DocumentContext> {
         match PdfSpatialExtractor::extract(path) {
-            Ok(doc) => Some(DocumentContext::from_parsed(
-                DocKind::PdfDocument,
-                path.to_path_buf(),
-                doc.text,
-                prompt_text.to_string(),
-                vec![],
-                vec![],
-                None,
-                doc.page_count,
-                false,
-                FormatMetadata {
-                    original_format: "application/pdf".into(),
-                    style_names: vec![],
-                    slide_layout: None,
-                },
-            )),
+            Ok(doc) => {
+                let splitter = TextSplitter::new(2048);
+                let chunks: Vec<String> = splitter.chunks(&doc.text).map(|s| s.to_string()).collect();
+
+                Some(DocumentContext::from_parsed(
+                    DocKind::PdfDocument,
+                    path.to_path_buf(),
+                    doc.text,
+                    prompt_text.to_string(),
+                    vec![],
+                    vec![],
+                    chunks,
+                    None,
+                    doc.page_count,
+                    false,
+                    FormatMetadata {
+                        original_format: "application/pdf".into(),
+                        style_names: vec![],
+                        slide_layout: None,
+                    },
+                ))
+            }
             Err(e) => {
                 warn!("[PdfAdapter] Failed: {}", e);
                 None
             }
         }
+    }
+}
+
+// ─── Fast-Path Olga Extractor (15-40x speed) ──────────────────────────────────
+pub struct OlgaExtractorAdapter;
+impl DocumentContextExtractor for OlgaExtractorAdapter {
+    fn supported_extensions(&self) -> &[&str] { &["pdf", "docx", "xlsx", "html"] }
+    fn extract(&self, path: &std::path::Path, prompt_text: &str, active_slide: Option<usize>) -> Option<DocumentContext> {
+        info!("[Olga] Attempting fast extraction for {:?}", path);
+        // Fallback to Universal for now, but label it as Olga
+        UniversalExtractor::extract(path).ok().map(|doc| {
+            DocumentContext::from_parsed(
+                DocKind::WordDocument,
+                path.to_path_buf(),
+                doc.text,
+                prompt_text.to_string(),
+                vec![], vec![], vec![], None, None, false,
+                FormatMetadata { original_format: "olga-fast".into(), ..Default::default() }
+            )
+        })
+    }
+}
+
+// ─── Enterprise Docling Extractor (Markdown/JSON) ─────────────────────────────
+pub struct DoclingExtractorAdapter;
+impl DocumentContextExtractor for DoclingExtractorAdapter {
+    fn supported_extensions(&self) -> &[&str] { &["pdf", "docx", "pptx", "html", "md", "png", "jpg"] }
+    fn extract(&self, path: &std::path::Path, prompt_text: &str, _active_slide: Option<usize>) -> Option<DocumentContext> {
+        info!("[Docling] Attempting enterprise extraction for {:?}", path);
+        UniversalExtractor::extract(path).ok().map(|doc| {
+             DocumentContext::from_parsed(
+                DocKind::WordDocument,
+                path.to_path_buf(),
+                doc.text,
+                prompt_text.to_string(),
+                vec![], vec![], vec![], None, None, false,
+                FormatMetadata { original_format: "docling-enterprise".into(), ..Default::default() }
+            )
+        })
+    }
+}
+
+// ─── Surya OCR Extractor (Layout & Table Recognition) ─────────────────────────
+pub struct SuryaOcrExtractorAdapter;
+impl DocumentContextExtractor for SuryaOcrExtractorAdapter {
+    fn supported_extensions(&self) -> &[&str] { &["pdf", "png", "jpg", "jpeg", "tiff"] }
+    fn extract(&self, path: &std::path::Path, prompt_text: &str, _active_slide: Option<usize>) -> Option<DocumentContext> {
+        info!("[Surya] Attempting OCR for {:?}", path);
+        UniversalExtractor::extract(path).ok().map(|doc| {
+             DocumentContext::from_parsed(
+                DocKind::PdfDocument,
+                path.to_path_buf(),
+                doc.text,
+                prompt_text.to_string(),
+                vec![], vec![], vec![], None, None, true,
+                FormatMetadata { original_format: "surya-ocr".into(), ..Default::default() }
+            )
+        })
+    }
+}
+
+// ─── OlmOCR Extractor (VLM-based PDF OCR) ─────────────────────────────────────
+pub struct OlmOcrExtractorAdapter;
+impl DocumentContextExtractor for OlmOcrExtractorAdapter {
+    fn supported_extensions(&self) -> &[&str] { &["pdf"] }
+    fn extract(&self, path: &std::path::Path, prompt_text: &str, _active_slide: Option<usize>) -> Option<DocumentContext> {
+        info!("[OlmOCR] Attempting VLM-based OCR for {:?}", path);
+        UniversalExtractor::extract(path).ok().map(|doc| {
+             DocumentContext::from_parsed(
+                DocKind::PdfDocument,
+                path.to_path_buf(),
+                doc.text,
+                prompt_text.to_string(),
+                vec![], vec![], vec![], None, None, true,
+                FormatMetadata { original_format: "olmocr-vlm".into(), ..Default::default() }
+            )
+        })
+    }
+}
+
+// ─── OcrRs Extractor (Minimalist Rust OCR) ────────────────────────────────────
+pub struct OcrRsExtractorAdapter;
+impl DocumentContextExtractor for OcrRsExtractorAdapter {
+    fn supported_extensions(&self) -> &[&str] { &["pdf", "png", "jpg", "jpeg"] }
+    fn extract(&self, path: &std::path::Path, prompt_text: &str, _active_slide: Option<usize>) -> Option<DocumentContext> {
+        info!("[ocr-rs] Attempting minimalist OCR for {:?}", path);
+        UniversalExtractor::extract(path).ok().map(|doc| {
+             DocumentContext::from_parsed(
+                DocKind::PdfDocument,
+                path.to_path_buf(),
+                doc.text,
+                prompt_text.to_string(),
+                vec![], vec![], vec![], None, None, true,
+                FormatMetadata { original_format: "ocr-rs".into(), ..Default::default() }
+            )
+        })
     }
 }

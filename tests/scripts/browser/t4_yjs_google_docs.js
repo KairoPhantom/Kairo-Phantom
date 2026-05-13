@@ -1,5 +1,4 @@
-const { AgentBrowser } = require('agent-browser'); // Updated to modern import pattern if available, or just use playwright direct if agent-browser fails.
-// Note: Since agent-browser is a local clone, we will use Playwright directly as a robust fallback for the Yjs test to ensure execution.
+// Using Playwright directly for the Yjs test to ensure execution
 const { chromium } = require('playwright');
 
 (async () => {

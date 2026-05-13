@@ -149,6 +149,19 @@ impl Injector {
         self.backspace_n(1);
     }
 
+    /// Exits Microsoft Office ribbon mode, because pressing Alt triggers the ribbon.
+    pub fn escape_ribbon_mode(&self) {
+        let mut enigo = match Enigo::new(&Settings::default()) {
+            Ok(e) => e,
+            Err(_) => return,
+        };
+        // Press Esc twice to ensure any ribbon/menu is fully dismissed
+        let _ = enigo.key(Key::Escape, Direction::Click);
+        std::thread::sleep(Duration::from_millis(30));
+        let _ = enigo.key(Key::Escape, Direction::Click);
+        std::thread::sleep(Duration::from_millis(50));
+    }
+
     /// Write text to the Windows clipboard using Unicode format.
     #[cfg(windows)]
     pub fn write_to_clipboard(&self, text: &str) -> Result<()> {

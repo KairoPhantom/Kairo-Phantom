@@ -1,0 +1,53 @@
+// phantom-core/src/swarm/content.rs
+use crate::document_context::DocumentContext;
+use crate::plugin::SwarmAgent;
+
+pub struct ContentAgent;
+impl SwarmAgent for ContentAgent {
+    fn id(&self) -> &str { "content" }
+    fn name(&self) -> &str { "Content & All-Rounder Specialist" }
+    fn build_system_prompt(&self, doc_ctx: &DocumentContext) -> String {
+        let base = crate::ai::KAIRO_SYSTEM_PROMPT;
+        let doc_fragment = doc_ctx.to_system_prompt_fragment();
+        format!(
+            "{}\n\n[DOCUMENT CONTEXT]\n{}\n\n<SWARM_ROLE>\n\
+            ROLE: Content & All-Rounder Specialist\n\
+            OBJECTIVE: Perfect formatting. Rich structure. Professional tone.\n\
+            CONSTRAINTS: Adapt voice to document context. If continuing a list, maintain sequential numbering (1, 2, 3). No repetition. No hallucinations. Keep output crisp, concise, and logically justified.\n\
+            </SWARM_ROLE>\n\n\
+            \n## OFFICE AUTOMATION PIPELINE (OfficeCLI & MCP-MS-OFFICE)\n\
+            To programmatically create or edit Word/PPT/Excel files directly without user intervention, output the command `[MCP:officecli:execute:<json_payload>]`.\n\
+            To utilize the email document creation bridge for EML generation, output `[MCP:ms-office:create:eml:<json_payload>]`.\n\
+            This single-binary CLI handles all document manipulations. Do not use legacy COM hooks.\n\n\
+            COMMAND: Execute the user request within the defined context. START with [REPLACE] if applicable. OUTPUT ONLY THE CONTENT.", 
+            base, doc_fragment
+        )
+    }
+    fn match_score(&self, _doc_ctx: &DocumentContext) -> u8 { 10 } // Default fallback score
+}
+
+pub struct StudentTutorAgent;
+impl SwarmAgent for StudentTutorAgent {
+    fn id(&self) -> &str { "student" }
+    fn name(&self) -> &str { "Student & Beginner Tutor" }
+    fn build_system_prompt(&self, doc_ctx: &DocumentContext) -> String {
+        let base = crate::ai::KAIRO_SYSTEM_PROMPT;
+        let doc_fragment = doc_ctx.to_system_prompt_fragment();
+        format!(
+            "{}\n\n[DOCUMENT CONTEXT]\n{}\n\n<SWARM_ROLE>\n\
+            ROLE: Student & Beginner Tutor\n\
+            OBJECTIVE: Write accessibly, explain concepts, and adapt to learners.\n\
+            CONSTRAINTS: Define jargon. Use analogies. Structure essays with clear intro/body/conclusion. Never be condescending.\n\
+            </SWARM_ROLE>\n\n\
+            COMMAND: Execute the user request within the defined context. START with [REPLACE] if applicable. OUTPUT ONLY THE CONTENT.", 
+            base, doc_fragment
+        )
+    }
+    fn match_score(&self, doc_ctx: &DocumentContext) -> u8 {
+        let p = doc_ctx.prompt_text.to_lowercase();
+        if p.contains("explain") || p.contains("what is") || p.contains("how does")
+            || p.contains("essay") || p.contains("assignment") || p.contains("homework")
+            || p.contains("study") || p.contains("understand") { 85 }
+        else { 5 }
+    }
+}

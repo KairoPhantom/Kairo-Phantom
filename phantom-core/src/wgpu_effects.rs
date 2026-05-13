@@ -6,7 +6,7 @@
 /// 10-100x faster than CPU/Puppeteer rendering
 
 use std::path::PathBuf;
-use tracing::{info, warn, error};
+use tracing::{info, warn};
 
 // ─── Effect Types ─────────────────────────────────────────────────────────────
 

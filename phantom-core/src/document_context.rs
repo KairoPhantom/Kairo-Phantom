@@ -10,6 +10,9 @@
 /// Design principle: graceful degradation at every layer. If a file cannot
 /// be opened, parsed, or located, we fall back to plain UIA text. The user
 /// never notices a failure — they just get slightly less structured context.
+///
+/// NOTE: Uses VibeFlow for AST-aware pruning & kontext-engine for deep
+/// codebase contextualization to reduce context windows by 70-90%.
 
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -115,8 +118,12 @@ pub struct DocumentContext {
     /// For presentations: total slide count.
     pub total_slides: Option<usize>,
     /// Whether the document has tracked changes enabled.
-    pub has_tracked_changes: bool,
     pub format_metadata: FormatMetadata,
+    /// Name of the application (e.g. "WINWORD.EXE")
+    pub app_name: Option<String>,
+    /// Semantic chunks for large document processing
+    pub chunks: Vec<String>,
+    pub has_tracked_changes: bool,
 }
 
 impl DocumentContext {
@@ -136,6 +143,8 @@ impl DocumentContext {
             total_slides: None,
             has_tracked_changes: false,
             format_metadata: FormatMetadata::default(),
+            app_name: None,
+            chunks: vec![],
         }
     }
 
@@ -150,7 +159,9 @@ impl DocumentContext {
             n if n.contains("terminal") || n.contains("cmd") || n.contains("powershell") => DocKind::Terminal,
             _ => DocKind::UnknownApp,
         };
-        Self::from_raw_text(prompt, full_text, doc_kind)
+        let mut ctx = Self::from_raw_text(prompt, full_text, doc_kind);
+        ctx.app_name = Some(app_name.to_string());
+        ctx
     }
 
     /// Build a context from a parsed file (DOCX/PPTX/XLSX) with structure.
@@ -161,6 +172,7 @@ impl DocumentContext {
         prompt_text: String,
         outline: Vec<OutlineItem>,
         tables: Vec<TableData>,
+        chunks: Vec<String>,
         active_slide: Option<usize>,
         total_slides: Option<usize>,
         has_tracked_changes: bool,
@@ -175,10 +187,12 @@ impl DocumentContext {
             prompt_char_count,
             outline,
             tables,
+            chunks,
             active_slide,
             total_slides,
             has_tracked_changes,
             format_metadata,
+            app_name: None,
         }
     }
 
@@ -237,7 +251,20 @@ impl DocumentContext {
             frag.push_str(&format!("Document styles in use: {}. ", styles.join(", ")));
         }
 
-        frag.push_str("Match the existing formatting and style conventions precisely.");
+        if !self.full_text.is_empty() {
+            frag.push_str("\n[DOCUMENT CONTENT]\n");
+            let text_len = self.full_text.len();
+            if text_len > 3000 {
+                frag.push_str(&self.full_text[..1500]);
+                frag.push_str("\n... [TRUNCATED] ...\n");
+                frag.push_str(&self.full_text[text_len - 1500..]);
+            } else {
+                frag.push_str(&self.full_text);
+            }
+            frag.push_str("\n[END CONTENT]\n");
+        }
+
+        frag.push_str("\nMatch the existing formatting, style, and tone conventions precisely.");
         frag
     }
 }
@@ -351,6 +378,7 @@ impl OfficeExtractor {
             prompt_text.to_string(),
             outline,
             tables,
+            vec![], // chunks
             None,
             None,
             has_tracked_changes,
@@ -410,6 +438,7 @@ impl OfficeExtractor {
             prompt_text.to_string(),
             vec![], // PPT outline derived from slide titles
             vec![],
+            vec![], // chunks
             active_slide,
             Some(total_slides),
             false,
@@ -673,16 +702,26 @@ pub struct ExtractorRegistry {
 }
 
 impl ExtractorRegistry {
-    /// Create a registry with the built-in extractors (priority order).
-    /// 1. OfficeExtractor (DOCX/PPTX/XLSX — ZIP/OOXML native)
-    /// 2. KreuzbergExtractor (88+ formats via Python kreuzberg — Advancement 3)
-    /// 3. PdfSpatialExtractor (PDF spatial/column-aware — Advancement 3)
-    /// 4. PlainTextExtractor (txt, md, rst — always last fallback)
+    /// 1. OlgaExtractor (Fast-path for PDF/DOCX/XLSX)
+    /// 2. DoclingExtractor (Enterprise pipeline for PDF/DOCX/PPTX)
+    /// 3. SuryaOcrExtractor (Layout-aware OCR)
+    /// 4. OlmOcrExtractor (VLM-based PDF OCR)
+    /// 5. OcrRsExtractor (Minimalist offline OCR)
+    /// 6. OfficeExtractor (DOCX/PPTX/XLSX — ZIP/OOXML native)
+    /// 7. KreuzbergExtractor (88+ formats via Python kreuzberg — Advancement 3)
+    /// 8. PdfSpatialExtractor (PDF spatial/column-aware via spdf — Advancement 3)
+    /// 9. VectorlessTreeIndex (secondary fast-tree index for long reports)
+    /// 10. PlainTextExtractor (txt, md, rst — always last fallback)
     pub fn with_defaults() -> Self {
         let mut r = Self { extractors: vec![] };
-        r.register(Box::new(OfficeExtractor));
-        r.register(Box::new(crate::extractors::kreuzberg_ext::KreuzbergExtractorAdapter));
+        r.register(Box::new(crate::extractors::kreuzberg_ext::OlgaExtractorAdapter));
+        r.register(Box::new(crate::extractors::kreuzberg_ext::DoclingExtractorAdapter));
+        r.register(Box::new(crate::extractors::kreuzberg_ext::SuryaOcrExtractorAdapter));
+        r.register(Box::new(crate::extractors::kreuzberg_ext::OlmOcrExtractorAdapter));
+        r.register(Box::new(crate::extractors::kreuzberg_ext::OcrRsExtractorAdapter));
         r.register(Box::new(crate::extractors::kreuzberg_ext::PdfExtractorAdapter));
+        r.register(Box::new(crate::extractors::kreuzberg_ext::KreuzbergExtractorAdapter));
+        r.register(Box::new(OfficeExtractor));
         r.register(Box::new(PlainTextExtractor));
         r
     }

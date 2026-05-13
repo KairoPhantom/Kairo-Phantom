@@ -24,6 +24,7 @@
   "homepage": "https://github.com/Kartik24Hulmukh/Kairo#readme",
   "dependencies": {
     "agent-browser": "file:../agent-browser/agent-browser",
+    "agentation": "^3.0.2",
     "playwright": "^1.59.1"
   }
 }
