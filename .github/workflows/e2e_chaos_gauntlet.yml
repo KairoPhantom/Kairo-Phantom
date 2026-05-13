@@ -1,6 +1,6 @@
-name: Kairo Phantom — 76-Scenario Full Gauntlet
+name: Kairo Phantom - 76-Scenario Full Gauntlet
 
-# ── Triggers ────────────────────────────────────────────────────────────────
+# Triggers
 on:
   push:
     branches: ["master", "main"]
@@ -17,23 +17,20 @@ on:
         required: false
         default: '3'
 
-# ── Permissions ──────────────────────────────────────────────────────────────
 permissions:
   contents: read
   checks: write
 
-# ── Global env ───────────────────────────────────────────────────────────────
 env:
   MANIFEST: roadmaptoshow/output/kairo_gauntlet_graph.json
-  RESULTS_DIR: C:\tests\results
   KAIRO_LOG_LEVEL: info
 
 jobs:
-  # ═══════════════════════════════════════════════════════════════════════════
-  # GATE 1 — Rust unit + integration tests (must pass before any GUI agent)
-  # ═══════════════════════════════════════════════════════════════════════════
+  # ===================================================================
+  # GATE 1 - Rust unit + integration tests
+  # ===================================================================
   rust_gate:
-    name: "Gate 1 — Rust Tests (0 failures required)"
+    name: "Gate 1 - Rust Tests"
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -61,7 +58,9 @@ jobs:
         env:
           RUST_LOG: warn
 
-      - name: Run memory benchmark (score must be ≥ 0.95)
+      - name: Run memory benchmark
+        shell: pwsh
+        working-directory: phantom-core
         run: |
           $output = cargo run --release --bin memory_benchmark 2>&1 | Out-String
           Write-Host $output
@@ -73,18 +72,16 @@ jobs:
               exit 1
             }
           }
-        working-directory: phantom-core
-        shell: pwsh
 
-      - name: Strict Clippy (zero warnings)
+      - name: Strict Clippy
         run: cargo clippy --all-targets -- -D warnings
         working-directory: phantom-core
 
-  # ═══════════════════════════════════════════════════════════════════════════
-  # GATE 2 — Generate test fixtures (shared by all GUI agents)
-  # ═══════════════════════════════════════════════════════════════════════════
+  # ===================================================================
+  # GATE 2 - Generate test fixtures (shared artifact)
+  # ===================================================================
   setup_fixtures:
-    name: "Gate 2 — Generate Test Fixtures"
+    name: "Gate 2 - Generate Test Fixtures"
     runs-on: windows-latest
     needs: rust_gate
     steps:
@@ -99,8 +96,8 @@ jobs:
         run: pip install python-docx openpyxl pyautogui pywinauto playwright requests
 
       - name: Generate all test fixtures
-        run: python scripts/setup_fixtures.py
         shell: pwsh
+        run: python scripts/setup_fixtures.py
 
       - name: Upload fixtures as artifact
         uses: actions/upload-artifact@v4
@@ -109,94 +106,100 @@ jobs:
           path: C:\tests\
           retention-days: 1
 
-  # ═══════════════════════════════════════════════════════════════════════════
-  # GATE 3 — 12 parallel GUI agents (sharded matrix)
-  # Zero local RAM consumed. Each runner gets 16 GB + full Windows desktop.
-  # ═══════════════════════════════════════════════════════════════════════════
+  # ===================================================================
+  # GATE 3 - 12 parallel GUI agents (sharded matrix)
+  # FIX: removed job-level `if` that referenced matrix context —
+  #      use a shell-level filter inside the step instead.
+  # ===================================================================
   gui_gauntlet:
-    name: "Agent ${{ matrix.agent }} — ${{ matrix.scenarios }}"
+    name: "Agent ${{ matrix.agent }}"
     runs-on: windows-latest
     needs: setup_fixtures
-    if: ${{ github.event.inputs.agent_filter == '' || github.event.inputs.agent_filter == matrix.agent }}
-
     strategy:
-      fail-fast: false          # All agents run even if one fails
-      max-parallel: 12          # All 12 agents run simultaneously
+      fail-fast: false
+      max-parallel: 12
       matrix:
         include:
           - agent: agent_word
             scenarios: "W1,W2,W3,W4,W5,W6,W7,W8,W9,W10"
             app: "Microsoft Word"
-            scenario_count: 10
           - agent: agent_ppt
             scenarios: "P1,P2,P3,P4,P5,P6,P7"
             app: "Microsoft PowerPoint"
-            scenario_count: 7
           - agent: agent_excel
             scenarios: "E1,E2,E3,E4,E5,E6,E7"
             app: "Microsoft Excel"
-            scenario_count: 7
           - agent: agent_browser
             scenarios: "G1,G2,G3,G4,G5,G6"
             app: "Google Chrome"
-            scenario_count: 6
           - agent: agent_vscode
             scenarios: "V1,V2,V3,V4,V5,V6"
             app: "Visual Studio Code"
-            scenario_count: 6
           - agent: agent_terminal
             scenarios: "T1,T2,T3,T4,T5"
             app: "Windows Terminal"
-            scenario_count: 5
           - agent: agent_notepad
             scenarios: "N1,N2,N3,N4"
             app: "Windows Notepad"
-            scenario_count: 4
           - agent: agent_obsidian
             scenarios: "O1,O2,O3,O4,O5"
             app: "Obsidian"
-            scenario_count: 5
           - agent: agent_notion
             scenarios: "NO1,NO2,NO3,NO4"
             app: "Notion"
-            scenario_count: 4
           - agent: agent_figma
             scenarios: "F1,F2,F3,F4,F5"
             app: "Figma Desktop"
-            scenario_count: 5
           - agent: agent_slack
             scenarios: "S1,S2,S3,S4,S5"
             app: "Slack Desktop"
-            scenario_count: 5
           - agent: agent_pdf
             scenarios: "PDF1,PDF2,PDF3,PDF4,PDF5"
             app: "PDF Reader"
-            scenario_count: 5
 
     steps:
       - uses: actions/checkout@v4
 
+      # FIX: agent_filter check moved here — shell supports matrix context
+      - name: Check agent filter
+        id: filter
+        shell: pwsh
+        run: |
+          $filter = "${{ github.event.inputs.agent_filter }}"
+          $agent  = "${{ matrix.agent }}"
+          if ($filter -eq "" -or $filter -eq $agent) {
+            echo "SKIP=false" >> $env:GITHUB_OUTPUT
+          } else {
+            echo "SKIP=true" >> $env:GITHUB_OUTPUT
+            Write-Host "Skipping $agent (filter: $filter)"
+          }
+
       - name: Download test fixtures
+        if: steps.filter.outputs.SKIP != 'true'
         uses: actions/download-artifact@v4
         with:
           name: test-fixtures
           path: C:\tests\
 
       - name: Set up Python
+        if: steps.filter.outputs.SKIP != 'true'
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
       - name: Install automation dependencies
+        if: steps.filter.outputs.SKIP != 'true'
+        shell: pwsh
         run: |
           pip install pywinauto pyautogui python-docx openpyxl playwright requests
           playwright install chromium
-        shell: pwsh
 
-      - name: Install Rust and build Kairo Phantom
+      - name: Install Rust
+        if: steps.filter.outputs.SKIP != 'true'
         uses: dtolnay/rust-toolchain@stable
 
       - name: Cache cargo
+        if: steps.filter.outputs.SKIP != 'true'
         uses: actions/cache@v4
         with:
           path: |
@@ -206,69 +209,77 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Build Kairo Phantom release binary
+        if: steps.filter.outputs.SKIP != 'true'
         run: cargo build --release
         working-directory: phantom-core
 
-      - name: Install Ollama (offline AI inference)
+      - name: Install Ollama (local inference)
+        if: steps.filter.outputs.SKIP != 'true'
+        shell: pwsh
+        continue-on-error: true
         run: |
-          $ollamaInstaller = "https://ollama.ai/download/OllamaSetup.exe"
-          Invoke-WebRequest -Uri $ollamaInstaller -OutFile "$env:TEMP\OllamaSetup.exe"
+          Invoke-WebRequest -Uri "https://ollama.ai/download/OllamaSetup.exe" -OutFile "$env:TEMP\OllamaSetup.exe"
           Start-Process "$env:TEMP\OllamaSetup.exe" -ArgumentList "/S" -Wait
           Start-Process "ollama" -ArgumentList "serve" -WindowStyle Hidden
           Start-Sleep -Seconds 10
           ollama pull qwen2.5-coder:7b
-        shell: pwsh
-        continue-on-error: true   # Fallback to cloud provider if Ollama install fails
 
       - name: Start Kairo Phantom daemon
+        if: steps.filter.outputs.SKIP != 'true'
+        shell: pwsh
         run: |
-          $daemon = Start-Process -FilePath "phantom-core\target\release\kairo-phantom.exe" `
+          $daemon = Start-Process `
+            -FilePath "phantom-core\target\release\kairo-phantom.exe" `
             -ArgumentList "--daemon" `
             -PassThru -WindowStyle Hidden
           echo "KAIRO_PID=$($daemon.Id)" >> $env:GITHUB_ENV
           Start-Sleep -Seconds 5
           Write-Host "Kairo Phantom started (PID $($daemon.Id))"
-        shell: pwsh
 
-      - name: Start chaos monkey (background fault injection)
+      - name: Start chaos monkey
+        if: steps.filter.outputs.SKIP != 'true'
+        shell: pwsh
+        continue-on-error: true
         run: |
-          Start-Process powershell -ArgumentList `
-            "-ExecutionPolicy Bypass -File scripts\win\chaos_advanced.ps1" `
+          Start-Process powershell `
+            -ArgumentList "-ExecutionPolicy Bypass -File scripts\win\chaos_advanced.ps1" `
             -WindowStyle Hidden
           Write-Host "Chaos monkey started"
-        shell: pwsh
 
-      - name: Create log directories
-        run: |
-          New-Item -ItemType Directory -Force "C:\tests\logs" | Out-Null
-          New-Item -ItemType Directory -Force "C:\tests\screenshots" | Out-Null
-          New-Item -ItemType Directory -Force "C:\tests\results" | Out-Null
+      - name: Create log/result directories
+        if: steps.filter.outputs.SKIP != 'true'
         shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force "C:\tests\logs"       | Out-Null
+          New-Item -ItemType Directory -Force "C:\tests\screenshots" | Out-Null
+          New-Item -ItemType Directory -Force "C:\tests\results"     | Out-Null
 
       - name: Execute agent scenarios
-        run: |
-          python scripts/win/universal_orchestrator.py `
-            --manifest $env:MANIFEST `
-            --agent-id ${{ matrix.agent }} `
-            --scenarios "${{ matrix.scenarios }}" `
-            --log-file "C:\tests\logs\${{ matrix.agent }}.log" `
-            --max-retries ${{ github.event.inputs.max_retries || 3 }} `
-            --gate-enforce `
-            --screenshot-on-fail
+        if: steps.filter.outputs.SKIP != 'true'
         shell: pwsh
         env:
           KAIRO_TEST_APP: "${{ matrix.app }}"
+          MAX_RETRIES: "${{ github.event.inputs.max_retries || '3' }}"
+        run: |
+          python scripts/win/universal_orchestrator.py `
+            --manifest "$env:MANIFEST" `
+            --agent-id "${{ matrix.agent }}" `
+            --scenarios "${{ matrix.scenarios }}" `
+            --log-file "C:\tests\logs\${{ matrix.agent }}.log" `
+            --max-retries "$env:MAX_RETRIES" `
+            --gate-enforce `
+            --screenshot-on-fail
 
       - name: Stop Kairo Phantom daemon
         if: always()
+        shell: pwsh
         run: |
           if ($env:KAIRO_PID) {
             Stop-Process -Id $env:KAIRO_PID -Force -ErrorAction SilentlyContinue
           }
-        shell: pwsh
 
       - name: Upload agent results
-        if: always()
+        if: always() && steps.filter.outputs.SKIP != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: results-${{ matrix.agent }}
@@ -278,15 +289,14 @@ jobs:
             C:\tests\screenshots\
           retention-days: 7
 
-  # ═══════════════════════════════════════════════════════════════════════════
-  # FINAL — Aggregate all 12 agent results into master report
-  # ═══════════════════════════════════════════════════════════════════════════
+  # ===================================================================
+  # FINAL - Aggregate all 12 results into master report
+  # ===================================================================
   aggregate_report:
-    name: "Final — Master Gauntlet Report"
+    name: "Final - Master Gauntlet Report"
     runs-on: windows-latest
     needs: gui_gauntlet
     if: always()
-
     steps:
       - uses: actions/checkout@v4
 
@@ -303,27 +313,27 @@ jobs:
           python-version: "3.12"
 
       - name: Aggregate into master report
-        run: python scripts/win/finalize_and_report.py
         shell: pwsh
+        run: python scripts/win/finalize_and_report.py
 
       - name: Print master report summary
+        shell: pwsh
         run: |
           $report = Get-Content "C:\tests\results\MASTER_GAUNTLET_REPORT.json" | ConvertFrom-Json
-          Write-Host "═══════════════════════════════════════════"
-          Write-Host "KAIRO PHANTOM — 76-SCENARIO GAUNTLET RESULT"
-          Write-Host "═══════════════════════════════════════════"
+          Write-Host "==========================================="
+          Write-Host "KAIRO PHANTOM - 76-SCENARIO GAUNTLET RESULT"
+          Write-Host "==========================================="
           Write-Host "Total Scenarios : $($report.total_scenarios)"
           Write-Host "Passed          : $($report.passed)"
           Write-Host "Failed          : $($report.failed)"
           Write-Host "First-Attempt % : $($report.first_attempt_pass_rate)"
           Write-Host "Prompt Leakage  : $($report.system_prompt_leakage_events)"
           Write-Host "PRODUCTION READY: $($report.production_ready)"
-          Write-Host "═══════════════════════════════════════════"
+          Write-Host "==========================================="
           if (-not $report.production_ready) {
-            Write-Error "GAUNTLET FAILED — Kairo Phantom is NOT production ready"
+            Write-Error "GAUNTLET FAILED - Kairo Phantom is NOT production ready"
             exit 1
           }
-        shell: pwsh
 
       - name: Upload master report
         uses: actions/upload-artifact@v4
