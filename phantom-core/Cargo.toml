@@ -10,7 +10,8 @@ documentation = "https://github.com/Kartik24Hulmukh/Kairo-Phantom/blob/main/CONT
 authors = ["Kairo Phantom Contributors"]
 keywords = ["ai", "ghost-writer", "llm", "ollama", "document-intelligence"]
 categories = ["command-line-utilities", "text-processing"]
-readme = "README.md"
+readme = "../README.md"
+
 
 
 [lib]
