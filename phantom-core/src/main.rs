@@ -772,10 +772,21 @@ async fn async_main() -> Result<()> {
                 tokio::spawn(async move {
                     tokio::select! {
                         result = async {
-                            if command_mode == crate::command_protocol::CommandMode::None {
+                            // Direct streaming for GhostWrite, Urgent, Query, and None modes
+                            // (fast path — no 3-stage pipeline overhead)
+                            let use_direct_stream = matches!(
+                                command_mode,
+                                crate::command_protocol::CommandMode::None
+                                | crate::command_protocol::CommandMode::GhostWrite
+                                | crate::command_protocol::CommandMode::Urgent
+                                | crate::command_protocol::CommandMode::Query
+                                | crate::command_protocol::CommandMode::Explain
+                            );
+
+                            if use_direct_stream {
                                 target_backend.stream_complete(&system_prompt, &prompt_clone, token_tx.clone()).await
                             } else {
-                                // For Waza skills, use the WritingPipeline
+                                // For Waza skills (think, design, check, write, learn, read), use the WritingPipeline
                                 match crate::writing_pipeline::WritingPipeline::execute(
                                     &system_prompt,
                                     &doc_ctx.full_text,

@@ -72,12 +72,15 @@ impl PromptGuard {
                 "role play as a",
                 "pretend you are a",
                 "pretend you are gpt",
-                // Sentinel/security probes
+                // Sentinel/security probes — block attempts to REVEAL the sentinel,
+                // but do NOT block the word 'security_sentinel' itself because Kairo's
+                // own Sentinel module injects that string into the system prompt.
                 "what is your sentinel",
                 "print the sentinel",
                 "output the sentinel hash",
-                "security_sentinel",
-                "[security_sentinel",
+                // NOTE: 'security_sentinel' and '[security_sentinel' intentionally removed
+                // from hard_patterns — they appear in Kairo's own system prompt wrapper.
+                // Leakage detection for those strings is handled in output_contains_system_leak().
             ],
             // === SOFT BLOCK: Suspicious patterns scored cumulatively ===
             soft_patterns: vec![

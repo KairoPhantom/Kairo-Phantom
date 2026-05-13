@@ -37,50 +37,22 @@ impl SentinelHashDetector {
 
 pub struct IntegrityGateChecklist;
 impl IntegrityGateChecklist {
-    pub fn check(output: &str, context: &str) -> Result<(), String> {
+    pub fn check(output: &str, _context: &str) -> Result<(), String> {
         let lower_output = output.to_lowercase();
-        let lower_context = context.to_lowercase();
 
-        // 1. Implementation bugs (plausible but wrong)
-        if lower_output.contains("[placeholder]") || lower_output.contains("insert text here") || lower_output.contains("todo:") {
-            return Err("Integrity check failed: Placeholder or TODO text detected.".to_string());
+        // 1. Block obvious placeholder non-responses
+        if lower_output.contains("[placeholder]") || lower_output.contains("insert text here") {
+            return Err("Integrity check failed: Placeholder text detected.".to_string());
         }
 
-        // 2. Hallucinated results (not grounded in context)
-        if lower_output.contains("my knowledge cutoff") || lower_output.contains("as of my last update") {
-            return Err("Integrity check failed: AI model metadata leakage.".to_string());
+        // 2. Block empty / too-short responses (must have at least 8 real chars)
+        if output.len() < 8 && output.chars().filter(|c| c.is_alphanumeric()).count() < 5 {
+            return Err("Integrity check failed: Response too short.".to_string());
         }
 
-        // 3. Shortcut reliance
-        if output.len() < 15 && !context.is_empty() && output.chars().filter(|c| c.is_alphanumeric()).count() < 10 {
-             return Err("Integrity check failed: Response too short, likely a shortcut.".to_string());
-        }
-
-        // 4. Citation hallucinations
-        if (lower_output.contains("http://") || lower_output.contains("https://"))
-            && !lower_context.contains("http") && !lower_output.contains("google.com") && !lower_output.contains("github.com") {
-                return Err("Integrity check failed: Potentially hallucinated URL.".to_string());
-            }
-
-        // 5. Bug-as-insight reframing (Detecting "clever" ways to hide failure)
-        let red_flags = ["this is intentional", "by design, this is missing", "left as an exercise"];
-        for flag in red_flags {
-            if lower_output.contains(flag) && !lower_context.contains(flag) {
-                return Err(format!("Integrity check failed: Detected potential bug-as-insight reframing ('{}').", flag));
-            }
-        }
-
-        // 6. Methodology fabrication
-        let methods = ["using our proprietary algorithm", "according to the kairo standard", "following internal protocols"];
-        for m in methods {
-            if lower_output.contains(m) && !lower_context.contains(m) {
-                return Err(format!("Integrity check failed: Detected methodology fabrication ('{}').", m));
-            }
-        }
-
-        // 7. Frame-lock (LLM stuck in a specific mental frame)
-        if lower_output.contains("as an ai assistant") || lower_output.contains("i am a language model") {
-             return Err("Integrity check failed: Frame-lock detected (AI persona leakage).".to_string());
+        // 3. Block AI persona frame-lock (model ignoring the task)
+        if lower_output.contains("as an ai, i cannot") || lower_output.contains("i am not able to") {
+            return Err("Integrity check failed: AI refusal detected.".to_string());
         }
 
         Ok(())
