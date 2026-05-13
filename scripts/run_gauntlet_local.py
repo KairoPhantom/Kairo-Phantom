@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import sys, io
+# Force UTF-8 output on Windows (avoids cp1252 UnicodeEncodeError)
+if sys.stdout.encoding != "utf-8":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+if sys.stderr.encoding != "utf-8":
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 """
 Kairo Phantom Local Gauntlet Runner
 ====================================
@@ -19,9 +26,9 @@ Usage:
     KAIRO_TEST_PARALLEL=2 python scripts/run_gauntlet_local.py
 
 RAM Guide:
-    --max-parallel 1  →  ~2-3 GB  (safest, any machine)
-    --max-parallel 2  →  ~4-6 GB  (good for 8 GB machines)
-    --max-parallel 4  →  ~8-12 GB (good for 16 GB machines)
+    --max-parallel 1  ->  ~2-3 GB  (safest, any machine)
+    --max-parallel 2  ->  ~4-6 GB  (good for 8 GB machines)
+    --max-parallel 4  ->  ~8-12 GB (good for 16 GB machines)
 """
 
 import os
@@ -44,7 +51,7 @@ RESULTS_DIR = Path("C:/tests/results")
 LOG_DIR = Path("C:/tests/logs")
 SCREENSHOT_DIR = Path("C:/tests/screenshots")
 
-# ── All 12 agents in dependency-aware order (lightest first for RAM) ────────
+# -- All 12 agents in dependency-aware order (lightest first for RAM) --------
 AGENT_ORDER = [
     "agent_notepad",    # 100 MB
     "agent_terminal",   # 300 MB
@@ -104,7 +111,7 @@ def run_agent(agent_id: str, scenarios: List[str], max_retries: int,
         cmd.append("--gate-enforce")
 
     start = time.time()
-    print(f"  ▶ [{agent_id}] Starting {len(scenarios)} scenarios...")
+    print(f"  > [{agent_id}] Starting {len(scenarios)} scenarios...")
 
     try:
         proc = subprocess.run(
@@ -123,7 +130,7 @@ def run_agent(agent_id: str, scenarios: List[str], max_retries: int,
             with open(result_file) as f:
                 result_data = json.load(f)
 
-        status = "✅ PASS" if success else "❌ FAIL"
+        status = "? PASS" if success else "[FAIL] FAIL"
         passed = result_data.get("passed", 0)
         failed = result_data.get("failed", 0)
         total = result_data.get("totalScenarios", len(scenarios))
@@ -144,19 +151,19 @@ def run_agent(agent_id: str, scenarios: List[str], max_retries: int,
         }
 
     except subprocess.TimeoutExpired:
-        print(f"  ⏰ TIMEOUT [{agent_id}] after 30 min")
+        print(f"  [TIMEOUT] TIMEOUT [{agent_id}] after 30 min")
         return {"agentId": agent_id, "success": False, "passed": 0,
                 "failed": len(scenarios), "total": len(scenarios), "timeout": True}
     except Exception as e:
-        print(f"  💥 ERROR [{agent_id}]: {e}")
+        print(f"  ? ERROR [{agent_id}]: {e}")
         return {"agentId": agent_id, "success": False, "error": str(e),
                 "passed": 0, "failed": len(scenarios), "total": len(scenarios)}
 
 
 def print_summary(results: List[Dict], elapsed_total: float):
-    print("\n" + "═" * 60)
-    print("  KAIRO PHANTOM — LOCAL GAUNTLET SUMMARY")
-    print("═" * 60)
+    print("\n" + "=" * 60)
+    print("  KAIRO PHANTOM -- LOCAL GAUNTLET SUMMARY")
+    print("=" * 60)
 
     total_passed = sum(r.get("passed", 0) for r in results)
     total_failed = sum(r.get("failed", 0) for r in results)
@@ -164,18 +171,18 @@ def print_summary(results: List[Dict], elapsed_total: float):
     all_passed = total_failed == 0
 
     for r in results:
-        status = "✅" if r["success"] else "❌"
+        status = "?" if r["success"] else "[FAIL]"
         p = r.get("passed", 0)
         t = r.get("total", 0)
         elapsed = r.get("elapsed_sec", 0)
         print(f"  {status} {r['agentId']:<25} {p:>2}/{t:<2} scenarios  ({elapsed:.0f}s)")
 
-    print("─" * 60)
+    print("-" * 60)
     print(f"  Total: {total_passed}/{total_scenarios} passed "
           f"({'%.1f' % (total_passed/total_scenarios*100 if total_scenarios else 0)}%)")
     print(f"  Wall time: {elapsed_total:.0f}s")
-    print(f"  PRODUCTION READY: {'✅ YES' if all_passed else '❌ NO'}")
-    print("═" * 60)
+    print(f"  PRODUCTION READY: {'? YES' if all_passed else '[FAIL] NO'}")
+    print("=" * 60)
 
     return all_passed
 
@@ -215,7 +222,7 @@ def save_master_report(results: List[Dict], elapsed: float):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Kairo Phantom Local Gauntlet Runner — RAM-aware parallel execution"
+        description="Kairo Phantom Local Gauntlet Runner -- RAM-aware parallel execution"
     )
     parser.add_argument(
         "--max-parallel",
@@ -260,15 +267,15 @@ def main():
     args = parser.parse_args()
     manifest = load_manifest()
 
-    # ── List mode ────────────────────────────────────────────────────────────
+    # -- List mode ------------------------------------------------------------
     if args.list:
-        print(f"\nKairo Phantom — {manifest['graph_meta']['total_scenarios']} scenarios across {manifest['graph_meta']['total_agents']} agents\n")
+        print(f"\nKairo Phantom -- {manifest['graph_meta']['total_scenarios']} scenarios across {manifest['graph_meta']['total_agents']} agents\n")
         for agent in manifest["agents"]:
             ids = ", ".join(agent["scenario_ids"])
             print(f"  {agent['agentId']:<25} [{ids}]")
         sys.exit(0)
 
-    # ── Determine which agents / scenarios to run ────────────────────────────
+    # -- Determine which agents / scenarios to run ----------------------------
     if args.agent:
         agents_to_run = [args.agent]
     else:
@@ -284,7 +291,7 @@ def main():
             scenarios = get_agent_scenarios(manifest, agent_id)
 
         if not scenarios:
-            print(f"  ⚠ Warning: no scenarios found for {agent_id}")
+            print(f"  ? Warning: no scenarios found for {agent_id}")
             continue
         work_items.append((agent_id, scenarios))
 
@@ -292,14 +299,14 @@ def main():
         print("No work items found. Check --agent / --scenario flags.")
         sys.exit(1)
 
-    # ── Print plan ───────────────────────────────────────────────────────────
+    # -- Print plan -----------------------------------------------------------
     total = sum(len(s) for _, s in work_items)
-    print(f"\n{'═'*60}")
+    print(f"\n{'='*60}")
     print(f"  Kairo Phantom Local Gauntlet")
     print(f"  Agents: {len(work_items)}  Scenarios: {total}  Parallel: {args.max_parallel}")
-    print(f"{'═'*60}\n")
+    print(f"{'='*60}\n")
 
-    # ── Execute with ThreadPoolExecutor (semaphore = max_parallel) ──────────
+    # -- Execute with ThreadPoolExecutor (semaphore = max_parallel) ----------
     gate_enforce = not args.no_gate
     start_wall = time.time()
     results = []
@@ -322,14 +329,14 @@ def main():
                 with results_lock:
                     results.append(result)
             except Exception as e:
-                print(f"  💥 Unhandled exception from {agent_id}: {e}")
+                print(f"  ? Unhandled exception from {agent_id}: {e}")
                 with results_lock:
                     results.append({"agentId": agent_id, "success": False,
                                     "error": str(e), "passed": 0, "failed": 1, "total": 1})
 
     elapsed_total = time.time() - start_wall
 
-    # ── Report ───────────────────────────────────────────────────────────────
+    # -- Report ---------------------------------------------------------------
     # Sort results to match original agent order
     order_map = {a: i for i, a in enumerate(agents_to_run)}
     results.sort(key=lambda r: order_map.get(r["agentId"], 999))

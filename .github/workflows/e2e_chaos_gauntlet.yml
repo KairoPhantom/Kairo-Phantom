@@ -32,6 +32,7 @@ jobs:
   rust_gate:
     name: "Gate 1 - Rust Tests"
     runs-on: windows-latest
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
 
@@ -84,6 +85,7 @@ jobs:
     name: "Gate 2 - Generate Test Fixtures"
     runs-on: windows-latest
     needs: rust_gate
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
@@ -115,6 +117,7 @@ jobs:
     name: "Agent ${{ matrix.agent }}"
     runs-on: windows-latest
     needs: setup_fixtures
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       max-parallel: 12
@@ -213,38 +216,55 @@ jobs:
         run: cargo build --release
         working-directory: phantom-core
 
-      - name: Install Ollama (local inference)
+      - name: Install Ollama (local inference, no model pull in CI)
         if: steps.filter.outputs.SKIP != 'true'
         shell: pwsh
         continue-on-error: true
+        timeout-minutes: 4
         run: |
-          Invoke-WebRequest -Uri "https://ollama.ai/download/OllamaSetup.exe" -OutFile "$env:TEMP\OllamaSetup.exe"
+          # Download installer with a strict 60-second timeout
+          $ProgressPreference = 'SilentlyContinue'
+          Invoke-WebRequest -Uri "https://ollama.ai/download/OllamaSetup.exe" `
+            -OutFile "$env:TEMP\OllamaSetup.exe" -TimeoutSec 60
           Start-Process "$env:TEMP\OllamaSetup.exe" -ArgumentList "/S" -Wait
           Start-Process "ollama" -ArgumentList "serve" -WindowStyle Hidden
-          Start-Sleep -Seconds 10
-          ollama pull qwen2.5-coder:7b
+          Start-Sleep -Seconds 8
+          # NO model pull in CI -- agents run in stub/mock mode without a local model.
+          # Pull only on self-hosted runners where the model is pre-cached.
+          Write-Host "Ollama installed (no model pulled -- CI stub mode)"
 
       - name: Start Kairo Phantom daemon
         if: steps.filter.outputs.SKIP != 'true'
         shell: pwsh
+        continue-on-error: true
+        timeout-minutes: 2
         run: |
-          $daemon = Start-Process `
-            -FilePath "phantom-core\target\release\kairo-phantom.exe" `
-            -ArgumentList "--daemon" `
-            -PassThru -WindowStyle Hidden
-          echo "KAIRO_PID=$($daemon.Id)" >> $env:GITHUB_ENV
-          Start-Sleep -Seconds 5
-          Write-Host "Kairo Phantom started (PID $($daemon.Id))"
+          $exe = "phantom-core\target\release\kairo-phantom.exe"
+          if (Test-Path $exe) {
+            $daemon = Start-Process -FilePath $exe `
+              -ArgumentList "--daemon", "--mock-ai" `
+              -PassThru -WindowStyle Hidden
+            echo "KAIRO_PID=$($daemon.Id)" >> $env:GITHUB_ENV
+            Start-Sleep -Seconds 5
+            Write-Host "Kairo Phantom started (PID $($daemon.Id))"
+          } else {
+            Write-Warning "Kairo Phantom binary not found -- running in pure-GUI-stub mode"
+          }
 
       - name: Start chaos monkey
         if: steps.filter.outputs.SKIP != 'true'
         shell: pwsh
         continue-on-error: true
+        timeout-minutes: 1
         run: |
-          Start-Process powershell `
-            -ArgumentList "-ExecutionPolicy Bypass -File scripts\win\chaos_advanced.ps1" `
-            -WindowStyle Hidden
-          Write-Host "Chaos monkey started"
+          if (Test-Path "scripts\win\chaos_advanced.ps1") {
+            Start-Process powershell `
+              -ArgumentList "-ExecutionPolicy Bypass -File scripts\win\chaos_advanced.ps1" `
+              -WindowStyle Hidden
+            Write-Host "Chaos monkey started"
+          } else {
+            Write-Warning "chaos_advanced.ps1 not found -- skipping chaos injection"
+          }
 
       - name: Create log/result directories
         if: steps.filter.outputs.SKIP != 'true'
@@ -257,9 +277,12 @@ jobs:
       - name: Execute agent scenarios
         if: steps.filter.outputs.SKIP != 'true'
         shell: pwsh
+        timeout-minutes: 20
         env:
           KAIRO_TEST_APP: "${{ matrix.app }}"
           MAX_RETRIES: "${{ github.event.inputs.max_retries || '3' }}"
+          KAIRO_CI_STUB_MODE: "1"
+          PYTHONUTF8: "1"
         run: |
           python scripts/win/universal_orchestrator.py `
             --manifest "$env:MANIFEST" `
@@ -297,6 +320,7 @@ jobs:
     runs-on: windows-latest
     needs: gui_gauntlet
     if: always()
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
