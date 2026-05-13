@@ -14,7 +14,7 @@ use tracing::info;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use crate::crdt::CrdtSession;
-use crate::injector::Injector;
+use crate::injector::HumanizedInjector as Injector;
 use crate::uia::UiaReader;
 use crate::ai::AiBackend;
 use crate::context::ContextEngine;
@@ -103,6 +103,19 @@ pub struct ImageGenerateResponse {
     pub base64_data: String,
     pub mime_type: String,
     pub backend_used: String,
+}
+
+#[derive(Deserialize)]
+pub struct MobileSyncRequest {
+    pub device_id: String,
+    pub content: String,
+    pub tags: Vec<String>,
+}
+
+#[derive(Serialize)]
+pub struct MobileSyncResponse {
+    pub status: String,
+    pub sync_id: String,
 }
 
 /// GET /health
@@ -207,6 +220,7 @@ async fn ask(
         
     let injector = state.injector.clone();
     let text = resp.clone();
+    #[allow(clippy::let_underscore_future)]
     let _ = tokio::task::spawn_blocking(move || injector.type_text(&text));
     
     Ok(Json(AskResponse { response: resp }))
@@ -323,9 +337,10 @@ async fn kami_export(
     Json(req): Json<KamiExportRequest>,
 ) -> (StatusCode, Json<()>) {
     let res = match req.format.as_str() {
-        "markdown" => crate::kami_export::KamiExport::export_markdown(&req.content, &req.output_path),
-        "pdf" => crate::kami_export::KamiExport::export_pdf(&req.content, &req.output_path),
-        "reveal" => crate::kami_export::KamiExport::export_reveal_js(&req.content, &req.output_path),
+        "pdf" => crate::kami_export::KamiExporter::execute(crate::kami_export::KamiCommand::Pdf, req.content).await,
+        "reveal" => crate::kami_export::KamiExporter::execute(crate::kami_export::KamiCommand::RevealJs, req.content).await,
+        "email" => crate::kami_export::KamiExporter::execute(crate::kami_export::KamiCommand::Email, req.content).await,
+        "linkedin" => crate::kami_export::KamiExporter::execute(crate::kami_export::KamiCommand::LinkedIn, req.content).await,
         _ => Err("Unsupported format".to_string()),
     };
 
@@ -333,6 +348,24 @@ async fn kami_export(
         Ok(_) => (StatusCode::OK, Json(())),
         Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(())),
     }
+}
+
+async fn mobile_sync_post(
+    State(state): State<ApiState>,
+    Json(req): Json<MobileSyncRequest>,
+) -> Json<MobileSyncResponse> {
+    info!("📱 Mobile Bridge: Received sync from {}", req.device_id);
+    
+    // Store in memory for now, will eventually go to MemMachine
+    let sync_id = uuid::Uuid::new_v4().to_string();
+    
+    // Inject into CRDT for real-time visibility in overlay
+    state.crdt.insert_human_text(&format!("\n--- Mobile Sync ({}) ---\n{}\n", req.device_id, req.content));
+
+    Json(MobileSyncResponse {
+        status: "synced".into(),
+        sync_id,
+    })
 }
 
 pub async fn start_api_server(state: ApiState) {
@@ -347,11 +380,12 @@ pub async fn start_api_server(state: ApiState) {
         .route("/generate_image", post(generate_image))
         .route("/bedrock/invoke", post(aws_bedrock_invoke))
         .route("/kami/export", post(kami_export))
+        .route("/mobile/sync", post(mobile_sync_post))
         .with_state(state);
 
     let addr = format!("127.0.0.1:{}", PORT);
     let listener = TcpListener::bind(&addr).await
-        .expect(&format!("Failed to bind to {}", addr));
+        .unwrap_or_else(|_| panic!("Failed to bind to {}", addr));
 
     info!("🌐 HTTP API listening on http://{}", addr);
     axum::serve(listener, app).await.unwrap();

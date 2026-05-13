@@ -1,11 +1,11 @@
-/// Kairo Phantom — Cross-Platform Accessibility Layer
-/// 
-/// Provides a unified trait for reading text from the focused UI element
-/// across Windows (UIAutomation), macOS (AXUIElement), and Linux (AT-SPI2).
-/// Each platform has its own implementation module, selected at compile time.
-///
-/// Architecture inspired by xa11y's unified API design, but implemented
-/// natively using each platform's official accessibility APIs.
+// Kairo Phantom — Cross-Platform Accessibility Layer
+//
+// Provides a unified trait for reading text from the focused UI element
+// across Windows (UIAutomation), macOS (AXUIElement), and Linux (AT-SPI2).
+// Each platform has its own implementation module, selected at compile time.
+//
+// Architecture inspired by xa11y's unified API design, but implemented
+// natively using each platform's official accessibility APIs.
 
 /// The canonical accessibility reader trait.
 /// Every platform implements this to extract text from the focused UI element.

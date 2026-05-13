@@ -1,13 +1,13 @@
-/// Kairo Phantom V6 — WASM Plugin Sandbox (Production-Grade)
-/// D1: Real Wasmtime JIT with defense-in-depth security
-/// D2: Real Ed25519 signature verification
-/// D3: Mandatory manifest enforcement — runtime capability enforcement
-///
-/// Security hardening vs OpenClaw CVEs:
-/// - 2GB guard regions (Wasmtime default)
-/// - Explicit stack overflow detection
-/// - Memory zeroing between instances
-/// - Capability allowlist enforced at call-time
+// Kairo Phantom V6 — WASM Plugin Sandbox (Production-Grade)
+// D1: Real Wasmtime JIT with defense-in-depth security
+// D2: Real Ed25519 signature verification
+// D3: Mandatory manifest enforcement — runtime capability enforcement
+//
+// Security hardening vs OpenClaw CVEs:
+// - 2GB guard regions (Wasmtime default)
+// - Explicit stack overflow detection
+// - Memory zeroing between instances
+// - Capability allowlist enforced at call-time
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -215,10 +215,7 @@ impl WasmPlugin {
         let warnings = self.manifest.validate();
         for w in &warnings { warn!("[WasmPlugin:{}] {}", self.manifest.name, w); }
 
-        match self.ensure_compiled() {
-            Err(e) => return PluginCallOutput { suggestion: None, meta: None, error: Some(e) },
-            Ok(()) => {}
-        }
+        if let Err(e) = self.ensure_compiled() { return PluginCallOutput { suggestion: None, meta: None, error: Some(e) } }
 
         let module_guard = self.module.lock().unwrap();
         let module = module_guard.as_ref().unwrap();

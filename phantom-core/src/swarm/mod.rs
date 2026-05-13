@@ -8,7 +8,13 @@ pub mod image;
 pub mod sales;
 pub mod medical;
 pub mod legal;
+pub mod metrics;
 use crate::skills::SkillManager;
+#[allow(unused_imports)]
+use crate::integration::IntegrationManager;
+
+
+
 
 use crate::document_context::DocumentContext;
 use tracing::info;
@@ -45,6 +51,19 @@ pub struct AgentProfile {
     pub system_directive: String,
 }
 
+impl AgentProfile {
+    pub fn agent_type_id(&self) -> &str {
+        match self.agent_type {
+            AgentType::DesignAndMedia => "design",
+            AgentType::ReasoningAndLogic => "reasoning",
+            AgentType::ContentAndAllRounder => "content",
+            AgentType::StudentTutor => "student",
+            AgentType::Engineer => "engineer",
+            AgentType::DataAnalyst => "data",
+        }
+    }
+}
+
 pub struct SwarmOrchestrator {
     pub config: SwarmConfig,
     pub registry: AgentRegistry,
@@ -58,6 +77,8 @@ pub struct SwarmOrchestrator {
     pub context7: Context7,
     pub optimizer: crate::context_optimizer::ContextOptimizer,
     pub skill_manager: SkillManager,
+    pub integration_manager: IntegrationManager,
+    pub dashboard: Arc<metrics::PerformanceDashboard>,
 }
 
 impl SwarmOrchestrator {
@@ -92,17 +113,29 @@ impl SwarmOrchestrator {
             context7: Context7::new(),
             optimizer: crate::context_optimizer::ContextOptimizer::new(4096),
             skill_manager: SkillManager::new(),
+            integration_manager: IntegrationManager::new(),
+            dashboard: Arc::new(metrics::PerformanceDashboard::new()),
         }
     }
 
     pub async fn route(&self, doc_ctx: &DocumentContext, command_mode: &crate::command_protocol::CommandMode) -> (Arc<dyn AiBackend>, AgentProfile) {
+        let start = std::time::Instant::now();
+        let (backend, profile) = self.route_internal(doc_ctx, command_mode).await;
+        let latency = start.elapsed().as_millis() as u64;
+        
+        self.dashboard.record_call(profile.agent_type_id(), latency, true);
+        
+        (backend, profile)
+    }
+
+    async fn route_internal(&self, doc_ctx: &DocumentContext, command_mode: &crate::command_protocol::CommandMode) -> (Arc<dyn AiBackend>, AgentProfile) {
         let mut selected_agent: Arc<dyn SwarmAgent> = match self.registry.select_best(doc_ctx) {
             Some(agent) => agent,
             None => {
                 info!("⚠️  No agents in registry, using raw fallback backend");
                 let profile = AgentProfile {
                     agent_type: AgentType::ContentAndAllRounder,
-                    system_directive: format!("{}", crate::ai::KAIRO_SYSTEM_PROMPT),
+                    system_directive: crate::ai::KAIRO_SYSTEM_PROMPT.to_string(),
                 };
                 return (self.fallback_agent.clone(), profile);
             }
@@ -139,17 +172,28 @@ impl SwarmOrchestrator {
         let ground_truth = self.context7.fetch_ground_truth(&doc_ctx.prompt_text).await;
         let ground_truth_fragment = ground_truth.map(|gt| format!("\n\n## GROUND TRUTH (Context7)\n{}", gt)).unwrap_or_default();
 
+        // Fetch deep app context if an adapter is available
+        let mut deep_context_fragment = String::new();
+        if let Some(app_id) = &doc_ctx.app_name {
+            if let Some(adapter) = self.integration_manager.get_adapter(&app_id.to_lowercase()).await {
+                if let Ok(ctx) = adapter.get_deep_context().await {
+                    deep_context_fragment = format!("\n\n## DEEP APP CONTEXT ({})\n{}", app_id, ctx);
+                }
+            }
+        }
+
         let command_hint = command_mode.system_hint();
         let skill_directive = self.skill_manager.get_skill_directive(command_mode).unwrap_or_default();
         let persona_aware_ctx = PersonaAwareContext::new(doc_ctx.clone(), &self.persona_manager);
         let persona_fragment = persona_aware_ctx.persona.build_prompt_fragment();
         
         let system_directive = format!(
-            "<system>\n{}\n\n{}\n\n{}\n\n{}\n\n{}\n\n## COMMAND PROTOCOL\n{}\n\nCRITICAL: Output ONLY within <output> tags. No conversational preamble.\n</system>",
+            "<system>\n{}\n\n{}\n\n{}\n\n{}\n\n{}\n\n{}\n\n## COMMAND PROTOCOL\n{}\n\nCRITICAL: Output ONLY within <output> tags. No conversational preamble.\n</system>",
             base_directive,
             persona_fragment,
             memory_fragment,
             ground_truth_fragment,
+            deep_context_fragment,
             skill_directive,
             command_hint
         );

@@ -99,6 +99,12 @@ pub struct PersonaManager {
     personas: HashMap<String, Persona>,
 }
 
+impl Default for PersonaManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PersonaManager {
     pub fn new() -> Self {
         Self {

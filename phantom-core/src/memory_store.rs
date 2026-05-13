@@ -84,6 +84,14 @@ impl MemoryStore {
             )",
             [],
         )?;
+        // BUGFIX: app_bias table was missing — caused silent failure on load
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS app_bias (
+                app TEXT PRIMARY KEY,
+                bias TEXT NOT NULL
+            )",
+            [],
+        )?;
         Ok(conn)
     }
 
@@ -322,6 +330,10 @@ impl MemoryStore {
         }
 
         self.save(memory);
+
+        // Also save to the Markdown Vault (LLM Wiki pattern + Git)
+        let vault = crate::memory_vault::MemoryVault::new();
+        vault.save_vault(memory);
     }
 }
 

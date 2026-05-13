@@ -1,8 +1,13 @@
-use std::collections::HashSet;
 use rand::Rng;
 
 pub struct SentinelHashDetector {
     current_hash: String,
+}
+
+impl Default for SentinelHashDetector {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl SentinelHashDetector {
@@ -52,11 +57,10 @@ impl IntegrityGateChecklist {
         }
 
         // 4. Citation hallucinations
-        if lower_output.contains("http://") || lower_output.contains("https://") {
-            if !lower_context.contains("http") && !lower_output.contains("google.com") && !lower_output.contains("github.com") {
+        if (lower_output.contains("http://") || lower_output.contains("https://"))
+            && !lower_context.contains("http") && !lower_output.contains("google.com") && !lower_output.contains("github.com") {
                 return Err("Integrity check failed: Potentially hallucinated URL.".to_string());
             }
-        }
 
         // 5. Bug-as-insight reframing (Detecting "clever" ways to hide failure)
         let red_flags = ["this is intentional", "by design, this is missing", "left as an exercise"];

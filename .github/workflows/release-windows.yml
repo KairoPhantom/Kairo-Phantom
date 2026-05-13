@@ -1,0 +1,68 @@
+name: Release Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-windows:
+    # Tauri requires a native Windows environment to run WiX and NSIS bundlers
+    runs-on: windows-latest
+
+    env:
+      TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+      TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Tauri CLI
+        run: npm install -g @tauri-apps/cli
+
+      # Optional cross compilation step if running on Ubuntu:
+      # - name: Install Cross
+      #   run: cargo install cross --git https://github.com/cross-rs/cross
+      # - name: Build binary via Cross
+      #   run: cross build --release --target x86_64-pc-windows-msvc
+
+      - name: Install Windows SDKs (if missing UIA headers)
+        run: |
+          # The windows-latest runner has Windows SDKs pre-installed
+
+      - name: Build and Package Tauri App (.msi and .exe)
+        working-directory: ./phantom-core/src-tauri
+        run: |
+          # This compiles the Rust binary and bundles the MSI/NSIS installers.
+          # UIAccess=true requires the final executable to be digitally signed to function.
+          tauri build --target x86_64-pc-windows-msvc
+
+      # Assuming signtool is available to sign the .exe and .msi
+      - name: Sign Executables and Installer
+        run: |
+          echo "Run signtool here. UIAccess=true requires the binary to be placed in a trusted location (Program Files) and signed with a trusted certificate."
+          # signtool sign /v /debug /f mycert.pfx /p password /tr http://timestamp.digicert.com /td SHA256 "phantom-core\src-tauri\target\x86_64-pc-windows-msvc\release\bundle\msi\Kairo Phantom*.msi"
+
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            ./phantom-core/src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe
+            ./phantom-core/src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi
+            ./phantom-core/src-tauri/target/x86_64-pc-windows-msvc/release/bundle/windows/latest-win.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

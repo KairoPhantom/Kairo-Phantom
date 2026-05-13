@@ -1,5 +1,4 @@
 use std::env;
-use std::sync::Arc;
 use tokio::time::{Duration, sleep};
 
 // Kairo Phantom - Layer 7: Universal E2E Test Matrix

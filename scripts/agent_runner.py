@@ -20,52 +20,50 @@ from pathlib import Path
 # ── Scenario Definitions ───────────────────────────────────────────────────
 
 SCENARIOS = {
-    # Word scenarios (W1-W10)
-    "w1": {"name": "Word: rewrite formal tone", "test": "e2e_win_w1", "suite": "word"},
-    "w2": {"name": "Word: expand bullet to paragraph", "test": "e2e_win_w2", "suite": "word"},
-    "w3": {"name": "Word: summarize to 3 bullets", "test": "e2e_win_w3", "suite": "word"},
-    "w4": {"name": "Word: executive summary", "test": "e2e_win_w4", "suite": "word"},
-    "w5": {"name": "Word: continue writing", "test": "e2e_win_w5", "suite": "word"},
-    "w6": {"name": "Word: translate text", "test": "e2e_win_w6", "suite": "word"},
-    "w7": {"name": "Word: fix grammar/style", "test": "e2e_win_w7", "suite": "word"},
-    "w8": {"name": "Word: generate conclusion", "test": "e2e_win_w8", "suite": "word"},
-    "w9": {"name": "Word: bullets to paragraph", "test": "e2e_win_w9", "suite": "word"},
-    "w10": {"name": "Word: no focus steal", "test": "e2e_win_w10", "suite": "word"},
-    # PowerPoint scenarios (P1-P7)
-    "p1": {"name": "PPT: slide title + 5 bullets", "test": "e2e_win_p1", "suite": "ppt"},
-    "p2": {"name": "PPT: visual bullets", "test": "e2e_win_p2", "suite": "ppt"},
-    "p3": {"name": "PPT: speaker notes", "test": "e2e_win_p3", "suite": "ppt"},
-    "p4": {"name": "PPT: punchy action content", "test": "e2e_win_p4", "suite": "ppt"},
-    "p5": {"name": "PPT: agenda slide", "test": "e2e_win_p5", "suite": "ppt"},
-    "p6": {"name": "PPT: slide number awareness", "test": "e2e_win_p6", "suite": "ppt"},
-    "p7": {"name": "PPT: call-to-action slide", "test": "e2e_win_p7", "suite": "ppt"},
-    # Excel scenarios (X1-X5)
-    "x1": {"name": "Excel: XLOOKUP formula", "test": "e2e_win_x1", "suite": "excel"},
-    "x2": {"name": "Excel: explain formula", "test": "e2e_win_x2", "suite": "excel"},
-    "x3": {"name": "Excel: pivot table summary", "test": "e2e_win_x3", "suite": "excel"},
-    "x4": {"name": "Excel: dynamic array formula", "test": "e2e_win_x4", "suite": "excel"},
-    "x5": {"name": "Excel: conditional formatting", "test": "e2e_win_x5", "suite": "excel"},
-    # Figma scenarios (F1-F5)
-    "f1": {"name": "Figma: hero section copy", "test": "e2e_win_f1", "suite": "figma"},
-    "f2": {"name": "Figma: button label CRO", "test": "e2e_win_f2", "suite": "figma"},
-    "f3": {"name": "Figma: accessibility alt text", "test": "e2e_win_f3", "suite": "figma"},
-    "f4": {"name": "Figma: error state copy", "test": "e2e_win_f4", "suite": "figma"},
-    "f5": {"name": "Figma: onboarding tooltip", "test": "e2e_win_f5", "suite": "figma"},
-    # Terminal scenarios (T1-T4)
-    "t1": {"name": "Terminal: git commit message", "test": "e2e_win_t1", "suite": "terminal"},
-    "t2": {"name": "Terminal: explain command output", "test": "e2e_win_t2", "suite": "terminal"},
-    "t3": {"name": "Terminal: shell one-liner", "test": "e2e_win_t3", "suite": "terminal"},
-    "t4": {"name": "Terminal: Dockerfile generation", "test": "e2e_win_t4", "suite": "terminal"},
-    # Cross-app scenarios (C1-C4)
-    "c1": {"name": "Cross: context switches cleanly", "test": "e2e_win_c1", "suite": "cross"},
-    "c2": {"name": "Cross: memory persists", "test": "e2e_win_c2", "suite": "cross"},
-    "c3": {"name": "Cross: correct agent selected", "test": "e2e_win_c3", "suite": "cross"},
-    "c4": {"name": "Cross: Kami export", "test": "kami_export::tests", "suite": "cross", "lib": True},
-    # Security scenarios (S1-S4)
-    "s1": {"name": "Security: no system prompt leak", "test": "sentinel_leakage", "suite": "security"},
-    "s2": {"name": "Security: roleplay override blocked", "test": "guardrails::tests::test_roleplay_override", "suite": "security", "lib": True},
-    "s3": {"name": "Security: indirect injection blocked", "test": "guardrails::tests::test_indirect_injection", "suite": "security", "lib": True},
-    "s4": {"name": "Security: PII not echoed", "test": "pii_guard::tests::test_doc_pii", "suite": "security", "lib": True},
+    # Command Protocol scenarios
+    "w1": {"name": "Command: ghostwrite parsing", "test": "gauntlet_extended", "test_args": "w1_ghostwrite_mode_parsing", "suite": "word"},
+    "w2": {"name": "Command: urgent parsing", "test": "gauntlet_extended", "test_args": "w2_urgent_mode_parsing", "suite": "word"},
+    "w3": {"name": "Command: query parsing", "test": "gauntlet_extended", "test_args": "w3_query_mode_parsing", "suite": "word"},
+    "w4": {"name": "Command: no delimiter", "test": "gauntlet_extended", "test_args": "w4_no_delimiter_stays_silent", "suite": "word"},
+    "w5": {"name": "Command: hint ghostwrite", "test": "gauntlet_extended", "test_args": "w5_command_mode_system_hint_ghostwrite", "suite": "word"},
+    "w6": {"name": "Command: hint query", "test": "gauntlet_extended", "test_args": "w6_command_mode_system_hint_query", "suite": "word"},
+    "w7": {"name": "Command: context before", "test": "gauntlet_extended", "test_args": "w7_ghostwrite_with_context_before", "suite": "word"},
+    "w8": {"name": "Command: multiline parsing", "test": "gauntlet_extended", "test_args": "w8_multiline_command_parsing", "suite": "word"},
+    # Security scenarios
+    "s1": {"name": "Security: sentinel blocks hash", "test": "gauntlet_extended", "test_args": "s1_sentinel_blocks_leaked_hash", "suite": "security"},
+    "s2": {"name": "Security: sentinel allows clean", "test": "gauntlet_extended", "test_args": "s2_sentinel_allows_clean_response", "suite": "security"},
+    "s3": {"name": "Security: xml framing", "test": "gauntlet_extended", "test_args": "s3_sentinel_xml_framing_extraction", "suite": "security"},
+    "s4": {"name": "Security: pii email redaction", "test": "gauntlet_extended", "test_args": "s4_pii_email_redaction", "suite": "security"},
+    "s5": {"name": "Security: pii api key redaction", "test": "gauntlet_extended", "test_args": "s5_pii_api_key_redaction", "suite": "security"},
+    "s6": {"name": "Security: pii clean text", "test": "gauntlet_extended", "test_args": "s6_pii_clean_text_no_redaction", "suite": "security"},
+    "s7": {"name": "Security: inject override", "test": "gauntlet_extended", "test_args": "s7_injection_guard_blocks_override", "suite": "security"},
+    "s8": {"name": "Security: inject probe", "test": "gauntlet_extended", "test_args": "s8_injection_guard_blocks_system_probe", "suite": "security"},
+    "s9": {"name": "Security: inject clean", "test": "gauntlet_extended", "test_args": "s9_injection_guard_allows_clean_prompt", "suite": "security"},
+    "s10": {"name": "Security: validator roleplay", "test": "gauntlet_extended", "test_args": "s10_response_validator_blocks_roleplay", "suite": "security"},
+    "s11": {"name": "Security: validator clean", "test": "gauntlet_extended", "test_args": "s11_response_validator_allows_good_response", "suite": "security"},
+    "s12": {"name": "Security: wraps system prompt", "test": "gauntlet_extended", "test_args": "s12_sentinel_wraps_system_prompt", "suite": "security"},
+    # Routing scenarios
+    "r1": {"name": "Routing: design agent (ppt)", "test": "gauntlet_extended", "test_args": "r1_design_agent_for_powerpoint", "suite": "ppt"},
+    "r2": {"name": "Routing: data analyst (excel)", "test": "gauntlet_extended", "test_args": "r2_data_analyst_for_excel", "suite": "excel"},
+    "r3": {"name": "Routing: content agent (word)", "test": "gauntlet_extended", "test_args": "r3_content_agent_for_word", "suite": "word"},
+    "r4": {"name": "Routing: reasoning query mode", "test": "gauntlet_extended", "test_args": "r4_reasoning_for_query_mode", "suite": "cross"},
+    "r5": {"name": "Routing: medical agent", "test": "gauntlet_extended", "test_args": "r5_medical_agent_for_clinical_prompt", "suite": "cross"},
+    "r6": {"name": "Routing: legal agent", "test": "gauntlet_extended", "test_args": "r6_legal_agent_for_contract", "suite": "cross"},
+    "r7": {"name": "Routing: sales agent", "test": "gauntlet_extended", "test_args": "r7_sales_agent_for_proposal", "suite": "cross"},
+    "r8": {"name": "Routing: engineer agent", "test": "gauntlet_extended", "test_args": "r8_engineer_for_code_prompt", "suite": "cross"},
+    "r9": {"name": "Routing: xml framing all", "test": "gauntlet_extended", "test_args": "r9_xml_framing_in_all_agents", "suite": "cross"},
+    "r10": {"name": "Routing: output tags", "test": "gauntlet_extended", "test_args": "r10_output_tags_in_directives", "suite": "cross"},
+    # Document Context scenarios
+    "d1": {"name": "Context: doc kind detection", "test": "gauntlet_extended", "test_args": "d1_doc_kind_detection_by_extension", "suite": "cross"},
+    "d2": {"name": "Context: doc kind excel", "test": "gauntlet_extended", "test_args": "d2_doc_kind_detection_excel", "suite": "cross"},
+    "d3": {"name": "Context: prompt extraction", "test": "gauntlet_extended", "test_args": "d3_doc_context_prompt_extraction", "suite": "cross"},
+    "d4": {"name": "Context: short prompt band", "test": "gauntlet_extended", "test_args": "d4_confidence_band_short_prompt", "suite": "cross"},
+    "d5": {"name": "Context: rich context band", "test": "gauntlet_extended", "test_args": "d5_confidence_band_rich_context", "suite": "cross"},
+    # Memory scenarios
+    "m1": {"name": "Memory: learns from accepted", "test": "gauntlet_extended", "test_args": "m1_memory_learns_from_accepted_interaction", "suite": "cross"},
+    "m2": {"name": "Memory: fragment preferences", "test": "gauntlet_extended", "test_args": "m2_memory_fragment_includes_preferences", "suite": "cross"},
+    "m3": {"name": "Memory: persona default word", "test": "gauntlet_extended", "test_args": "m3_persona_default_for_word", "suite": "cross"},
+    "m4": {"name": "Memory: persona default code", "test": "gauntlet_extended", "test_args": "m4_persona_default_for_code", "suite": "cross"},
 }
 
 def run_test(scenario_id: str, scenario: dict, chaos: bool = False) -> dict:
@@ -84,7 +82,11 @@ def run_test(scenario_id: str, scenario: dict, chaos: bool = False) -> dict:
     if is_lib:
         cmd = ["cargo", "test", "--lib", test_name, "--", "--nocapture"]
     else:
-        cmd = ["cargo", "test", "--test", test_name, "--", "--nocapture"]
+        cmd = ["cargo", "test", "--test", test_name]
+        if "test_args" in scenario:
+            cmd.extend(["--", scenario["test_args"], "--exact", "--nocapture"])
+        else:
+            cmd.extend(["--", "--nocapture"])
     
     crate_dir = Path(__file__).parent.parent / "phantom-core"
     

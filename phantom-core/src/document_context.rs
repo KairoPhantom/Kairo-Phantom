@@ -1,18 +1,18 @@
-/// Kairo Phantom v3.0 — Structured Document Understanding
-///
-/// This module provides the `DocumentContext` type — the canonical context
-/// object passed through the entire pipeline (Context Engine → Swarm Brain → Agent).
-///
-/// Instead of passing raw text, every Alt+M trigger now produces a rich
-/// `DocumentContext` containing the document structure: headings, tables,
-/// slide positions, and tracked-change status.
-///
-/// Design principle: graceful degradation at every layer. If a file cannot
-/// be opened, parsed, or located, we fall back to plain UIA text. The user
-/// never notices a failure — they just get slightly less structured context.
-///
-/// NOTE: Uses VibeFlow for AST-aware pruning & kontext-engine for deep
-/// codebase contextualization to reduce context windows by 70-90%.
+// Kairo Phantom v3.0 — Structured Document Understanding
+//
+// This module provides the `DocumentContext` type — the canonical context
+// object passed through the entire pipeline (Context Engine → Swarm Brain → Agent).
+//
+// Instead of passing raw text, every Alt+M trigger now produces a rich
+// `DocumentContext` containing the document structure: headings, tables,
+// slide positions, and tracked-change status.
+//
+// Design principle: graceful degradation at every layer. If a file cannot
+// be opened, parsed, or located, we fall back to plain UIA text. The user
+// never notices a failure — they just get slightly less structured context.
+//
+// NOTE: Uses VibeFlow for AST-aware pruning & kontext-engine for deep
+// codebase contextualization to reduce context windows by 70-90%.
 
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -165,6 +165,7 @@ impl DocumentContext {
     }
 
     /// Build a context from a parsed file (DOCX/PPTX/XLSX) with structure.
+    #[allow(clippy::too_many_arguments)]
     pub fn from_parsed(
         doc_kind: DocKind,
         file_path: PathBuf,
@@ -503,12 +504,11 @@ impl OfficeExtractor {
                 '<' => {
                     in_tag = true;
                     // Check for paragraph tag to insert newlines
-                    if xml[xml.find('<').unwrap_or(0)..].starts_with("</w:p>") {
-                        if !last_was_para {
+                    if xml[xml.find('<').unwrap_or(0)..].starts_with("</w:p>")
+                        && !last_was_para {
                             result.push('\n');
                             last_was_para = true;
                         }
-                    }
                 }
                 '>' => {
                     in_tag = false;

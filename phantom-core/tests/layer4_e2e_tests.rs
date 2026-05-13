@@ -1,14 +1,14 @@
-/// ============================================================
-/// LAYER 4: Cross-Platform E2E Integration Tests
-///
-/// Validates the complete Alt+M workflow end-to-end:
-///   - Hotkey registration
-///   - Config load lifecycle  
-///   - Session creation and cancellation
-///   - MCP server round-trip structure
-///   - Swarm agent selection for different document types
-///   - Clipboard injection fallback chain
-/// ============================================================
+// ============================================================
+// LAYER 4: Cross-Platform E2E Integration Tests
+//
+// Validates the complete Alt+M workflow end-to-end:
+//   - Hotkey registration
+//   - Config load lifecycle
+//   - Session creation and cancellation
+//   - MCP server round-trip structure
+//   - Swarm agent selection for different document types
+//   - Clipboard injection fallback chain
+// ============================================================
 use phantom_core::config::PhantomConfig;
 use phantom_core::ghost_session::{GhostSession, ConfidenceBand, SessionState};
 use phantom_core::document_context::{DocumentContext, DocKind};

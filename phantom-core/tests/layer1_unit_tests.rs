@@ -5,7 +5,7 @@
 /// external dependencies (Ollama, UIA, clipboard)
 /// ============================================================
 use phantom_core::ghost_session::{GhostSession, ConfidenceBand, SessionState};
-use phantom_core::config::{PhantomConfig, ModelConfig, SwarmConfig};
+use phantom_core::config::PhantomConfig;
 use phantom_core::chaos::{FAULT_UIA_TIMEOUT, FAULT_CLIPBOARD_FAILURE,
                            FAULT_SSE_DISCONNECT, FAULT_OLLAMA_SLOW};
 use std::sync::atomic::Ordering;

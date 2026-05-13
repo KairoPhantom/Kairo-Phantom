@@ -4,10 +4,9 @@
 /// ============================================================
 use proptest::prelude::*;
 use phantom_core::swarm::SwarmOrchestrator;
-use phantom_core::ghost_session::{GhostSession, ConfidenceBand};
+use phantom_core::ghost_session::ConfidenceBand;
 use phantom_core::config::PhantomConfig;
-use phantom_core::document_context::{DocumentContext, DocKind};
-use std::path::Path;
+use phantom_core::document_context::DocumentContext;
 
 // ──────────────────────────────────────────────────────────────
 // Property 1: Swarm routing is DETERMINISTIC
@@ -22,7 +21,7 @@ proptest! {
         doc_text in "\\PC{0,2000}",
         prompt   in "\\PC{1,200}"
     ) {
-        let cfg = PhantomConfig::default();
+        let _cfg = PhantomConfig::default();
         let mut orch1 = SwarmOrchestrator::new_for_test();
         let mut orch2 = SwarmOrchestrator::new_for_test();
 

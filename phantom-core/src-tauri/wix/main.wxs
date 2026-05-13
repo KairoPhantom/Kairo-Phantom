@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Fragment>
+        <!-- Start Menu Shortcut -->
+        <DirectoryRef Id="ApplicationProgramsFolder">
+            <Component Id="ApplicationShortcut" Guid="*">
+                <Shortcut Id="ApplicationStartMenuShortcut"
+                          Name="Kairo Phantom"
+                          Description="Kairo Phantom Desktop AI"
+                          Target="[INSTALLDIR]KairoPhantom.exe"
+                          WorkingDirectory="INSTALLDIR"/>
+                <RemoveFolder Id="CleanUpShortCut" Directory="ApplicationProgramsFolder" On="uninstall"/>
+                <RegistryValue Root="HKCU" Key="Software\KairoPhantom" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
+            </Component>
+        </DirectoryRef>
+
+        <!-- Optional Startup Registry Key (Off by default, enabled via app settings) -->
+        <Component Id="StartupEntry" Guid="*" Directory="INSTALLDIR">
+            <RegistryValue Root="HKCU"
+                           Key="Software\Microsoft\Windows\CurrentVersion\Run"
+                           Name="KairoPhantom"
+                           Type="string"
+                           Value="[INSTALLDIR]KairoPhantom.exe --startup"
+                           KeyPath="yes" />
+            <Condition>STARTUP_ENABLED = 1</Condition>
+        </Component>
+
+    </Fragment>
+</Wix>

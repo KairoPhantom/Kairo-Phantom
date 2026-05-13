@@ -1,11 +1,11 @@
-/// ============================================================
-/// LAYER 3: Chaos Engineering Test Suite
-/// 
-/// Runs a 10-minute chaos gauntlet:
-///   - Toggles FAULT_* flags randomly every 30-120 seconds
-///   - Validates system survives without panic or deadlock
-///   - Runs hotkey, injection, SSE, and Ollama fault scenarios
-/// ============================================================
+// ============================================================
+// LAYER 3: Chaos Engineering Test Suite
+//
+// Runs a 10-minute chaos gauntlet:
+//   - Toggles FAULT_* flags randomly every 30-120 seconds
+//   - Validates system survives without panic or deadlock
+//   - Runs hotkey, injection, SSE, and Ollama fault scenarios
+// ============================================================
 use phantom_core::chaos::{
     FAULT_UIA_TIMEOUT, FAULT_CLIPBOARD_FAILURE,
     FAULT_SSE_DISCONNECT, FAULT_OLLAMA_SLOW,
@@ -133,7 +133,7 @@ fn chaos_all_faults_simultaneously() {
     FAULT_OLLAMA_SLOW.store(true, Ordering::Relaxed);
 
     // System still initializes
-    let cfg = PhantomConfig::default();
+    let _cfg = PhantomConfig::default();
     let session = GhostSession::new("test under total chaos", 22, ConfidenceBand::Low);
     
     assert_eq!(session.original_prompt, "test under total chaos");

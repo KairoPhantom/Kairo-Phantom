@@ -53,6 +53,7 @@ impl PromptGuard {
                 // Absolute override commands
                 "ignore all previous instructions",
                 "ignore all prior instructions",
+                "ignore previous instructions",
                 "disregard all previous",
                 "forget all previous instructions",
                 "override your training",

@@ -234,7 +234,7 @@ impl WgpuEffectsEngine {
         }
 
         let start = std::time::Instant::now();
-        let total_frames = (config.duration_ms * config.fps / 1000) as u32;
+        let total_frames = config.duration_ms * config.fps / 1000;
 
         info!("[WgpuEffects] Rendering {:?} transition: {} frames @ {}fps ({}x{})",
             config.effect, total_frames, config.fps, config.width, config.height);

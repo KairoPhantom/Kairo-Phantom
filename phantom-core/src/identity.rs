@@ -363,7 +363,7 @@ pub struct CloudSyncManager {
 }
 
 impl CloudSyncManager {
-    pub async fn sync_to_cloud(&self, data: &str) -> Result<(), String> {
+    pub async fn sync_to_cloud(&self, _data: &str) -> Result<(), String> {
         info!("☁️  [Tier 8] Syncing memory nexus to SurrealDB Cloud: {}", self.surreal_endpoint);
         // Mock sync logic
         Ok(())
@@ -383,8 +383,29 @@ fn hex_encode(bytes: &[u8]) -> String {
 }
 
 fn hex_decode(hex: &str) -> Result<Vec<u8>, &'static str> {
-    if hex.len() % 2 != 0 { return Err("Odd hex length"); }
+    if !hex.len().is_multiple_of(2) { return Err("Odd hex length"); }
     (0..hex.len()).step_by(2)
         .map(|i| u8::from_str_radix(&hex[i..i+2], 16).map_err(|_| "Invalid hex"))
         .collect()
+}
+// "?"?"? SPIFFE Agent Identity & SSO (Gap 3) "?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?"?
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SpiffeIdentity {
+    pub trust_domain: String,
+    pub spiffe_id: String,
+    pub certificate_pem: String,
+    pub sso_provider: String,
+}
+
+impl SpiffeIdentity {
+    pub fn new(agent_name: &str, sso_provider: &str) -> Self {
+        let trust_domain = "kairo-phantom.io";
+        Self {
+            trust_domain: trust_domain.to_string(),
+            spiffe_id: format!("spiffe://{}/agent/{}", trust_domain, agent_name),
+            certificate_pem: "-----BEGIN CERTIFICATE-----\nMOCK_SPIFFE_CERT...\n-----END CERTIFICATE-----".to_string(),
+            sso_provider: sso_provider.to_string(),
+        }
+    }
 }

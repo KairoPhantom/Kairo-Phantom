@@ -12,6 +12,12 @@ use super::AccessibilityReader;
 
 pub struct WindowsUiaReader;
 
+impl Default for WindowsUiaReader {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl WindowsUiaReader {
     pub fn new() -> Self {
         WindowsUiaReader

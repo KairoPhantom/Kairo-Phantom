@@ -152,7 +152,11 @@ impl SentinelSanitizer {
 
 }
 
-#[cfg(test)]
+impl Default for SentinelSanitizer {
+    fn default() -> Self { Self::new() }
+}
+
+
 mod tests {
     use super::*;
 

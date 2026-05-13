@@ -1,16 +1,15 @@
-/// ============================================================
-/// LAYER 6: WASM Sandbox Defense-in-Depth Tests
-///
-/// Validates the Phase 4 WASM Plugin Sandbox:
-///   - Ed25519 signature enforcement
-///   - Capability bounding and manifest validation
-///   - Concurrent Wasmtime compilation bounds
-///   - Fuzzing of malformed manifests
-/// ============================================================
+// ============================================================
+// LAYER 6: WASM Sandbox Defense-in-Depth Tests
+//
+// Validates the Phase 4 WASM Plugin Sandbox:
+//   - Ed25519 signature enforcement
+//   - Capability bounding and manifest validation
+//   - Concurrent Wasmtime compilation bounds
+//   - Fuzzing of malformed manifests
+// ============================================================
 use phantom_core::wasm_sandbox::{WasmPluginManifest, WasmCapability, WasmPluginRegistry, generate_skeleton_manifest};
 use proptest::prelude::*;
-use std::path::PathBuf;
-use ed25519_dalek::{SigningKey, Signer, SecretKey};
+use ed25519_dalek::{SigningKey, Signer};
 use rand::rngs::OsRng;
 use std::fs;
 use tempfile::tempdir;
@@ -39,7 +38,7 @@ proptest! {
         };
 
         // Should not panic, just return violations
-        let violations = manifest.validate_imports(&[import_str]);
+        let _violations = manifest.validate_imports(&[import_str]);
         
         // Either it violates or it doesn't, but no panics.
         let _warnings = manifest.validate();

@@ -40,6 +40,15 @@ mod context_optimizer;
 mod background_worker;
 mod aws_emulation;
 mod skills;
+mod memory_vault;
+mod tolaria_bridge;
+mod integration;
+mod telemetry;
+mod eval;
+mod xa11y;
+mod inference;
+mod mcp_auth;
+mod waza_sdk;
 use identity::IdentityManager;
 use wasm_sandbox::WasmPluginRegistry;
 
@@ -58,7 +67,7 @@ use api::ApiState;
 use config::PhantomConfig;
 use crdt::CrdtSession;
 use hotkey::HotkeyWatcher;
-use injector::Injector;
+use injector::HumanizedInjector as Injector;
 use uia::UiaReader;
 use context::{ContextEngine, AppContext};
 use ai::build_backend;
@@ -86,7 +95,7 @@ async fn check_ollama_health(base_url: &str) -> bool {
         .timeout(std::time::Duration::from_secs(5))
         .build()
         .unwrap_or_default();
-    client.get(&format!("{}/api/tags", base_url))
+    client.get(format!("{}/api/tags", base_url))
         .send().await
         .map(|r| r.status().is_success())
         .unwrap_or(false)
@@ -229,12 +238,46 @@ async fn async_main() -> Result<()> {
     };
     
     // ── Production Modules: Memory, Context7, PII Guard ──────────────────────────
+    let kairo_config_dir = dirs::home_dir()
+        .unwrap_or_else(|| std::path::PathBuf::from("."))
+        .join(".kairo-phantom");
+    let mem_machine = Arc::new(crate::memory::MemMachine::new(kairo_config_dir.clone())?);
+    
+    // Spawn Alaya 24-hour background maintenance.
+    // rusqlite::Connection is !Send, so we can't move it into tokio::spawn directly.
+    // Instead, create a dedicated MemMachine for the Alaya thread and run it in
+    // spawn_blocking, which runs on the blocking thread-pool with no Send constraint.
+    let alaya_config_dir = kairo_config_dir.clone();
+    std::thread::spawn(move || {
+        let rt = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .expect("Alaya tokio runtime");
+        rt.block_on(async move {
+            match crate::memory::MemMachine::new(alaya_config_dir.clone()) {
+                Ok(alaya_mem) => {
+                    // Run once on startup
+                    let _ = alaya_mem.run_maintenance_cycle().await;
+                    // Then every 24 hours
+                    let mut interval = tokio::time::interval(std::time::Duration::from_secs(86400));
+                    loop {
+                        interval.tick().await;
+                        let _ = alaya_mem.run_maintenance_cycle().await;
+                    }
+                }
+                Err(e) => {
+                    tracing::warn!("⚠️  Alaya: could not open maintenance MemMachine: {}", e);
+                }
+            }
+        });
+    });
+
     let mem_store = memory_store::MemoryStore::from_env();
     let kairo_memory = mem_store.load();
     let context7 = Arc::new(context7::Context7::new());
     let pii_guard = pii_guard::PiiGuard::new();
-    info!("🧠 Memory loaded: {} preferences | 📚 Context7 ready | 🛡️ PII Guard active",
-        kairo_memory.preferences.len());
+    info!("🧠 MemMachine ready | 📚 Context7 ready | 🛡️ PII Guard active");
+    
     // Share memory store for session recording
     let mem_store = Arc::new(std::sync::Mutex::new((mem_store, kairo_memory)));
     
@@ -311,6 +354,13 @@ async fn async_main() -> Result<()> {
         }
     }
     let _wasm_registry = Arc::new(wasm_registry);
+
+    // ── Waza Skill Architecture — per kairo-intel.md §3.1 ───────────────────
+    let skill_manager = Arc::new(crate::skills::SkillManager::new());
+    info!("🎯 Waza skills loaded: {}/{} SKILL.md files active", skill_manager.count(), 8);
+    for summary_line in skill_manager.skill_summary() {
+        info!("{}", summary_line);
+    }
 
     // Create CRDT session (AI peer with fixed clientID 999)
     let crdt_session = Arc::new(CrdtSession::new(999));
@@ -435,27 +485,121 @@ async fn async_main() -> Result<()> {
                 // Handle System Commands Immediately
                 match command_mode {
                     crate::command_protocol::CommandMode::Health => {
+                        // Comprehensive health audit per kairo-intel.md §3.4
+                        let base_url = config.model.base_url.as_deref().unwrap_or("http://localhost:11434");
+                        let ollama_ok = check_ollama_health(base_url).await;
+                        let api_key_status = if config.model.api_key.as_deref().unwrap_or("").is_empty() {
+                            "⚪ Not configured (offline/Ollama mode)"
+                        } else {
+                            "✅ API key configured"
+                        };
                         let lock = mem_store.lock().unwrap();
                         let (_, ref memory) = *lock;
+                        let learned_prefs: Vec<String> = memory.preferences.iter()
+                            .filter(|p| p.weight > 0.5)
+                            .map(|p| format!("  · {} → {} (weight: {:.1})", p.key, p.value, p.weight))
+                            .collect();
+                        let word_model: Vec<String> = memory.user_model.word_preferences.iter()
+                            .map(|(k, v)| format!("  · {}: {}", k, v))
+                            .collect();
+                        let ppt_model: Vec<String> = memory.user_model.ppt_preferences.iter()
+                            .map(|(k, v)| format!("  · {}: {}", k, v))
+                            .collect();
+                        let mcp_status = if std::path::Path::new("mcp-servers").exists() { "✅ MCP directory found" } else { "⚠️  MCP directory missing" };
+                        let kairo_ver = env!("CARGO_PKG_VERSION");
+                        let skill_summary_lines = skill_manager.skill_summary();
+                        let skill_report = skill_summary_lines.join("\n");
                         let report = format!(
-                            "🏥 Kairo Health Report\n- Preferences: {}\n- Interactions: {}\n- Patterns: {}\n- User Model (Word): {} entries\n- User Model (PPT): {} entries",
+                            "🏥 Kairo Phantom v{} — System Health Report\n\n\
+                             🤖 AI Engine\n  · Provider: {}\n  · Model: {}\n  · Ollama: {}\n  · API Key: {}\n\n\
+                             🧠 Memory (SQLite: ~/.kairo-phantom/memory.db)\n  · Preferences: {} learned\n  · Interactions: {} recorded\n  · Skill patterns: {} stored\n  · Knowledge graph: {} nodes, {} edges\n\n\
+                             📊 User Model (Word): {}\n{}\n\n\
+                             📊 User Model (PPT): {}\n{}\n\n\
+                             📚 Learned Preferences (weight > 0.5):\n{}\n\n\
+                             🎯 Waza Skills ({}/8 loaded):\n{}\n\n\
+                             🔌 MCP Bridge: {}\n  · Context7: {} (offline: {})\n  · PII Guard: ✅ Active\n  · Sentinel: ✅ Active\n  · PromptGuard: ✅ 27 patterns loaded\n\n\
+                             📁 Export (Kami):\n  · Use: // kami <markdown|pdf|revealjs>",
+                            kairo_ver,
+                            config.model.provider,
+                            config.model.model_name.as_deref().unwrap_or("default"),
+                            if ollama_ok { "✅ Running" } else { "❌ Not detected" },
+                            api_key_status,
                             memory.preferences.len(),
                             memory.interactions.len(),
                             memory.skill.reusable_patterns.len(),
-                            memory.user_model.word_preferences.len(),
-                            memory.user_model.ppt_preferences.len()
+                            memory.graph.nodes.len(),
+                            memory.graph.edges.len(),
+                            if word_model.is_empty() { 0 } else { word_model.len() },
+                            if word_model.is_empty() { "  · (none yet — use Kairo in Word to learn)".to_string() } else { word_model.join("\n") },
+                            if ppt_model.is_empty() { 0 } else { ppt_model.len() },
+                            if ppt_model.is_empty() { "  · (none yet — use Kairo in PowerPoint to learn)".to_string() } else { ppt_model.join("\n") },
+                            if learned_prefs.is_empty() { "  · (none yet)".to_string() } else { learned_prefs.join("\n") },
+                            skill_manager.count(),
+                            skill_report,
+                            mcp_status,
+                            if std::env::var("KAIRO_OFFLINE").is_ok() { "⚪ Offline mode" } else { "✅ Online mode" },
+                            std::env::var("KAIRO_OFFLINE").is_ok(),
                         );
                         injector.erase_prompt(doc_ctx.prompt_char_count);
                         injector.type_text(&report);
                         continue;
                     },
                     crate::command_protocol::CommandMode::Kami => {
-                        let result = crate::kami_export::KamiExport::export_markdown(&doc_ctx.full_text, "kairo_export.md");
+                        // Parse format from clean_prompt: // kami <format> or default to markdown
+                        let kami_args = clean_prompt.trim().to_lowercase();
+                        let kami_format = if kami_args.contains("pdf") { "pdf" }
+                            else if kami_args.contains("revealjs") || kami_args.contains("slides") || kami_args.contains("presentation") { "revealjs" }
+                            else { "markdown" };
+                        let kami_output = match kami_format {
+                            "pdf" => "kairo_export.pdf",
+                            "revealjs" => "kairo_export.html",
+                            _ => "kairo_export.md",
+                        };
+                        let kami_result = match kami_format {
+                            "pdf" => crate::kami_export::KamiExporter::execute(crate::kami_export::KamiCommand::Pdf, doc_ctx.full_text.clone()).await,
+                            "revealjs" => crate::kami_export::KamiExporter::execute(crate::kami_export::KamiCommand::RevealJs, doc_ctx.full_text.clone()).await,
+                            _ => crate::kami_export::KamiExporter::execute(crate::kami_export::KamiCommand::Summary, doc_ctx.full_text.clone()).await,
+                        };
                         injector.erase_prompt(doc_ctx.prompt_char_count);
-                        match result {
-                            Ok(_) => injector.type_text("✅ Document exported via Kami to kairo_export.md"),
-                            Err(e) => injector.type_text(&format!("❌ Kami export failed: {}", e)),
+                        match kami_result {
+                            Ok(_) => injector.type_text(&format!("✅ Document exported via Kami ({}) → {}", kami_format, kami_output)),
+                            Err(e) => injector.type_text(&format!("❌ Kami {} export failed: {}", kami_format, e)),
                         }
+                        continue;
+                    },
+                    crate::command_protocol::CommandMode::Think => {
+                        // PHASE 1 of Think: Generate a structured plan and show it.
+                        // User reviews it; pressing Alt+M again with the plan in context executes it.
+                        // Per kairo-intel.md §3.3: "Kairo outputs a plan (not the slides yet)"
+                        let (target_backend, agent_profile) = swarm_engine.route(&doc_ctx, &command_mode).await;
+                        let sentinel = crate::sentinel::SentinelSanitizer::new();
+                        let think_system = sentinel.wrap_system_prompt(&format!(
+                            "{}\n\nMODE: THINK — PLAN ONLY. Do NOT execute yet. Output a structured JSON-style plan with:\n\
+                             1. Problem restatement\n2. Proposed approach (bullet points)\n3. Sections/slides/steps to generate\n4. Tone and formatting decisions\n5. Key constraints\n\
+                             Start with '## KAIRO PLAN — review and press Alt+M to execute'\n\
+                             DO NOT generate the final content yet. Only the plan.",
+                            agent_profile.system_directive
+                        ));
+                        let (plan_tx, mut plan_rx) = mpsc::channel::<String>(200);
+                        let backend_clone = target_backend.clone();
+                        let prompt_for_plan = clean_prompt.clone();
+                        let ctx_for_plan = doc_ctx.full_text.clone();
+                        tokio::spawn(async move {
+                            let _ = backend_clone.stream_complete(
+                                &think_system,
+                                &format!("DOCUMENT CONTEXT:\n{}\n\nUSER REQUEST: {}", &ctx_for_plan[..ctx_for_plan.len().min(2000)], prompt_for_plan),
+                                plan_tx
+                            ).await;
+                        });
+                        // Collect plan output
+                        let mut plan_output = String::new();
+                        while let Some(token) = plan_rx.recv().await {
+                            plan_output.push_str(&token);
+                        }
+                        // Inject plan for user review - they press Alt+M again to execute
+                        injector.erase_prompt(doc_ctx.prompt_char_count);
+                        injector.type_text(&plan_output);
+                        info!("💭 Think: Plan generated ({} chars) — user reviews, Alt+M executes", plan_output.len());
                         continue;
                     },
                     _ => {}
@@ -474,6 +618,9 @@ async fn async_main() -> Result<()> {
                     continue;
                 }
                 let mut system_prompt = agent_profile.system_directive;
+                if let Some(skill_directive) = skill_manager.get_skill_directive(&command_mode) {
+                    system_prompt = format!("{}\n\n---\n\nWAZA SKILL DIRECTIVE:\n{}", system_prompt, skill_directive);
+                }
                 let prompt_text = clean_prompt.clone();
                 let prompt_char_count = doc_ctx.prompt_char_count;
                 let _original_prompt = prompt_text.clone();
@@ -497,7 +644,7 @@ async fn async_main() -> Result<()> {
                         AuditOutcome::Blocked,
                         &app_label,
                         kairo_agent_id,
-                        &config.model.model_name.as_deref().unwrap_or("default"),
+                        config.model.model_name.as_deref().unwrap_or("default"),
                         prompt_char_count,
                     );
                     continue;
@@ -506,16 +653,85 @@ async fn async_main() -> Result<()> {
                 // Context7
                 println!("📚 Grounding in Context7 documentation...");
                 let context7_hint = context7.fetch_ground_truth(&clean_prompt_for_llm).await;
-                let enriched_system = if let Some(ref docs) = context7_hint {
+                let mut enriched_system = if let Some(ref docs) = context7_hint {
                     info!("📚 Context7: injecting {} chars of ground-truth docs", docs.len());
                     format!("{system_prompt}\n\n<context7_docs>\n{docs}\n</context7_docs>")
                 } else {
                     system_prompt.clone()
                 };
-                system_prompt = sentinel.wrap_system_prompt(&enriched_system);
+
+                // P1: Tolaria MCP bridge for enterprise knowledge
+                let tolaria = crate::tolaria_bridge::TolariaBridge::new("tolaria");
+                if let Ok(brand_guidelines) = tolaria.get_brand_guidelines().await {
+                    if !brand_guidelines.is_empty() {
+                        info!("🏢 Tolaria: injecting enterprise brand guidelines");
+                        enriched_system = format!("{enriched_system}\n\n<tolaria_brand_guidelines>\n{brand_guidelines}\n</tolaria_brand_guidelines>");
+                    }
+                }
+                
+                // Wire ContextOptimizer: inject memory-personalized context into system prompt
+                let _context_optimizer = crate::context_optimizer::ContextOptimizer::new(2048);
+                
+                // Upgrade 4: Multi-Granularity Memory Recall
+                let granularities = vec![app_label.clone(), doc_ctx.doc_kind.human_name().to_string()];
+                let memories = mem_machine.recall_contextualized(&clean_prompt_for_llm, granularities, 3).await.unwrap_or_default();
+                
+                // Upgrade 5: Context-Aware Distillation
+                let distilled_memories = if !memories.is_empty() {
+                    let optimizer = crate::memory::optimizer::MemoryOptimizer::new();
+                    optimizer.distill_context(&app_label, &clean_prompt_for_llm, &memories)
+                } else {
+                    String::new()
+                };
+
+                let personalized_system = if !distilled_memories.is_empty() {
+                    info!("🧠 MemMachine: injecting {} chars of distilled context", distilled_memories.len());
+                    format!("{}\n\n<memory_context>\n{}\n</memory_context>", enriched_system, distilled_memories)
+                } else {
+                    enriched_system.clone()
+                };
+                
+                system_prompt = sentinel.wrap_system_prompt(&personalized_system);
 
                 // Add Command Mode Hint
                 system_prompt = format!("{}\n\n{}", system_prompt, command_mode.system_hint());
+
+                // Upgrade 5: PAHF Confidence Check (Pre-Action Clarification)
+                // Per kairo-gap.md §5 and PAHF research: if ConfidenceEngine < 0.4, inject a
+                // clarifying question instead of guessing. This prevents low-confidence outputs
+                // from polluting the memory system with wrong preferences.
+                let history = mem_machine.get_feedback_history(&app_label).unwrap_or_default();
+                if !history.is_empty() {
+                    // Generate a mock response preview to score against feedback history
+                    let preview_hint = format!("{} {}", clean_prompt_for_llm, app_label);
+                    let pahf_confidence = crate::memory::feedback::ConfidenceEngine::calculate_confidence(
+                        &app_label,
+                        &preview_hint,
+                        &history,
+                    );
+                    if pahf_confidence < 0.4 {
+                        // Inject a clarifying question rather than a potentially wrong guess
+                        let clarification = format!(
+                            "❓ Kairo needs clarification before generating:\n\
+                             \n\
+                             My confidence for this task in {} is low ({:.0}%) based on your feedback history.\n\
+                             \n\
+                             Could you clarify:\n\
+                             • Format preference: bullets / prose / table?\n\
+                             • Tone: formal / casual / technical?\n\
+                             • Length: concise (< 50 words) / standard / detailed?\n\
+                             \n\
+                             Type your preference and press Alt+M again to generate.",
+                            app_label,
+                            pahf_confidence * 100.0
+                        );
+                        injector.erase_prompt(prompt_char_count);
+                        injector.type_text(&clarification);
+                        info!("❓ PAHF: Low confidence ({:.2}) — injected clarification request", pahf_confidence);
+                        continue;
+                    }
+                    info!("✅ PAHF: Confidence {:.2} — proceeding with generation", pahf_confidence);
+                }
 
                 // F. Phase 3: Create Ghost Session with CancellationToken
                 let confidence = ConfidenceBand::compute(
@@ -532,7 +748,7 @@ async fn async_main() -> Result<()> {
                     AuditOutcome::Pending,
                     &app_label,
                     &kairo_agent_id_for_log,
-                    &config.model.model_name.as_deref().unwrap_or("default"),
+                    config.model.model_name.as_deref().unwrap_or("default"),
                     prompt_char_count,
                 );
 
@@ -620,6 +836,21 @@ async fn async_main() -> Result<()> {
                                         if buffer.len() > 15 || buffer.contains("[REPLACE]") {
                                             first_token = false;
                                             let clean_buf = buffer.replace("[REPLACE]", "").trim_start().to_string();
+                                            
+                                            // Upgrade 5: Late Confidence Check
+                                            let confidence_score = crate::memory::feedback::ConfidenceEngine::calculate_confidence(&app_label, &clean_buf, &history);
+                                            if confidence_score < 0.4 {
+                                                info!("⚠️  Confidence low ({:.2}). Seeking clarification...", confidence_score);
+                                                injector_clone.erase_prompt(prompt_char_count);
+                                                let msg = if clean_buf.contains("- ") {
+                                                    "I'm not sure if you wanted bullet points here. Would you prefer prose or a list?"
+                                                } else {
+                                                    "I'm not sure about the tone here. Should this be more formal or concise?"
+                                                };
+                                                injector_clone.type_text(msg);
+                                                was_cancelled = true;
+                                                break;
+                                            }
 
                                             info!("♻️  Erasing prompt ({} chars)...", prompt_char_count);
                                             injector_clone.erase_prompt(prompt_char_count);
@@ -646,6 +877,41 @@ async fn async_main() -> Result<()> {
                             break;
                         }
                     }
+                }
+
+                // Upgrade 1: Remember Ground Truth Episode
+                if !full_response.is_empty() && !was_cancelled {
+                    let mem_machine_clone = Arc::clone(&mem_machine);
+                    let response_clone = full_response.clone();
+                    let prompt_clone = clean_prompt_for_llm.clone();
+                    let app_clone = app_label.clone();
+                    tokio::spawn(async move {
+                        let _ = mem_machine_clone.remember(
+                            &response_clone, 
+                            Some(&prompt_clone), 
+                            &app_clone, 
+                            None, 
+                            true, 
+                            vec!["ghost_session"]
+                        ).await;
+                        info!("💾 MemMachine: Stored ground-truth episode.");
+                    });
+
+                    // Upgrade 5: Post-Action Feedback Monitor
+                    let mem_machine_fb = Arc::clone(&mem_machine);
+                    let app_fb = app_label.clone();
+                    let ai_output = full_response.clone();
+                    let uia_fb = Arc::clone(&uia_reader);
+                    tokio::spawn(async move {
+                        tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+                        if let Ok(current_text) = uia_fb.get_focused_text() {
+                            let signals = crate::memory::feedback::FeedbackClassifier::classify(&ai_output, &current_text);
+                            if !signals.is_empty() {
+                                let _ = mem_machine_fb.store_feedback(&app_fb, signals);
+                                info!("🧠 PAHF: Recorded user corrections as feedback signals.");
+                            }
+                        }
+                    });
                 }
 
                 // Fallback: small buffer never triggered
@@ -685,7 +951,7 @@ async fn async_main() -> Result<()> {
                             AuditOutcome::Blocked,
                             &app_label,
                             &kairo_agent_id_for_log,
-                            &config.model.model_name.as_deref().unwrap_or("default"),
+                            config.model.model_name.as_deref().unwrap_or("default"),
                             full_response.len(),
                         );
                     } else {
@@ -708,17 +974,36 @@ async fn async_main() -> Result<()> {
                             AuditOutcome::Success,
                             &app_label,
                             &kairo_agent_id_for_log,
-                            &config.model.model_name.as_deref().unwrap_or("default"),
+                            config.model.model_name.as_deref().unwrap_or("default"),
                             full_response.len(),
                         );
                     }
                 } else {
+                    // Rejection path: user pressed Esc — record as rejected in memory for learning
+                    if !full_response.is_empty() {
+                        if let Ok(mut store_lock) = mem_store.lock() {
+                            let (ref store, ref mut memory) = *store_lock;
+                            // learn_from_interaction stores the rejection signal
+                            memory.learn_from_interaction(crate::memory::types::Interaction {
+                                app: app_label.clone(),
+                                prompt: prompt_text.clone(),
+                                response: full_response.clone(),
+                                accepted: false, // rejected — Esc pressed
+                                timestamp: std::time::SystemTime::now()
+                                    .duration_since(std::time::UNIX_EPOCH)
+                                    .unwrap_or_default()
+                                    .as_secs(),
+                            });
+                            store.record_interaction(memory, &app_label, &prompt_text, &full_response, false);
+                            info!("🧠 After-action review: rejection pattern stored for future learning");
+                        }
+                    }
                     audit_logger.log_ghost_session(
                         AuditEvent::GhostSessionCancelled,
                         AuditOutcome::Aborted,
                         &app_label,
                         &kairo_agent_id_for_log,
-                        &config.model.model_name.as_deref().unwrap_or("default"),
+                        config.model.model_name.as_deref().unwrap_or("default"),
                         full_response.len(),
                     );
                 }

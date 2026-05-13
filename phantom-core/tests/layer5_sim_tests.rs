@@ -1,16 +1,15 @@
-/// ============================================================
-/// LAYER 5: Deterministic Simulation Tests
-///
-/// FoundationDB-style: seed-based deterministic async execution
-/// - Tests ghost session lifecycle under simulated time
-/// - 1000 seeds, each must produce zero panics
-/// - Any failure is perfectly reproducible by seed ID
-/// ============================================================
+// ============================================================
+// LAYER 5: Deterministic Simulation Tests
+//
+// FoundationDB-style: seed-based deterministic async execution
+// - Tests ghost session lifecycle under simulated time
+// - 1000 seeds, each must produce zero panics
+// - Any failure is perfectly reproducible by seed ID
+// ============================================================
 use phantom_core::ghost_session::{GhostSession, ConfidenceBand};
 use phantom_core::config::PhantomConfig;
 use phantom_core::chaos::{FAULT_UIA_TIMEOUT, FAULT_CLIPBOARD_FAILURE, FAULT_SSE_DISCONNECT, FAULT_OLLAMA_SLOW};
 use std::sync::atomic::Ordering::Relaxed;
-use std::time::Duration;
 
 /// Deterministic pseudo-random number generator (LCG seeded)
 struct DeterministicRng {

@@ -426,7 +426,7 @@ impl DocumentContextExtractor for PdfExtractorAdapter {
 pub struct OlgaExtractorAdapter;
 impl DocumentContextExtractor for OlgaExtractorAdapter {
     fn supported_extensions(&self) -> &[&str] { &["pdf", "docx", "xlsx", "html"] }
-    fn extract(&self, path: &std::path::Path, prompt_text: &str, active_slide: Option<usize>) -> Option<DocumentContext> {
+    fn extract(&self, path: &std::path::Path, prompt_text: &str, _active_slide: Option<usize>) -> Option<DocumentContext> {
         info!("[Olga] Attempting fast extraction for {:?}", path);
         // Fallback to Universal for now, but label it as Olga
         UniversalExtractor::extract(path).ok().map(|doc| {

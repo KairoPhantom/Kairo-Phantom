@@ -68,7 +68,7 @@ impl SIMDTextDiffer {
 
     /// Return only new content by stripping existing prefix.
     pub fn diff_token_stream<'a>(&self, existing: &str, new_full: &'a str) -> &'a str {
-        if new_full.starts_with(existing) { &new_full[existing.len()..] } else { new_full }
+        if new_full.starts_with(existing) { new_full.strip_prefix(existing).unwrap_or(new_full) } else { new_full }
     }
 }
 
@@ -77,6 +77,12 @@ impl Default for SIMDTextDiffer { fn default() -> Self { Self::new() } }
 // ─── A3: Zero-Alloc SSE Parser ───────────────────────────────────────────────
 
 pub struct ZeroAllocSseParser { buf: Vec<u8> }
+
+impl Default for ZeroAllocSseParser {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl ZeroAllocSseParser {
     pub fn new() -> Self { Self { buf: Vec::with_capacity(4096) } }
@@ -156,6 +162,12 @@ struct CachedModel { last_used: u64, reuse_count: u64 }
 
 pub struct McpModelCache {
     instances: std::sync::Mutex<std::collections::HashMap<String, CachedModel>>,
+}
+
+impl Default for McpModelCache {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl McpModelCache {

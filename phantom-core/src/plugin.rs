@@ -34,6 +34,12 @@ pub struct FingerprinterRegistry {
     fingerprinters: Vec<Box<dyn AppFingerprinter>>,
 }
 
+impl Default for FingerprinterRegistry {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FingerprinterRegistry {
     pub fn new() -> Self {
         Self { fingerprinters: Vec::new() }
@@ -56,6 +62,12 @@ impl FingerprinterRegistry {
 /// Registry for swarm agents.
 pub struct AgentRegistry {
     agents: Vec<Arc<dyn SwarmAgent>>,
+}
+
+impl Default for AgentRegistry {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl AgentRegistry {

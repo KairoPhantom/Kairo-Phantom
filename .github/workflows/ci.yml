@@ -155,7 +155,7 @@ jobs:
       - name: Verify all skill SKILL.md files are complete
         run: |
           MIN_SIZE=200
-          for skill_dir in skills/*/; do
+          for skill_dir in phantom-core/src/skills/*/; do
             skill_file="$skill_dir/SKILL.md"
             if [ -f "$skill_file" ]; then
               size=$(wc -c < "$skill_file")

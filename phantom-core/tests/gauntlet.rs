@@ -10,7 +10,7 @@ use std::sync::Arc;
 async fn test_production_gauntlet() {
     let fallback_backend = Arc::new(phantom_core::swarm::TestFallbackBackend);
     let swarm = SwarmOrchestrator::new(SwarmConfig::default(), fallback_backend);
-    let mut sentinel = SentinelSanitizer::new();
+    let sentinel = SentinelSanitizer::new();
 
     // SCENARIO 1: // Direct Ghost-Write
     let doc_ctx = DocumentContext::from_plain_text("Microsoft Word", "Context", "// jumps over the dog");

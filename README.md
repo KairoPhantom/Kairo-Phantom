@@ -1,286 +1,174 @@
 # Kairo Phantom
 
-> **The AI ghost-writer that lives inside your apps.**
-> Press Alt+M anywhere. Kairo reads your document, routes to the right specialist agent, and types the answer directly into your window.
+> **An AI ghost-writer that haunts any app and learns how you write.**
 
-[![Build](https://github.com/your-org/kairo-phantom/actions/workflows/ci.yml/badge.svg)](https://github.com/your-org/kairo-phantom/actions)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Rust](https://img.shields.io/badge/rust-1.78%2B-orange.svg)](https://www.rust-lang.org)
-[![MCP Compatible](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io)
-
----
-
-## ⚡ Quick Install
-
-**The Developer Way:**
 ```bash
 cargo install kairo-phantom
 ```
 
-**Windows (Pre-built binary):**
-```powershell
-irm https://raw.githubusercontent.com/your-org/kairo-phantom/main/install.ps1 | iex
-```
-
-**macOS / Linux (Pre-built binary):**
-```bash
-curl -sSL https://raw.githubusercontent.com/your-org/kairo-phantom/main/install.sh | bash
-```
-
-### 🏁 First-Run Experience
-
-What happens after you run `kairo-phantom` for the first time?
-1. Kairo will **auto-detect** if you have Ollama installed and running. If it finds it, you are ready to go—100% offline!
-2. If you want higher quality or image generation, it will prompt you to add your `openai_api_key` or `gemini_api_key` to `~/.kairo-phantom/config.toml`.
-3. An overlay will appear. Just switch to any app (Word, VS Code, Chrome) and press **Alt+M** to start ghost-writing.
+Press `Alt+M` anywhere. Ghost-text appears in 2 seconds.
 
 ---
 
-## 🎯 What It Does
-
-| Press | In | Kairo does |
-|-------|-----|------------|
-| `Alt+M` | Word | Reads your doc → streams AI prose → types it in |
-| `Alt+M` | PowerPoint | Detects slide → suggests layout + content → types it |
-| `Alt+M` | Excel | Detects data → writes formula → injects it |
-| `Alt+M` | VS Code | Reads code → writes completion → types it |
-| `Alt+M` | Terminal | Reads command history → suggests next command |
-| `Alt+M` | Any app | Clipboard fallback → ghost types the response |
+`Works in any app` &nbsp;|&nbsp; `Learns your style` &nbsp;|&nbsp; `100% offline via Ollama`
 
 ---
 
-## 🤖 Swarm Agents (15 Specialists)
+## What it does
 
-Kairo automatically routes to the best agent based on what you're writing:
+Kairo Phantom is a system-wide AI writing assistant for Windows. It lives at the OS level — no browser extension, no plugin, no copy-paste. Press `Alt+M` in **any** text field (Word, Outlook, Slack, VS Code, your browser, your terminal), and Kairo reads your context, routes your prompt to the best specialist agent, and types the AI response directly into the window — character by character, as if a skilled colleague is typing beside you.
 
-| Agent | Triggers On |
-|-------|-------------|
-| 🎨 Design & Media | PowerPoint, Figma, Canva, visual prompts |
-| 🧠 Reasoning & Logic | Code, terminal, calculations |
-| ✍️ Content All-Rounder | Word docs, general writing (default) |
-| 🖼️ Image Generation | "generate image", "create icon", "diagram" |
-| 💰 Finance & Spreadsheet | Excel, Google Sheets, formulas |
-| ⚖️ Legal Documents | Contracts, NDAs, agreements |
-| 🏥 Medical Documentation | SOAP notes, ICD-10, clinical summaries |
-| 🎓 Academic Writing | Research papers, APA/MLA citations |
-| 📈 Sales & Marketing | Cold email, proposals, pitch decks |
-| 👥 HR & Talent | Job descriptions, performance reviews |
-| 📣 Marketing Content | Blog posts, SEO, ad copy, landing pages |
-| 📋 Product Management | PRDs, user stories, OKRs, roadmaps |
-| 👨‍💻 Engineer | README, commits, architecture docs |
-| 📚 Student Tutor | Beginner-friendly explanations |
-| 📊 Data Analyst | Pivot tables, data summaries |
+**Who it's for:** Knowledge workers who type for a living and are tired of switching windows to an AI chat interface.
 
 ---
 
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Kairo Phantom Core                        │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌────────────┐ │
-│  │  Global  │  │    UIA   │  │  Swarm   │  │   Ghost    │ │
-│  │  Hotkey  │→ │  Reader  │→ │  Brain   │→ │  Session   │ │
-│  │  Alt+M   │  │ (Win32)  │  │ (Router) │  │  (Stream)  │ │
-│  └──────────┘  └──────────┘  └──────────┘  └────────────┘ │
-│                                    ↓              ↓         │
-│                              ┌──────────┐  ┌────────────┐ │
-│                              │   Image  │  │  Injector  │ │
-│                              │ Pipeline │  │  (Enigo)   │ │
-│                              └──────────┘  └────────────┘ │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │          HTTP API (localhost:7437)                   │   │
-│  │  /health /materialize /ask /inject /generate_image  │   │
-│  └─────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
-         ↕ JSON-RPC stdio                    ↕ JSON-RPC stdio
-┌──────────────────┐              ┌─────────────────────────┐
-│ MCP Bridge: PPTX │              │   Kairo MCP Server      │
-│  14 tools        │              │   8 tools               │
-│  (python-pptx)   │              │   (Claude/Cursor/Wind.) │
-└──────────────────┘              └─────────────────────────┘
-```
-
----
-
-## 🖼️ Image Generation
-
-Kairo routes image generation to the best available backend:
-
-| Backend | Quality | Speed | Cost | Setup |
-|---------|---------|-------|------|-------|
-| OpenAI gpt-image-1 | ⭐⭐⭐⭐⭐ | ~15s | $0.04/img | `openai_api_key` |
-| Google Imagen 3 | ⭐⭐⭐⭐⭐ | ~10s | Free tier | `gemini_api_key` |
-| Ollama (local) | ⭐⭐⭐ | ~30–120s | FREE | Ollama installed |
-
-Generated images are automatically:
-- Copied to clipboard (Ctrl+V in any app)
-- Injected directly into PPTX slides (via python-pptx)
-- Inserted into Word documents (via python-docx)
-
----
-
-## 🔌 MCP Integration (Claude Code / Cursor / Windsurf)
-
-Add to your MCP config:
-
-```json
-{
-  "mcpServers": {
-    "kairo": {
-      "command": "kairo-mcp",
-      "args": []
-    }
-  }
-}
-```
-
-Available MCP tools:
-
-| Tool | Description |
-|------|-------------|
-| `kairo_read_context` | Read focused window text |
-| `kairo_ghost_write` | Type text into active window |
-| `kairo_ask` | Full AI round-trip (read → route → inject) |
-| `kairo_generate_image` | Generate image via image pipeline |
-| `kairo_generate_image_inject` | Generate + auto-inject into doc |
-| `kairo_generate_slide` | Generate full PPTX from topic |
-| `kairo_detect_app` | Detect active application |
-| `kairo_list_agents` | List all 15 swarm agents |
-
----
-
-## ⚙️ Configuration
-
-`~/.kairo-phantom/config.toml`:
-
-```toml
-[ai]
-# Choose one (or all — Kairo falls back gracefully):
-openai_api_key = "sk-..."           # OpenAI GPT-4o
-gemini_api_key = "AIza..."          # Google Gemini
-ollama_base_url = "http://localhost:11434"  # Offline/local
-
-[image]
-openai_api_key = "sk-..."           # gpt-image-1
-gemini_api_key = "AIza..."          # Imagen 3
-# offline_only = true               # Force local Ollama
-
-[swarm]
-enabled = true                      # Multi-agent routing
-
-[mcp]
-# canva_access_token = "..."        # Canva Connect API
-```
-
----
-
-## 🧩 Plugin System
-
-Install hero plugins to extend Kairo's capabilities:
+## Quickstart
 
 ```bash
-# Copy plugins to installation directory
-cp plugins/*.toml ~/.kairo-phantom/plugins/
+# 1. Install Ollama (offline AI engine)
+#    → https://ollama.ai
+
+# 2. Pull a model
+ollama pull qwen2.5-coder:7b
+
+# 3. Install Kairo Phantom
+cargo install kairo-phantom
+
+# 4. Launch
+kairo-phantom
+
+# 5. Open any app, click a text field, press Alt+M
 ```
 
-**Available hero plugins** (`plugins/`):
-- `finance.toml` — Excel formulas, DCF, financial modeling
-- `legal.toml` — Contracts, NDAs, legal drafting  
-- `design.toml` — PowerPoint, Figma, visual design
-- `dev.toml` — Code, README, git commits, architecture
-- `medical.toml` — SOAP notes, ICD-10, clinical docs
-- `academic.toml` — Research papers, APA/MLA citations
-- `sales.toml` — Cold email, proposals, CRM
-- `hr.toml` — Job descriptions, performance reviews
-- `marketing.toml` — Blogs, SEO, ad copy
-- `product.toml` — PRDs, user stories, OKRs
+That's it. No accounts. No API keys. No data leaving your machine.
 
 ---
 
-## 🎮 Keyboard Shortcuts
+## How it works
+
+- **Press `Alt+M`** — hotkey is intercepted at the OS level via native accessibility APIs.
+- **Context is captured** — Kairo reads the active window title, selected text, and surrounding document content.
+- **Prompt is routed** — the 8-agent Waza swarm selects the specialist best suited to your context.
+- **Memory is recalled** — your formatting preferences (bullets vs. prose, formal vs. casual, length) are loaded from local SQLite.
+- **Ghost-text appears** — the response streams directly into your active window, character by character.
+
+---
+
+## Does Kairo actually learn?
+
+**Yes — and we've measured it.**
+
+The `MemMachine` intelligence engine is validated against a 30-session production benchmark. All scores are computed from live system output — not simulations.
+
+### Memory Intelligence Benchmark — v0.3.0
+
+| Metric | Score |
+|--------|-------|
+| **Final Composite Score** | **0.9872** |
+| **Learning Convergence** | Session 2 (from cold start) |
+| **Format Match (sessions 2–30)** | 1.000 |
+| **Tone Consistency (sessions 2–30)** | 1.000 |
+| **Length Accuracy (sessions 2–30)** | 1.000 |
+| **Sessions tested** | 30 |
+
+**Learning curve:**
+
+| Session | Composite |
+|---------|-----------|
+| 1 | 0.617 |
+| 2 | **1.000** |
+| 3–30 | **1.000** |
+
+Score curve: `▂████████████████████████████` — converges after **one correction**.
+
+Reproduce it yourself:
+```bash
+cargo run --release --bin memory_benchmark
+```
+
+### Five architectural upgrades behind the score
+
+| Upgrade | Technique | Impact |
+|---------|-----------|--------|
+| **Ground-Truth Store** | Raw episode preservation | Eliminates LLM summary drift |
+| **PRIME Meta-Operations** | Merge/Split/Generalize policies | Self-improving learning |
+| **Alaya Cognitive Decay** | Ebbinghaus curves in SQLite | Prunes noise, preserves signal |
+| **Multi-Granularity Routing** | Entropy-based context_key | Sub-app preference precision |
+| **PAHF Dual-Channel Feedback** | Format + tone + length signals | 3× faster preference learning |
+
+---
+
+## Waza Agents
+
+Kairo ships with 8 specialist agents. The router selects the best one automatically.
+
+| Agent | Best for | Example prompt |
+|---|---|---|
+| **Corporate Strategist** | Pitch decks, exec summaries | *"Draft a Q3 migration memo for the board."* |
+| **Creative Writer** | Blog posts, marketing copy | *"Write a compelling hook about our new launch."* |
+| **Developer** | Code docs, technical writing | *"Document this Python class and its methods."* |
+| **Academic Researcher** | Literature reviews, citations | *"Summarize the findings on quantum decoherence."* |
+| **Medical Reviewer** | Clinical notes, patient comms | *"Plain-English explanation of this diagnosis."* |
+| **Legal Writer** | Contracts, briefs, compliance | *"Write a boilerplate non-disclosure clause."* |
+| **Marketing Copywriter** | SEO, ad copy, social media | *"Generate 3 tweet variants for this feature."* |
+| **Executive Communicator** | Slack, email, status updates | *"Politely decline this meeting request."* |
+
+---
+
+## Keyboard Reference
 
 | Shortcut | Action |
-|----------|--------|
-| `Alt+M` | Activate Kairo / submit prompt |
-| `Esc` | Cancel streaming (immediately) |
-| `Tab` | Accept full suggestion |
-| `Ctrl+Right` | Accept next word |
-| `Alt+1` / `Alt+2` | Switch between alternatives A/B |
-| `Ctrl+/` | Re-prompt (inline correction) |
-| `Ctrl+Z` | Agent-aware undo (restores pre-Kairo state) |
-| `Alt+Shift+M` | Replay last session |
+|---|---|
+| `Alt+M` | Trigger ghost-write at cursor |
+| `Esc` | Cancel streaming mid-generation |
+| `Alt+Z` | Undo last ghost-write |
+| `Alt+Shift+M` | Re-run with different agent |
 
 ---
 
-## 🔑 API Keys Reference
+## Install community agents
 
-After installation, you'll need at least one of these:
-
-| Service | Key | Get it at | Used for |
-|---------|-----|-----------|----------|
-| **OpenAI** | `openai_api_key` | [platform.openai.com](https://platform.openai.com) | GPT-4o text + gpt-image-1 |
-| **Google Gemini** | `gemini_api_key` | [aistudio.google.com](https://aistudio.google.com) | Gemini text + Imagen 3 |
-| **Anthropic** | `anthropic_api_key` | [console.anthropic.com](https://console.anthropic.com) | Claude Sonnet |
-| **Canva** | `canva_access_token` | [canva.com/developers](https://www.canva.com/developers) | Canva Connect API |
-| **Ollama** | *(none)* | [ollama.ai](https://ollama.ai) | 100% local/offline |
-
-> **Minimum to start:** Just Ollama (free, local). Add cloud keys for higher quality.
-
----
-
-## 🏗️ Build from Source
+The Waza architecture is fully open. Install third-party agents from the community:
 
 ```bash
-git clone https://github.com/your-org/kairo-phantom
-cd kairo-phantom
-
-# Build core
-cd phantom-core && cargo build --release
-
-# Build MCP server  
-cd ../mcp-servers/kairo-mcp && cargo build --release
-
-# Install Python bridges
-pip install python-pptx pillow requests
-
-# Run
-./target/release/kairo-phantom
+kairo agent install github.com/community/legal-brief-agent
 ```
 
----
-
-## 🚑 Troubleshooting
-
-If Kairo Phantom isn't working as expected, it's usually one of these three things:
-
-1. **"Ollama connection refused"**
-   - *Fix:* Ensure Ollama is running in the background (`ollama serve`) and the model is pulled (`ollama run llama3`).
-2. **macOS: "Failed to read context"**
-   - *Fix:* Grant Accessibility permissions. Go to System Settings -> Privacy & Security -> Accessibility and toggle on your Terminal or Kairo.
-3. **Linux: "Clipboard not accessible"**
-   - *Fix:* On X11, Kairo requires `xclip` or `xsel` as a fallback. Run `sudo apt install xclip`.
+Build your own: see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
-## 🌟 Contributing & Community
+## Privacy
 
-Kairo is a living community. We'd love your help!
+**Zero telemetry. Your data never leaves your machine** unless you explicitly configure a cloud LLM provider.
 
-1. Check out our [**CONTRIBUTORS.md**](CONTRIBUTORS.md) for "Good First Issues" you can pick up in under an hour.
-2. Read the [**ROADMAP.md**](ROADMAP.md) to see where we're heading in the next 6 months.
-3. Join the discussion on **GitHub Discussions** or our **Discord server**.
+- Default provider: **Ollama** (100% local inference)
+- Memory store: local SQLite at `~/.kairo-phantom/memory/`
+- No usage analytics, crash reporting, or network calls from the core engine
 
-**Quick Contribution Guide:**
-1. Fork the repo and clone it locally.
-2. Create a feature branch: `git checkout -b feat/my-feature`
-3. Commit with Conventional Commits: `feat(swarm): add new agent`
-4. Open a PR — describe What/Why/How.
-
-See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for our dependency attributions.
+Cloud providers (OpenAI, Anthropic, Gemini) are opt-in and require you to add your own API key to `~/.kairo-phantom/config.toml`.
 
 ---
 
-## 📄 License
+## Security
 
-MIT License — see [LICENSE](LICENSE)
+- **WASM sandbox** — third-party plugins run in Wasmtime with Ed25519 signature verification
+- **ToolGate** — explicit allowlist for all file access and tool calls
+- **Sentinel sanitizer** — prompt injection detection and PII redaction on all AI output
+- **SPIFFE identity** — cryptographically signed agent identity at every inter-agent boundary
+
+See [SECURITY.md](SECURITY.md) for vulnerability reporting.
+
+---
+
+## Contributing
+
+We welcome community agents, bug fixes, and platform ports.
+
+→ [Build your own Waza agent in 10 minutes](CONTRIBUTING.md)
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE).

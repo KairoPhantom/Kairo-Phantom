@@ -15,8 +15,8 @@ impl FactsVerifier {
         let mut implemented = 0;
         let mut specs = 0;
         let mut drafts = 0;
-        let mut passed = 0;
-        let mut failed = 0;
+        let mut _passed = 0;
+        let mut _failed = 0;
         
         let mut current_fact_type = "";
         
@@ -31,20 +31,19 @@ impl FactsVerifier {
             } else if line.starts_with("@draft:") {
                 drafts += 1;
                 current_fact_type = "draft";
-            } else if line.starts_with("command:") {
-                if current_fact_type == "implemented" {
+            } else if line.starts_with("command:")
+                && current_fact_type == "implemented" {
                     let cmd_str = line.trim_start_matches("command:").trim();
                     let parts: Vec<&str> = cmd_str.split_whitespace().collect();
                     if !parts.is_empty() {
                         let mut cmd = Command::new(parts[0]);
                         cmd.args(&parts[1..]);
                         match cmd.status() {
-                            Ok(status) if status.success() => passed += 1,
-                            _ => failed += 1,
+                            Ok(status) if status.success() => _passed += 1,
+                            _ => _failed += 1,
                         }
                     }
                 }
-            }
         }
         
         let total_valid = implemented + specs + drafts;
@@ -53,8 +52,8 @@ impl FactsVerifier {
         println!("Kairo Phantom v4.0: {}/{} facts implemented, {} specs in progress, {} drafts. Production readiness: {:.1}%.",
             implemented, total_valid, specs, drafts, readiness);
             
-        if failed > 0 {
-            println!("Verification FAILED: {} commands failed.", failed);
+        if _failed > 0 {
+            println!("Verification FAILED: {} commands failed.", _failed);
             Ok(false)
         } else {
             println!("Verification PASSED.");

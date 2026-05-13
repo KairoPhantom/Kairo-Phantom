@@ -1,0 +1,85 @@
+name: Release macOS DMG
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+
+    env:
+      TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+      TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+      APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+      APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+      APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-apple-darwin, aarch64-apple-darwin
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install macOS build dependencies
+        run: |
+          brew install node create-dmg
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Tauri CLI
+        run: npm install -g @tauri-apps/cli
+
+      - name: Import Apple Code Signing Certificate
+        uses: Apple-Actions/import-codesign-certs@v2
+        with:
+          p12-file-base64: ${{ secrets.APPLE_CERTIFICATE }}
+          p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+
+      - name: Build and Package Tauri App
+        working-directory: ./phantom-core/src-tauri
+        run: |
+          # Build signed .app and DMG
+          tauri build --target universal-apple-darwin
+
+      - name: Notarize App
+        working-directory: ./phantom-core/src-tauri/target/universal-apple-darwin/release/bundle/macos
+        run: |
+          xcrun notarytool submit "Kairo Phantom.app" --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$APPLE_TEAM_ID" --wait
+
+      - name: Create DMG with create-dmg (Fallback / Custom)
+        working-directory: ./phantom-core/src-tauri/target/universal-apple-darwin/release/bundle/macos
+        run: |
+          create-dmg \
+            --volname "Kairo Phantom Installer" \
+            --window-pos 200 120 \
+            --window-size 800 400 \
+            --icon-size 100 \
+            --icon "Kairo Phantom.app" 200 190 \
+            --hide-extension "Kairo Phantom.app" \
+            --app-drop-link 600 185 \
+            "Kairo Phantom.dmg" \
+            "Kairo Phantom.app"
+
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            ./phantom-core/src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
+            ./phantom-core/src-tauri/target/universal-apple-darwin/release/bundle/macos/Kairo Phantom.dmg
+            ./phantom-core/src-tauri/target/universal-apple-darwin/release/bundle/macos/latest-mac.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

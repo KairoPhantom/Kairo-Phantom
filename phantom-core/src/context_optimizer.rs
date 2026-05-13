@@ -3,7 +3,6 @@
 // Prunes redundant or low-weight context fragments to fit within target LLM windows.
 // Integrates concept from icm-graph (context window management).
 
-use crate::document_context::DocumentContext;
 use crate::memory::KairoMemory;
 use tracing::info;
 
@@ -48,7 +47,7 @@ impl ContextOptimizer {
         }
 
         // Sort by weight descending
-        fragments.sort_by(|a, b| b.0.cmp(&a.0));
+        fragments.sort_by_key(|&(w, _)| std::cmp::Reverse(w));
 
         let mut result = Vec::new();
         let mut current_chars = 0;

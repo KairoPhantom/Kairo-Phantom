@@ -214,6 +214,12 @@ pub struct ContextEngine {
 }
 
 
+impl Default for ContextEngine {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ContextEngine {
     pub fn new() -> Self {
         let mut registry = FingerprinterRegistry::new();
@@ -303,12 +309,10 @@ impl ContextEngine {
             dirs::download_dir(),
         ];
 
-        for dir_opt in &search_dirs {
-            if let Some(dir) = dir_opt {
-                let candidate_path = dir.join(clean);
-                if candidate_path.exists() {
-                    return Some(candidate_path);
-                }
+        for dir in search_dirs.iter().flatten() {
+            let candidate_path = dir.join(clean);
+            if candidate_path.exists() {
+                return Some(candidate_path);
             }
         }
 
@@ -338,7 +342,7 @@ impl ContextEngine {
     pub fn extract_last_paragraph(text: &str) -> String {
         // Split by paragraph breaks and take the last non-empty one
         let paragraphs: Vec<&str> = text
-            .split(|c| c == '\n' || c == '\r')
+            .split(['\n', '\r'])
             .map(|s| s.trim())
             .filter(|s| !s.is_empty())
             .collect();

@@ -1,10 +1,10 @@
-/// uia.rs — backwards-compatibility shim
-/// 
-/// The UIA implementation has been refactored into `platform/windows.rs`
-/// as part of the Kairo v3.0 cross-platform initiative.
-/// 
-/// This module re-exports the platform implementation for any code
-/// still using the old `UiaReader` name.
+// uia.rs — backwards-compatibility shim
+//
+// The UIA implementation has been refactored into `platform/windows.rs`
+// as part of the Kairo v3.0 cross-platform initiative.
+//
+// This module re-exports the platform implementation for any code
+// still using the old `UiaReader` name.
 
 // Re-export the Windows implementation under the old name for compatibility.
 #[cfg(target_os = "windows")]
