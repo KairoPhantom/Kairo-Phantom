@@ -1,0 +1,369 @@
+{
+  "graph_meta": {
+    "title": "Kairo Phantom 76-Scenario Gauntlet — Agent Memory Graph",
+    "version": "1.0.0",
+    "generated": "2026-05-14",
+    "total_scenarios": 76,
+    "total_agents": 12,
+    "description": "Structured knowledge graph encoding every scenario, pass criteria, prerequisites, and retry rules for all 12 test agents. Used by GitHub Actions matrix runners and local orchestrators."
+  },
+  "global_rules": {
+    "max_retries": 3,
+    "retry_cooldown_sec": 30,
+    "screenshot_on_fail": true,
+    "screenshot_dir": "C:\\tests\\screenshots",
+    "log_dir": "C:\\tests\\logs",
+    "results_dir": "C:\\tests\\results",
+    "gate_enforce": true,
+    "chaos_active": true,
+    "delimiter_protocol": "//",
+    "output_quality_check": {
+      "forbidden_strings": ["Content Agent", "Swarm Role", "[insert here]", "TBD", "PLACEHOLDER"],
+      "system_prompt_leakage": true,
+      "prompt_repetition": true
+    },
+    "production_ready_threshold": {
+      "total_pass": 76,
+      "first_attempt_pass_rate": 0.92,
+      "max_retries_per_scenario": 2,
+      "zero_crashes": true,
+      "zero_prompt_leakage": true
+    }
+  },
+  "fixtures": {
+    "setup_script": "scripts/setup_fixtures.py",
+    "files": {
+      "report_docx": "C:\\tests\\report.docx",
+      "report_informal_docx": "C:\\tests\\report_informal.docx",
+      "contract_docx": "C:\\tests\\contract.docx",
+      "deck_pptx": "C:\\tests\\deck.pptx",
+      "blank_deck_pptx": "C:\\tests\\blank_deck.pptx",
+      "spreadsheet_xlsx": "C:\\tests\\spreadsheet.xlsx",
+      "spreadsheet_broken_xlsx": "C:\\tests\\spreadsheet_broken.xlsx",
+      "notes_txt": "C:\\tests\\notes.txt",
+      "vscode_project": "C:\\tests\\vscode-project",
+      "vscode_buggy": "C:\\tests\\vscode-buggy"
+    }
+  },
+  "agents": [
+    {
+      "agentId": "agent_word",
+      "app": "Microsoft Word",
+      "executable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+      "process": "WINWORD.EXE",
+      "scenario_ids": ["W1","W2","W3","W4","W5","W6","W7","W8","W9","W10"],
+      "ci_runner": "windows-latest",
+      "local_ram_mb": 800,
+      "scenarios": [
+        {
+          "id": "W1", "name": "Blank Page — Write from scratch", "timeout": 15,
+          "prerequisite": "Blank Word document",
+          "user_prompt": "// Write an executive summary for a Q3 2026 quarterly business review covering revenue growth, market expansion, and team headcount. Use professional business tone with headings.",
+          "expected": "Multi-paragraph executive summary with H1/H2 headings",
+          "pass_criteria": {
+            "min_paragraphs": 3, "min_headings": 2,
+            "must_contain": ["revenue","market","headcount"],
+            "forbidden": ["[insert here]","TBD","Content Agent","Swarm Role"]
+          },
+          "retry_condition": "Fewer than 2 paragraphs OR missing any of 3 required topics OR system prompt leakage"
+        },
+        {
+          "id": "W2", "name": "Pre-Written — Fix formatting", "timeout": 20,
+          "fixture": "report.docx",
+          "user_prompt": "// Fix all formatting inconsistencies, make line spacing uniform at 1.15, ensure all body text is 11pt Calibri, fix broken numbering in lists, and justify all paragraphs properly. Preserve all content and heading structure.",
+          "pass_criteria": {
+            "uniform_spacing": true, "uniform_font": true,
+            "sequential_numbering": true, "content_preserved": true
+          },
+          "retry_condition": "Formatting inconsistency remains OR numbered list broken OR content lost"
+        },
+        {
+          "id": "W3", "name": "Pre-Written — Grammar/tone correction", "timeout": 12,
+          "fixture": "report_informal.docx",
+          "user_prompt": "// Rewrite this in formal business English with proper grammar, consistent terminology, and professional tone suitable for a board presentation.",
+          "pass_criteria": {
+            "forbidden_words": ["gotta","cuz","theyre","lol","alright"],
+            "memory_record": {"format":"prose","tone":"formal"},
+            "consecutive_passes_required": 5
+          },
+          "retry_condition": "Any slang remains OR grammar errors persist OR system prompt leakage"
+        },
+        {
+          "id": "W4", "name": "Table Manipulation — Summarize table data", "timeout": 12,
+          "pass_criteria": {
+            "bullet_count": 3, "has_numbers": true,
+            "table_not_overwritten": true
+          }
+        },
+        {
+          "id": "W5", "name": "Tracked Changes — AI with revision tracking", "timeout": 12,
+          "fixture": "contract.docx",
+          "prerequisite": "Track Changes must be ON before Alt+M",
+          "pass_criteria": {
+            "tracked_changes_active": true, "insertions_present": true,
+            "original_preserved_strikethrough": true
+          }
+        },
+        {
+          "id": "W6", "name": "Large Document — 40+ page section rewrite", "timeout": 25,
+          "pass_criteria": {
+            "only_section_3_changed": true, "headings_preserved": true,
+            "no_corruption": true
+          }
+        },
+        {
+          "id": "W7", "name": "Multi-Style — Mixed content preservation", "timeout": 18,
+          "pass_criteria": {
+            "heading_count_unchanged": true, "list_count_unchanged": true,
+            "blockquote_count_unchanged": true, "code_block_count_unchanged": true,
+            "body_text_changed": true
+          }
+        },
+        {
+          "id": "W8", "name": "Tone Shift — Formal to conversational", "timeout": 10,
+          "pass_criteria": {
+            "min_emojis": 1, "casual_tone": true, "key_info_preserved": true
+          }
+        },
+        {
+          "id": "W9", "name": "Structural Restructuring — Reorder sections", "timeout": 15,
+          "pass_criteria": {
+            "section_order": ["Introduction","Methodology","Results","Conclusion","References"]
+          }
+        },
+        {
+          "id": "W10", "name": "Broken Formatting Repair — Style corruption fix", "timeout": 15,
+          "pass_criteria": {
+            "all_body_normal_style": true, "heading_styles_correct": true,
+            "max_distinct_styles": 5
+          }
+        }
+      ]
+    },
+    {
+      "agentId": "agent_ppt",
+      "app": "Microsoft PowerPoint",
+      "executable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\POWERPNT.EXE",
+      "process": "POWERPNT.EXE",
+      "scenario_ids": ["P1","P2","P3","P4","P5","P6","P7"],
+      "ci_runner": "windows-latest",
+      "local_ram_mb": 700,
+      "scenarios": [
+        {"id":"P1","name":"Blank Deck — Create from scratch","timeout":30,"pass_criteria":{"slide_count":5,"slide1_contains":"Kairo Phantom","min_images":1}},
+        {"id":"P2","name":"Existing Deck — Visual consistency","timeout":25,"fixture":"deck.pptx","pass_criteria":{"uniform_title_font":true,"bullets_on_text_heavy_slides":2,"uniform_colors":true}},
+        {"id":"P3","name":"Text Condensing — Paragraph to bullets","timeout":12,"pass_criteria":{"bullet_count_min":5,"bullet_count_max":7,"max_chars_per_bullet":120}},
+        {"id":"P4","name":"Image Generation — AI slide imagery","timeout":25,"pass_criteria":{"image_shape_exists":true,"title_visible":true}},
+        {"id":"P5","name":"Speaker Notes — Generate talking points","timeout":25,"fixture":"deck.pptx","pass_criteria":{"min_slides_with_notes":6,"notes_have_transitions":true}},
+        {"id":"P6","name":"Slide Restructuring — Merge and reorder","timeout":18,"pass_criteria":{"slide_count":"original-1","slides_3_4_merged":true,"slide7_at_position2":true}},
+        {"id":"P7","name":"Theme Application — Corporate theme","timeout":15,"pass_criteria":{"not_plain_white":true,"title_slide_distinct":true,"consistent_colors":true}}
+      ]
+    },
+    {
+      "agentId": "agent_excel",
+      "app": "Microsoft Excel",
+      "executable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\EXCEL.EXE",
+      "process": "EXCEL.EXE",
+      "scenario_ids": ["E1","E2","E3","E4","E5","E6","E7"],
+      "ci_runner": "windows-latest",
+      "local_ram_mb": 600,
+      "scenarios": [
+        {"id":"E1","name":"Formula Debug — Fix broken formulas","timeout":15,"fixture":"spreadsheet_broken.xlsx","pass_criteria":{"zero_error_values":true,"error_patterns":["#REF!","#VALUE!","#DIV/0!"]}},
+        {"id":"E2","name":"Data Analysis — Generate insights","timeout":20,"fixture":"spreadsheet.xlsx","pass_criteria":{"min_data_points":4,"names_match_data":true,"numbers_accurate":true}},
+        {"id":"E3","name":"Chart Creation — AI visualization","timeout":18,"fixture":"spreadsheet.xlsx","pass_criteria":{"chart_exists":true,"chart_type":"line","has_labels":true,"has_title":true}},
+        {"id":"E4","name":"Formula Generation — Profit margin","timeout":15,"pass_criteria":{"formula_correct":true,"zero_errors":true,"percentage_format":true}},
+        {"id":"E5","name":"Data Cleaning — Standardize data","timeout":20,"pass_criteria":{"dates_standardized":"YYYY-MM-DD","names_proper_case":true,"no_whitespace":true,"duplicates_highlighted_yellow":true}},
+        {"id":"E6","name":"Cross-Sheet Formula — VLOOKUP","timeout":15,"pass_criteria":{"missing_ids_show_na":true,"correct_values":true}},
+        {"id":"E7","name":"Pivot Table — AI summarization","timeout":20,"fixture":"spreadsheet.xlsx","pass_criteria":{"new_sheet_created":true,"rows_region":true,"cols_product":true,"grand_totals":true}}
+      ]
+    },
+    {
+      "agentId": "agent_browser",
+      "app": "Google Chrome (Google Docs/Yjs)",
+      "executable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "process": "chrome.exe",
+      "scenario_ids": ["G1","G2","G3","G4","G5","G6"],
+      "ci_runner": "windows-latest",
+      "local_ram_mb": 900,
+      "scenarios": [
+        {"id":"G1","name":"Yjs Collaborative Peer — AI joins as collaborator","timeout":12,"pass_criteria":{"clientid_prefix":"kairo-ai-","visible_in_both_browsers":true,"no_duplication":true}},
+        {"id":"G2","name":"AI Awareness Visibility — Collaborators see AI","timeout":15,"pass_criteria":{"awareness_marker_visible":true,"label_specific":true,"cursor_disappears_after":true}},
+        {"id":"G3","name":"AI Undo — Single Ctrl+Z reverts","timeout":10,"pass_criteria":{"single_undo_reverts_all":true,"no_residual_artifacts":true}},
+        {"id":"G4","name":"Concurrent Human+AI Editing — No conflicts","timeout":15,"pass_criteria":{"no_conflict_dialog":true,"both_edits_succeed":true,"no_data_loss":true}},
+        {"id":"G5","name":"AI Injection with Memory — Style remembered","timeout":60,"pass_criteria":{"session_4_prose_output":true,"pahf_confidence_gt_0.7":true}},
+        {"id":"G6","name":"Offline Google Docs — Local Ollama fallback","timeout":20,"prerequisite":"Disconnect network","pass_criteria":{"text_injected":true,"no_network_error":true,"under_20_seconds":true}}
+      ]
+    },
+    {
+      "agentId": "agent_vscode",
+      "app": "Visual Studio Code",
+      "executable": "C:\\Users\\SANDIP\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe",
+      "process": "Code.exe",
+      "scenario_ids": ["V1","V2","V3","V4","V5","V6"],
+      "ci_runner": "windows-latest",
+      "local_ram_mb": 700,
+      "scenarios": [
+        {"id":"V1","name":"Code Generation — From comment","timeout":12,"pass_criteria":{"valid_typescript":true,"has_type_annotations":true,"has_error_handling":true,"no_hallucinated_api":true}},
+        {"id":"V2","name":"Code Refactoring — Improve function","timeout":18,"pass_criteria":{"has_docstring":true,"descriptive_variables":true,"early_returns":true,"same_output":true}},
+        {"id":"V3","name":"Bug Fixing — Identify and fix","timeout":15,"fixture":"vscode-buggy","pass_criteria":{"code_runs_correctly":true,"comments_per_fix":true}},
+        {"id":"V4","name":"MCP Server Integration — Kairo via MCP","timeout":20,"pass_criteria":{"mcp_call_logged":true,"text_injected":true}},
+        {"id":"V5","name":"Multi-File Context — Project-wide analysis","timeout":18,"fixture":"vscode-project","pass_criteria":{"min_files_mentioned":2,"paths_exist":true,"no_hallucinated_files":true}},
+        {"id":"V6","name":"Test Generation — Jest unit tests","timeout":20,"pass_criteria":{"jest_syntax":true,"min_tests_per_function":2,"edge_cases_covered":true,"tests_pass":true}}
+      ]
+    },
+    {
+      "agentId": "agent_terminal",
+      "app": "Windows Terminal",
+      "executable": "wt.exe",
+      "process": "WindowsTerminal.exe",
+      "scenario_ids": ["T1","T2","T3","T4","T5"],
+      "ci_runner": "windows-latest",
+      "local_ram_mb": 300,
+      "scenarios": [
+        {"id":"T1","name":"Command Generation — Shell commands","timeout":10,"pass_criteria":{"valid_powershell":true,"finds_ts_files":true,"date_filter":true,"size_sort":true,"no_auto_execute":true}},
+        {"id":"T2","name":"Script Generation — Deployment script","timeout":18,"pass_criteria":{"has_install":true,"has_test":true,"has_build":true,"has_deploy":true,"has_error_handling":true,"has_comments":true}},
+        {"id":"T3","name":"Error Explanation — NPM ERESOLVE","timeout":12,"pass_criteria":{"explains_eresolve":true,"provides_fix_command":true}},
+        {"id":"T4","name":"Multi-Step Workflow — 4-step script","timeout":20,"pass_criteria":{"has_all_4_steps":true,"correct_order":true,"has_confirmation_prompts":true,"has_error_handling":true}},
+        {"id":"T5","name":"Pipeline Debugging — CI log analysis","timeout":15,"pass_criteria":{"identifies_specific_error":true,"concrete_fix":true}}
+      ]
+    },
+    {
+      "agentId": "agent_notepad",
+      "app": "Windows Notepad",
+      "executable": "notepad.exe",
+      "process": "notepad.exe",
+      "scenario_ids": ["N1","N2","N3","N4"],
+      "ci_runner": "windows-latest",
+      "local_ram_mb": 100,
+      "scenarios": [
+        {"id":"N1","name":"Quick Note — Expand brief notes","timeout":10,"pass_criteria":{"output_longer_than_input":true,"action_items_marked":true,"all_topics_mentioned":true}},
+        {"id":"N2","name":"Offline Mode — No internet","timeout":20,"prerequisite":"Disconnect network","pass_criteria":{"approx_4_stanzas":true,"no_network_error":true,"under_20_seconds":true}},
+        {"id":"N3","name":"Text Transformation — Encoding fix","timeout":8,"pass_criteria":{"no_smart_quotes":true,"no_em_dashes":true,"crlf_line_endings":true}},
+        {"id":"N4","name":"CRITICAL: // Delimiter protocol — No prompt = no action","timeout":5,"prerequisite":"Text WITHOUT // prefix in Notepad","user_action":"Press Alt+M without any // prefix","pass_criteria":{"no_overlay":true,"no_text_injected":true,"kairo_stays_idle":true},"hard_fail_on_violation":true}
+      ]
+    },
+    {
+      "agentId": "agent_obsidian",
+      "app": "Obsidian",
+      "executable": "C:\\Users\\SANDIP\\AppData\\Local\\Obsidian\\Obsidian.exe",
+      "process": "Obsidian.exe",
+      "scenario_ids": ["O1","O2","O3","O4","O5"],
+      "ci_runner": "windows-latest",
+      "local_ram_mb": 400,
+      "scenarios": [
+        {"id":"O1","name":"Daily Note — Expand meeting bullets","timeout":12,"pass_criteria":{"output_longer":true,"action_items_checkboxes":true,"has_wikilinks":true}},
+        {"id":"O2","name":"Note Linking — Suggest backlinks","timeout":15,"pass_criteria":{"exactly_5_suggestions":true,"notes_exist_in_vault":true,"has_reasoning":true}},
+        {"id":"O3","name":"Long-Form — Structure research into article","timeout":18,"pass_criteria":{"has_introduction":true,"has_body_sections":3,"has_conclusion":true,"placeholder_links":true}},
+        {"id":"O4","name":"Knowledge Graph — Extract atomic concepts","timeout":15,"pass_criteria":{"exactly_5_concepts":true,"each_atomic":true,"derived_from_note":true}},
+        {"id":"O5","name":"Template Filling — YAML frontmatter","timeout":12,"pass_criteria":{"all_fields_populated":true,"yaml_valid":true,"content_relevant_to_q3":true}}
+      ]
+    },
+    {
+      "agentId": "agent_notion",
+      "app": "Notion",
+      "executable": "C:\\Users\\SANDIP\\AppData\\Local\\Programs\\Notion\\Notion.exe",
+      "process": "Notion.exe",
+      "scenario_ids": ["NO1","NO2","NO3","NO4"],
+      "ci_runner": "windows-latest",
+      "local_ram_mb": 500,
+      "scenarios": [
+        {"id":"NO1","name":"Page Creation — Structured project page","timeout":15,"pass_criteria":{"all_5_sections":true,"uses_toggles":true,"no_empty_sections":true}},
+        {"id":"NO2","name":"Database Entry — Populate row","timeout":10,"pass_criteria":{"task_name":"Review Q3 vendor contracts","assignee":"Legal Team","priority":"High","status":"Not started"}},
+        {"id":"NO3","name":"Wiki Update — Deprecation notice","timeout":12,"pass_criteria":{"deprecation_notice_at_top":true,"references_v3":true,"notice_visible":true}},
+        {"id":"NO4","name":"Meeting Notes — Structure raw notes","timeout":15,"pass_criteria":{"all_4_sections":true,"at_mentions_present":true,"content_derived_from_notes":true}}
+      ]
+    },
+    {
+      "agentId": "agent_figma",
+      "app": "Figma Desktop",
+      "executable": "C:\\Users\\SANDIP\\AppData\\Local\\Figma\\Figma.exe",
+      "process": "Figma.exe",
+      "scenario_ids": ["F1","F2","F3","F4","F5"],
+      "ci_runner": "windows-latest",
+      "local_ram_mb": 800,
+      "scenarios": [
+        {"id":"F1","name":"Text Content — Ghost-write into text layer","timeout":10,"pass_criteria":{"text_changed":true,"under_60_chars":true,"styling_preserved":true}},
+        {"id":"F2","name":"Design Generation — Hero section","timeout":20,"pass_criteria":{"min_text_elements":3,"button_exists":true,"clear_hierarchy":true}},
+        {"id":"F3","name":"Design System — Apply consistent styles","timeout":12,"pass_criteria":{"headings_inter_bold_32px":true,"body_inter_regular_16px":true,"content_unchanged":true}},
+        {"id":"F4","name":"Component Variant — Create 3 states","timeout":18,"pass_criteria":{"total_variants":4,"hover_darker":true,"disabled_grayed":true,"loading_has_indicator":true}},
+        {"id":"F5","name":"Auto Layout — Apply responsive layout","timeout":12,"pass_criteria":{"auto_layout_enabled":true,"direction":"vertical","gap_px":24,"padding_px":40,"elements_in_order":true}}
+      ]
+    },
+    {
+      "agentId": "agent_slack",
+      "app": "Slack Desktop",
+      "executable": "C:\\Users\\SANDIP\\AppData\\Local\\slack\\slack.exe",
+      "process": "slack.exe",
+      "scenario_ids": ["S1","S2","S3","S4","S5"],
+      "ci_runner": "ubuntu-latest",
+      "local_ram_mb": 500,
+      "scenarios": [
+        {"id":"S1","name":"Slack Message — Team announcement","timeout":10,"pass_criteria":{"mentions_feature_and_friday":true,"min_emojis":2,"under_500_chars":true}},
+        {"id":"S2","name":"Email — Professional client email","timeout":15,"pass_criteria":{"has_subject":true,"acknowledges_delay":true,"mentions_supply_chain":true,"proposes_2_week_extension":true,"offers_15_percent_discount":true}},
+        {"id":"S3","name":"Meeting Summary — Thread summarization","timeout":12,"pass_criteria":{"exactly_3_decisions":true,"exactly_2_open_questions":true,"bullet_format":true,"no_invented_content":true}},
+        {"id":"S4","name":"Multilingual — Translate and reply in Spanish","timeout":12,"pass_criteria":{"english_translation_accurate":true,"reply_in_spanish":true,"confirms_3pm_meeting":true}},
+        {"id":"S5","name":"Crisis Communication — Incident notification","timeout":10,"pass_criteria":{"states_degraded_not_down":true,"mentions_investigating":true,"has_eta":true,"no_hyperbole":true}}
+      ]
+    },
+    {
+      "agentId": "agent_pdf",
+      "app": "PDF Reader (Browser or Acrobat)",
+      "process": "chrome.exe",
+      "scenario_ids": ["PDF1","PDF2","PDF3","PDF4","PDF5"],
+      "ci_runner": "windows-latest",
+      "local_ram_mb": 400,
+      "scenarios": [
+        {"id":"PDF1","name":"Text Extraction — Summarize PDF","timeout":12,"pass_criteria":{"single_paragraph":true,"matches_pdf_content":true,"title_extracted":true}},
+        {"id":"PDF2","name":"Form Filling — Complete PDF form","timeout":12,"pass_criteria":{"addresses_each_field":true,"uses_user_context":true,"no_invented_data":true}},
+        {"id":"PDF3","name":"Contract Review — Flag risky clauses","timeout":15,"pass_criteria":{"min_concerns":3,"clause_references":true,"business_relevant":true}},
+        {"id":"PDF4","name":"Data Extraction — CSV from PDF table","timeout":15,"pass_criteria":{"csv_format":true,"headers_present":true,"numbers_exact":true}},
+        {"id":"PDF5","name":"Annotation — Q/Connection/Key format","timeout":12,"pass_criteria":{"has_question":true,"has_connection":true,"has_key_takeaway":true,"format_q_connection_key":true}}
+      ]
+    },
+    {
+      "agentId": "agent_chaos",
+      "app": "Background Fault Injection",
+      "script": "scripts/win/chaos_advanced.ps1",
+      "scenario_ids": ["CHAOS"],
+      "continuous": true,
+      "fault_types": [
+        {"type":"network_drop","interval_sec":{"min":30,"max":90}},
+        {"type":"clipboard_clear","interval_sec":{"min":15,"max":45}},
+        {"type":"cpu_spike","duration_sec":{"min":20,"max":30}},
+        {"type":"firewall_block","target":"kairo-phantom.exe","duration_sec":{"min":20,"max":30}},
+        {"type":"process_suspend","target":"kairo-phantom.exe","duration_sec":5}
+      ],
+      "scenarios": [
+        {"id":"CHAOS","name":"Background Fault Injection — Continuous","timeout":0,"continuous":true}
+      ]
+    }
+  ],
+  "execution_strategy": {
+    "ci_primary": {
+      "description": "GitHub Actions 12-agent sharded matrix — ZERO local RAM",
+      "platform": "windows-latest",
+      "max_parallel": 12,
+      "ram_per_runner_gb": 16,
+      "cost": "free (public repo)",
+      "estimated_time_min": 20
+    },
+    "local_single": {
+      "description": "Single scenario, single agent — for debugging specific failures",
+      "command": "python scripts/win/scenario_{agent}.py --scenario {id} --verbose",
+      "ram_mb": 2048,
+      "setup_time_min": 0
+    },
+    "local_parallel_limited": {
+      "description": "Local run with max-parallel=2 for pre-push validation",
+      "command": "python scripts/win/universal_orchestrator.py --max-parallel 2",
+      "ram_mb": 6144,
+      "setup_time_min": 10
+    },
+    "cloud_vm": {
+      "description": "AWS spot t3.xlarge overnight for full gauntlet",
+      "instance": "t3.xlarge",
+      "ram_gb": 16,
+      "cost_per_hour_usd": 0.07,
+      "setup_time_min": 30
+    }
+  }
+}

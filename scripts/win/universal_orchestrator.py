@@ -168,7 +168,43 @@ class ScenarioOrchestrator:
                 sys.path.append(r"c:\Users\SANDIP\Desktop\Memory\KairoPhantom\scripts\win")
                 import scenario_vscode
                 return scenario_vscode.run_vscode_scenario(scenario_id, self.logger)
-                
+
+            elif "browser" in self.agent_id:
+                import sys
+                sys.path.append(r"c:\Users\SANDIP\Desktop\Memory\KairoPhantom\scripts\win")
+                import scenario_browser
+                return scenario_browser.run_browser_scenario(scenario_id, self.logger)
+
+            elif "obsidian" in self.agent_id:
+                import sys
+                sys.path.append(r"c:\Users\SANDIP\Desktop\Memory\KairoPhantom\scripts\win")
+                import scenario_obsidian
+                return scenario_obsidian.run_obsidian_scenario(scenario_id, self.logger)
+
+            elif "notion" in self.agent_id:
+                import sys
+                sys.path.append(r"c:\Users\SANDIP\Desktop\Memory\KairoPhantom\scripts\win")
+                from scenario_notion_figma_slack_pdf import run_notion_scenario
+                return run_notion_scenario(scenario_id, self.logger)
+
+            elif "figma" in self.agent_id:
+                import sys
+                sys.path.append(r"c:\Users\SANDIP\Desktop\Memory\KairoPhantom\scripts\win")
+                from scenario_notion_figma_slack_pdf import run_figma_scenario
+                return run_figma_scenario(scenario_id, self.logger)
+
+            elif "slack" in self.agent_id:
+                import sys
+                sys.path.append(r"c:\Users\SANDIP\Desktop\Memory\KairoPhantom\scripts\win")
+                from scenario_notion_figma_slack_pdf import run_slack_scenario
+                return run_slack_scenario(scenario_id, self.logger)
+
+            elif "pdf" in self.agent_id:
+                import sys
+                sys.path.append(r"c:\Users\SANDIP\Desktop\Memory\KairoPhantom\scripts\win")
+                from scenario_notion_figma_slack_pdf import run_pdf_scenario
+                return run_pdf_scenario(scenario_id, self.logger)
+
             else:
                 self.logger.info(f"Fallback simulated execution for {self.agent_id}")
                 time.sleep(1)

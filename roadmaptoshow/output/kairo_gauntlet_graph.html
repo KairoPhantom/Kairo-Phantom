@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <title>Kairo Phantom — 76-Scenario Agent Memory Graph</title>
+      <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:#0d1117; color:#e6edf3; font-family:Inter,system-ui,sans-serif; overflow:hidden; }
+        #header {
+          position:fixed; top:0; left:0; right:0; z-index:10;
+          padding:14px 24px;
+          background:rgba(13,17,23,0.92);
+          border-bottom:1px solid #30363d;
+          display:flex; align-items:center; gap:16px;
+        }
+        #header h1 { font-size:15px; font-weight:600; color:#f0f6fc; }
+        #header .badge {
+          padding:3px 10px; border-radius:20px; font-size:12px; font-weight:600;
+        }
+        .b-agents { background:#1f4e8c; color:#79c0ff; }
+        .b-scenarios { background:#1a4428; color:#56d364; }
+        .b-fixtures { background:#3d2200; color:#ffa657; }
+        #tooltip {
+          position:fixed; background:#161b22; border:1px solid #30363d;
+          border-radius:8px; padding:10px 14px; font-size:13px;
+          pointer-events:none; opacity:0; transition:opacity .15s;
+          max-width:280px; line-height:1.5;
+        }
+        svg { width:100vw; height:100vh; }
+        .link { stroke-opacity:0.35; }
+        .link-owns      { stroke:#1f4e8c; }
+        .link-contains  { stroke:#1a4428; }
+        .link-requires  { stroke:#3d2200; }
+        .node circle { stroke-width:1.5; cursor:pointer; }
+        .node text {
+          font-size:9px; fill:#c9d1d9; pointer-events:none;
+          text-anchor:middle; dominant-baseline:central;
+        }
+        /* Legend */
+        #legend {
+          position:fixed; bottom:20px; left:20px;
+          background:rgba(13,17,23,0.9); border:1px solid #30363d;
+          border-radius:8px; padding:12px 16px; font-size:12px;
+        }
+        .leg-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+        .leg-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+      </style>
+      <script src="https://d3js.org/d3.v7.min.js"></script>
+    </head>
+    <body>
+    <div id="header">
+      <h1>🧠 Kairo Phantom — Agent Memory Graph</h1>
+      <span class="badge b-agents">12 Agents</span>
+      <span class="badge b-scenarios">76 Scenarios</span>
+      <span class="badge b-fixtures">Fixtures</span>
+    </div>
+    <div id="tooltip"></div>
+    <div id="legend">
+      <div class="leg-row"><div class="leg-dot" style="background:#f78166"></div>Hub</div>
+      <div class="leg-row"><div class="leg-dot" style="background:#79c0ff"></div>Agent (12)</div>
+      <div class="leg-row"><div class="leg-dot" style="background:#56d364"></div>Scenario (76)</div>
+      <div class="leg-row"><div class="leg-dot" style="background:#ffa657"></div>Fixture</div>
+    </div>
+    <svg id="graph"></svg>
+    <script>
+    const nodes = [{"id": "Kairo Phantom\n76-Scenario Gauntlet", "group": 0, "meta": ""}, {"id": "agent_word", "group": 1, "meta": "Microsoft Word | RAM ~800 MB"}, {"id": "W1\nBlank Page \u00e2\u20ac\u201d Write from scratch", "group": 2, "meta": "Timeout: 15s"}, {"id": "W2\nPre-Written \u00e2\u20ac\u201d Fix formatting", "group": 2, "meta": "Timeout: 20s"}, {"id": "\ud83d\udcc4 report.docx", "group": 3, "meta": ""}, {"id": "W3\nPre-Written \u00e2\u20ac\u201d Grammar/tone correction", "group": 2, "meta": "Timeout: 12s"}, {"id": "\ud83d\udcc4 report_informal.docx", "group": 3, "meta": ""}, {"id": "W4\nTable Manipulation \u00e2\u20ac\u201d Summarize table d", "group": 2, "meta": "Timeout: 12s"}, {"id": "W5\nTracked Changes \u00e2\u20ac\u201d AI with revision tra", "group": 2, "meta": "Timeout: 12s"}, {"id": "\ud83d\udcc4 contract.docx", "group": 3, "meta": ""}, {"id": "W6\nLarge Document \u00e2\u20ac\u201d 40+ page section rewr", "group": 2, "meta": "Timeout: 25s"}, {"id": "W7\nMulti-Style \u00e2\u20ac\u201d Mixed content preservati", "group": 2, "meta": "Timeout: 18s"}, {"id": "W8\nTone Shift \u00e2\u20ac\u201d Formal to conversational", "group": 2, "meta": "Timeout: 10s"}, {"id": "W9\nStructural Restructuring \u00e2\u20ac\u201d Reorder sec", "group": 2, "meta": "Timeout: 15s"}, {"id": "W10\nBroken Formatting Repair \u00e2\u20ac\u201d Style corru", "group": 2, "meta": "Timeout: 15s"}, {"id": "agent_ppt", "group": 1, "meta": "Microsoft PowerPoint | RAM ~700 MB"}, {"id": "P1\nBlank Deck \u00e2\u20ac\u201d Create from scratch", "group": 2, "meta": "Timeout: 30s"}, {"id": "P2\nExisting Deck \u00e2\u20ac\u201d Visual consistency", "group": 2, "meta": "Timeout: 25s"}, {"id": "\ud83d\udcc4 deck.pptx", "group": 3, "meta": ""}, {"id": "P3\nText Condensing \u00e2\u20ac\u201d Paragraph to bullets", "group": 2, "meta": "Timeout: 12s"}, {"id": "P4\nImage Generation \u00e2\u20ac\u201d AI slide imagery", "group": 2, "meta": "Timeout: 25s"}, {"id": "P5\nSpeaker Notes \u00e2\u20ac\u201d Generate talking point", "group": 2, "meta": "Timeout: 25s"}, {"id": "P6\nSlide Restructuring \u00e2\u20ac\u201d Merge and reorde", "group": 2, "meta": "Timeout: 18s"}, {"id": "P7\nTheme Application \u00e2\u20ac\u201d Corporate theme", "group": 2, "meta": "Timeout: 15s"}, {"id": "agent_excel", "group": 1, "meta": "Microsoft Excel | RAM ~600 MB"}, {"id": "E1\nFormula Debug \u00e2\u20ac\u201d Fix broken formulas", "group": 2, "meta": "Timeout: 15s"}, {"id": "\ud83d\udcc4 spreadsheet_broken.xlsx", "group": 3, "meta": ""}, {"id": "E2\nData Analysis \u00e2\u20ac\u201d Generate insights", "group": 2, "meta": "Timeout: 20s"}, {"id": "\ud83d\udcc4 spreadsheet.xlsx", "group": 3, "meta": ""}, {"id": "E3\nChart Creation \u00e2\u20ac\u201d AI visualization", "group": 2, "meta": "Timeout: 18s"}, {"id": "E4\nFormula Generation \u00e2\u20ac\u201d Profit margin", "group": 2, "meta": "Timeout: 15s"}, {"id": "E5\nData Cleaning \u00e2\u20ac\u201d Standardize data", "group": 2, "meta": "Timeout: 20s"}, {"id": "E6\nCross-Sheet Formula \u00e2\u20ac\u201d VLOOKUP", "group": 2, "meta": "Timeout: 15s"}, {"id": "E7\nPivot Table \u00e2\u20ac\u201d AI summarization", "group": 2, "meta": "Timeout: 20s"}, {"id": "agent_browser", "group": 1, "meta": "Google Chrome (Google Docs/Yjs) | RAM ~900 MB"}, {"id": "G1\nYjs Collaborative Peer \u00e2\u20ac\u201d AI joins as c", "group": 2, "meta": "Timeout: 12s"}, {"id": "G2\nAI Awareness Visibility \u00e2\u20ac\u201d Collaborator", "group": 2, "meta": "Timeout: 15s"}, {"id": "G3\nAI Undo \u00e2\u20ac\u201d Single Ctrl+Z reverts", "group": 2, "meta": "Timeout: 10s"}, {"id": "G4\nConcurrent Human+AI Editing \u00e2\u20ac\u201d No confl", "group": 2, "meta": "Timeout: 15s"}, {"id": "G5\nAI Injection with Memory \u00e2\u20ac\u201d Style remem", "group": 2, "meta": "Timeout: 60s"}, {"id": "G6\nOffline Google Docs \u00e2\u20ac\u201d Local Ollama fal", "group": 2, "meta": "Timeout: 20s"}, {"id": "agent_vscode", "group": 1, "meta": "Visual Studio Code | RAM ~700 MB"}, {"id": "V1\nCode Generation \u00e2\u20ac\u201d From comment", "group": 2, "meta": "Timeout: 12s"}, {"id": "V2\nCode Refactoring \u00e2\u20ac\u201d Improve function", "group": 2, "meta": "Timeout: 18s"}, {"id": "V3\nBug Fixing \u00e2\u20ac\u201d Identify and fix", "group": 2, "meta": "Timeout: 15s"}, {"id": "\ud83d\udcc4 vscode-buggy", "group": 3, "meta": ""}, {"id": "V4\nMCP Server Integration \u00e2\u20ac\u201d Kairo via MCP", "group": 2, "meta": "Timeout: 20s"}, {"id": "V5\nMulti-File Context \u00e2\u20ac\u201d Project-wide anal", "group": 2, "meta": "Timeout: 18s"}, {"id": "\ud83d\udcc4 vscode-project", "group": 3, "meta": ""}, {"id": "V6\nTest Generation \u00e2\u20ac\u201d Jest unit tests", "group": 2, "meta": "Timeout: 20s"}, {"id": "agent_terminal", "group": 1, "meta": "Windows Terminal | RAM ~300 MB"}, {"id": "T1\nCommand Generation \u00e2\u20ac\u201d Shell commands", "group": 2, "meta": "Timeout: 10s"}, {"id": "T2\nScript Generation \u00e2\u20ac\u201d Deployment script", "group": 2, "meta": "Timeout: 18s"}, {"id": "T3\nError Explanation \u00e2\u20ac\u201d NPM ERESOLVE", "group": 2, "meta": "Timeout: 12s"}, {"id": "T4\nMulti-Step Workflow \u00e2\u20ac\u201d 4-step script", "group": 2, "meta": "Timeout: 20s"}, {"id": "T5\nPipeline Debugging \u00e2\u20ac\u201d CI log analysis", "group": 2, "meta": "Timeout: 15s"}, {"id": "agent_notepad", "group": 1, "meta": "Windows Notepad | RAM ~100 MB"}, {"id": "N1\nQuick Note \u00e2\u20ac\u201d Expand brief notes", "group": 2, "meta": "Timeout: 10s"}, {"id": "N2\nOffline Mode \u00e2\u20ac\u201d No internet", "group": 2, "meta": "Timeout: 20s"}, {"id": "N3\nText Transformation \u00e2\u20ac\u201d Encoding fix", "group": 2, "meta": "Timeout: 8s"}, {"id": "N4\nCRITICAL: // Delimiter protocol \u00e2\u20ac\u201d No p", "group": 2, "meta": "Timeout: 5s"}, {"id": "agent_obsidian", "group": 1, "meta": "Obsidian | RAM ~400 MB"}, {"id": "O1\nDaily Note \u00e2\u20ac\u201d Expand meeting bullets", "group": 2, "meta": "Timeout: 12s"}, {"id": "O2\nNote Linking \u00e2\u20ac\u201d Suggest backlinks", "group": 2, "meta": "Timeout: 15s"}, {"id": "O3\nLong-Form \u00e2\u20ac\u201d Structure research into ar", "group": 2, "meta": "Timeout: 18s"}, {"id": "O4\nKnowledge Graph \u00e2\u20ac\u201d Extract atomic conce", "group": 2, "meta": "Timeout: 15s"}, {"id": "O5\nTemplate Filling \u00e2\u20ac\u201d YAML frontmatter", "group": 2, "meta": "Timeout: 12s"}, {"id": "agent_notion", "group": 1, "meta": "Notion | RAM ~500 MB"}, {"id": "NO1\nPage Creation \u00e2\u20ac\u201d Structured project pag", "group": 2, "meta": "Timeout: 15s"}, {"id": "NO2\nDatabase Entry \u00e2\u20ac\u201d Populate row", "group": 2, "meta": "Timeout: 10s"}, {"id": "NO3\nWiki Update \u00e2\u20ac\u201d Deprecation notice", "group": 2, "meta": "Timeout: 12s"}, {"id": "NO4\nMeeting Notes \u00e2\u20ac\u201d Structure raw notes", "group": 2, "meta": "Timeout: 15s"}, {"id": "agent_figma", "group": 1, "meta": "Figma Desktop | RAM ~800 MB"}, {"id": "F1\nText Content \u00e2\u20ac\u201d Ghost-write into text l", "group": 2, "meta": "Timeout: 10s"}, {"id": "F2\nDesign Generation \u00e2\u20ac\u201d Hero section", "group": 2, "meta": "Timeout: 20s"}, {"id": "F3\nDesign System \u00e2\u20ac\u201d Apply consistent style", "group": 2, "meta": "Timeout: 12s"}, {"id": "F4\nComponent Variant \u00e2\u20ac\u201d Create 3 states", "group": 2, "meta": "Timeout: 18s"}, {"id": "F5\nAuto Layout \u00e2\u20ac\u201d Apply responsive layout", "group": 2, "meta": "Timeout: 12s"}, {"id": "agent_slack", "group": 1, "meta": "Slack Desktop | RAM ~500 MB"}, {"id": "S1\nSlack Message \u00e2\u20ac\u201d Team announcement", "group": 2, "meta": "Timeout: 10s"}, {"id": "S2\nEmail \u00e2\u20ac\u201d Professional client email", "group": 2, "meta": "Timeout: 15s"}, {"id": "S3\nMeeting Summary \u00e2\u20ac\u201d Thread summarization", "group": 2, "meta": "Timeout: 12s"}, {"id": "S4\nMultilingual \u00e2\u20ac\u201d Translate and reply in ", "group": 2, "meta": "Timeout: 12s"}, {"id": "S5\nCrisis Communication \u00e2\u20ac\u201d Incident notifi", "group": 2, "meta": "Timeout: 10s"}, {"id": "agent_pdf", "group": 1, "meta": "PDF Reader (Browser or Acrobat) | RAM ~400 MB"}, {"id": "PDF1\nText Extraction \u00e2\u20ac\u201d Summarize PDF", "group": 2, "meta": "Timeout: 12s"}, {"id": "PDF2\nForm Filling \u00e2\u20ac\u201d Complete PDF form", "group": 2, "meta": "Timeout: 12s"}, {"id": "PDF3\nContract Review \u00e2\u20ac\u201d Flag risky clauses", "group": 2, "meta": "Timeout: 15s"}, {"id": "PDF4\nData Extraction \u00e2\u20ac\u201d CSV from PDF table", "group": 2, "meta": "Timeout: 15s"}, {"id": "PDF5\nAnnotation \u00e2\u20ac\u201d Q/Connection/Key format", "group": 2, "meta": "Timeout: 12s"}, {"id": "agent_chaos", "group": 1, "meta": "Background Fault Injection | RAM ~0 MB"}, {"id": "CHAOS\nBackground Fault Injection \u00e2\u20ac\u201d Continuou", "group": 2, "meta": "Timeout: 0s"}];
+    const links = [{"source": 0, "target": 1, "type": "owns"}, {"source": 1, "target": 2, "type": "contains"}, {"source": 1, "target": 3, "type": "contains"}, {"source": 3, "target": 4, "type": "requires"}, {"source": 1, "target": 5, "type": "contains"}, {"source": 5, "target": 6, "type": "requires"}, {"source": 1, "target": 7, "type": "contains"}, {"source": 1, "target": 8, "type": "contains"}, {"source": 8, "target": 9, "type": "requires"}, {"source": 1, "target": 10, "type": "contains"}, {"source": 1, "target": 11, "type": "contains"}, {"source": 1, "target": 12, "type": "contains"}, {"source": 1, "target": 13, "type": "contains"}, {"source": 1, "target": 14, "type": "contains"}, {"source": 0, "target": 15, "type": "owns"}, {"source": 15, "target": 16, "type": "contains"}, {"source": 15, "target": 17, "type": "contains"}, {"source": 17, "target": 18, "type": "requires"}, {"source": 15, "target": 19, "type": "contains"}, {"source": 15, "target": 20, "type": "contains"}, {"source": 15, "target": 21, "type": "contains"}, {"source": 21, "target": 18, "type": "requires"}, {"source": 15, "target": 22, "type": "contains"}, {"source": 15, "target": 23, "type": "contains"}, {"source": 0, "target": 24, "type": "owns"}, {"source": 24, "target": 25, "type": "contains"}, {"source": 25, "target": 26, "type": "requires"}, {"source": 24, "target": 27, "type": "contains"}, {"source": 27, "target": 28, "type": "requires"}, {"source": 24, "target": 29, "type": "contains"}, {"source": 29, "target": 28, "type": "requires"}, {"source": 24, "target": 30, "type": "contains"}, {"source": 24, "target": 31, "type": "contains"}, {"source": 24, "target": 32, "type": "contains"}, {"source": 24, "target": 33, "type": "contains"}, {"source": 33, "target": 28, "type": "requires"}, {"source": 0, "target": 34, "type": "owns"}, {"source": 34, "target": 35, "type": "contains"}, {"source": 34, "target": 36, "type": "contains"}, {"source": 34, "target": 37, "type": "contains"}, {"source": 34, "target": 38, "type": "contains"}, {"source": 34, "target": 39, "type": "contains"}, {"source": 34, "target": 40, "type": "contains"}, {"source": 0, "target": 41, "type": "owns"}, {"source": 41, "target": 42, "type": "contains"}, {"source": 41, "target": 43, "type": "contains"}, {"source": 41, "target": 44, "type": "contains"}, {"source": 44, "target": 45, "type": "requires"}, {"source": 41, "target": 46, "type": "contains"}, {"source": 41, "target": 47, "type": "contains"}, {"source": 47, "target": 48, "type": "requires"}, {"source": 41, "target": 49, "type": "contains"}, {"source": 0, "target": 50, "type": "owns"}, {"source": 50, "target": 51, "type": "contains"}, {"source": 50, "target": 52, "type": "contains"}, {"source": 50, "target": 53, "type": "contains"}, {"source": 50, "target": 54, "type": "contains"}, {"source": 50, "target": 55, "type": "contains"}, {"source": 0, "target": 56, "type": "owns"}, {"source": 56, "target": 57, "type": "contains"}, {"source": 56, "target": 58, "type": "contains"}, {"source": 56, "target": 59, "type": "contains"}, {"source": 56, "target": 60, "type": "contains"}, {"source": 0, "target": 61, "type": "owns"}, {"source": 61, "target": 62, "type": "contains"}, {"source": 61, "target": 63, "type": "contains"}, {"source": 61, "target": 64, "type": "contains"}, {"source": 61, "target": 65, "type": "contains"}, {"source": 61, "target": 66, "type": "contains"}, {"source": 0, "target": 67, "type": "owns"}, {"source": 67, "target": 68, "type": "contains"}, {"source": 67, "target": 69, "type": "contains"}, {"source": 67, "target": 70, "type": "contains"}, {"source": 67, "target": 71, "type": "contains"}, {"source": 0, "target": 72, "type": "owns"}, {"source": 72, "target": 73, "type": "contains"}, {"source": 72, "target": 74, "type": "contains"}, {"source": 72, "target": 75, "type": "contains"}, {"source": 72, "target": 76, "type": "contains"}, {"source": 72, "target": 77, "type": "contains"}, {"source": 0, "target": 78, "type": "owns"}, {"source": 78, "target": 79, "type": "contains"}, {"source": 78, "target": 80, "type": "contains"}, {"source": 78, "target": 81, "type": "contains"}, {"source": 78, "target": 82, "type": "contains"}, {"source": 78, "target": 83, "type": "contains"}, {"source": 0, "target": 84, "type": "owns"}, {"source": 84, "target": 85, "type": "contains"}, {"source": 84, "target": 86, "type": "contains"}, {"source": 84, "target": 87, "type": "contains"}, {"source": 84, "target": 88, "type": "contains"}, {"source": 84, "target": 89, "type": "contains"}, {"source": 0, "target": 90, "type": "owns"}, {"source": 90, "target": 91, "type": "contains"}];
+
+    const colorMap = ["#f78166","#79c0ff","#56d364","#ffa657","#d2a8ff"];
+
+    const svg   = d3.select("#graph");
+    const W     = window.innerWidth;
+    const H     = window.innerHeight;
+    const tooltip = document.getElementById("tooltip");
+
+    const sim = d3.forceSimulation(nodes)
+      .force("link",   d3.forceLink(links).id(d=>d.id).distance(d=>d.type==="contains"?90:160).strength(0.6))
+      .force("charge", d3.forceManyBody().strength(-220))
+      .force("center", d3.forceCenter(W/2, H/2))
+      .force("collide", d3.forceCollide(20));
+
+    const g = svg.append("g");
+
+    // Zoom
+    svg.call(d3.zoom().scaleExtent([0.15,4]).on("zoom", e => g.attr("transform", e.transform)));
+
+    // Links
+    const link = g.append("g").selectAll("line")
+      .data(links).join("line")
+      .attr("class", d=>"link link-"+d.type)
+      .attr("stroke-width", d=>d.type==="owns"?2:1);
+
+    // Nodes
+    const node = g.append("g").selectAll("g")
+      .data(nodes).join("g")
+      .attr("class","node")
+      .call(d3.drag()
+        .on("start", (e,d)=>{ if(!e.active) sim.alphaTarget(0.3).restart(); d.fx=d.x; d.fy=d.y; })
+        .on("drag",  (e,d)=>{ d.fx=e.x; d.fy=e.y; })
+        .on("end",   (e,d)=>{ if(!e.active) sim.alphaTarget(0); d.fx=null; d.fy=null; }));
+
+    node.append("circle")
+      .attr("r", d=>d.group===0?22:d.group===1?16:d.group===2?10:8)
+      .attr("fill", d=>colorMap[d.group]||"#888")
+      .attr("fill-opacity", d=>d.group===0?1:0.85)
+      .attr("stroke", d=>d3.color(colorMap[d.group]||"#888").brighter(1))
+      .on("mouseover", (e,d)=>{
+        tooltip.style.opacity=1;
+        tooltip.style.left=(e.clientX+16)+"px";
+        tooltip.style.top=(e.clientY-10)+"px";
+        tooltip.innerHTML="<strong>"+d.id.replace(/
+/,"<br>")+"</strong>"+(d.meta?"<br><span style='color:#8b949e'>"+d.meta+"</span>":"");
+      })
+      .on("mousemove", e=>{tooltip.style.left=(e.clientX+16)+"px"; tooltip.style.top=(e.clientY-10)+"px";})
+      .on("mouseout",  ()=>{tooltip.style.opacity=0;});
+
+    node.append("text")
+      .text(d=>d.id.split("\n")[0].replace("agent_","").toUpperCase())
+      .attr("font-weight", d=>d.group<=1?"600":"400");
+
+    sim.on("tick",()=>{
+      link.attr("x1",d=>d.source.x).attr("y1",d=>d.source.y)
+          .attr("x2",d=>d.target.x).attr("y2",d=>d.target.y);
+      node.attr("transform",d=>`translate(${d.x},${d.y})`);
+    });
+
+    window.addEventListener("resize",()=>{
+      sim.force("center",d3.forceCenter(window.innerWidth/2,window.innerHeight/2)).alpha(0.3).restart();
+    });
+    </script>
+    </body></html>
