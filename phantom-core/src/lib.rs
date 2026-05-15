@@ -83,3 +83,17 @@ pub mod inference;
 pub mod mcp_auth;
 
 pub mod waza_sdk;
+
+// ── 100x Roadmap Modules ──────────────────────────────────────────────────────
+pub mod ollama_bootstrap;       // P0-A2: Ollama auto-detection & background setup
+pub mod toast_notification;     // P0-B2: PAHF toast overlay (replaces doc injection)
+pub mod startup_timer;          // P0-A1: Startup checkpoint profiler
+pub mod memory_seeder;          // P1-A2: Seed MemMachine from existing doc folder
+pub mod kpx_export;             // P1-A4: .kpx portable memory export/import
+pub mod health_check;           // P2-A1: Document health check (passive voice, consistency)
+pub mod compliance_scanner;     // P2-A3: HIPAA/GDPR/custom compliance clause scanner
+pub mod owasp_compliance;       // P2-C1: OWASP Agentic Top 10 compliance matrix
+pub mod deep_presenter;         // P2-A7: DeepPresenter-9B local PPT generation bridge
+pub mod waza_registry;          // P3-A2/B1: Waza Skills marketplace + skill builder CLI
+pub mod siem_export;            // P4-A2: CEF/LEEF/JSON-lines SIEM audit log export
+

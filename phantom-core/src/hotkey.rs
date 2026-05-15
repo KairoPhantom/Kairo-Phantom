@@ -8,15 +8,17 @@ use once_cell::sync::Lazy;
 use windows::Win32::UI::WindowsAndMessaging::{
     SetWindowsHookExW, UnhookWindowsHookEx, CallNextHookEx, GetMessageW, 
     WH_KEYBOARD_LL, KBDLLHOOKSTRUCT, WM_KEYDOWN, WM_SYSKEYDOWN, MSG, HC_ACTION,
-    DispatchMessageW, TranslateMessage
+    DispatchMessageW, TranslateMessage, GetForegroundWindow,
 };
-use windows::Win32::Foundation::{LPARAM, LRESULT, WPARAM};
+use windows::Win32::Foundation::{LPARAM, LRESULT, WPARAM, HWND};
 use windows::Win32::UI::Input::KeyboardAndMouse::{VK_MENU, VK_LMENU, VK_RMENU};
 
 use crate::PhantomEvent;
 
 static GLOBAL_TX: Lazy<Mutex<Option<Sender<PhantomEvent>>>> = Lazy::new(|| Mutex::new(None));
 static ALT_PRESSED: Lazy<Mutex<bool>> = Lazy::new(|| Mutex::new(false));
+/// HWND captured at the exact moment Alt+M fires — this is the user's target window.
+pub static CAPTURED_HWND: Lazy<Mutex<isize>> = Lazy::new(|| Mutex::new(0));
 
 pub struct HotkeyWatcher {
     hotkey_str: String,
@@ -80,10 +82,19 @@ unsafe extern "system" fn low_level_keyboard_proc(code: i32, wparam: WPARAM, lpa
             debug!("KEY: 'M' Pressed (Alt held: {})", alt);
             
             if alt {
-                info!("🔥 HOTKEY TRIGGERED: Alt + M detected!");
+                // ── CRITICAL: Capture the foreground window RIGHT NOW ──────────
+                // This is the user's actual target window (e.g. WINWORD.EXE).
+                // By the time the main loop processes HotkeyPressed, focus may
+                // have shifted — so we snapshot it here in the hook.
+                let hwnd: HWND = GetForegroundWindow();
+                {
+                    let mut cap = CAPTURED_HWND.lock().unwrap();
+                    *cap = hwnd.0 as isize;
+                }
+                info!("🔥 HOTKEY TRIGGERED: Alt+M detected! Captured HWND={:?}", hwnd.0);
                 if let Some(tx) = &*GLOBAL_TX.lock().unwrap() {
                     let _ = tx.blocking_send(PhantomEvent::HotkeyPressed);
-                    // CONSUME THE KEY
+                    // CONSUME THE KEY — prevent 'm' from appearing in the document
                     return LRESULT(1);
                 }
             }

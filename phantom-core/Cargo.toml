@@ -126,6 +126,14 @@ opentelemetry_sdk = "0.32.0"
 opentelemetry-otlp = "0.32.0"
 spiffe = "0.15.1"
 
+# Real offline embeddings — all-MiniLM-L6-v2 (80 MB ONNX, <5 ms/embed, zero API calls)
+# Gated behind "local-embeddings" feature so CI stays fast; enable for production builds.
+fastembed = { version = "3", optional = true }
+
+[features]
+default = []
+local-embeddings = ["dep:fastembed"]
+
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.58", features = [
     "Win32_UI_Accessibility",

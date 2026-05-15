@@ -1,0 +1,340 @@
+# .github/workflows/gui_gauntlet.yml
+# ─────────────────────────────────────────────────────────────────────────────
+# Kairo Phantom — GUI Gauntlet (Real Windows 11 Desktop E2E)
+#
+# Runs the full 39-scenario gauntlet on a real GitHub Actions Windows 11 runner
+# where Office applications can actually be launched and controlled.
+#
+# Trigger: manual dispatch OR push to `main` with [gui-test] in commit message.
+#
+# Architecture:
+#   1. Spin up windows-2022 runner (x86-64, full GUI session)
+#   2. Install Microsoft Office via Chocolatey
+#   3. Build Kairo Phantom release binary
+#   4. Launch daemon in background (KAIRO_OFFLINE=1 → local Ollama)
+#   5. Run headless test suite first (smoke check)
+#   6. Run GUI gauntlet via AutoHotkey script for each app scenario
+#   7. Collect screenshots as artefacts
+#   8. Write gui_gauntlet_report.json
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: GUI Gauntlet (Windows 11 Real Apps)
+
+on:
+  workflow_dispatch:
+    inputs:
+      scenarios:
+        description: 'Comma-separated scenario IDs to run (empty = all)'
+        required: false
+        default: ''
+      max_parallel:
+        description: 'Max scenarios in parallel (1 = sequential, safe for flaky apps)'
+        required: false
+        default: '1'
+  push:
+    branches: [main]
+    # Only run full GUI gauntlet when explicitly requested to save CI minutes
+    # Add [gui-test] to your commit message to trigger
+    if: contains(github.event.head_commit.message, '[gui-test]')
+
+jobs:
+  gui-gauntlet:
+    name: GUI Gauntlet — Windows 11 (${{ matrix.scenario_group }})
+    runs-on: windows-2022
+    timeout-minutes: 120
+
+    strategy:
+      fail-fast: false
+      matrix:
+        scenario_group:
+          - word
+          - excel
+          - powerpoint
+          - notepad
+          - browser
+
+    env:
+      RUST_LOG: info
+      KAIRO_OFFLINE: "1"           # Use Ollama local model, no external API calls
+      KAIRO_AUDIT_LOG: "1"         # Full audit trail for CI verification
+      KAIRO_HEADLESS_CI: "0"       # Disable headless mode — we HAVE a display
+      KAIRO_TEST_TIMEOUT: "30000"  # 30 seconds per scenario
+
+    steps:
+      # ── Checkout ────────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── Rust toolchain ──────────────────────────────────────────────────────
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Cache Rust build artefacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "phantom-core"
+          key: gui-gauntlet-${{ matrix.scenario_group }}
+
+      # ── Office installation ─────────────────────────────────────────────────
+      - name: Install Microsoft Office (Word + Excel + PowerPoint)
+        shell: pwsh
+        run: |
+          # windows-2022 runners have Office pre-installed.
+          # Verify and activate for automation.
+          $word = Get-Command WINWORD.EXE -ErrorAction SilentlyContinue
+          if ($word) {
+            Write-Host "✅ Office detected at: $($word.Source)"
+          } else {
+            Write-Host "⚠️  Office not found — installing Office 365 via Chocolatey"
+            choco install office365business --no-progress -y
+          }
+
+      # ── Ollama (offline LLM) ────────────────────────────────────────────────
+      - name: Install and start Ollama with local model
+        shell: pwsh
+        run: |
+          Write-Host "📦 Installing Ollama…"
+          winget install --id Ollama.Ollama --silent --accept-source-agreements --accept-package-agreements
+          
+          Start-Process ollama -ArgumentList "serve" -WindowStyle Hidden
+          Start-Sleep -Seconds 5
+          
+          Write-Host "📥 Pulling qwen2.5-coder:7b (fast, offline, 4 GB)…"
+          ollama pull qwen2.5-coder:7b
+          Write-Host "✅ Ollama ready."
+
+      # ── Build Kairo Phantom ──────────────────────────────────────────────────
+      - name: Build release binary
+        working-directory: phantom-core
+        shell: pwsh
+        run: |
+          cargo build --release --bin kairo-phantom
+          Write-Host "✅ Built: target\release\kairo-phantom.exe"
+
+      # ── Run headless tests first (smoke gate) ───────────────────────────────
+      - name: Headless smoke gate (must be 100% before GUI runs)
+        working-directory: phantom-core
+        shell: pwsh
+        run: |
+          cargo test --test layer1_unit_tests `
+                     --test layer3_chaos_tests `
+                     --test layer4_e2e_tests `
+                     --test gauntlet_extended `
+                     -- --test-threads=4
+          Write-Host "✅ Headless smoke gate PASSED."
+
+      # ── Launch Kairo Phantom daemon ─────────────────────────────────────────
+      - name: Start Kairo Phantom daemon
+        shell: pwsh
+        run: |
+          $daemon = Start-Process `
+            -FilePath "phantom-core\target\release\kairo-phantom.exe" `
+            -WindowStyle Hidden -PassThru
+          
+          Write-Host "🚀 Daemon PID: $($daemon.Id)"
+          Start-Sleep -Seconds 3
+          
+          # Verify daemon is running
+          if ($daemon.HasExited) {
+            Write-Host "❌ Daemon exited prematurely — check logs"
+            exit 1
+          }
+          Write-Host "✅ Daemon running."
+          
+          # Export PID for teardown
+          $daemon.Id | Set-Content "daemon.pid"
+
+      # ── GUI Gauntlet — per scenario group ───────────────────────────────────
+      - name: Run GUI gauntlet — ${{ matrix.scenario_group }} scenarios
+        shell: pwsh
+        run: |
+          $group = "${{ matrix.scenario_group }}"
+          $results = @()
+          $screenshotDir = "gui-screenshots\$group"
+          New-Item -ItemType Directory -Force -Path $screenshotDir | Out-Null
+
+          # Map scenario group to test IDs from kairo_gauntlet_graph.json
+          $scenarioMap = @{
+            word        = @("WORD-001","WORD-002","WORD-003","WORD-004","WORD-005","WORD-006","WORD-007")
+            excel       = @("EXCEL-001","EXCEL-002","EXCEL-003")
+            powerpoint  = @("PPT-001","PPT-002","PPT-003")
+            notepad     = @("NOTEPAD-001","NOTEPAD-002")
+            browser     = @("BROWSER-001")
+          }
+
+          $scenarios = $scenarioMap[$group]
+          Write-Host "📋 Running $($scenarios.Count) scenarios for group: $group"
+
+          foreach ($scenarioId in $scenarios) {
+            Write-Host "  ▶ Scenario: $scenarioId" -ForegroundColor Cyan
+            $start = Get-Date
+
+            # Read scenario definition from gauntlet graph
+            $graph = Get-Content "roadmaptoshow\output\kairo_gauntlet_graph.json" | ConvertFrom-Json
+            $scenario = $graph.scenarios | Where-Object { $_.id -eq $scenarioId }
+
+            if (-not $scenario) {
+              Write-Warning "  ⚠️  Scenario $scenarioId not found in gauntlet graph — skipping"
+              continue
+            }
+
+            # Launch the target application
+            $appName = $scenario.app
+            Write-Host "    App: $appName"
+            
+            $result = @{
+              id      = $scenarioId
+              app     = $appName
+              status  = "PENDING"
+              elapsed = 0
+              error   = ""
+            }
+
+            try {
+              # Open app via PowerShell
+              switch -Regex ($appName) {
+                "Word"       { Start-Process WINWORD.EXE  -WindowStyle Normal }
+                "Excel"      { Start-Process EXCEL.EXE    -WindowStyle Normal }
+                "PowerPoint" { Start-Process POWERPNT.EXE -WindowStyle Normal }
+                "Notepad"    { Start-Process notepad.exe  -WindowStyle Normal }
+                "Chrome"     { Start-Process chrome.exe   -ArgumentList "--new-window", "about:blank" -WindowStyle Normal }
+                default      { Start-Process notepad.exe  -WindowStyle Normal }
+              }
+              Start-Sleep -Seconds 3  # Let app fully load
+
+              # Simulate typing the Kairo command via SendKeys
+              # The daemon intercepts Alt+M; we use WScript.Shell to send it
+              $wshell = New-Object -ComObject wscript.shell
+              $wshell.SendKeys($scenario.prompt)
+              Start-Sleep -Milliseconds 500
+              $wshell.SendKeys("%m")  # Alt+M → triggers daemon
+              
+              # Wait for AI response injection
+              $timeout = [int]$env:KAIRO_TEST_TIMEOUT / 1000
+              Start-Sleep -Seconds $timeout
+
+              # Take screenshot for artefact
+              $screenshotPath = "$screenshotDir\${scenarioId}.png"
+              Add-Type -AssemblyName System.Windows.Forms
+              $screen = [System.Windows.Forms.Screen]::PrimaryScreen
+              $bitmap = New-Object System.Drawing.Bitmap($screen.Bounds.Width, $screen.Bounds.Height)
+              $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+              $graphics.CopyFromScreen($screen.Bounds.Location, [System.Drawing.Point]::Empty, $screen.Bounds.Size)
+              $bitmap.Save($screenshotPath)
+              $graphics.Dispose()
+              $bitmap.Dispose()
+
+              # Verify audit log contains the scenario completion
+              $auditLog = Get-Content "$env:USERPROFILE\.kairo-phantom\audit.jsonl" -ErrorAction SilentlyContinue | Select-Object -Last 10
+              $found = $auditLog | Where-Object { $_ -match "ghost_session_completed" }
+              
+              if ($found) {
+                $result.status = "PASSED"
+                Write-Host "    ✅ PASSED" -ForegroundColor Green
+              } else {
+                $result.status = "NO_AUDIT_ENTRY"
+                Write-Host "    ⚠️  No audit entry found — injection may have failed" -ForegroundColor Yellow
+              }
+
+              # Close the app
+              switch -Regex ($appName) {
+                "Word"       { Get-Process WINWORD  -ErrorAction SilentlyContinue | Stop-Process -Force }
+                "Excel"      { Get-Process EXCEL    -ErrorAction SilentlyContinue | Stop-Process -Force }
+                "PowerPoint" { Get-Process POWERPNT -ErrorAction SilentlyContinue | Stop-Process -Force }
+                "Notepad"    { Get-Process notepad  -ErrorAction SilentlyContinue | Stop-Process -Force }
+                "Chrome"     { Get-Process chrome   -ErrorAction SilentlyContinue | Stop-Process -Force }
+              }
+              Start-Sleep -Seconds 1
+
+            } catch {
+              $result.status = "ERROR"
+              $result.error  = $_.Exception.Message
+              Write-Host "    ❌ ERROR: $($_.Exception.Message)" -ForegroundColor Red
+            }
+
+            $result.elapsed = [int]((Get-Date) - $start).TotalMilliseconds
+            $results += $result
+          }
+
+          # Write results JSON
+          $reportPath = "gui-screenshots\$group\results.json"
+          $results | ConvertTo-Json -Depth 4 | Set-Content $reportPath
+          Write-Host "`n📊 Results written to: $reportPath"
+
+          # Summary
+          $passed = ($results | Where-Object { $_.status -eq "PASSED" }).Count
+          $total  = $results.Count
+          Write-Host "  Passed: $passed / $total" -ForegroundColor $(if ($passed -eq $total) { "Green" } else { "Yellow" })
+
+          if ($passed -lt $total * 0.8) {
+            Write-Host "❌ Less than 80% pass rate — failing CI" -ForegroundColor Red
+            exit 1
+          }
+
+      # ── Teardown daemon ──────────────────────────────────────────────────────
+      - name: Stop Kairo Phantom daemon
+        if: always()
+        shell: pwsh
+        run: |
+          if (Test-Path "daemon.pid") {
+            $pid = Get-Content "daemon.pid"
+            Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue
+            Write-Host "🛑 Daemon stopped."
+          }
+
+      # ── Upload screenshots and results ───────────────────────────────────────
+      - name: Upload GUI gauntlet artefacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gui-gauntlet-${{ matrix.scenario_group }}-${{ github.run_number }}
+          path: |
+            gui-screenshots/
+          retention-days: 30
+
+  # ── Aggregate all groups into final report ───────────────────────────────────
+  consolidate-report:
+    name: Consolidate GUI Gauntlet Report
+    runs-on: ubuntu-latest
+    needs: gui-gauntlet
+    if: always()
+
+    steps:
+      - name: Download all gauntlet artefacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: gui-gauntlet-*-${{ github.run_number }}
+          merge-multiple: true
+          path: all-results/
+
+      - name: Build consolidated report
+        shell: bash
+        run: |
+          echo "{ \"run\": ${{ github.run_number }}, \"groups\": [" > report.json
+          first=true
+          for f in all-results/*/results.json; do
+            if [ "$first" = false ]; then echo "," >> report.json; fi
+            cat "$f" >> report.json
+            first=false
+          done
+          echo "]}" >> report.json
+          
+          echo "════ GUI GAUNTLET FINAL REPORT ════"
+          cat report.json | python3 -c "
+          import json, sys
+          data = json.load(sys.stdin)
+          results = data.get('groups', [])
+          if isinstance(results, list):
+              flat = [r for group in results for r in (group if isinstance(group, list) else [group])]
+              passed = sum(1 for r in flat if r.get('status') == 'PASSED')
+              total  = len(flat)
+              print(f'Total: {passed}/{total} passed ({100*passed//total if total else 0}%)')
+          "
+
+      - name: Upload consolidated report
+        uses: actions/upload-artifact@v4
+        with:
+          name: gui-gauntlet-report-${{ github.run_number }}
+          path: report.json

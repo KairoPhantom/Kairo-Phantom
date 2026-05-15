@@ -49,6 +49,21 @@ mod xa11y;
 mod inference;
 mod mcp_auth;
 mod waza_sdk;
+
+// ── 100x Roadmap Modules ─────────────────────────────────────────────────────
+mod ollama_bootstrap;
+mod toast_notification;
+mod startup_timer;
+mod memory_seeder;
+mod kpx_export;
+mod health_check;
+mod compliance_scanner;
+mod owasp_compliance;
+mod deep_presenter;
+mod waza_registry;
+mod siem_export;
+
+
 use identity::IdentityManager;
 use wasm_sandbox::WasmPluginRegistry;
 
@@ -121,7 +136,15 @@ async fn async_main() -> Result<()> {
 
     info!("👻 Kairo Phantom (Production Engine) starting...");
 
-    // --- CLI Subcommand Routing ---
+    // P0-A1: Startup performance timer
+    let _startup_timer = startup_timer::StartupTimer::new();
+    _startup_timer.checkpoint("logger init");
+
+    // P0-A2: Ollama bootstrap — detect + background model pull
+    ollama_bootstrap::OllamaBootstrap::bootstrap("qwen2.5:7b").await;
+    _startup_timer.checkpoint("ollama check");
+
+
     let args: Vec<String> = std::env::args().collect();
 
     if args.iter().any(|a| a == "--version" || a == "-V") {
@@ -180,6 +203,73 @@ async fn async_main() -> Result<()> {
         println!("3. Start Kairo: kairo-phantom");
         return Ok(());
     }
+
+    // ── 100x: New CLI subcommands ─────────────────────────────────────────────
+
+    // kairo seed <folder> — seed MemMachine from existing documents
+    if args.len() >= 3 && args[1] == "seed" {
+        return memory_seeder::run_seed_command(&args[2]).await;
+    }
+
+    // kairo import <file.kpx> — import memory export
+    if args.len() >= 3 && args[1] == "import" {
+        let kpx_path = std::path::Path::new(&args[2]);
+        let db_path = dirs::home_dir()
+            .unwrap_or_default()
+            .join(".kairo-phantom")
+            .join("mem_machine.db");
+        let count = kpx_export::KpxExporter::import(kpx_path, &db_path)?;
+        println!("✅ Imported {} memories from {}", count, args[2]);
+        return Ok(());
+    }
+
+    // kairo export-memory [--output <path>] — export memory as .kpx
+    if args.len() >= 2 && args[1] == "export-memory" {
+        let output = args.iter().position(|a| a == "--output")
+            .and_then(|i| args.get(i + 1))
+            .map(|s| s.as_str())
+            .unwrap_or("kairo-memory.kpx");
+        let db_path = dirs::home_dir()
+            .unwrap_or_default()
+            .join(".kairo-phantom")
+            .join("mem_machine.db");
+        let count = kpx_export::KpxExporter::export(
+            &db_path, std::path::Path::new(output), "Manual export"
+        )?;
+        println!("📦 Exported {} memories to {}", count, output);
+        return Ok(());
+    }
+
+    // kairo owasp-report — print OWASP compliance matrix
+    if args.len() >= 2 && args[1] == "owasp-report" {
+        let report = owasp_compliance::generate_markdown_report();
+        let output_path = "KAIRO_OWASP_COMPLIANCE.md";
+        std::fs::write(output_path, &report)?;
+        println!("✅ OWASP Compliance Matrix written to: {}", output_path);
+        println!("\n{}", owasp_compliance::generate_ciso_summary());
+        return Ok(());
+    }
+
+    // kairo first-run — interactive onboarding
+    if args.iter().any(|a| a == "--first-run" || a == "first-run") {
+        println!();
+        println!("  ╔══════════════════════════════════════════════════════════╗");
+        println!("  ║     👻 Welcome to Kairo Phantom v{}{}",
+            env!("CARGO_PKG_VERSION"),
+            " ".repeat(30usize.saturating_sub(env!("CARGO_PKG_VERSION").len()))
+        );
+        println!("  ║     The AI ghost-writer that haunts every desktop app   ║");
+        println!("  ╠══════════════════════════════════════════════════════════╣");
+        println!("  ║  ⚡ Alt+M  — Activate Kairo in any app                  ║");
+        println!("  ║  🧠 MemMachine — Learns your style automatically        ║");
+        println!("  ║  🔒 100% offline — Zero data leaves your machine        ║");
+        println!("  ╚══════════════════════════════════════════════════════════╝");
+        println!();
+        println!("  💡 Tip: Run 'kairo seed <your-docs-folder>' to teach Kairo");
+        println!("         your writing style from existing documents.\n");
+        // Fall through to normal startup
+    }
+
 
     // kairo plugin list — show registered plugins from config + auto-discovered ones
     if args.len() >= 3 && args[1] == "plugin" && args[2] == "list" {
@@ -426,11 +516,25 @@ async fn async_main() -> Result<()> {
             PhantomEvent::HotkeyPressed => {
                 info!("============= GHOST SESSION TRIGGERED =============");
 
-                // A. Escape Ribbon and Clean up the 'm' typed during Alt+M
+                // A. Refocus the EXACT window that had focus when Alt+M was pressed.
+                //    This is critical — by the time we're here, focus may have shifted
+                //    to the daemon process itself. We must give focus back to Word/Notepad/etc.
+                let target_hwnd_val = *crate::hotkey::CAPTURED_HWND.lock().unwrap();
+                if target_hwnd_val != 0 {
+                    use windows::Win32::UI::WindowsAndMessaging::SetForegroundWindow;
+                    use windows::Win32::Foundation::HWND;
+                    let target_hwnd = HWND(target_hwnd_val as *mut std::ffi::c_void);
+                    unsafe { let _ = SetForegroundWindow(target_hwnd); }
+                    info!("🎯 Refocused target window: HWND={}", target_hwnd_val);
+                    // Short sleep to let the OS actually move focus
+                    tokio::time::sleep(std::time::Duration::from_millis(80)).await;
+                }
+
+                // B. Escape Ribbon and Clean up any 'm' typed during Alt+M
                 injector.escape_ribbon_mode();
                 injector.undo_ghost_char();
 
-                // B. Read Text via UIA
+                // C. Read Text via UIA (now from the correct focused window)
                 let raw_text = match uia_reader.get_focused_text() {
                     Ok(t) => t,
                     Err(e) => {
@@ -444,7 +548,7 @@ async fn async_main() -> Result<()> {
                     continue;
                 }
 
-                // C. Context Engine Analysis
+                // D. Context Engine Analysis
                 let app_ctx: AppContext = context_engine.capture(&raw_text);
                 if app_ctx.prompt_text.is_empty() {
                     warn!("⚠️  Prompt empty after extraction.");
@@ -453,6 +557,7 @@ async fn async_main() -> Result<()> {
 
                 let app_label = app_ctx.environment.label().to_string();
                 info!("🧠 App: {} | Prompt: {} chars", app_label, app_ctx.prompt_char_count);
+
 
                 // D. Build DocumentContext
                 println!("🔍 Reading document structure...");
@@ -863,6 +968,16 @@ async fn async_main() -> Result<()> {
                                                 break;
                                             }
 
+                                            // ── Refocus target window before injecting ──────────
+                                            let hwnd_val = *crate::hotkey::CAPTURED_HWND.lock().unwrap();
+                                            if hwnd_val != 0 {
+                                                use windows::Win32::UI::WindowsAndMessaging::SetForegroundWindow;
+                                                use windows::Win32::Foundation::HWND;
+                                                let h = HWND(hwnd_val as *mut std::ffi::c_void);
+                                                unsafe { let _ = SetForegroundWindow(h); }
+                                                tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+                                            }
+
                                             info!("♻️  Erasing prompt ({} chars)...", prompt_char_count);
                                             injector_clone.erase_prompt(prompt_char_count);
                                             tokio::time::sleep(std::time::Duration::from_millis(50)).await;
@@ -874,6 +989,7 @@ async fn async_main() -> Result<()> {
                                                 full_response.push_str(&clean_buf);
                                             }
                                             replaced = true;
+
                                         }
                                     } else {
                                         injector_clone.type_text(&token);

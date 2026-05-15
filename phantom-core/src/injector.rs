@@ -1,7 +1,20 @@
+/// Real Windows keyboard injector — uses SendInput + clipboard for actual text injection.
+/// Previously this was stub-only (println!). Now it actually types into the focused window.
+
+use std::thread;
 use std::time::Duration;
-use tokio::time::sleep;
-use tokio_util::sync::CancellationToken;
-use rand::Rng;
+
+#[cfg(windows)]
+use windows::Win32::UI::Input::KeyboardAndMouse::{
+    SendInput, INPUT, INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_KEYUP, KEYEVENTF_UNICODE,
+    VK_BACK, VK_ESCAPE, VK_RETURN, VK_CONTROL, VK_END,
+};
+#[cfg(windows)]
+use windows::Win32::Foundation::LPARAM;
+#[cfg(windows)]
+use windows::Win32::UI::WindowsAndMessaging::{
+    PostMessageW, SetForegroundWindow, GetForegroundWindow,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum SpeedProfile {
@@ -12,10 +25,8 @@ pub enum SpeedProfile {
 }
 
 pub struct HumanizedInjector {
-    profile: SpeedProfile,
-    char_count_since_pause: usize,
-    word_length: usize,
-    word_char_index: usize,
+    pub profile: SpeedProfile,
+    delay_ms: u64,
 }
 
 impl HumanizedInjector {
@@ -29,124 +40,263 @@ impl HumanizedInjector {
         } else {
             SpeedProfile::Readable
         };
-        
-        Self {
-            profile,
-            char_count_since_pause: 0,
-            word_length: 0,
-            word_char_index: 0,
-        }
+        Self { profile, delay_ms }
     }
 
-    /// Simulate injecting a character with appropriate rhythm delays.
-    pub async fn inject_char(&mut self, c: char, cancel: &CancellationToken) -> bool {
-        if cancel.is_cancelled() {
-            // Finish current word before stopping (if natural/readable)
-            if c.is_whitespace() || self.profile == SpeedProfile::Ghost {
-                return false; // Stop injection
-            }
-        }
+    // ─── Core: Send a single Unicode character via SendInput ─────────────────
 
-        // Calculate delay
-        let delay = self.calculate_delay(c);
-
-        // Simulate typing the character (in real app, use Enigo)
-        // enigo.key_sequence(&c.to_string());
-        
-        if delay.as_millis() > 0 {
-            sleep(delay).await;
-        }
-
-        true // Continue injection
+    #[cfg(windows)]
+    fn send_char(c: char) {
+        let code = c as u16;
+        let inputs = [
+            INPUT {
+                r#type: INPUT_KEYBOARD,
+                Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
+                    ki: KEYBDINPUT {
+                        wVk: windows::Win32::UI::Input::KeyboardAndMouse::VIRTUAL_KEY(0),
+                        wScan: code,
+                        dwFlags: KEYEVENTF_UNICODE,
+                        time: 0,
+                        dwExtraInfo: 0,
+                    },
+                },
+            },
+            INPUT {
+                r#type: INPUT_KEYBOARD,
+                Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
+                    ki: KEYBDINPUT {
+                        wVk: windows::Win32::UI::Input::KeyboardAndMouse::VIRTUAL_KEY(0),
+                        wScan: code,
+                        dwFlags: KEYEVENTF_UNICODE | KEYEVENTF_KEYUP,
+                        time: 0,
+                        dwExtraInfo: 0,
+                    },
+                },
+            },
+        ];
+        unsafe { SendInput(&inputs, std::mem::size_of::<INPUT>() as i32); }
     }
 
-    fn calculate_delay(&mut self, c: char) -> Duration {
-        if self.profile == SpeedProfile::Ghost {
-            return Duration::from_millis(0);
-        }
+    #[cfg(not(windows))]
+    fn send_char(_c: char) {}
 
-        let mut rng = rand::thread_rng();
-        let mut delay_ms = 0;
+    // ─── Core: Send a virtual key down+up ────────────────────────────────────
 
-        match self.profile {
-            SpeedProfile::FastHuman => {
-                delay_ms = rng.gen_range(30..=60) + rng.gen_range(0..=30) - 15;
-            }
-            SpeedProfile::Natural => {
-                delay_ms = rng.gen_range(60..=120);
-            }
-            SpeedProfile::Readable => {
-                delay_ms = rng.gen_range(100..=150); // slower baseline
-            }
-            _ => {}
-        }
-
-        // Word boundary logic
-        if c.is_whitespace() {
-            if self.profile == SpeedProfile::Natural || self.profile == SpeedProfile::Readable {
-                delay_ms += 150;
-            }
-            self.word_length = 0;
-            self.word_char_index = 0;
-            
-            if c == '\n' {
-                delay_ms += 300;
-            }
-        } else {
-            self.word_char_index += 1;
-            // We can't know full word length ahead without buffering, 
-            // but we assume if index > 4 we might slow down.
-            if self.word_char_index >= 5 && self.word_char_index <= 8 {
-                delay_ms += 40; // cognitive load
-            }
-        }
-
-        // Punctuation
-        if c == '.' || c == ',' {
-            delay_ms += 200;
-        } else if c == '!' || c == '?' || c == ';' || c == ':' {
-            delay_ms += 50;
-        }
-
-        // Random micro-pauses (1 in 40 chars)
-        self.char_count_since_pause += 1;
-        if self.char_count_since_pause > rng.gen_range(30..50) {
-            delay_ms += rng.gen_range(400..=800);
-            self.char_count_since_pause = 0;
-        }
-
-        // Ensure no negative delays
-        let final_ms = delay_ms.max(0) as u64;
-        Duration::from_millis(final_ms)
+    #[cfg(windows)]
+    fn send_vk(vk: windows::Win32::UI::Input::KeyboardAndMouse::VIRTUAL_KEY) {
+        let inputs = [
+            INPUT {
+                r#type: INPUT_KEYBOARD,
+                Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
+                    ki: KEYBDINPUT {
+                        wVk: vk,
+                        wScan: 0,
+                        dwFlags: windows::Win32::UI::Input::KeyboardAndMouse::KEYBD_EVENT_FLAGS(0),
+                        time: 0,
+                        dwExtraInfo: 0,
+                    },
+                },
+            },
+            INPUT {
+                r#type: INPUT_KEYBOARD,
+                Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
+                    ki: KEYBDINPUT {
+                        wVk: vk,
+                        wScan: 0,
+                        dwFlags: KEYEVENTF_KEYUP,
+                        time: 0,
+                        dwExtraInfo: 0,
+                    },
+                },
+            },
+        ];
+        unsafe { SendInput(&inputs, std::mem::size_of::<INPUT>() as i32); }
     }
 
-    pub async fn inject_stream(&mut self, text: &str, cancel: &CancellationToken) {
-        for c in text.chars() {
-            if !self.inject_char(c, cancel).await {
-                break;
-            }
-        }
-    }
+    #[cfg(not(windows))]
+    fn send_vk(_vk: u16) {}
 
-    pub fn type_text(&self, text: &str) {
-        // Synchronous wrapper for legacy calls
-        println!("Typing (sync): {}", text);
-    }
+    // ─── Public API ───────────────────────────────────────────────────────────
 
+    /// Erase `count` characters by sending Backspace repeatedly.
     pub fn erase_prompt(&self, count: usize) {
-        println!("Erasing {} characters...", count);
+        if count == 0 { return; }
+        tracing::info!("♻️  Erasing {} characters...", count);
+        #[cfg(windows)]
+        for _ in 0..count {
+            Self::send_vk(VK_BACK);
+            thread::sleep(Duration::from_millis(8));
+        }
     }
 
-    pub fn escape_ribbon_mode(&self) {
-        println!("Escaping ribbon mode...");
+    /// Type text by pasting via clipboard (fast, reliable, works in Word).
+    pub fn type_text(&self, text: &str) {
+        if text.is_empty() { return; }
+        tracing::info!("⌨️  Injecting {} chars via clipboard...", text.len());
+        self.inject_via_clipboard(text);
     }
 
-    pub fn undo_ghost_char(&self) {
-        println!("Undoing ghost char...");
-    }
-
+    /// Inject text via clipboard paste (Ctrl+V) — most reliable for Office apps.
     pub fn inject_via_clipboard(&self, text: &str) -> bool {
-        println!("Injecting via clipboard: {}", text);
+        if text.is_empty() { return true; }
+        
+        #[cfg(windows)]
+        {
+            // Write to clipboard
+            if !Self::set_clipboard(text) {
+                tracing::warn!("⚠️  Clipboard set failed, falling back to SendInput char-by-char");
+                self.type_text_sendinput(text);
+                return true;
+            }
+            
+            // Small delay for clipboard to settle
+            thread::sleep(Duration::from_millis(50));
+            
+            // Send Ctrl+V
+            Self::send_ctrl_v();
+            
+            // Log word by word for visibility
+            for word in text.split_whitespace().take(5) {
+                tracing::debug!("Pasted: {}", word);
+            }
+            tracing::info!("✅ Clipboard paste complete ({} chars)", text.len());
+        }
         true
+    }
+
+    /// Fallback: type char by char using SendInput (Unicode)
+    fn type_text_sendinput(&self, text: &str) {
+        let delay = match self.profile {
+            SpeedProfile::Ghost => 0,
+            SpeedProfile::FastHuman => 15,
+            _ => 25,
+        };
+        for c in text.chars() {
+            Self::send_char(c);
+            if delay > 0 {
+                thread::sleep(Duration::from_millis(delay));
+            }
+        }
+    }
+
+    /// Set Windows clipboard content.
+    #[cfg(windows)]
+    fn set_clipboard(text: &str) -> bool {
+        use windows::Win32::System::DataExchange::{OpenClipboard, EmptyClipboard, SetClipboardData, CloseClipboard};
+        use windows::Win32::System::Memory::{GlobalAlloc, GlobalLock, GlobalUnlock, GMEM_MOVEABLE};
+        use windows::Win32::Foundation::HANDLE;
+        use windows::core::PCWSTR;
+
+        let wide: Vec<u16> = text.encode_utf16().chain(std::iter::once(0)).collect();
+        let byte_count = wide.len() * 2;
+
+        unsafe {
+            if OpenClipboard(None).is_err() { return false; }
+            let _ = EmptyClipboard();
+            
+            let h_mem = GlobalAlloc(GMEM_MOVEABLE, byte_count);
+            if h_mem.is_err() { let _ = CloseClipboard(); return false; }
+            let h_mem = h_mem.unwrap();
+            
+            let ptr = GlobalLock(h_mem) as *mut u16;
+            if ptr.is_null() { let _ = CloseClipboard(); return false; }
+            std::ptr::copy_nonoverlapping(wide.as_ptr(), ptr, wide.len());
+            let _ = GlobalUnlock(h_mem);
+            
+            // CF_UNICODETEXT = 13
+            let result = SetClipboardData(13, HANDLE(h_mem.0));
+            let _ = CloseClipboard();
+            result.is_ok()
+        }
+    }
+
+    /// Send Ctrl+V keystroke.
+    #[cfg(windows)]
+    fn send_ctrl_v() {
+        use windows::Win32::UI::Input::KeyboardAndMouse::{VIRTUAL_KEY, KEYBD_EVENT_FLAGS};
+        let inputs = [
+            // Ctrl down
+            INPUT {
+                r#type: INPUT_KEYBOARD,
+                Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
+                    ki: KEYBDINPUT {
+                        wVk: VK_CONTROL,
+                        wScan: 0,
+                        dwFlags: KEYBD_EVENT_FLAGS(0),
+                        time: 0,
+                        dwExtraInfo: 0,
+                    },
+                },
+            },
+            // V down
+            INPUT {
+                r#type: INPUT_KEYBOARD,
+                Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
+                    ki: KEYBDINPUT {
+                        wVk: VIRTUAL_KEY(0x56), // 'V'
+                        wScan: 0,
+                        dwFlags: KEYBD_EVENT_FLAGS(0),
+                        time: 0,
+                        dwExtraInfo: 0,
+                    },
+                },
+            },
+            // V up
+            INPUT {
+                r#type: INPUT_KEYBOARD,
+                Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
+                    ki: KEYBDINPUT {
+                        wVk: VIRTUAL_KEY(0x56),
+                        wScan: 0,
+                        dwFlags: KEYEVENTF_KEYUP,
+                        time: 0,
+                        dwExtraInfo: 0,
+                    },
+                },
+            },
+            // Ctrl up
+            INPUT {
+                r#type: INPUT_KEYBOARD,
+                Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
+                    ki: KEYBDINPUT {
+                        wVk: VK_CONTROL,
+                        wScan: 0,
+                        dwFlags: KEYEVENTF_KEYUP,
+                        time: 0,
+                        dwExtraInfo: 0,
+                    },
+                },
+            },
+        ];
+        unsafe { SendInput(&inputs, std::mem::size_of::<INPUT>() as i32); }
+    }
+
+    /// Escape any ribbon/menu mode (send Escape key twice to be safe).
+    pub fn escape_ribbon_mode(&self) {
+        #[cfg(windows)]
+        {
+            Self::send_vk(VK_ESCAPE);
+            thread::sleep(Duration::from_millis(30));
+            Self::send_vk(VK_ESCAPE);
+        }
+    }
+
+    /// Undo the 'm' character that may have been typed before the hook consumed it.
+    pub fn undo_ghost_char(&self) {
+        // The hook now consumes the key (LRESULT(1)), so no ghost char appears.
+        // This is a no-op for safety.
+    }
+
+    // Legacy async API (kept for compatibility)
+    pub async fn inject_char(&mut self, c: char, cancel: &tokio_util::sync::CancellationToken) -> bool {
+        if cancel.is_cancelled() { return false; }
+        Self::send_char(c);
+        true
+    }
+
+    pub async fn inject_stream(&mut self, text: &str, cancel: &tokio_util::sync::CancellationToken) {
+        for c in text.chars() {
+            if !self.inject_char(c, cancel).await { break; }
+        }
     }
 }
