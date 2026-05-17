@@ -557,6 +557,11 @@ async fn async_main() -> Result<()> {
         Arc::new(std::sync::Mutex::new(None));
     let active_cancel_clone = Arc::clone(&active_cancel_token);
 
+    // Stale prompt guard: track the last // command that was processed.
+    // If the user presses Alt+M again with the same // line (e.g., from a
+    // previous AI output still in the document), we warn instead of re-generating.
+    let mut last_processed_prompt: String = String::new();
+
     // Main Orchestration Loop (High-Concurrency with Ghost Session)
     while let Some(event) = rx.recv().await {
         match event {
@@ -729,6 +734,20 @@ async fn async_main() -> Result<()> {
                 // Safe truncation: use .chars().take() to avoid UTF-8 mid-char panic
                 let prompt_preview: String = prompt_text.chars().take(80).collect();
                 info!("🧠 App: '{}' | Prompt ({} chars): '{}'", app_label, prompt_char_count, prompt_preview);
+
+                // DEFECT 2 FIX: Stale prompt guard.
+                // If this exact // line was already processed last session, warn the user.
+                // This prevents reusing a stale // line that's sitting in the document
+                // from a previous AI injection.
+                if prompt_text == last_processed_prompt {
+                    warn!("⚠️  Stale prompt detected — same // command as last session.");
+                    crate::toast_notification::show_progress_toast(
+                        "Kairo: Edit your // prompt before pressing Alt+M again."
+                    );
+                    continue;
+                }
+                // Record this prompt as the currently processing one
+                last_processed_prompt = prompt_text.clone();
 
                 // Build AppContext from our captured data
                 let app_ctx = crate::context::AppContext {
@@ -1243,6 +1262,32 @@ async fn async_main() -> Result<()> {
                         warn!("⚠️  AI returned empty response");
                     } else {
                         info!("📡 Stream complete: {} chars. Starting injection...", clean_response.len());
+
+                        // DEFECT 3 FIX: Output sanitization — block internal config leakage.
+                        // VS Code's UIA layer can inject internal editor strings into the
+                        // LLM context, causing the model to echo them back.
+                        // Block any output that contains these sentinel strings.
+                        const OUTPUT_BLOCKLIST: &[&str] = &[
+                            "editor.accessibilityMode",
+                            "screen-reader-optimized",
+                            "workbench.action",
+                            "vscode-token",
+                            "Content Agent",
+                            "Swarm Role",
+                            "system prompt",
+                            "<system>",
+                            "internal hash",
+                        ];
+                        let lower_resp = clean_response.to_lowercase();
+                        if let Some(blocked) = OUTPUT_BLOCKLIST.iter().find(|b| lower_resp.contains(&b.to_lowercase())) {
+                            tracing::error!("🚫 BLOCKED BY SENTINEL: output contains '{}'", blocked);
+                            crate::toast_notification::show_progress_toast(
+                                "Kairo: Output blocked (internal string detected). Edit your prompt and retry."
+                            );
+                            // Reset last_processed_prompt so user can retry immediately
+                            last_processed_prompt = String::new();
+                            continue;
+                        }
 
                         // 1. Set clipboard FIRST — before any focus changes
                         let cb_ok = crate::injector::HumanizedInjector::set_clipboard(&clean_response);

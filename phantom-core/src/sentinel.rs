@@ -23,6 +23,17 @@ impl SentinelSanitizer {
             Regex::new(r"(?i)instruction leakage").unwrap(),
             Regex::new(r"(?i)<system>").unwrap(),
             Regex::new(r"(?i)</system>").unwrap(),
+            // VS Code internal config leakage (Defect 3 fix)
+            Regex::new(r"(?i)editor\.accessibilityMode").unwrap(),
+            Regex::new(r"(?i)screen-reader-optimized").unwrap(),
+            Regex::new(r"(?i)workbench\.action").unwrap(),
+            Regex::new(r"(?i)vscode-token").unwrap(),
+            // Agent/swarm internal strings
+            Regex::new(r"(?i)Content Agent").unwrap(),
+            Regex::new(r"(?i)Swarm Role").unwrap(),
+            Regex::new(r"(?i)Swarm Brain").unwrap(),
+            Regex::new(r"(?i)internal hash").unwrap(),
+            Regex::new(r"(?i)sentinel hash").unwrap(),
         ];
         Self {
             session_tokens: HashSet::new(),
@@ -157,6 +168,7 @@ impl Default for SentinelSanitizer {
 }
 
 
+#[cfg(test)]
 mod tests {
     use super::*;
 
@@ -165,13 +177,38 @@ mod tests {
         let sanitizer = SentinelSanitizer::new();
         let prompt = "System instruction";
         let wrapped = sanitizer.wrap_system_prompt(prompt);
-        
         assert!(wrapped.contains(sanitizer.sentinel()));
-        
         let safe_output = "Hello world";
         let leaked_output = format!("The sentinel is {}", sanitizer.sentinel());
-        
         assert_eq!(sanitizer.sanitize(safe_output), "Hello world");
         assert_eq!(sanitizer.sanitize(&leaked_output), "[BLOCKED: SECURITY POLICY VIOLATION]");
     }
+
+    #[test]
+    fn test_sentinel_blocklist_accessibility() {
+        let sanitizer = SentinelSanitizer::new();
+        // Simulate VS Code internal config leaking into LLM output
+        let leaked = r#"editor.accessibilityMode = "screen-reader-optimized";"#;
+        let result = sanitizer.sanitize(leaked);
+        assert_eq!(result, "[BLOCKED: SECURITY POLICY VIOLATION]",
+            "accessibilityMode output must be blocked by sentinel");
+    }
+
+    #[test]
+    fn test_sentinel_blocklist_swarm_role() {
+        let sanitizer = SentinelSanitizer::new();
+        let leaked = "Swarm Role: CodeSpecialist\nSwarm Brain: routing...";
+        let result = sanitizer.sanitize(leaked);
+        assert_eq!(result, "[BLOCKED: SECURITY POLICY VIOLATION]",
+            "Swarm internal strings must be blocked");
+    }
+
+    #[test]
+    fn test_safe_output_passes() {
+        let sanitizer = SentinelSanitizer::new();
+        let safe = "Here is a detailed report on Zerodha FY2026.\n\nZerodha has achieved remarkable growth...";
+        let result = sanitizer.sanitize(safe);
+        assert!(!result.contains("BLOCKED"), "Normal output must pass sentinel");
+    }
 }
+

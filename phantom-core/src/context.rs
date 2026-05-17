@@ -351,13 +351,21 @@ impl ContextEngine {
             .filter(|s| !s.is_empty())
             .collect();
 
-        // Priority 1: Find the LAST line that starts with "//" (Kairo command)
+        // ONLY return a line that starts with "//" (Kairo command protocol).
+        // If no // line exists, return empty — main.rs will show "type // first" toast.
+        // This prevents Kairo from firing on plain text without a // command.
+        //
+        // Supported prefixes:
+        //   //   → ghost write (default)
+        //   //!  → critical / urgent
+        //   ///  → global operation
+        //   //?  → query / question
         if let Some(cmd_line) = lines.iter().rev().find(|l| l.starts_with("//")) {
             return cmd_line.to_string();
         }
 
-        // Priority 2: Last non-empty line (selection-based or plain text usage)
-        lines.last().unwrap_or(&"").to_string()
+        // No // command found — return empty to signal no-op
+        String::new()
     }
 
     /// Get the active foreground process name and window title.
