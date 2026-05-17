@@ -101,3 +101,8 @@ pub mod lan_sync;               // P1-A1: LAN memory sync — UDP discovery + TC
 pub mod excel_formula;          // P2-A5: Excel formula explainer + generator
 pub mod section_summarizer;     // P2-A4: 3-bullet section summarizer
 
+// ── Phase 1: Python Sidecar + Document-Native Pipeline ────────────────────────
+pub mod sidecar_client;         // TCP client → Python sidecar (DOCX/XLSX/PPTX/PDF I/O)
+pub mod doc_prompt_builder;     // Format-specific LLM prompt builder + JSON op parser
+
+

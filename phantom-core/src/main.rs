@@ -66,6 +66,8 @@ mod cross_doc_consistency;
 mod lan_sync;
 mod excel_formula;
 mod section_summarizer;
+mod sidecar_client;         // Phase 1: Python sidecar client
+mod doc_prompt_builder;     // Phase 1: Document-aware prompt builder
 
 use identity::IdentityManager;
 use wasm_sandbox::WasmPluginRegistry;
@@ -525,6 +527,12 @@ async fn async_main() -> Result<()> {
         let watcher = HotkeyWatcher::new(hotkey_combo, hotkey_tx);
         watcher.run();
     });
+
+    // ── Phase 1: Launch Python document sidecar ───────────────────────────────
+    // Spawns sidecar.py as a background process with auto-restart.
+    // Activates DOCX/XLSX/PPTX native write path for saved documents.
+    sidecar_client::launch_sidecar().await;
+    _startup_timer.checkpoint("sidecar launch");
 
     info!("👀 Kairo Phantom ready — press configured hotkey to materialize");
 
