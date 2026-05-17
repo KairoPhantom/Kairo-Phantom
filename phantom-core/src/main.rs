@@ -1242,33 +1242,96 @@ async fn async_main() -> Result<()> {
                     if clean_response.is_empty() {
                         warn!("⚠️  AI returned empty response");
                     } else {
-                        info!("📡 Stream complete: {} chars. Injecting...", clean_response.len());
+                        info!("📡 Stream complete: {} chars. Starting injection...", clean_response.len());
 
-                        // 1. Set clipboard BEFORE focusing (Word locks clipboard on focus)
+                        // 1. Set clipboard FIRST — before any focus changes
                         let cb_ok = crate::injector::HumanizedInjector::set_clipboard(&clean_response);
                         info!("Clipboard: {} ({} chars)", if cb_ok { "OK" } else { "FAILED" }, clean_response.len());
 
-                        // 2. Focus target window
+                        // 2. CRITICAL: Wait for user to physically release Alt.
+                        //    If Alt is still held when we send keystrokes, Shift+End becomes
+                        //    Alt+Shift which triggers the Windows language switcher popup,
+                        //    stealing focus from Word so Ctrl+V goes nowhere.
+                        #[cfg(windows)]
+                        {
+                            use windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState;
+                            let mut waited_ms = 0u32;
+                            while waited_ms < 2000 {
+                                let alt_state = unsafe { GetAsyncKeyState(0x12) }; // VK_MENU
+                                if (alt_state & -32768i16) == 0 { break; } // Alt released
+                                tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+                                waited_ms += 20;
+                            }
+                            if waited_ms > 0 {
+                                info!("⏱️ Waited {}ms for Alt to be physically released", waited_ms);
+                            }
+                        }
+
+                        // 3. Focus the target window (only restore if minimized)
                         let hwnd_val = crate::hotkey::CAPTURED_HWND.load(std::sync::atomic::Ordering::SeqCst);
                         if hwnd_val != 0 {
                             use windows::Win32::UI::WindowsAndMessaging::{
-                                SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE,
+                                SetForegroundWindow, BringWindowToTop, ShowWindow,
+                                SW_RESTORE, IsIconic, GetForegroundWindow,
                             };
                             use windows::Win32::Foundation::HWND;
                             let h = HWND(hwnd_val as *mut std::ffi::c_void);
                             unsafe {
-                                if windows::Win32::UI::WindowsAndMessaging::IsIconic(h).as_bool() { let _ = ShowWindow(h, SW_RESTORE); }
+                                // Only call SW_RESTORE if actually minimized — otherwise leave
+                                // maximized/normal state alone
+                                if IsIconic(h).as_bool() {
+                                    let _ = ShowWindow(h, SW_RESTORE);
+                                }
                                 let _ = BringWindowToTop(h);
                                 let _ = SetForegroundWindow(h);
                             }
-                            info!("Window focused: HWND={}", hwnd_val);
-                            // 3. Wait for window focus to settle
-                            tokio::time::sleep(std::time::Duration::from_millis(400)).await;
+
+                            // Wait for OS to grant keyboard focus to the document body
+                            tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+
+                            // Verify Word actually has focus — if language switcher or another
+                            // window stole it, re-focus
+                            #[cfg(windows)]
+                            unsafe {
+                                let fg = GetForegroundWindow();
+                                if fg.0 != h.0 {
+                                    info!("⚠️ Word lost focus (fg={:?}), re-focusing...", fg.0);
+                                    let _ = BringWindowToTop(h);
+                                    let _ = SetForegroundWindow(h);
+                                    tokio::time::sleep(std::time::Duration::from_millis(300)).await;
+                                }
+                            }
+                            info!("✅ Window focused: HWND={}", hwnd_val);
                         }
 
-                        // 4. Home + Shift+End (select prompt line) + Ctrl+V (paste response)
-                        injector_clone.inject_replace_line();
-                        info!("✅ Injection complete: {} chars into HWND={}", clean_response.len(), hwnd_val);
+                        // 4. Inject response using End → Enter → Ctrl+V
+                        //    (No Shift key used — prevents Alt+Shift = language switcher)
+                        //    This appends the AI response on a new line below the // prompt.
+                        #[cfg(windows)]
+                        {
+                            use windows::Win32::UI::Input::KeyboardAndMouse::{
+                                SendInput, INPUT, INPUT_KEYBOARD, KEYBDINPUT,
+                                KEYEVENTF_KEYUP, VK_CONTROL, VK_END, VK_RETURN,
+                                VIRTUAL_KEY, KEYBD_EVENT_FLAGS,
+                            };
+
+                            let inputs = [
+                                // End — move to end of prompt line
+                                INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_END, wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } },
+                                INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_END, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
+                                // Enter — new line (no Shift = no language switcher risk)
+                                INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_RETURN, wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } },
+                                INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_RETURN, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
+                                // Ctrl+V — paste AI response
+                                INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_CONTROL, wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } },
+                                INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VIRTUAL_KEY(0x56), wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } },
+                                INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VIRTUAL_KEY(0x56), wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
+                                INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_CONTROL, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
+                            ];
+                            unsafe { SendInput(&inputs, std::mem::size_of::<INPUT>() as i32); }
+                        }
+
+                        info!("✅ Injection complete: {} chars → HWND={}", clean_response.len(), hwnd_val);
                         crate::toast_notification::show_completion_toast(clean_response.len(), "Kairo");
                     }
                 }
