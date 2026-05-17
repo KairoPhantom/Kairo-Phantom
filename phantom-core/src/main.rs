@@ -1,4 +1,4 @@
-﻿mod ai;
+mod ai;
 mod api;
 mod config;
 mod crdt;
@@ -672,13 +672,17 @@ async fn async_main() -> Result<()> {
                 let prompt_char_count = prompt_text.chars().count();
 
                 if prompt_text.is_empty() {
-                    warn!("⚠️  No // command found in text. Prompt: {:?}", &raw_text[..raw_text.len().min(100)]);
+                    // Safe truncation: use char_indices to avoid UTF-8 mid-char panic
+                    let preview: String = raw_text.chars().take(100).collect();
+                    warn!("⚠️  No // command found in text. Prompt: {:?}", preview);
                     crate::toast_notification::show_progress_toast("Kairo: Type // followed by your instruction.");
                     continue;
                 }
 
                 let app_label = app_env.label().to_string();
-                info!("🧠 App: '{}' | Prompt ({} chars): '{}'", app_label, prompt_char_count, &prompt_text[..prompt_text.len().min(80)]);
+                // Safe truncation: use .chars().take() to avoid UTF-8 mid-char panic
+                let prompt_preview: String = prompt_text.chars().take(80).collect();
+                info!("🧠 App: '{}' | Prompt ({} chars): '{}'", app_label, prompt_char_count, prompt_preview);
 
                 // Build AppContext from our captured data
                 let app_ctx = crate::context::AppContext {
@@ -779,8 +783,17 @@ async fn async_main() -> Result<()> {
                             if std::env::var("KAIRO_OFFLINE").is_ok() { "⚪ Offline mode" } else { "✅ Online mode" },
                             std::env::var("KAIRO_OFFLINE").is_ok(),
                         );
-                        injector.erase_prompt(doc_ctx.prompt_char_count);
-                        injector.type_text(&report);
+                        // Use production injection: clipboard → focus → select line → paste
+                        let hwnd_val = *crate::hotkey::CAPTURED_HWND.lock().unwrap();
+                        let _ = crate::injector::HumanizedInjector::set_clipboard(&report);
+                        if hwnd_val != 0 {
+                            use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_SHOW};
+                            use windows::Win32::Foundation::HWND;
+                            let h = HWND(hwnd_val as *mut std::ffi::c_void);
+                            unsafe { let _ = ShowWindow(h, SW_SHOW); let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
+                            tokio::time::sleep(std::time::Duration::from_millis(400)).await;
+                        }
+                        injector.inject_replace_line();
                         continue;
                     },
                     crate::command_protocol::CommandMode::Kami => {
@@ -799,11 +812,20 @@ async fn async_main() -> Result<()> {
                             "revealjs" => crate::kami_export::KamiExporter::execute(crate::kami_export::KamiCommand::RevealJs, doc_ctx.full_text.clone()).await,
                             _ => crate::kami_export::KamiExporter::execute(crate::kami_export::KamiCommand::Summary, doc_ctx.full_text.clone()).await,
                         };
-                        injector.erase_prompt(doc_ctx.prompt_char_count);
-                        match kami_result {
-                            Ok(_) => injector.type_text(&format!("✅ Document exported via Kami ({}) → {}", kami_format, kami_output)),
-                            Err(e) => injector.type_text(&format!("❌ Kami {} export failed: {}", kami_format, e)),
+                        let kami_msg = match kami_result {
+                            Ok(_) => format!("✅ Document exported via Kami ({}) → {}", kami_format, kami_output),
+                            Err(e) => format!("❌ Kami {} export failed: {}", kami_format, e),
+                        };
+                        let hwnd_val = *crate::hotkey::CAPTURED_HWND.lock().unwrap();
+                        let _ = crate::injector::HumanizedInjector::set_clipboard(&kami_msg);
+                        if hwnd_val != 0 {
+                            use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_SHOW};
+                            use windows::Win32::Foundation::HWND;
+                            let h = HWND(hwnd_val as *mut std::ffi::c_void);
+                            unsafe { let _ = ShowWindow(h, SW_SHOW); let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
+                            tokio::time::sleep(std::time::Duration::from_millis(400)).await;
                         }
+                        injector.inject_replace_line();
                         continue;
                     },
                     crate::command_protocol::CommandMode::Think => {
@@ -824,9 +846,11 @@ async fn async_main() -> Result<()> {
                         let prompt_for_plan = clean_prompt.clone();
                         let ctx_for_plan = doc_ctx.full_text.clone();
                         tokio::spawn(async move {
+                            // Safe truncation: use .chars().take() to avoid UTF-8 panic
+                            let ctx_preview: String = ctx_for_plan.chars().take(2000).collect();
                             let _ = backend_clone.stream_complete(
                                 &think_system,
-                                &format!("DOCUMENT CONTEXT:\n{}\n\nUSER REQUEST: {}", &ctx_for_plan[..ctx_for_plan.len().min(2000)], prompt_for_plan),
+                                &format!("DOCUMENT CONTEXT:\n{}\n\nUSER REQUEST: {}", ctx_preview, prompt_for_plan),
                                 plan_tx
                             ).await;
                         });
@@ -836,8 +860,16 @@ async fn async_main() -> Result<()> {
                             plan_output.push_str(&token);
                         }
                         // Inject plan for user review - they press Alt+M again to execute
-                        injector.erase_prompt(doc_ctx.prompt_char_count);
-                        injector.type_text(&plan_output);
+                        let hwnd_val = *crate::hotkey::CAPTURED_HWND.lock().unwrap();
+                        let _ = crate::injector::HumanizedInjector::set_clipboard(&plan_output);
+                        if hwnd_val != 0 {
+                            use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_SHOW};
+                            use windows::Win32::Foundation::HWND;
+                            let h = HWND(hwnd_val as *mut std::ffi::c_void);
+                            unsafe { let _ = ShowWindow(h, SW_SHOW); let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
+                            tokio::time::sleep(std::time::Duration::from_millis(400)).await;
+                        }
+                        injector.inject_replace_line();
                         info!("💭 Think: Plan generated ({} chars) — user reviews, Alt+M executes", plan_output.len());
                         continue;
                     },
@@ -859,8 +891,16 @@ async fn async_main() -> Result<()> {
                     let mut raw_summary = String::new();
                     while let Some(t) = sum_rx.recv().await { raw_summary.push_str(&t); }
                     let bullets = section_summarizer::SectionSummarizer::normalize_bullets(&raw_summary);
-                    injector.erase_prompt(doc_ctx.prompt_char_count);
-                    injector.type_text(&bullets);
+                    let hwnd_val = *crate::hotkey::CAPTURED_HWND.lock().unwrap();
+                    let _ = crate::injector::HumanizedInjector::set_clipboard(&bullets);
+                    if hwnd_val != 0 {
+                        use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_SHOW};
+                        use windows::Win32::Foundation::HWND;
+                        let h = HWND(hwnd_val as *mut std::ffi::c_void);
+                        unsafe { let _ = ShowWindow(h, SW_SHOW); let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
+                        tokio::time::sleep(std::time::Duration::from_millis(400)).await;
+                    }
+                    injector.inject_replace_line();
                     info!("📋 Summary injected ({} bullets)", bullets.lines().count());
                     continue;
                 }
@@ -873,8 +913,17 @@ async fn async_main() -> Result<()> {
                     // If an existing formula is in the prompt → explain it
                     if let Some(formula) = excel_formula::ExcelFormulaEngine::extract_formula(&doc_ctx.prompt_text) {
                         let explanation = engine.explain(&formula);
-                        injector.erase_prompt(doc_ctx.prompt_char_count);
-                        injector.type_text(&explanation.format_for_injection());
+                        let explain_text = explanation.format_for_injection();
+                        let hwnd_val = *crate::hotkey::CAPTURED_HWND.lock().unwrap();
+                        let _ = crate::injector::HumanizedInjector::set_clipboard(&explain_text);
+                        if hwnd_val != 0 {
+                            use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_SHOW};
+                            use windows::Win32::Foundation::HWND;
+                            let h = HWND(hwnd_val as *mut std::ffi::c_void);
+                            unsafe { let _ = ShowWindow(h, SW_SHOW); let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
+                            tokio::time::sleep(std::time::Duration::from_millis(400)).await;
+                        }
+                        injector.inject_replace_line();
                         info!("📊 Excel formula explained: {}", formula);
                         continue;
                     } else {
@@ -889,8 +938,16 @@ async fn async_main() -> Result<()> {
                         let mut formula_out = String::new();
                         while let Some(t) = fx_rx.recv().await { formula_out.push_str(&t); }
                         let formula_clean = formula_out.trim().to_string();
-                        injector.erase_prompt(doc_ctx.prompt_char_count);
-                        injector.type_text(&formula_clean);
+                        let hwnd_val = *crate::hotkey::CAPTURED_HWND.lock().unwrap();
+                        let _ = crate::injector::HumanizedInjector::set_clipboard(&formula_clean);
+                        if hwnd_val != 0 {
+                            use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_SHOW};
+                            use windows::Win32::Foundation::HWND;
+                            let h = HWND(hwnd_val as *mut std::ffi::c_void);
+                            unsafe { let _ = ShowWindow(h, SW_SHOW); let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
+                            tokio::time::sleep(std::time::Duration::from_millis(400)).await;
+                        }
+                        injector.inject_replace_line();
                         info!("📊 Excel formula generated: {}", formula_clean);
                         continue;
                     }
@@ -902,8 +959,10 @@ async fn async_main() -> Result<()> {
                     let violations = scanner.scan(&doc_ctx.full_text);
                     if !violations.is_empty() {
                         let violation_summary = violations.iter()
-                            .map(|v| format!("⚠️  {} [{}]: '{}'", v.rule_id, v.severity,
-                                &v.matched_phrase[..v.matched_phrase.len().min(40)]))
+                            .map(|v| {
+                                let phrase_preview: String = v.matched_phrase.chars().take(40).collect();
+                                format!("⚠️  {} [{}]: '{}'", v.rule_id, v.severity, phrase_preview)
+                            })
                             .collect::<Vec<_>>()
                             .join("\n");
                         warn!("🔒 Compliance scanner: {} violations found:\n{}", violations.len(), violation_summary);
@@ -1039,8 +1098,16 @@ async fn async_main() -> Result<()> {
                             app_label,
                             pahf_confidence * 100.0
                         );
-                        injector.erase_prompt(prompt_char_count);
-                        injector.type_text(&clarification);
+                        let hwnd_val = *crate::hotkey::CAPTURED_HWND.lock().unwrap();
+                        let _ = crate::injector::HumanizedInjector::set_clipboard(&clarification);
+                        if hwnd_val != 0 {
+                            use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_SHOW};
+                            use windows::Win32::Foundation::HWND;
+                            let h = HWND(hwnd_val as *mut std::ffi::c_void);
+                            unsafe { let _ = ShowWindow(h, SW_SHOW); let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
+                            tokio::time::sleep(std::time::Duration::from_millis(400)).await;
+                        }
+                        injector.inject_replace_line();
                         info!("❓ PAHF: Low confidence ({:.2}) — injected clarification request", pahf_confidence);
                         continue;
                     }
@@ -1141,95 +1208,28 @@ async fn async_main() -> Result<()> {
                     }
                 });
 
-                // H. Process Stream — inject tokens as they arrive
+                // H. Collect ALL stream tokens, then inject ONCE at the end.
+                //
+                // ARCHITECTURE: We do NOT inject mid-stream. We collect the entire AI
+                // response into `full_response`, then do ONE clipboard→focus→select→paste.
+                //
+                // Why: Mid-stream injection caused two problems:
+                //   1. Only the first ~15 chars got injected; the rest accumulated silently
+                //   2. Focus switches mid-stream confuse Word's document body focus model
+                //
+                // The new approach: collect everything, inject once.
                 let injector_clone = Arc::clone(&injector);
-                let mut first_token = true;
                 let mut full_response = String::new();
-                let mut buffer = String::new();
-                let mut replaced = false;
                 let mut was_cancelled = false;
 
+                info!("📡 Streaming AI response...");
                 loop {
                     tokio::select! {
                         maybe_token = token_rx.recv() => {
                             match maybe_token {
-                                None => break, // stream ended
+                                None => break, // stream ended — all tokens collected
                                 Some(token) => {
-                                    buffer.push_str(&token);
-
-                                    if first_token {
-                                        if buffer.len() > 15 || buffer.contains("[REPLACE]") {
-                                            first_token = false;
-                                            let clean_buf = buffer.replace("[REPLACE]", "").trim_start().to_string();
-                                            
-                                            // Confidence check: only block if we have > 5 interactions of history.
-                                            // Cold-start always injects (prevents blocking new users).
-                                            let confidence_score = crate::memory::feedback::ConfidenceEngine::calculate_confidence(&app_label, &clean_buf, &history);
-                                            if confidence_score < 0.4 && history.len() > 5 {
-                                                info!("Low confidence ({:.2}) with {} history entries, toasting.", confidence_score, history.len());
-                                                let msg = if clean_buf.contains("- ") {
-                                                    "Kairo: Bullet points or prose? Press Alt+M again to clarify."
-                                                } else {
-                                                    "Kairo: Formal or casual? Press Alt+M again to clarify."
-                                                };
-                                                crate::toast_notification::show_progress_toast(msg);
-                                                was_cancelled = true;
-                                                break;
-                                            }
-
-                                            // ── PRODUCTION INJECTION ─────────────────────────────────────────
-                                            // Strategy: clipboard-first → focus-window → Home+Shift+End → Ctrl+V
-                                            //
-                                            // CRITICAL ORDER:
-                                            //   1. Set clipboard BEFORE focusing window (Word may lock clipboard on focus)
-                                            //   2. Then focus window (BringWindowToTop + SetForegroundWindow)
-                                            //   3. Wait 400ms — Word needs this to fully hand keyboard focus to doc body
-                                            //   4. Home+Shift+End selects the current prompt line (no char count needed)
-                                            //   5. Ctrl+V replaces the selection with AI output
-                                            //
-                                            // This eliminates backspace-based erasure entirely. Backspaces are unreliable
-                                            // because SetForegroundWindow focuses the window FRAME, not the document BODY.
-                                            // Keystrokes hit whatever Word sub-element happened to have focus last.
-
-                                            let hwnd_val = *crate::hotkey::CAPTURED_HWND.lock().unwrap();
-
-                                            // Step 1: Set clipboard BEFORE switching focus
-                                            if !clean_buf.is_empty() {
-                                                let cb_set = crate::injector::HumanizedInjector::set_clipboard(&clean_buf);
-                                                info!("Clipboard pre-set: {} ({} chars)", if cb_set { "OK" } else { "FAILED" }, clean_buf.len());
-
-                                                // Step 2: Now focus the target window
-                                                if hwnd_val != 0 {
-                                                    use windows::Win32::UI::WindowsAndMessaging::{
-                                                        SetForegroundWindow, BringWindowToTop, ShowWindow, SW_SHOW,
-                                                    };
-                                                    use windows::Win32::Foundation::HWND;
-                                                    let h = HWND(hwnd_val as *mut std::ffi::c_void);
-                                                    unsafe {
-                                                        let _ = ShowWindow(h, SW_SHOW);
-                                                        let _ = BringWindowToTop(h);
-                                                        let _ = SetForegroundWindow(h);
-                                                    }
-                                                    info!("Window focused: HWND={}", hwnd_val);
-                                                    // Step 3: 400ms settle — Word needs this for document body focus
-                                                    tokio::time::sleep(std::time::Duration::from_millis(400)).await;
-                                                }
-
-                                                // Step 4+5: Home + Shift+End (select line) + Ctrl+V (paste)
-                                                injector_clone.inject_replace_line();
-                                                full_response.push_str(&clean_buf);
-                                                info!("Injection complete: {} chars into HWND={}", clean_buf.len(), hwnd_val);
-                                                crate::toast_notification::show_completion_toast(clean_buf.len(), "Kairo");
-                                            }
-                                            replaced = true;
-
-                                        }
-                                    } else {
-                                        // Streaming token: accumulate in full_response but do NOT inject yet.
-                                        // We inject all-at-once via inject_replace_line() above.
-                                        // Token-by-token SendInput is unreliable for Word focus model.
-                                        full_response.push_str(&token);
-                                    }
+                                    full_response.push_str(&token);
                                 }
                             }
                         }
@@ -1237,6 +1237,55 @@ async fn async_main() -> Result<()> {
                             info!("🛑 Ghost session cancelled mid-stream");
                             was_cancelled = true;
                             break;
+                        }
+                    }
+                }
+
+                // ── POST-STREAM: Clean up and inject the complete response ──────────
+                if !was_cancelled && !full_response.is_empty() {
+                    // Strip [REPLACE] tag from WritingPipeline responses
+                    let clean_response = full_response.replace("[REPLACE]", "").trim().to_string();
+                    full_response = clean_response.clone();
+
+                    if clean_response.is_empty() {
+                        warn!("⚠️  AI returned empty response after cleanup");
+                    } else {
+                        info!("📡 Stream complete: {} chars collected. Injecting...", clean_response.len());
+
+                        // Confidence check: only block if we have > 5 interactions of history.
+                        let confidence_score = crate::memory::feedback::ConfidenceEngine::calculate_confidence(&app_label, &clean_response, &history);
+                        if confidence_score < 0.4 && history.len() > 5 {
+                            info!("Low confidence ({:.2}) with {} history entries — skipping injection.", confidence_score, history.len());
+                            crate::toast_notification::show_progress_toast("Kairo: Low confidence. Press Alt+M again to clarify.");
+                            was_cancelled = true;
+                        } else {
+                            // ── PRODUCTION INJECTION ─────────────────────────────────────
+                            // 1. Set clipboard BEFORE focusing (Word locks clipboard on focus)
+                            let cb_ok = crate::injector::HumanizedInjector::set_clipboard(&clean_response);
+                            info!("Clipboard: {} ({} chars)", if cb_ok { "OK" } else { "FAILED" }, clean_response.len());
+
+                            // 2. Focus target window
+                            let hwnd_val = *crate::hotkey::CAPTURED_HWND.lock().unwrap();
+                            if hwnd_val != 0 {
+                                use windows::Win32::UI::WindowsAndMessaging::{
+                                    SetForegroundWindow, BringWindowToTop, ShowWindow, SW_SHOW,
+                                };
+                                use windows::Win32::Foundation::HWND;
+                                let h = HWND(hwnd_val as *mut std::ffi::c_void);
+                                unsafe {
+                                    let _ = ShowWindow(h, SW_SHOW);
+                                    let _ = BringWindowToTop(h);
+                                    let _ = SetForegroundWindow(h);
+                                }
+                                info!("Window focused: HWND={}", hwnd_val);
+                                // 3. 400ms settle for Word document body focus
+                                tokio::time::sleep(std::time::Duration::from_millis(400)).await;
+                            }
+
+                            // 4+5. Home + Shift+End (select prompt line) + Ctrl+V (paste)
+                            injector_clone.inject_replace_line();
+                            info!("✅ Injection complete: {} chars into HWND={}", clean_response.len(), hwnd_val);
+                            crate::toast_notification::show_completion_toast(clean_response.len(), "Kairo");
                         }
                     }
                 }
@@ -1276,16 +1325,7 @@ async fn async_main() -> Result<()> {
                     });
                 }
 
-                // Fallback: small buffer never triggered
-                if !replaced && !buffer.is_empty() && !was_cancelled {
-                    let clean_buf = buffer.replace("[REPLACE]", "").trim_start().to_string();
-                    injector_clone.erase_prompt(prompt_char_count);
-                    tokio::time::sleep(std::time::Duration::from_millis(50)).await;
-                    if !injector_clone.inject_via_clipboard(&clean_buf) {
-                        injector_clone.type_text(&clean_buf);
-                    }
-                    full_response.push_str(&clean_buf);
-                }
+                // (Fallback block removed — post-stream injection handles all cases now)
 
                 // I. Phase 3: Record undo history
                 if !full_response.is_empty() && !was_cancelled {
