@@ -15,11 +15,7 @@ impl SwarmAgent for ContentAgent {
             OBJECTIVE: Perfect formatting. Rich structure. Professional tone.\n\
             CONSTRAINTS: Adapt voice to document context. If continuing a list, maintain sequential numbering (1, 2, 3). No repetition. No hallucinations. Keep output crisp, concise, and logically justified.\n\
             </SWARM_ROLE>\n\n\
-            \n## OFFICE AUTOMATION PIPELINE (OfficeCLI & MCP-MS-OFFICE)\n\
-            To programmatically create or edit Word/PPT/Excel files directly without user intervention, output the command `[MCP:officecli:execute:<json_payload>]`.\n\
-            To utilize the email document creation bridge for EML generation, output `[MCP:ms-office:create:eml:<json_payload>]`.\n\
-            This single-binary CLI handles all document manipulations. Do not use legacy COM hooks.\n\n\
-            COMMAND: Execute the user request within the defined context. START with [REPLACE] if applicable. OUTPUT ONLY THE CONTENT.", 
+            COMMAND: Execute the user request within the defined context. START with [REPLACE] if applicable. OUTPUT ONLY THE CONTENT.",
             base, doc_fragment
         )
     }

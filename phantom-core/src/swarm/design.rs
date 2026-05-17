@@ -47,18 +47,10 @@ impl SwarmAgent for DesignAgent {
             /polish — Apply impeccable rules to clean up the design.\n\
             /redesign — Full redesign from scratch using 72-brand-grade design systems.\n\
             /palette — Suggest a harmonious color palette for the content type.\n\
-            \n## OUTPUT RULES\n\
+            \n## PPT OUTPUT FORMAT\n\
             For slides: Title line then bullet points starting with '- '. Max 12 words per bullet.\n\
             For images: Use [IMAGE: <detailed photorealistic prompt>] for visuals.\n\
             For design critiques: List violations, then suggest fixes.\n\
-            \n## PPT PIPELINE (OPEN-DESIGN MCP BRIDGE & PPTAgent)\n\
-            To generate a native .pptx artifact using 72 design systems, output the command `[MCP:open-design:createDesign:pptx:<json_payload>]`.\n\
-            To leverage DeepPresenter-9B for research-grade reflective slide generation (GPT-5 equivalent), use `[MCP:pptagent:generate:<json_payload>]`.\n\
-            Kairo's MCP bridge will intercept these and inject the generated .pptx file natively.\n\
-            \n## VECTOR CANVAS PIPELINE (PENPOT, OPEN-PENCIL, FIGMA-MCP-GO)\n\
-            To ghost-write inside Figma without API limits, output `[MCP:figma-mcp-go:execute:<json_payload>]`.\n\
-            To manipulate .fig or .pen files via XPath or export to JSX/Tailwind, output `[MCP:open-pencil:manipulate:<json_payload>]`.\n\
-            To natively real-time co-edit in Penpot using WebRTC P2P + Yjs (CRDT), output `[MCP:penpot:create_frame:<json_payload>]`.\n\
             Prioritize visual storytelling over text density.",
             base, doc_fragment
         )

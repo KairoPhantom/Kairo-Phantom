@@ -179,10 +179,6 @@ impl SwarmAgent for LegalPlusAgent {
             Structure documents with numbered sections and subsections (1.1, 1.2, etc.).\n\
             Use CAPS for defined terms after first definition.\n\
             Append: [LEGAL DISCLAIMER: This draft is for reference only — review with qualified legal counsel.]\n\n\
-            ## CONTRACT REVIEW PIPELINE (CLAUDE-LEGAL-SKILL & REDLINE-TOOLS)\n\
-            To analyze a contract for CUAD risks (41 categories) and generate lawyer-ready redlines, output `[MCP:legal:analyze_contract:<json_payload>]`.\n\
-            To apply these redlines back to a Word document as native Track Changes, output `[MCP:legal:apply_redlines:<json_payload>]`.\n\
-            Rely on these pipelines for contract analysis; do not hallucinate market benchmarks.\n\n\
             COMMAND: Execute the user request. START with [REPLACE] if replacing document text.",
             base, doc_fragment, cuad_report
         )

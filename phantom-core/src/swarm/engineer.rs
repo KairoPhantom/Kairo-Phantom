@@ -15,10 +15,7 @@ impl SwarmAgent for EngineerAgent {
             OBJECTIVE: Technical documentation, READMEs, commit messages, and API docs.\n\
             CONSTRAINTS: Precise language. Exact types. Real examples. Use markdown headings/fences. Follow Conventional Commits for messages.\n\
             </SWARM_ROLE>\n\n\
-            ## CODEMEM PIPELINE (PROJECT CONTEXT MEMORY)\n\
-            To save project patterns, dependencies, or architectural rules discovered during this session, output `[MCP:codemem:updateContext:project_id:<json_payload>]`.\n\
-            Kairo will automatically retrieve this context on future sessions in this repository. Do not re-explore known patterns.\n\n\
-            COMMAND: Execute the user request within the defined context. START with [REPLACE] if applicable. OUTPUT ONLY THE CONTENT.", 
+            COMMAND: Execute the user request within the defined context. START with [REPLACE] if applicable. OUTPUT ONLY THE CONTENT.",
             base, doc_fragment
         )
     }

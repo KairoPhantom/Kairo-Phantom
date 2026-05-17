@@ -1255,7 +1255,49 @@ async fn async_main() -> Result<()> {
 
                 // ── POST-STREAM: Inject the complete response ──────────────────
                 if !was_cancelled && !full_response.is_empty() {
-                    let clean_response = full_response.replace("[REPLACE]", "").trim().to_string();
+                    let mut clean_response = full_response.replace("[REPLACE]", "").trim().to_string();
+
+                    // Strip ALL [MCP:...] command blocks from the output.
+                    //
+                    // ROOT CAUSE of the Word contamination bug:
+                    //   The swarm specialist prompts instruct the AI to emit
+                    //   `[MCP:officecli:execute:{...}]` commands for Word/Excel/PPT
+                    //   operations. These are supposed to be intercepted by an MCP
+                    //   bridge that doesn't exist in this deployment. Result: the raw
+                    //   JSON command literal was being injected into the Word document.
+                    //
+                    // FIX STRATEGY: Strip EVERY [MCP:...] block before injection.
+                    //   This is the defence-in-depth layer. The root cause is also
+                    //   fixed by removing the MCP instructions from specialist prompts.
+                    {
+                        // Use a regex-free, allocation-minimal approach: scan for
+                        // [MCP: tokens and drop everything through the matching ].
+                        let mut stripped = String::with_capacity(clean_response.len());
+                        let bytes = clean_response.as_bytes();
+                        let mut i = 0;
+                        while i < bytes.len() {
+                            // Look for literal "[MCP:"
+                            if i + 5 <= bytes.len() && &bytes[i..i+5] == b"[MCP:" {
+                                // Scan forward to find the closing ']'
+                                let start = i;
+                                i += 5;
+                                let mut depth = 1i32;
+                                while i < bytes.len() && depth > 0 {
+                                    if bytes[i] == b'[' { depth += 1; }
+                                    else if bytes[i] == b']' { depth -= 1; }
+                                    i += 1;
+                                }
+                                // Strip any trailing newline after the MCP block
+                                if i < bytes.len() && bytes[i] == b'\n' { i += 1; }
+                                tracing::warn!("🔧 Stripped MCP block ({} bytes) from AI output", i - start);
+                            } else {
+                                stripped.push(bytes[i] as char);
+                                i += 1;
+                            }
+                        }
+                        clean_response = stripped.trim().to_string();
+                    }
+
                     full_response = clean_response.clone();
 
                     if clean_response.is_empty() {

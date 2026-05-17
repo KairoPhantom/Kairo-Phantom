@@ -15,10 +15,7 @@ impl SwarmAgent for DataAnalystAgent {
             OBJECTIVE: Excel formulas, pivot tables, and data summaries.\n\
             CONSTRAINTS: Correct formula syntax (=VLOOKUP, etc.). Explain patterns clearly. Use bullet points for summaries. Describe best chart types.\n\
             </SWARM_ROLE>\n\n\
-            ## EXCEL PIPELINE (MCP-SERVER-EXCEL)\n\
-            To perform deep Excel operations (Power Query, DAX, VBA, PivotTables, Charts), output the command `[MCP:excel:operation:<json_payload>]`.\n\
-            This utilizes the COM API natively and safely. Do not hallucinate capabilities; rely on this bridge for complex operations.\n\n\
-            COMMAND: Execute the user request within the defined context. START with [REPLACE] if applicable. OUTPUT ONLY THE CONTENT.", 
+            COMMAND: Execute the user request within the defined context. START with [REPLACE] if applicable. OUTPUT ONLY THE CONTENT.",
             base, doc_fragment
         )
     }

@@ -34,6 +34,9 @@ impl SentinelSanitizer {
             Regex::new(r"(?i)Swarm Brain").unwrap(),
             Regex::new(r"(?i)internal hash").unwrap(),
             Regex::new(r"(?i)sentinel hash").unwrap(),
+            // MCP command leakage — these are system-internal commands that must
+            // never appear verbatim in user-facing document output.
+            Regex::new(r"\[MCP:").unwrap(),
         ];
         Self {
             session_tokens: HashSet::new(),
@@ -59,12 +62,39 @@ impl SentinelSanitizer {
     /// Scans the output for the sentinel and leakage patterns.
     pub fn sanitize(&self, content: &str) -> String {
         let mut sanitized = content.to_string();
-        
+
         // 1. Remove XML Tags (Enforce raw injection for ghost-writing)
         sanitized = sanitized.replace("<output>", "").replace("</output>", "");
         sanitized = sanitized.replace("<thought>", "").replace("</thought>", "");
-        
-        // 2. Check for Instruction Leakage
+        // Strip internal agent XML tags that sometimes leak into responses
+        sanitized = sanitized.replace("<SWARM_ROLE>", "").replace("</SWARM_ROLE>", "");
+        sanitized = sanitized.replace("[DOCUMENT CONTEXT]", "").replace("[DOCUMENT INTELLIGENCE]", "");
+
+        // 2. Strip any [MCP:...] command blocks (defence-in-depth for MCP leakage)
+        //    This is also done in main.rs before injection, but we do it here too
+        //    so the pattern-match in step 3 doesn't false-positive.
+        {
+            let mut stripped = String::with_capacity(sanitized.len());
+            let bytes = sanitized.as_bytes();
+            let mut i = 0;
+            while i < bytes.len() {
+                if i + 5 <= bytes.len() && &bytes[i..i+5] == b"[MCP:" {
+                    i += 5;
+                    let mut depth = 1i32;
+                    while i < bytes.len() && depth > 0 {
+                        if bytes[i] == b'[' { depth += 1; }
+                        else if bytes[i] == b']' { depth -= 1; }
+                        i += 1;
+                    }
+                } else {
+                    stripped.push(bytes[i] as char);
+                    i += 1;
+                }
+            }
+            sanitized = stripped;
+        }
+
+        // 3. Check for Instruction Leakage
         for pattern in &self.leak_patterns {
             if pattern.is_match(&sanitized) {
                 info!("⚠️ [SENTINEL] Instruction leakage detected! Blocking response.");
@@ -72,7 +102,7 @@ impl SentinelSanitizer {
             }
         }
 
-        // 3. Check for Sentinel Leakage
+        // 4. Check for Sentinel Leakage
         if sanitized.contains(&self.sentinel) {
             info!("⚠️ [SENTINEL] System prompt sentinel leakage detected! Blocking response.");
             return "[BLOCKED: SECURITY POLICY VIOLATION]".to_string();
