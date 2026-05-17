@@ -630,64 +630,123 @@ async fn async_main() -> Result<()> {
                 };
 
                 // C. Read text from target app
-                //    Strategy: UIA first (works without focus for Word, Notepad, etc.)
-                //    If UIA fails, focus the window SAFELY then use clipboard fallback.
+                //    Strategy:
+                //    1. UIA — works for Word, Notepad, browsers
+                //    2. For VS Code specifically: UIA returns an inaccessible warning
+                //       instead of editor text unless screen reader mode is on.
+                //       We detect this and use the clipboard path instead.
+                //    3. Clipboard path: Home→Shift+End→Ctrl+C grabs ONLY the
+                //       current line (where the cursor and // prompt are).
+                //       We do NOT use Ctrl+A because that grabs the entire file —
+                //       extract_last_paragraph would then search all // comments.
                 let raw_text = {
-                    // Try UIA first — it can read from the focused element without us
-                    // needing to SetForegroundWindow
+                    // Known VS Code inaccessibility strings (returned instead of editor text)
+                    const VSCODE_INACCESSIBLE: &[&str] = &[
+                        "The editor is not accessible at this time",
+                        "screen reader optimized mode",
+                        "Shift+Alt+F1",
+                    ];
+
                     let uia_result = uia_reader.get_focused_text();
-                    match uia_result {
+                    let is_vscode = captured_process.to_lowercase().contains("code")
+                        && !captured_process.to_lowercase().contains("discord");
+
+                    let uia_text_opt = match uia_result {
                         Ok(t) if !t.trim().is_empty() => {
-                            info!("📖 UIA read: {} chars", t.len());
-                            t
+                            // Check if VS Code returned its inaccessibility warning
+                            let is_inaccessible = VSCODE_INACCESSIBLE.iter()
+                                .any(|s| t.contains(s));
+                            if is_inaccessible {
+                                info!("⚠️  VS Code UIA returned inaccessibility warning — routing to clipboard path");
+                                None  // Force clipboard fallback
+                            } else {
+                                info!("📖 UIA read: {} chars", t.len());
+                                Some(t)
+                            }
                         },
-                        uia_r => {
-                            if let Err(ref e) = uia_r { warn!("⚠️  UIA error: {}", e); }
-                            // Clipboard fallback: need to focus window first, then Ctrl+A, Ctrl+C
-                            info!("📋 Clipboard fallback: focusing window, then Ctrl+A + Ctrl+C...");
+                        Ok(_) => {
+                            info!("📖 UIA returned empty — routing to clipboard path");
+                            None
+                        },
+                        Err(ref e) => {
+                            warn!("⚠️  UIA error: {} — routing to clipboard path", e);
+                            None
+                        }
+                    };
 
-                            #[cfg(windows)]
-                            {
-                                use windows::Win32::UI::WindowsAndMessaging::{
-                                    SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE,
-                                };
-                                use windows::Win32::Foundation::HWND;
-                                use windows::Win32::UI::Input::KeyboardAndMouse::{
-                                    SendInput, INPUT, INPUT_KEYBOARD, KEYBDINPUT,
-                                    KEYEVENTF_KEYUP, VK_CONTROL, VK_MENU, VK_LMENU, VK_RMENU,
-                                    VK_SHIFT, VIRTUAL_KEY, KEYBD_EVENT_FLAGS,
-                                };
+                    if let Some(text) = uia_text_opt {
+                        text
+                    } else {
+                        // Clipboard path: focus window then capture text
+                        info!("📋 Clipboard capture: focusing '{}' window...", captured_process);
+                        #[cfg(windows)]
+                        {
+                            use windows::Win32::UI::WindowsAndMessaging::{
+                                SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE,
+                            };
+                            use windows::Win32::Foundation::HWND;
+                            use windows::Win32::UI::Input::KeyboardAndMouse::{
+                                SendInput, INPUT, INPUT_KEYBOARD, KEYBDINPUT,
+                                KEYEVENTF_KEYUP, VK_CONTROL, VK_END, VK_HOME,
+                                VK_SHIFT, VIRTUAL_KEY, KEYBD_EVENT_FLAGS,
+                            };
 
-                                let hwnd = HWND(target_hwnd_val as *mut std::ffi::c_void);
-
-                                // Focus the window using SW_RESTORE (not SW_SHOW — SW_SHOW can
-                                // cause issues with minimized windows)
-                                unsafe {
-                                    if windows::Win32::UI::WindowsAndMessaging::IsIconic(hwnd).as_bool() { let _ = ShowWindow(hwnd, SW_RESTORE); }
-                                    let _ = BringWindowToTop(hwnd);
-                                    let _ = SetForegroundWindow(hwnd);
+                            let hwnd = HWND(target_hwnd_val as *mut std::ffi::c_void);
+                            unsafe {
+                                if windows::Win32::UI::WindowsAndMessaging::IsIconic(hwnd).as_bool() {
+                                    let _ = ShowWindow(hwnd, SW_RESTORE);
                                 }
-                                tokio::time::sleep(std::time::Duration::from_millis(300)).await;
+                                let _ = BringWindowToTop(hwnd);
+                                let _ = SetForegroundWindow(hwnd);
+                            }
+                            tokio::time::sleep(std::time::Duration::from_millis(400)).await;
 
-                                // NOTE: No modifier clearing needed — the hotkey hook already
-                                // consumed the Alt key-up event to prevent ribbon activation.
-
-                                // NOW safe to send Ctrl+A, Ctrl+C
-                                let sel_copy = [
+                            // For VS Code (code editor): use Home→Shift+End→Ctrl+C
+                            //   This captures ONLY the current line (the // prompt line)
+                            //   instead of Ctrl+A which would grab the entire file.
+                            //
+                            // For other apps: use Ctrl+A→Ctrl+C (full document needed
+                            //   for context-aware ghost-writing in Word/Notepad)
+                            let sel_copy: Vec<INPUT> = if is_vscode {
+                                info!("📋 VS Code: using Home→Shift+End→Ctrl+C (current line only)");
+                                vec![
+                                    // Home — move to start of current line
+                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_HOME, wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } },
+                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_HOME, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
+                                    // Shift+End — select to end of current line
+                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_SHIFT, wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } },
+                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_END, wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } },
+                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_END, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
+                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_SHIFT, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
+                                    // Ctrl+C — copy selected line
                                     INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_CONTROL, wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } },
-                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VIRTUAL_KEY(0x41), wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } },
-                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VIRTUAL_KEY(0x41), wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
                                     INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VIRTUAL_KEY(0x43), wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } },
                                     INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VIRTUAL_KEY(0x43), wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
                                     INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_CONTROL, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
-                                ];
-                                unsafe { SendInput(&sel_copy, std::mem::size_of::<INPUT>() as i32); }
-                            }
-                            tokio::time::sleep(std::time::Duration::from_millis(200)).await;
-                            let clip = uia_reader.get_clipboard_text().unwrap_or_default();
-                            info!("📋 Clipboard captured: {} chars", clip.len());
-                            clip
+                                ]
+                            } else {
+                                info!("📋 Non-VSCode app: using Ctrl+A→Ctrl+C (full document)");
+                                vec![
+                                    // Ctrl+A (select all)
+                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_CONTROL, wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } },
+                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VIRTUAL_KEY(0x41), wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } },
+                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VIRTUAL_KEY(0x41), wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
+                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_CONTROL, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
+                                    // Ctrl+C (copy)
+                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_CONTROL, wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } },
+                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VIRTUAL_KEY(0x43), wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } },
+                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VIRTUAL_KEY(0x43), wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
+                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_CONTROL, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
+                                ]
+                            };
+                            unsafe { SendInput(&sel_copy, std::mem::size_of::<INPUT>() as i32); }
                         }
+                        // Give VS Code time to update clipboard (it's slower than Notepad)
+                        tokio::time::sleep(std::time::Duration::from_millis(300)).await;
+                        let clip = uia_reader.get_clipboard_text().unwrap_or_default();
+                        info!("📋 Clipboard captured: {} chars ('{}')", clip.len(),
+                            clip.chars().take(60).collect::<String>());
+                        clip
                     }
                 };
 
