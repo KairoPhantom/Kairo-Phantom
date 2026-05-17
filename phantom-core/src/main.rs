@@ -542,7 +542,10 @@ async fn async_main() -> Result<()> {
             PhantomEvent::HotkeyPressed => {
                 info!("============= GHOST SESSION TRIGGERED =============");
 
-                // A. Refocus the EXACT window that had focus when Alt+M was pressed.
+                // A. Immediately show progress toast so user knows Alt+M was detected
+                crate::toast_notification::show_progress_toast("Kairo is thinking... ✨");
+
+                // B. Refocus the EXACT window that had focus when Alt+M was pressed.
                 //    This is critical — by the time we're here, focus may have shifted
                 //    to the daemon process itself. We must give focus back to Word/Notepad/etc.
                 let target_hwnd_val = *crate::hotkey::CAPTURED_HWND.lock().unwrap();
@@ -552,32 +555,56 @@ async fn async_main() -> Result<()> {
                     let target_hwnd = HWND(target_hwnd_val as *mut std::ffi::c_void);
                     unsafe { let _ = SetForegroundWindow(target_hwnd); }
                     info!("🎯 Refocused target window: HWND={}", target_hwnd_val);
-                    // Short sleep to let the OS actually move focus
-                    tokio::time::sleep(std::time::Duration::from_millis(80)).await;
+                    // Wait for OS to actually move focus before we read or type anything
+                    tokio::time::sleep(std::time::Duration::from_millis(150)).await;
                 }
 
-                // B. Escape Ribbon and Clean up any 'm' typed during Alt+M
-                injector.escape_ribbon_mode();
-                injector.undo_ghost_char();
-
                 // C. Read Text via UIA (now from the correct focused window)
-                let raw_text = match uia_reader.get_focused_text() {
-                    Ok(t) => t,
-                    Err(e) => {
-                        warn!("⚠️  UIA read failed: {}. Clipboard fallback...", e);
-                        uia_reader.get_clipboard_text().unwrap_or_default()
+                //    NOTE: escape_ribbon_mode() (double-ESC) is intentionally NOT called here.
+                //    It was destroying Word's menu state and moving cursor unexpectedly.
+                //    The hook already consumed the 'M' key (LRESULT(1)), so no ghost char appears.
+                let raw_text = {
+                    // Primary: UIA TextPattern — works for Word, Notepad, VS Code
+                    let uia_result = uia_reader.get_focused_text();
+                    match uia_result {
+                        Ok(t) if !t.trim().is_empty() => t,
+                        Ok(_) | Err(_) => {
+                            // Secondary: Ctrl+A, Ctrl+C clipboard capture — works for browsers, Chrome
+                            // This is required for DeepSeek and other web apps.
+                            info!("📋 UIA empty/failed — attempting Ctrl+A, Ctrl+C clipboard capture");
+                            use windows::Win32::UI::Input::KeyboardAndMouse::{
+                                SendInput, INPUT, INPUT_KEYBOARD, KEYBDINPUT,
+                                KEYEVENTF_KEYUP, VK_CONTROL, VIRTUAL_KEY, KEYBD_EVENT_FLAGS,
+                            };
+                            // Select all + copy to clipboard
+                            let sel_copy = [
+                                INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_CONTROL, wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } },
+                                INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VIRTUAL_KEY(0x41), wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } }, // Ctrl+A
+                                INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VIRTUAL_KEY(0x41), wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
+                                INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VIRTUAL_KEY(0x43), wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } }, // Ctrl+C
+                                INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VIRTUAL_KEY(0x43), wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
+                                INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_CONTROL, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
+                            ];
+                            unsafe { SendInput(&sel_copy, std::mem::size_of::<INPUT>() as i32); }
+                            tokio::time::sleep(std::time::Duration::from_millis(120)).await;
+                            uia_reader.get_clipboard_text().unwrap_or_default()
+                        }
                     }
                 };
 
                 if raw_text.trim().is_empty() {
-                    warn!("⚠️  No text in focused element. Type a prompt first.");
+                    warn!("⚠️  No text captured. Type a prompt first, then press Alt+M.");
+                    crate::toast_notification::show_progress_toast("Kairo: No text found. Type a // prompt first.");
                     continue;
                 }
+
+                info!("📖 Captured {} chars of text", raw_text.len());
 
                 // D. Context Engine Analysis
                 let app_ctx: AppContext = context_engine.capture(&raw_text);
                 if app_ctx.prompt_text.is_empty() {
-                    warn!("⚠️  Prompt empty after extraction.");
+                    warn!("⚠️  Prompt empty after extraction — no // command found.");
+                    crate::toast_notification::show_progress_toast("Kairo: Start your text with // to give a command.");
                     continue;
                 }
 

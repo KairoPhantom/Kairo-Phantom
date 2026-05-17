@@ -184,7 +184,15 @@ impl OpenAiBackend {
             .timeout(std::time::Duration::from_secs(120))
             .build()
             .unwrap_or_default();
-        OpenAiBackend { client, api_key, model, base_url }
+        // Normalize base_url: if it's an OpenAI-compatible base (ends with /v1),
+        // append /chat/completions. If it already ends with /chat/completions, use as-is.
+        let normalized_url = if base_url.ends_with("/chat/completions") {
+            base_url
+        } else {
+            let trimmed = base_url.trim_end_matches('/');
+            format!("{}/chat/completions", trimmed)
+        };
+        OpenAiBackend { client, api_key, model, base_url: normalized_url }
     }
 }
 

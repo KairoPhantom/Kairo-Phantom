@@ -337,17 +337,27 @@ impl ContextEngine {
     // classify_environment removed in favor of FingerprinterRegistry
 
 
-    /// Extract the last non-empty paragraph (the user's actual prompt).
+    /// Extract the user's Kairo prompt from the captured text.
+    ///
+    /// Priority:
+    /// 1. Last line starting with "//" — the canonical Kairo command syntax
+    /// 2. Last non-empty line — fallback for selection-based usage
+    ///
     /// This is what Kairo will erase and replace with AI output.
     pub fn extract_last_paragraph(text: &str) -> String {
-        // Split by paragraph breaks and take the last non-empty one
-        let paragraphs: Vec<&str> = text
+        let lines: Vec<&str> = text
             .split(['\n', '\r'])
             .map(|s| s.trim())
             .filter(|s| !s.is_empty())
             .collect();
 
-        paragraphs.last().unwrap_or(&"").to_string()
+        // Priority 1: Find the LAST line that starts with "//" (Kairo command)
+        if let Some(cmd_line) = lines.iter().rev().find(|l| l.starts_with("//")) {
+            return cmd_line.to_string();
+        }
+
+        // Priority 2: Last non-empty line (selection-based or plain text usage)
+        lines.last().unwrap_or(&"").to_string()
     }
 
     /// Get the active foreground process name and window title.
