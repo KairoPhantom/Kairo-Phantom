@@ -658,7 +658,7 @@ async fn async_main() -> Result<()> {
                                 // Focus the window using SW_RESTORE (not SW_SHOW — SW_SHOW can
                                 // cause issues with minimized windows)
                                 unsafe {
-                                    let _ = ShowWindow(hwnd, SW_RESTORE);
+                                    if windows::Win32::UI::WindowsAndMessaging::IsIconic(hwnd).as_bool() { let _ = ShowWindow(hwnd, SW_RESTORE); }
                                     let _ = BringWindowToTop(hwnd);
                                     let _ = SetForegroundWindow(hwnd);
                                 }
@@ -836,7 +836,7 @@ async fn async_main() -> Result<()> {
                             use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE};
                             use windows::Win32::Foundation::HWND;
                             let h = HWND(hwnd_val as *mut std::ffi::c_void);
-                            unsafe { let _ = ShowWindow(h, SW_RESTORE); let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
+                            unsafe { if windows::Win32::UI::WindowsAndMessaging::IsIconic(h).as_bool() { let _ = windows::Win32::UI::WindowsAndMessaging::ShowWindow(h, windows::Win32::UI::WindowsAndMessaging::SW_RESTORE); } let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
                             tokio::time::sleep(std::time::Duration::from_millis(400)).await;
                         }
                         injector.inject_replace_line();
@@ -868,7 +868,7 @@ async fn async_main() -> Result<()> {
                             use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE};
                             use windows::Win32::Foundation::HWND;
                             let h = HWND(hwnd_val as *mut std::ffi::c_void);
-                            unsafe { let _ = ShowWindow(h, SW_RESTORE); let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
+                            unsafe { if windows::Win32::UI::WindowsAndMessaging::IsIconic(h).as_bool() { let _ = windows::Win32::UI::WindowsAndMessaging::ShowWindow(h, windows::Win32::UI::WindowsAndMessaging::SW_RESTORE); } let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
                             tokio::time::sleep(std::time::Duration::from_millis(400)).await;
                         }
                         injector.inject_replace_line();
@@ -912,7 +912,7 @@ async fn async_main() -> Result<()> {
                             use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE};
                             use windows::Win32::Foundation::HWND;
                             let h = HWND(hwnd_val as *mut std::ffi::c_void);
-                            unsafe { let _ = ShowWindow(h, SW_RESTORE); let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
+                            unsafe { if windows::Win32::UI::WindowsAndMessaging::IsIconic(h).as_bool() { let _ = windows::Win32::UI::WindowsAndMessaging::ShowWindow(h, windows::Win32::UI::WindowsAndMessaging::SW_RESTORE); } let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
                             tokio::time::sleep(std::time::Duration::from_millis(400)).await;
                         }
                         injector.inject_replace_line();
@@ -943,7 +943,7 @@ async fn async_main() -> Result<()> {
                         use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE};
                         use windows::Win32::Foundation::HWND;
                         let h = HWND(hwnd_val as *mut std::ffi::c_void);
-                        unsafe { let _ = ShowWindow(h, SW_RESTORE); let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
+                        unsafe { if windows::Win32::UI::WindowsAndMessaging::IsIconic(h).as_bool() { let _ = windows::Win32::UI::WindowsAndMessaging::ShowWindow(h, windows::Win32::UI::WindowsAndMessaging::SW_RESTORE); } let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
                         tokio::time::sleep(std::time::Duration::from_millis(400)).await;
                     }
                     injector.inject_replace_line();
@@ -966,7 +966,7 @@ async fn async_main() -> Result<()> {
                             use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE};
                             use windows::Win32::Foundation::HWND;
                             let h = HWND(hwnd_val as *mut std::ffi::c_void);
-                            unsafe { let _ = ShowWindow(h, SW_RESTORE); let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
+                            unsafe { if windows::Win32::UI::WindowsAndMessaging::IsIconic(h).as_bool() { let _ = windows::Win32::UI::WindowsAndMessaging::ShowWindow(h, windows::Win32::UI::WindowsAndMessaging::SW_RESTORE); } let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
                             tokio::time::sleep(std::time::Duration::from_millis(400)).await;
                         }
                         injector.inject_replace_line();
@@ -990,7 +990,7 @@ async fn async_main() -> Result<()> {
                             use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE};
                             use windows::Win32::Foundation::HWND;
                             let h = HWND(hwnd_val as *mut std::ffi::c_void);
-                            unsafe { let _ = ShowWindow(h, SW_RESTORE); let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
+                            unsafe { if windows::Win32::UI::WindowsAndMessaging::IsIconic(h).as_bool() { let _ = windows::Win32::UI::WindowsAndMessaging::ShowWindow(h, windows::Win32::UI::WindowsAndMessaging::SW_RESTORE); } let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
                             tokio::time::sleep(std::time::Duration::from_millis(400)).await;
                         }
                         injector.inject_replace_line();
@@ -1257,7 +1257,7 @@ async fn async_main() -> Result<()> {
                             use windows::Win32::Foundation::HWND;
                             let h = HWND(hwnd_val as *mut std::ffi::c_void);
                             unsafe {
-                                let _ = ShowWindow(h, SW_RESTORE);
+                                if windows::Win32::UI::WindowsAndMessaging::IsIconic(h).as_bool() { let _ = ShowWindow(h, SW_RESTORE); }
                                 let _ = BringWindowToTop(h);
                                 let _ = SetForegroundWindow(h);
                             }
