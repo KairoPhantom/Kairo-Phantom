@@ -62,7 +62,10 @@ mod owasp_compliance;
 mod deep_presenter;
 mod waza_registry;
 mod siem_export;
-
+mod cross_doc_consistency;
+mod lan_sync;
+mod excel_formula;
+mod section_summarizer;
 
 use identity::IdentityManager;
 use wasm_sandbox::WasmPluginRegistry;
@@ -247,6 +250,29 @@ async fn async_main() -> Result<()> {
         std::fs::write(output_path, &report)?;
         println!("✅ OWASP Compliance Matrix written to: {}", output_path);
         println!("\n{}", owasp_compliance::generate_ciso_summary());
+        return Ok(());
+    }
+
+    // kairo siem-export [--format cef|leef|json] [--output file]
+    if args.len() >= 2 && args[1] == "siem-export" {
+        return siem_export::run_siem_export_command(&args[2..]).await;
+    }
+
+    // kairo memory sync <discover|pull <peer>|serve>
+    if args.len() >= 3 && args[1] == "memory" && args[2] == "sync" {
+        return lan_sync::run_lan_sync_command(&args[3..]).await;
+    }
+
+    // kairo skill <add|list|remove|new> [args]
+    if args.len() >= 2 && args[1] == "skill" {
+        let sub = args.get(2).map(|s| s.as_str()).unwrap_or("list");
+        let skill_args = if args.len() > 3 { args[3..].to_vec() } else { vec![] };
+        return waza_registry::run_skill_command(sub, &skill_args).await;
+    }
+
+    // kairo help — show all available commands
+    if args.len() >= 2 && (args[1] == "help" || args[1] == "--help" || args[1] == "-h") {
+        print_help();
         return Ok(());
     }
 
@@ -710,6 +736,81 @@ async fn async_main() -> Result<()> {
                     _ => {}
                 }
 
+                // ── P2.4: Section Summarizer — intercept "summarize" prompts ────────
+                if section_summarizer::SectionSummarizer::is_summary_request(&doc_ctx.prompt_text) {
+                    info!("📋 Section Summarizer: building structure-aware prompt");
+                    let summary_prompt = section_summarizer::SectionSummarizer::build_summary_prompt(
+                        &doc_ctx, &doc_ctx.prompt_text
+                    );
+                    let (sum_tx, mut sum_rx) = mpsc::channel::<String>(200);
+                    let backend_for_sum = fallback_backend.clone();
+                    let sys_for_sum = "You are a concise document summarizer. Output exactly 3 bullet points.".to_string();
+                    tokio::spawn(async move {
+                        let _ = backend_for_sum.stream_complete(&sys_for_sum, &summary_prompt, sum_tx).await;
+                    });
+                    let mut raw_summary = String::new();
+                    while let Some(t) = sum_rx.recv().await { raw_summary.push_str(&t); }
+                    let bullets = section_summarizer::SectionSummarizer::normalize_bullets(&raw_summary);
+                    injector.erase_prompt(doc_ctx.prompt_char_count);
+                    injector.type_text(&bullets);
+                    info!("📋 Summary injected ({} bullets)", bullets.lines().count());
+                    continue;
+                }
+
+                // ── P2.5: Excel Formula Engine ───────────────────────────────────────
+                if excel_formula::ExcelFormulaEngine::should_handle(
+                    &doc_ctx.prompt_text, doc_ctx.doc_kind.human_name()
+                ) {
+                    let engine = excel_formula::ExcelFormulaEngine::new();
+                    // If an existing formula is in the prompt → explain it
+                    if let Some(formula) = excel_formula::ExcelFormulaEngine::extract_formula(&doc_ctx.prompt_text) {
+                        let explanation = engine.explain(&formula);
+                        injector.erase_prompt(doc_ctx.prompt_char_count);
+                        injector.type_text(&explanation.format_for_injection());
+                        info!("📊 Excel formula explained: {}", formula);
+                        continue;
+                    } else {
+                        // Otherwise ask LLM to generate a formula
+                        let gen_prompt = engine.build_generation_prompt(&doc_ctx.prompt_text);
+                        let (fx_tx, mut fx_rx) = mpsc::channel::<String>(100);
+                        let backend_for_fx = fallback_backend.clone();
+                        let sys_for_fx = "You are an Excel formula expert. Output ONLY the formula starting with =, nothing else.".to_string();
+                        tokio::spawn(async move {
+                            let _ = backend_for_fx.stream_complete(&sys_for_fx, &gen_prompt, fx_tx).await;
+                        });
+                        let mut formula_out = String::new();
+                        while let Some(t) = fx_rx.recv().await { formula_out.push_str(&t); }
+                        let formula_clean = formula_out.trim().to_string();
+                        injector.erase_prompt(doc_ctx.prompt_char_count);
+                        injector.type_text(&formula_clean);
+                        info!("📊 Excel formula generated: {}", formula_clean);
+                        continue;
+                    }
+                }
+
+                // ── P2.3: Compliance Scanner — run on every ghost session ────────────
+                {
+                    let scanner = compliance_scanner::ComplianceScanner::load();
+                    let violations = scanner.scan(&doc_ctx.full_text);
+                    if !violations.is_empty() {
+                        let violation_summary = violations.iter()
+                            .map(|v| format!("⚠️  {} [{}]: '{}'", v.rule_id, v.severity,
+                                &v.matched_phrase[..v.matched_phrase.len().min(40)]))
+                            .collect::<Vec<_>>()
+                            .join("\n");
+                        warn!("🔒 Compliance scanner: {} violations found:\n{}", violations.len(), violation_summary);
+                        // Log to audit trail but don't block — compliance is advisory
+                        audit_logger.log_ghost_session(
+                            AuditEvent::GhostSessionStarted,
+                            AuditOutcome::Pending,
+                            &format!("COMPLIANCE_SCAN:{}", app_label),
+                            &identity_manager.identity.agent_id,
+                            config.model.model_name.as_deref().unwrap_or("default"),
+                            violations.len() as usize,
+                        );
+                    }
+                }
+
                 let (target_backend, agent_profile) = swarm_engine.route(&doc_ctx, &command_mode).await;
                 let _agent_id = agent_profile.agent_type.clone();
 
@@ -1152,4 +1253,35 @@ async fn async_main() -> Result<()> {
     }
 
     Ok(())
+}
+
+fn print_help() {
+    println!("👻 Kairo Phantom v{} — AI ghost-writer that haunts every app\n", env!("CARGO_PKG_VERSION"));
+    println!("USAGE: kairo-phantom [COMMAND] [OPTIONS]\n");
+    println!("COMMANDS:");
+    println!("  (no args)              Start the daemon — press Alt+M to activate");
+    println!("  seed <folder>          Seed MemMachine from existing documents");
+    println!("  import <file.kpx>      Import a .kpx memory export");
+    println!("  export-memory          Export memory as .kpx file");
+    println!("  owasp-report           Generate OWASP Agentic Top 10 compliance matrix");
+    println!("  siem-export            Export audit log (--format cef|leef|json, --output file)");
+    println!("  memory sync            Discover/sync LAN peers (discover|pull <addr>|serve)");
+    println!("  skill <sub>            Manage skills (list|add <url>|remove <name>|new <name>)");
+    println!("  verify                 Verify system facts");
+    println!("  export                 Export document (--format revealjs --output file)");
+    println!("  first-run              Show onboarding banner");
+    println!("  plugin list            List registered plugins");
+    println!("  --version              Show version");
+    println!("  --init-config          Generate default config file");
+    println!("  help                   Show this help\n");
+    println!("IN-DOCUMENT COMMANDS (type in any app, then press Alt+M):");
+    println!("  // health              Full document health audit");
+    println!("  // kami <format>       Export document (markdown|pdf|revealjs)");
+    println!("  // think <task>        Generate execution plan before writing");
+    println!("  // ghost <task>        Force ghost-write mode");
+    println!("  // urgent <task>       Force urgent/brief mode");
+    println!("  // query <question>    Q&A mode");
+    println!("  // explain <concept>   Explanation mode");
+    println!("  summarize              Summarize document into 3 bullets");
+    println!("\nFor docs: https://github.com/Kartik24Hulmukh/Kairo-Phantom");
 }

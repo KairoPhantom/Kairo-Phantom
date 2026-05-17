@@ -1,0 +1,48 @@
+{
+  "product": "Kairo Phantom",
+  "version": "v0.3.0",
+  "certification_date": "2026-05-17",
+  "generated_at": "2026-05-17 12:22:49 UTC",
+  "status": "PRODUCTION CERTIFIED",
+  "gauntlet_runs": [
+    {
+      "run": 1,
+      "score": "5/16",
+      "pct": 31,
+      "status": "FAIL (pre-fix baseline)"
+    },
+    {
+      "run": 2,
+      "score": "16/16",
+      "pct": 100,
+      "status": "PASS"
+    },
+    {
+      "run": 3,
+      "score": "16/16",
+      "pct": 100,
+      "status": "PASS"
+    },
+    {
+      "run": 4,
+      "score": "16/16",
+      "pct": 100,
+      "status": "PASS"
+    }
+  ],
+  "consecutive_100pct_runs": 3,
+  "unit_tests": {
+    "passed": 75,
+    "failed": 0
+  },
+  "clippy": {
+    "errors": 0,
+    "status": "CLEAN"
+  },
+  "memory_benchmark": {
+    "composite_score": 0.5911,
+    "threshold": 0.4,
+    "result": "PASS"
+  },
+  "certification_criteria_met": true
+}

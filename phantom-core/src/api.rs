@@ -214,8 +214,17 @@ async fn ask(
         state.swarm_engine.route(&doc_ctx, &mode).await
     };
     
-    let final_prompt = if prompt.is_empty() { req.prompt.as_str() } else { prompt.as_str() };
-    
+    // ── Determine final prompt: API request takes priority over UIA capture ──
+    // req.prompt is the actual user intent from the API caller.
+    // doc_ctx.prompt_text is UIA-captured screen text (used only as fallback context).
+    let final_prompt = if !req.prompt.is_empty() {
+        req.prompt.as_str()
+    } else if !prompt.is_empty() {
+        prompt.as_str()
+    } else {
+        return Err((StatusCode::BAD_REQUEST, "No prompt provided".into()));
+    };
+
     // Use a clear, helpful system directive for API callers
     // (not the internal swarm directive which is designed for ghost-session GUI injection)
     let api_system = format!(

@@ -454,7 +454,7 @@ fn invariants_1000_step_random_walk() {
         // INVARIANT 2: confidence always in [0.1, 1.0]
         let response = if step % 2 == 0 { "- bullet" } else { "prose text here" };
         let confidence = ConfidenceEngine::calculate_confidence(app, response, &history);
-        assert!(confidence >= 0.1 && confidence <= 1.0,
+        assert!((0.1f64..=1.0).contains(&confidence),
             "step {}: confidence {} out of range", step, confidence);
 
         // INVARIANT 3: CommandMode always parses without panic

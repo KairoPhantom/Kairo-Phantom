@@ -96,4 +96,8 @@ pub mod owasp_compliance;       // P2-C1: OWASP Agentic Top 10 compliance matrix
 pub mod deep_presenter;         // P2-A7: DeepPresenter-9B local PPT generation bridge
 pub mod waza_registry;          // P3-A2/B1: Waza Skills marketplace + skill builder CLI
 pub mod siem_export;            // P4-A2: CEF/LEEF/JSON-lines SIEM audit log export
+pub mod cross_doc_consistency;  // P2-A2: Cross-document consistency engine
+pub mod lan_sync;               // P1-A1: LAN memory sync — UDP discovery + TCP transfer
+pub mod excel_formula;          // P2-A5: Excel formula explainer + generator
+pub mod section_summarizer;     // P2-A4: 3-bullet section summarizer
 

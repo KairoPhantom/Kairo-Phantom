@@ -43,7 +43,13 @@ impl WazaSkillManager {
         std::fs::create_dir_all(&skills_dir).ok();
         Self { skills_dir }
     }
+}
 
+impl Default for WazaSkillManager {
+    fn default() -> Self { Self::new() }
+}
+
+impl WazaSkillManager {
     /// Add a skill from a GitHub URL: `kairo skill add <url>`
     pub async fn add_skill(&self, url: &str) -> Result<SkillManifest> {
         // Fetch the skill's manifest TOML
@@ -197,4 +203,38 @@ max_words = 100
         tracing::info!("✅ WASM signature present (full verification in P3-A3)");
         Ok(())
     }
+}
+
+/// CLI handler: `kairo skill <sub> [args]`
+pub async fn run_skill_command(sub: &str, args: &[String]) -> anyhow::Result<()> {
+    let mgr = WazaSkillManager::new();
+    match sub {
+        "add" => {
+            let url = args.first().ok_or_else(|| anyhow::anyhow!("Usage: kairo skill add <url>"))?;
+            mgr.add_skill(url).await?;
+        }
+        "remove" | "rm" => {
+            let id = args.first().ok_or_else(|| anyhow::anyhow!("Usage: kairo skill remove <id>"))?;
+            mgr.remove_skill(id)?;
+        }
+        "new" => {
+            let name = args.first().map(|s| s.as_str()).unwrap_or("my-skill");
+            WazaSkillManager::scaffold_skill(name)?;
+        }
+        "list" | "ls" => {
+            let installed = mgr.list_installed();
+            if installed.is_empty() {
+                println!("No skills installed. Use: kairo skill add <url>");
+            } else {
+                println!("Installed skills ({}):", installed.len());
+                for s in &installed {
+                    println!("  • {} v{} [{}] — {}", s.name, s.version, s.category, s.description);
+                }
+            }
+        }
+        _ => {
+            println!("Usage: kairo skill <add|remove|list|new> [args]");
+        }
+    }
+    Ok(())
 }
