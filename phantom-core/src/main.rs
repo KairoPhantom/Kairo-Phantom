@@ -563,46 +563,18 @@ async fn async_main() -> Result<()> {
             PhantomEvent::HotkeyPressed => {
                 info!("============= GHOST SESSION TRIGGERED =============");
 
-                // ══════════════════════════════════════════════════════════════════
-                // STEP 0: CLEAR ALL MODIFIER KEY STATE
-                //
-                // When the user presses Alt+M, our hook consumes 'M' but the OS
-                // still thinks Alt is held down. When Alt is released, Windows
-                // interprets it as "activate menu bar" in Word/Excel/etc.
-                // This activates the ribbon, and subsequent keystrokes hit the
-                // ribbon instead of the document body — which can CLOSE documents.
-                //
-                // FIX: Send synthetic key-up events for ALL modifier keys immediately.
-                // This clears the OS keyboard state machine before we do anything else.
-                // ══════════════════════════════════════════════════════════════════
-                #[cfg(windows)]
-                {
-                    use windows::Win32::UI::Input::KeyboardAndMouse::{
-                        SendInput, INPUT, INPUT_KEYBOARD, KEYBDINPUT,
-                        KEYEVENTF_KEYUP, VK_MENU, VK_LMENU, VK_RMENU, VK_CONTROL, VK_SHIFT,
-                        KEYBD_EVENT_FLAGS,
-                    };
-                    let modifier_clear = [
-                        // Release Alt (all variants)
-                        INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_MENU, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
-                        INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_LMENU, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
-                        INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_RMENU, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
-                        // Release Ctrl and Shift (safety)
-                        INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_CONTROL, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
-                        INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_SHIFT, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
-                    ];
-                    unsafe { SendInput(&modifier_clear, std::mem::size_of::<INPUT>() as i32); }
-                    info!("🔑 Modifier keys cleared (Alt/Ctrl/Shift released)");
-                }
-
-                // Wait for OS to process the modifier key-up events
-                tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+                // NOTE: The hotkey hook now consumes the Alt key-up event directly,
+                // preventing Windows from activating the ribbon/menu bar.
+                // No synthetic key-ups needed here — they can corrupt keyboard state.
+                
+                // Small delay to let the hook process the Alt key-up consumption
+                tokio::time::sleep(std::time::Duration::from_millis(50)).await;
 
                 // A. Show instant toast feedback
                 crate::toast_notification::show_progress_toast("Kairo is thinking... ✨");
 
                 // ── CRITICAL: Use the HWND captured at hook time (the user's actual app). ──
-                let target_hwnd_val = *crate::hotkey::CAPTURED_HWND.lock().unwrap();
+                let target_hwnd_val = crate::hotkey::CAPTURED_HWND.load(std::sync::atomic::Ordering::SeqCst);
                 info!("🎯 Target HWND from snapshot: {}", target_hwnd_val);
 
                 // B. Derive process name + window title FROM the captured HWND
@@ -692,25 +664,8 @@ async fn async_main() -> Result<()> {
                                 }
                                 tokio::time::sleep(std::time::Duration::from_millis(300)).await;
 
-                                // SAFETY: Clear modifier state AGAIN before sending Ctrl+A/C
-                                // This prevents Alt+Ctrl+A which activates Word ribbon shortcuts
-                                let clear_mods = [
-                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_MENU, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
-                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_LMENU, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
-                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_RMENU, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
-                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_CONTROL, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
-                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_SHIFT, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
-                                ];
-                                unsafe { SendInput(&clear_mods, std::mem::size_of::<INPUT>() as i32); }
-                                tokio::time::sleep(std::time::Duration::from_millis(50)).await;
-
-                                // Send Escape to dismiss any ribbon/menu that may have activated
-                                let esc = [
-                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: windows::Win32::UI::Input::KeyboardAndMouse::VK_ESCAPE, wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } },
-                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: windows::Win32::UI::Input::KeyboardAndMouse::VK_ESCAPE, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
-                                ];
-                                unsafe { SendInput(&esc, std::mem::size_of::<INPUT>() as i32); }
-                                tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+                                // NOTE: No modifier clearing needed — the hotkey hook already
+                                // consumed the Alt key-up event to prevent ribbon activation.
 
                                 // NOW safe to send Ctrl+A, Ctrl+C
                                 let sel_copy = [
@@ -875,7 +830,7 @@ async fn async_main() -> Result<()> {
                             std::env::var("KAIRO_OFFLINE").is_ok(),
                         );
                         // Use production injection: clipboard → focus → select line → paste
-                        let hwnd_val = *crate::hotkey::CAPTURED_HWND.lock().unwrap();
+                        let hwnd_val = crate::hotkey::CAPTURED_HWND.load(std::sync::atomic::Ordering::SeqCst);
                         let _ = crate::injector::HumanizedInjector::set_clipboard(&report);
                         if hwnd_val != 0 {
                             use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE};
@@ -907,7 +862,7 @@ async fn async_main() -> Result<()> {
                             Ok(_) => format!("✅ Document exported via Kami ({}) → {}", kami_format, kami_output),
                             Err(e) => format!("❌ Kami {} export failed: {}", kami_format, e),
                         };
-                        let hwnd_val = *crate::hotkey::CAPTURED_HWND.lock().unwrap();
+                        let hwnd_val = crate::hotkey::CAPTURED_HWND.load(std::sync::atomic::Ordering::SeqCst);
                         let _ = crate::injector::HumanizedInjector::set_clipboard(&kami_msg);
                         if hwnd_val != 0 {
                             use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE};
@@ -951,7 +906,7 @@ async fn async_main() -> Result<()> {
                             plan_output.push_str(&token);
                         }
                         // Inject plan for user review - they press Alt+M again to execute
-                        let hwnd_val = *crate::hotkey::CAPTURED_HWND.lock().unwrap();
+                        let hwnd_val = crate::hotkey::CAPTURED_HWND.load(std::sync::atomic::Ordering::SeqCst);
                         let _ = crate::injector::HumanizedInjector::set_clipboard(&plan_output);
                         if hwnd_val != 0 {
                             use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE};
@@ -982,7 +937,7 @@ async fn async_main() -> Result<()> {
                     let mut raw_summary = String::new();
                     while let Some(t) = sum_rx.recv().await { raw_summary.push_str(&t); }
                     let bullets = section_summarizer::SectionSummarizer::normalize_bullets(&raw_summary);
-                    let hwnd_val = *crate::hotkey::CAPTURED_HWND.lock().unwrap();
+                    let hwnd_val = crate::hotkey::CAPTURED_HWND.load(std::sync::atomic::Ordering::SeqCst);
                     let _ = crate::injector::HumanizedInjector::set_clipboard(&bullets);
                     if hwnd_val != 0 {
                         use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE};
@@ -1005,7 +960,7 @@ async fn async_main() -> Result<()> {
                     if let Some(formula) = excel_formula::ExcelFormulaEngine::extract_formula(&doc_ctx.prompt_text) {
                         let explanation = engine.explain(&formula);
                         let explain_text = explanation.format_for_injection();
-                        let hwnd_val = *crate::hotkey::CAPTURED_HWND.lock().unwrap();
+                        let hwnd_val = crate::hotkey::CAPTURED_HWND.load(std::sync::atomic::Ordering::SeqCst);
                         let _ = crate::injector::HumanizedInjector::set_clipboard(&explain_text);
                         if hwnd_val != 0 {
                             use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE};
@@ -1029,7 +984,7 @@ async fn async_main() -> Result<()> {
                         let mut formula_out = String::new();
                         while let Some(t) = fx_rx.recv().await { formula_out.push_str(&t); }
                         let formula_clean = formula_out.trim().to_string();
-                        let hwnd_val = *crate::hotkey::CAPTURED_HWND.lock().unwrap();
+                        let hwnd_val = crate::hotkey::CAPTURED_HWND.load(std::sync::atomic::Ordering::SeqCst);
                         let _ = crate::injector::HumanizedInjector::set_clipboard(&formula_clean);
                         if hwnd_val != 0 {
                             use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE};
@@ -1189,7 +1144,7 @@ async fn async_main() -> Result<()> {
                             app_label,
                             pahf_confidence * 100.0
                         );
-                        let hwnd_val = *crate::hotkey::CAPTURED_HWND.lock().unwrap();
+                        let hwnd_val = crate::hotkey::CAPTURED_HWND.load(std::sync::atomic::Ordering::SeqCst);
                         let _ = crate::injector::HumanizedInjector::set_clipboard(&clarification);
                         if hwnd_val != 0 {
                             use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE};
@@ -1244,57 +1199,34 @@ async fn async_main() -> Result<()> {
                 tokio::spawn(async move {
                     tokio::select! {
                         result = async {
-                            // Direct streaming for GhostWrite, Urgent, Query, and None modes
-                            // (fast path — no 3-stage pipeline overhead)
-                            let use_direct_stream = matches!(
-                                command_mode,
-                                crate::command_protocol::CommandMode::None
-                                | crate::command_protocol::CommandMode::GhostWrite
-                                | crate::command_protocol::CommandMode::Urgent
-                                | crate::command_protocol::CommandMode::Query
-                                | crate::command_protocol::CommandMode::Explain
-                            );
-
-                            if use_direct_stream {
-                                target_backend.stream_complete(&system_prompt, &prompt_clone, token_tx.clone()).await
-                            } else {
-                                // For Waza skills (think, design, check, write, learn, read), use the WritingPipeline
-                                match crate::writing_pipeline::WritingPipeline::execute(
-                                    &system_prompt,
-                                    &doc_ctx.full_text,
-                                    &prompt_clone,
-                                    |p: String| {
-                                        let backend = target_backend.clone();
-                                        let sys = system_prompt.clone();
-                                        async move {
-                                            let (tx, mut rx) = mpsc::channel(200);
-                                            let _ = backend.stream_complete(&sys, &p, tx).await;
-                                            let mut res = String::new();
-                                            while let Some(t) = rx.recv().await {
-                                                res.push_str(&t);
-                                            }
-                                            res
+                            // PRODUCTION FIX: Always use direct streaming.
+                            // The WritingPipeline makes 3 sequential API calls (Plan, Write, Review)
+                            // which hangs on rate-limited APIs (NVIDIA free tier, etc).
+                            // Direct streaming sends ONE request and streams tokens back immediately.
+                            info!("🚀 Direct streaming to AI backend...");
+                            target_backend.stream_complete(&system_prompt, &prompt_clone, token_tx.clone()).await
+                        } => {
+                            match result {
+                                Ok(()) => info!("✅ AI stream completed successfully"),
+                                Err(e) => {
+                                    warn!("🤖 AI streaming error: {}", e);
+                                    // Send error message as token so user sees it
+                                    let _ = token_tx.send(format!("[AI Error: {}]", e)).await;
+                                    if let Some(fallback) = cloud_fallback_clone {
+                                        warn!("🔄 Trying cloud fallback...");
+                                        if let Err(e2) = fallback.stream_complete(&system_prompt, &prompt_clone, token_tx).await {
+                                            warn!("🔄 Cloud fallback also failed: {}", e2);
                                         }
                                     }
-                                ).await {
-                                    Ok(res) => {
-                                        let _ = token_tx.send(format!("[REPLACE]{}", res)).await;
-                                        Ok(())
-                                    },
-                                    Err(e) => Err(anyhow::anyhow!("Pipeline error: {}", e))
-                                }
-                            }
-                        } => {
-                            if let Err(e) = result {
-                                warn!("🤖 Pipeline/Streaming error: {}", e);
-                                if let Some(fallback) = cloud_fallback_clone {
-                                    warn!("🔄 Cloud fallback...");
-                                    let _ = fallback.stream_complete(&system_prompt, &prompt_clone, token_tx).await;
                                 }
                             }
                         }
                         _ = child_token_clone.cancelled() => {
                             info!("🛑 Stream cancelled by user (Esc)");
+                        }
+                        _ = tokio::time::sleep(std::time::Duration::from_secs(90)) => {
+                            warn!("⏰ AI stream timed out after 90 seconds");
+                            let _ = token_tx.send("[Kairo: AI request timed out. Try again.]".to_string()).await;
                         }
                     }
                 });
@@ -1356,7 +1288,7 @@ async fn async_main() -> Result<()> {
                             info!("Clipboard: {} ({} chars)", if cb_ok { "OK" } else { "FAILED" }, clean_response.len());
 
                             // 2. Focus target window
-                            let hwnd_val = *crate::hotkey::CAPTURED_HWND.lock().unwrap();
+                            let hwnd_val = crate::hotkey::CAPTURED_HWND.load(std::sync::atomic::Ordering::SeqCst);
                             if hwnd_val != 0 {
                                 use windows::Win32::UI::WindowsAndMessaging::{
                                     SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE,
