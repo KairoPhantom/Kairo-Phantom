@@ -1177,38 +1177,57 @@ async fn async_main() -> Result<()> {
                                                 break;
                                             }
 
-                                            // Refocus target window before injecting
+                                            // ── PRODUCTION INJECTION ─────────────────────────────────────────
+                                            // Strategy: clipboard-first → focus-window → Home+Shift+End → Ctrl+V
+                                            //
+                                            // CRITICAL ORDER:
+                                            //   1. Set clipboard BEFORE focusing window (Word may lock clipboard on focus)
+                                            //   2. Then focus window (BringWindowToTop + SetForegroundWindow)
+                                            //   3. Wait 400ms — Word needs this to fully hand keyboard focus to doc body
+                                            //   4. Home+Shift+End selects the current prompt line (no char count needed)
+                                            //   5. Ctrl+V replaces the selection with AI output
+                                            //
+                                            // This eliminates backspace-based erasure entirely. Backspaces are unreliable
+                                            // because SetForegroundWindow focuses the window FRAME, not the document BODY.
+                                            // Keystrokes hit whatever Word sub-element happened to have focus last.
+
                                             let hwnd_val = *crate::hotkey::CAPTURED_HWND.lock().unwrap();
-                                            if hwnd_val != 0 {
-                                                use windows::Win32::UI::WindowsAndMessaging::{
-                                                    SetForegroundWindow, BringWindowToTop, ShowWindow, SW_SHOW,
-                                                };
-                                                use windows::Win32::Foundation::HWND;
-                                                let h = HWND(hwnd_val as *mut std::ffi::c_void);
-                                                unsafe {
-                                                    let _ = ShowWindow(h, SW_SHOW);
-                                                    let _ = BringWindowToTop(h);
-                                                    let _ = SetForegroundWindow(h);
-                                                }
-                                                // 300ms: Word/apps need time to fully restore keyboard focus
-                                                tokio::time::sleep(std::time::Duration::from_millis(300)).await;
-                                            }
 
-                                            info!("Erasing prompt ({} chars)...", prompt_char_count);
-                                            injector_clone.erase_prompt(prompt_char_count);
-                                            tokio::time::sleep(std::time::Duration::from_millis(80)).await;
-
+                                            // Step 1: Set clipboard BEFORE switching focus
                                             if !clean_buf.is_empty() {
-                                                if !injector_clone.inject_via_clipboard(&clean_buf) {
-                                                    injector_clone.type_text(&clean_buf);
+                                                let cb_set = crate::injector::HumanizedInjector::set_clipboard(&clean_buf);
+                                                info!("Clipboard pre-set: {} ({} chars)", if cb_set { "OK" } else { "FAILED" }, clean_buf.len());
+
+                                                // Step 2: Now focus the target window
+                                                if hwnd_val != 0 {
+                                                    use windows::Win32::UI::WindowsAndMessaging::{
+                                                        SetForegroundWindow, BringWindowToTop, ShowWindow, SW_SHOW,
+                                                    };
+                                                    use windows::Win32::Foundation::HWND;
+                                                    let h = HWND(hwnd_val as *mut std::ffi::c_void);
+                                                    unsafe {
+                                                        let _ = ShowWindow(h, SW_SHOW);
+                                                        let _ = BringWindowToTop(h);
+                                                        let _ = SetForegroundWindow(h);
+                                                    }
+                                                    info!("Window focused: HWND={}", hwnd_val);
+                                                    // Step 3: 400ms settle — Word needs this for document body focus
+                                                    tokio::time::sleep(std::time::Duration::from_millis(400)).await;
                                                 }
+
+                                                // Step 4+5: Home + Shift+End (select line) + Ctrl+V (paste)
+                                                injector_clone.inject_replace_line();
                                                 full_response.push_str(&clean_buf);
+                                                info!("Injection complete: {} chars into HWND={}", clean_buf.len(), hwnd_val);
+                                                crate::toast_notification::show_completion_toast(clean_buf.len(), "Kairo");
                                             }
                                             replaced = true;
 
                                         }
                                     } else {
-                                        injector_clone.type_text(&token);
+                                        // Streaming token: accumulate in full_response but do NOT inject yet.
+                                        // We inject all-at-once via inject_replace_line() above.
+                                        // Token-by-token SendInput is unreliable for Word focus model.
                                         full_response.push_str(&token);
                                     }
                                 }
