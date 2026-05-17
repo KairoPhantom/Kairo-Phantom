@@ -1,4 +1,4 @@
-mod ai;
+﻿mod ai;
 mod api;
 mod config;
 mod crdt;
@@ -542,74 +542,155 @@ async fn async_main() -> Result<()> {
             PhantomEvent::HotkeyPressed => {
                 info!("============= GHOST SESSION TRIGGERED =============");
 
-                // A. Immediately show progress toast so user knows Alt+M was detected
+                // A. Show instant toast feedback
                 crate::toast_notification::show_progress_toast("Kairo is thinking... ✨");
 
-                // B. Refocus the EXACT window that had focus when Alt+M was pressed.
-                //    This is critical — by the time we're here, focus may have shifted
-                //    to the daemon process itself. We must give focus back to Word/Notepad/etc.
+                // ── CRITICAL: Use the HWND captured at hook time (the user's actual app). ──
+                // By the time this async code runs, GetForegroundWindow() returns something
+                // different (daemon console, taskbar, etc). We must use the snapshot.
                 let target_hwnd_val = *crate::hotkey::CAPTURED_HWND.lock().unwrap();
-                if target_hwnd_val != 0 {
-                    use windows::Win32::UI::WindowsAndMessaging::SetForegroundWindow;
-                    use windows::Win32::Foundation::HWND;
-                    let target_hwnd = HWND(target_hwnd_val as *mut std::ffi::c_void);
-                    unsafe { let _ = SetForegroundWindow(target_hwnd); }
-                    info!("🎯 Refocused target window: HWND={}", target_hwnd_val);
-                    // Wait for OS to actually move focus before we read or type anything
-                    tokio::time::sleep(std::time::Duration::from_millis(150)).await;
-                }
+                info!("🎯 Target HWND from snapshot: {}", target_hwnd_val);
 
-                // C. Read Text via UIA (now from the correct focused window)
-                //    NOTE: escape_ribbon_mode() (double-ESC) is intentionally NOT called here.
-                //    It was destroying Word's menu state and moving cursor unexpectedly.
-                //    The hook already consumed the 'M' key (LRESULT(1)), so no ghost char appears.
+                // B. Derive process name + window title FROM the captured HWND
+                //    (Never call context_engine.capture() which uses GetForegroundWindow)
+                let (captured_process, captured_title) = unsafe {
+                    use windows::Win32::Foundation::HWND;
+                    use windows::Win32::UI::WindowsAndMessaging::{
+                        GetWindowTextW, GetWindowThreadProcessId, SetForegroundWindow,
+                        BringWindowToTop, ShowWindow, SW_SHOW,
+                    };
+                    use windows::Win32::System::Threading::{
+                        OpenProcess, PROCESS_QUERY_LIMITED_INFORMATION,
+                        QueryFullProcessImageNameW, PROCESS_NAME_WIN32,
+                    };
+
+                    let hwnd = HWND(target_hwnd_val as *mut std::ffi::c_void);
+
+                    // Force focus back: BringWindowToTop + SetForegroundWindow
+                    let _ = ShowWindow(hwnd, SW_SHOW);
+                    let _ = BringWindowToTop(hwnd);
+                    let _ = SetForegroundWindow(hwnd);
+                    tokio::time::sleep(std::time::Duration::from_millis(200)).await;
+
+                    // Read window title from captured HWND
+                    let mut title_buf = [0u16; 512];
+                    let title_len = GetWindowTextW(hwnd, &mut title_buf);
+                    let title = String::from_utf16_lossy(&title_buf[..title_len as usize]);
+
+                    // Read process name from captured HWND
+                    let mut pid = 0u32;
+                    GetWindowThreadProcessId(hwnd, Some(&mut pid));
+                    let proc_name = if let Ok(handle) = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid) {
+                        let mut path_buf = [0u16; 1024];
+                        let mut path_len = path_buf.len() as u32;
+                        if QueryFullProcessImageNameW(
+                            handle,
+                            PROCESS_NAME_WIN32,
+                            windows::core::PWSTR(path_buf.as_mut_ptr()),
+                            &mut path_len,
+                        ).is_ok() {
+                            let full_path = String::from_utf16_lossy(&path_buf[..path_len as usize]);
+                            std::path::Path::new(&full_path)
+                                .file_name()
+                                .and_then(|n| n.to_str())
+                                .unwrap_or("Unknown")
+                                .to_string()
+                        } else { "Unknown".to_string() }
+                    } else { "Unknown".to_string() };
+
+                    info!("🖥️  Target app: '{}' | Title: '{}'", proc_name, title);
+                    (proc_name, title)
+                };
+
+                // C. Read text from target app AFTER focus is restored
+                //    Try UIA first (Word, Notepad, VS Code), then clipboard fallback
                 let raw_text = {
-                    // Primary: UIA TextPattern — works for Word, Notepad, VS Code
+                    // 150ms grace period for focus to fully settle before UIA read
+                    tokio::time::sleep(std::time::Duration::from_millis(150)).await;
                     let uia_result = uia_reader.get_focused_text();
                     match uia_result {
-                        Ok(t) if !t.trim().is_empty() => t,
-                        Ok(_) | Err(_) => {
-                            // Secondary: Ctrl+A, Ctrl+C clipboard capture — works for browsers, Chrome
-                            // This is required for DeepSeek and other web apps.
-                            info!("📋 UIA empty/failed — attempting Ctrl+A, Ctrl+C clipboard capture");
-                            use windows::Win32::UI::Input::KeyboardAndMouse::{
-                                SendInput, INPUT, INPUT_KEYBOARD, KEYBDINPUT,
-                                KEYEVENTF_KEYUP, VK_CONTROL, VIRTUAL_KEY, KEYBD_EVENT_FLAGS,
-                            };
-                            // Select all + copy to clipboard
-                            let sel_copy = [
-                                INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_CONTROL, wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } },
-                                INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VIRTUAL_KEY(0x41), wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } }, // Ctrl+A
-                                INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VIRTUAL_KEY(0x41), wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
-                                INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VIRTUAL_KEY(0x43), wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } }, // Ctrl+C
-                                INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VIRTUAL_KEY(0x43), wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
-                                INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_CONTROL, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
-                            ];
-                            unsafe { SendInput(&sel_copy, std::mem::size_of::<INPUT>() as i32); }
-                            tokio::time::sleep(std::time::Duration::from_millis(120)).await;
-                            uia_reader.get_clipboard_text().unwrap_or_default()
+                        Ok(t) if !t.trim().is_empty() => {
+                            info!("📖 UIA read: {} chars", t.len());
+                            t
+                        },
+                        uia_r => {
+                            if let Err(ref e) = uia_r { warn!("⚠️  UIA error: {}", e); }
+                            // Clipboard fallback: Ctrl+A to select all, Ctrl+C to copy
+                            info!("📋 Trying clipboard capture (Ctrl+A, Ctrl+C)...");
+                            #[cfg(windows)] {
+                                use windows::Win32::UI::Input::KeyboardAndMouse::{
+                                    SendInput, INPUT, INPUT_KEYBOARD, KEYBDINPUT,
+                                    KEYEVENTF_KEYUP, VK_CONTROL, VIRTUAL_KEY, KEYBD_EVENT_FLAGS,
+                                };
+                                let sel_copy = [
+                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_CONTROL, wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } },
+                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VIRTUAL_KEY(0x41), wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } },
+                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VIRTUAL_KEY(0x41), wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
+                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VIRTUAL_KEY(0x43), wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } },
+                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VIRTUAL_KEY(0x43), wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
+                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_CONTROL, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
+                                ];
+                                unsafe { SendInput(&sel_copy, std::mem::size_of::<INPUT>() as i32); }
+                            }
+                            tokio::time::sleep(std::time::Duration::from_millis(150)).await;
+                            let clip = uia_reader.get_clipboard_text().unwrap_or_default();
+                            info!("📋 Clipboard captured: {} chars", clip.len());
+                            clip
                         }
                     }
                 };
 
                 if raw_text.trim().is_empty() {
-                    warn!("⚠️  No text captured. Type a prompt first, then press Alt+M.");
-                    crate::toast_notification::show_progress_toast("Kairo: No text found. Type a // prompt first.");
+                    warn!("⚠️  No text captured from '{}'. Type a // prompt first.", captured_process);
+                    crate::toast_notification::show_progress_toast("Kairo: No text found. Click in your app and type // first.");
                     continue;
                 }
 
-                info!("📖 Captured {} chars of text", raw_text.len());
+                // D. Build AppContext using CAPTURED process/title (not GetForegroundWindow)
+                //    This ensures we identify Word/Chrome/Notepad correctly.
+                let app_env = {
+                    use crate::context::AppEnvironment;
+                    let proc = captured_process.to_lowercase();
+                    let title = captured_title.to_lowercase();
+                    if proc.contains("winword") { AppEnvironment::MicrosoftWord }
+                    else if proc.contains("powerpnt") { AppEnvironment::MicrosoftPowerPoint }
+                    else if proc.contains("excel") { AppEnvironment::MicrosoftExcel }
+                    else if proc.contains("outlook") { AppEnvironment::MicrosoftOutlook }
+                    else if proc.contains("code") && !proc.contains("discord") { AppEnvironment::VSCode }
+                    else if proc.contains("notepad") { AppEnvironment::Notepad }
+                    else if proc.contains("windowsterminal") { AppEnvironment::WindowsTerminal }
+                    else if proc.contains("powershell") { AppEnvironment::PowerShell }
+                    else if title.contains("notion") { AppEnvironment::Notion }
+                    else if proc.contains("chrome") || proc.contains("chromium") { AppEnvironment::Chrome }
+                    else if proc.contains("msedge") { AppEnvironment::Edge }
+                    else if proc.contains("firefox") { AppEnvironment::Firefox }
+                    else { AppEnvironment::Unknown(captured_process.clone()) }
+                };
 
-                // D. Context Engine Analysis
-                let app_ctx: AppContext = context_engine.capture(&raw_text);
-                if app_ctx.prompt_text.is_empty() {
-                    warn!("⚠️  Prompt empty after extraction — no // command found.");
-                    crate::toast_notification::show_progress_toast("Kairo: Start your text with // to give a command.");
+                // Extract the // command from captured text
+                let prompt_text = crate::context::ContextEngine::extract_last_paragraph(&raw_text);
+                let prompt_char_count = prompt_text.chars().count();
+
+                if prompt_text.is_empty() {
+                    warn!("⚠️  No // command found in text. Prompt: {:?}", &raw_text[..raw_text.len().min(100)]);
+                    crate::toast_notification::show_progress_toast("Kairo: Type // followed by your instruction.");
                     continue;
                 }
 
-                let app_label = app_ctx.environment.label().to_string();
-                info!("🧠 App: {} | Prompt: {} chars", app_label, app_ctx.prompt_char_count);
+                let app_label = app_env.label().to_string();
+                info!("🧠 App: '{}' | Prompt ({} chars): '{}'", app_label, prompt_char_count, &prompt_text[..prompt_text.len().min(80)]);
+
+                // Build AppContext from our captured data
+                let app_ctx = crate::context::AppContext {
+                    process_name: captured_process.clone(),
+                    window_title: captured_title.clone(),
+                    environment: app_env,
+                    prompt_text: prompt_text.clone(),
+                    prompt_char_count,
+                    document_text: raw_text.clone(),
+                    file_path: crate::context::ContextEngine::resolve_file_path(&captured_title, &captured_process),
+                    active_slide: crate::context::ContextEngine::extract_slide_number(&captured_title),
+                };
 
 
                 // D. Build DocumentContext
@@ -1081,34 +1162,41 @@ async fn async_main() -> Result<()> {
                                             first_token = false;
                                             let clean_buf = buffer.replace("[REPLACE]", "").trim_start().to_string();
                                             
-                                            // Upgrade 5: Late Confidence Check
+                                            // Confidence check: only block if we have > 5 interactions of history.
+                                            // Cold-start always injects (prevents blocking new users).
                                             let confidence_score = crate::memory::feedback::ConfidenceEngine::calculate_confidence(&app_label, &clean_buf, &history);
-                                            if confidence_score < 0.4 {
-                                                info!("⚠️  Confidence low ({:.2}). Seeking clarification...", confidence_score);
-                                                injector_clone.erase_prompt(prompt_char_count);
+                                            if confidence_score < 0.4 && history.len() > 5 {
+                                                info!("Low confidence ({:.2}) with {} history entries, toasting.", confidence_score, history.len());
                                                 let msg = if clean_buf.contains("- ") {
-                                                    "I'm not sure if you wanted bullet points here. Would you prefer prose or a list?"
+                                                    "Kairo: Bullet points or prose? Press Alt+M again to clarify."
                                                 } else {
-                                                    "I'm not sure about the tone here. Should this be more formal or concise?"
+                                                    "Kairo: Formal or casual? Press Alt+M again to clarify."
                                                 };
-                                                injector_clone.type_text(msg);
+                                                crate::toast_notification::show_progress_toast(msg);
                                                 was_cancelled = true;
                                                 break;
                                             }
 
-                                            // ── Refocus target window before injecting ──────────
+                                            // Refocus target window before injecting
                                             let hwnd_val = *crate::hotkey::CAPTURED_HWND.lock().unwrap();
                                             if hwnd_val != 0 {
-                                                use windows::Win32::UI::WindowsAndMessaging::SetForegroundWindow;
+                                                use windows::Win32::UI::WindowsAndMessaging::{
+                                                    SetForegroundWindow, BringWindowToTop, ShowWindow, SW_SHOW,
+                                                };
                                                 use windows::Win32::Foundation::HWND;
                                                 let h = HWND(hwnd_val as *mut std::ffi::c_void);
-                                                unsafe { let _ = SetForegroundWindow(h); }
-                                                tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+                                                unsafe {
+                                                    let _ = ShowWindow(h, SW_SHOW);
+                                                    let _ = BringWindowToTop(h);
+                                                    let _ = SetForegroundWindow(h);
+                                                }
+                                                // 300ms: Word/apps need time to fully restore keyboard focus
+                                                tokio::time::sleep(std::time::Duration::from_millis(300)).await;
                                             }
 
-                                            info!("♻️  Erasing prompt ({} chars)...", prompt_char_count);
+                                            info!("Erasing prompt ({} chars)...", prompt_char_count);
                                             injector_clone.erase_prompt(prompt_char_count);
-                                            tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+                                            tokio::time::sleep(std::time::Duration::from_millis(80)).await;
 
                                             if !clean_buf.is_empty() {
                                                 if !injector_clone.inject_via_clipboard(&clean_buf) {
