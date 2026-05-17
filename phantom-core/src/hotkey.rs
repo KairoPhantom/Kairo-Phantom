@@ -17,6 +17,9 @@ use crate::PhantomEvent;
 
 static GLOBAL_TX: Lazy<Mutex<Option<Sender<PhantomEvent>>>> = Lazy::new(|| Mutex::new(None));
 static ALT_PRESSED: Lazy<Mutex<bool>> = Lazy::new(|| Mutex::new(false));
+/// When Alt+M fires, set this flag so the next Alt key-up is consumed
+/// (prevents Windows from activating the ribbon/menu bar).
+static CONSUME_NEXT_ALT_UP: Lazy<Mutex<bool>> = Lazy::new(|| Mutex::new(false));
 /// HWND captured at the exact moment Alt+M fires — this is the user's target window.
 pub static CAPTURED_HWND: Lazy<Mutex<isize>> = Lazy::new(|| Mutex::new(0));
 
@@ -64,17 +67,31 @@ unsafe extern "system" fn low_level_keyboard_proc(code: i32, wparam: WPARAM, lpa
         let msg = wparam.0 as u32;
 
         let is_down = msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN;
-        // let is_up = msg == WM_KEYUP || msg == WM_SYSKEYUP;
+        let is_up = msg == 0x0101 /* WM_KEYUP */ || msg == 0x0105 /* WM_SYSKEYUP */;
 
-        // Diagnostic: Log keys in DEBUG
-        // 0x4D is 'M'
-        // 0x12 is Alt (VK_MENU)
-        
         // Track ALL Alt keys (Left, Right, or General)
         if kbd.vkCode == VK_MENU.0 as u32 || kbd.vkCode == VK_LMENU.0 as u32 || kbd.vkCode == VK_RMENU.0 as u32 {
             let mut alt = ALT_PRESSED.lock().unwrap();
             *alt = is_down;
             debug!("KEY: Alt State Changed -> {}", is_down);
+
+            // ── CRITICAL: Consume the Alt key-up after Alt+M ──────────────────
+            // When the user releases Alt after pressing Alt+M, Windows interprets
+            // the bare Alt-release as "activate the menu bar / ribbon".
+            // In Word, this activates ribbon mode. Subsequent keystrokes from our
+            // injector then hit the ribbon instead of the document body, which can
+            // close documents or trigger unintended ribbon actions.
+            //
+            // FIX: After Alt+M fires, we set CONSUME_NEXT_ALT_UP. The next Alt
+            // key-up is eaten (return LRESULT(1)) so Windows never sees it.
+            if is_up {
+                let mut consume = CONSUME_NEXT_ALT_UP.lock().unwrap();
+                if *consume {
+                    *consume = false;
+                    info!("🔑 Consumed Alt key-up to prevent ribbon activation");
+                    return LRESULT(1);
+                }
+            }
         }
 
         if kbd.vkCode == 0x4D && is_down {
@@ -83,13 +100,15 @@ unsafe extern "system" fn low_level_keyboard_proc(code: i32, wparam: WPARAM, lpa
             
             if alt {
                 // ── CRITICAL: Capture the foreground window RIGHT NOW ──────────
-                // This is the user's actual target window (e.g. WINWORD.EXE).
-                // By the time the main loop processes HotkeyPressed, focus may
-                // have shifted — so we snapshot it here in the hook.
                 let hwnd: HWND = GetForegroundWindow();
                 {
                     let mut cap = CAPTURED_HWND.lock().unwrap();
                     *cap = hwnd.0 as isize;
+                }
+                // Set flag to consume the next Alt key-up
+                {
+                    let mut consume = CONSUME_NEXT_ALT_UP.lock().unwrap();
+                    *consume = true;
                 }
                 info!("🔥 HOTKEY TRIGGERED: Alt+M detected! Captured HWND={:?}", hwnd.0);
                 if let Some(tx) = &*GLOBAL_TX.lock().unwrap() {

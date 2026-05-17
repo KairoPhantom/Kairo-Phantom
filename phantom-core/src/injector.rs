@@ -160,11 +160,32 @@ impl HumanizedInjector {
     pub fn inject_replace_line(&self) {
         #[cfg(windows)]
         {
+            use windows::Win32::UI::Input::KeyboardAndMouse::{
+                VK_MENU, VK_LMENU, VK_RMENU,
+            };
+
             tracing::info!("Sending Home + Shift+End + Ctrl+V (select line → paste)");
-            
+
+            // SAFETY: Clear ALL modifier keys before injecting.
+            // If Alt is stuck down from the hotkey, Home becomes Alt+Home (go to doc start)
+            // and Ctrl+V becomes Ctrl+Alt+V (paste special in Word).
+            let modifier_clear = [
+                INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_MENU, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
+                INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_LMENU, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
+                INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_RMENU, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
+                INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_CONTROL, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
+                INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_SHIFT, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
+            ];
+            unsafe { SendInput(&modifier_clear, std::mem::size_of::<INPUT>() as i32); }
+            thread::sleep(Duration::from_millis(30));
+
+            // Send Escape to dismiss any active ribbon/menu in Word/Excel
+            Self::send_vk(VK_ESCAPE);
+            thread::sleep(Duration::from_millis(50));
+
             // Home: go to beginning of current line
             Self::send_vk(VK_HOME);
-            thread::sleep(Duration::from_millis(30));
+            thread::sleep(Duration::from_millis(50));
             
             // Shift+End: select to end of line
             let shift_end = [
@@ -218,7 +239,7 @@ impl HumanizedInjector {
                 },
             ];
             unsafe { SendInput(&shift_end, std::mem::size_of::<INPUT>() as i32); }
-            thread::sleep(Duration::from_millis(30));
+            thread::sleep(Duration::from_millis(50));
             
             // Ctrl+V: paste (replaces selection)
             Self::send_ctrl_v();

@@ -127,12 +127,33 @@ fn main() -> Result<()> {
 async fn async_main() -> Result<()> {
     // Initialize logging (use RUST_LOG=debug for verbose output)
     use tracing_subscriber::{fmt, prelude::*, EnvFilter};
+    
+    // Set up file-based logging to ~/.kairo-phantom/daemon.log
+    let kairo_dir = dirs::home_dir()
+        .map(|h| h.join(".kairo-phantom"))
+        .unwrap_or_else(|| std::path::PathBuf::from("."));
+    let log_file_path = kairo_dir.join("daemon.log");
+    let log_file = std::fs::OpenOptions::new()
+        .create(true)
+        .write(true)
+        .truncate(true) // Fresh log each daemon start
+        .open(&log_file_path)
+        .expect("Failed to open daemon.log for writing");
+
+    let file_layer = fmt::layer()
+        .with_target(true)
+        .with_ansi(false) // No ANSI color codes in file
+        .with_writer(std::sync::Mutex::new(log_file));
+    
+    let console_layer = if std::env::var("KAIRO_JSON_LOGS").is_ok() {
+        fmt::layer().with_target(true).json().boxed()
+    } else {
+        fmt::layer().with_target(true).boxed()
+    };
+
     tracing_subscriber::registry()
-        .with(if std::env::var("KAIRO_JSON_LOGS").is_ok() {
-            fmt::layer().with_target(true).json().boxed()
-        } else {
-            fmt::layer().with_target(true).boxed()
-        })
+        .with(console_layer)
+        .with(file_layer)
         .with(EnvFilter::try_from_default_env()
             .unwrap_or_else(|_| EnvFilter::new("kairo_phantom=info,info")))
         .init();
@@ -542,22 +563,57 @@ async fn async_main() -> Result<()> {
             PhantomEvent::HotkeyPressed => {
                 info!("============= GHOST SESSION TRIGGERED =============");
 
+                // ══════════════════════════════════════════════════════════════════
+                // STEP 0: CLEAR ALL MODIFIER KEY STATE
+                //
+                // When the user presses Alt+M, our hook consumes 'M' but the OS
+                // still thinks Alt is held down. When Alt is released, Windows
+                // interprets it as "activate menu bar" in Word/Excel/etc.
+                // This activates the ribbon, and subsequent keystrokes hit the
+                // ribbon instead of the document body — which can CLOSE documents.
+                //
+                // FIX: Send synthetic key-up events for ALL modifier keys immediately.
+                // This clears the OS keyboard state machine before we do anything else.
+                // ══════════════════════════════════════════════════════════════════
+                #[cfg(windows)]
+                {
+                    use windows::Win32::UI::Input::KeyboardAndMouse::{
+                        SendInput, INPUT, INPUT_KEYBOARD, KEYBDINPUT,
+                        KEYEVENTF_KEYUP, VK_MENU, VK_LMENU, VK_RMENU, VK_CONTROL, VK_SHIFT,
+                        KEYBD_EVENT_FLAGS,
+                    };
+                    let modifier_clear = [
+                        // Release Alt (all variants)
+                        INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_MENU, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
+                        INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_LMENU, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
+                        INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_RMENU, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
+                        // Release Ctrl and Shift (safety)
+                        INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_CONTROL, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
+                        INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_SHIFT, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
+                    ];
+                    unsafe { SendInput(&modifier_clear, std::mem::size_of::<INPUT>() as i32); }
+                    info!("🔑 Modifier keys cleared (Alt/Ctrl/Shift released)");
+                }
+
+                // Wait for OS to process the modifier key-up events
+                tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+
                 // A. Show instant toast feedback
                 crate::toast_notification::show_progress_toast("Kairo is thinking... ✨");
 
                 // ── CRITICAL: Use the HWND captured at hook time (the user's actual app). ──
-                // By the time this async code runs, GetForegroundWindow() returns something
-                // different (daemon console, taskbar, etc). We must use the snapshot.
                 let target_hwnd_val = *crate::hotkey::CAPTURED_HWND.lock().unwrap();
                 info!("🎯 Target HWND from snapshot: {}", target_hwnd_val);
 
                 // B. Derive process name + window title FROM the captured HWND
-                //    (Never call context_engine.capture() which uses GetForegroundWindow)
+                //    NOTE: GetWindowTextW and GetWindowThreadProcessId do NOT require
+                //    the window to be focused. We can read these from any valid HWND.
+                //    DO NOT call ShowWindow/BringWindowToTop/SetForegroundWindow here!
+                //    Focusing the window now would trigger Alt key release → ribbon activation.
                 let (captured_process, captured_title) = unsafe {
                     use windows::Win32::Foundation::HWND;
                     use windows::Win32::UI::WindowsAndMessaging::{
-                        GetWindowTextW, GetWindowThreadProcessId, SetForegroundWindow,
-                        BringWindowToTop, ShowWindow, SW_SHOW,
+                        GetWindowTextW, GetWindowThreadProcessId,
                     };
                     use windows::Win32::System::Threading::{
                         OpenProcess, PROCESS_QUERY_LIMITED_INFORMATION,
@@ -566,18 +622,12 @@ async fn async_main() -> Result<()> {
 
                     let hwnd = HWND(target_hwnd_val as *mut std::ffi::c_void);
 
-                    // Force focus back: BringWindowToTop + SetForegroundWindow
-                    let _ = ShowWindow(hwnd, SW_SHOW);
-                    let _ = BringWindowToTop(hwnd);
-                    let _ = SetForegroundWindow(hwnd);
-                    tokio::time::sleep(std::time::Duration::from_millis(200)).await;
-
-                    // Read window title from captured HWND
+                    // Read window title (no focus needed)
                     let mut title_buf = [0u16; 512];
                     let title_len = GetWindowTextW(hwnd, &mut title_buf);
                     let title = String::from_utf16_lossy(&title_buf[..title_len as usize]);
 
-                    // Read process name from captured HWND
+                    // Read process name (no focus needed)
                     let mut pid = 0u32;
                     GetWindowThreadProcessId(hwnd, Some(&mut pid));
                     let proc_name = if let Ok(handle) = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid) {
@@ -602,11 +652,12 @@ async fn async_main() -> Result<()> {
                     (proc_name, title)
                 };
 
-                // C. Read text from target app AFTER focus is restored
-                //    Try UIA first (Word, Notepad, VS Code), then clipboard fallback
+                // C. Read text from target app
+                //    Strategy: UIA first (works without focus for Word, Notepad, etc.)
+                //    If UIA fails, focus the window SAFELY then use clipboard fallback.
                 let raw_text = {
-                    // 150ms grace period for focus to fully settle before UIA read
-                    tokio::time::sleep(std::time::Duration::from_millis(150)).await;
+                    // Try UIA first — it can read from the focused element without us
+                    // needing to SetForegroundWindow
                     let uia_result = uia_reader.get_focused_text();
                     match uia_result {
                         Ok(t) if !t.trim().is_empty() => {
@@ -615,13 +666,53 @@ async fn async_main() -> Result<()> {
                         },
                         uia_r => {
                             if let Err(ref e) = uia_r { warn!("⚠️  UIA error: {}", e); }
-                            // Clipboard fallback: Ctrl+A to select all, Ctrl+C to copy
-                            info!("📋 Trying clipboard capture (Ctrl+A, Ctrl+C)...");
-                            #[cfg(windows)] {
+                            // Clipboard fallback: need to focus window first, then Ctrl+A, Ctrl+C
+                            info!("📋 Clipboard fallback: focusing window, then Ctrl+A + Ctrl+C...");
+
+                            #[cfg(windows)]
+                            {
+                                use windows::Win32::UI::WindowsAndMessaging::{
+                                    SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE,
+                                };
+                                use windows::Win32::Foundation::HWND;
                                 use windows::Win32::UI::Input::KeyboardAndMouse::{
                                     SendInput, INPUT, INPUT_KEYBOARD, KEYBDINPUT,
-                                    KEYEVENTF_KEYUP, VK_CONTROL, VIRTUAL_KEY, KEYBD_EVENT_FLAGS,
+                                    KEYEVENTF_KEYUP, VK_CONTROL, VK_MENU, VK_LMENU, VK_RMENU,
+                                    VK_SHIFT, VIRTUAL_KEY, KEYBD_EVENT_FLAGS,
                                 };
+
+                                let hwnd = HWND(target_hwnd_val as *mut std::ffi::c_void);
+
+                                // Focus the window using SW_RESTORE (not SW_SHOW — SW_SHOW can
+                                // cause issues with minimized windows)
+                                unsafe {
+                                    let _ = ShowWindow(hwnd, SW_RESTORE);
+                                    let _ = BringWindowToTop(hwnd);
+                                    let _ = SetForegroundWindow(hwnd);
+                                }
+                                tokio::time::sleep(std::time::Duration::from_millis(300)).await;
+
+                                // SAFETY: Clear modifier state AGAIN before sending Ctrl+A/C
+                                // This prevents Alt+Ctrl+A which activates Word ribbon shortcuts
+                                let clear_mods = [
+                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_MENU, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
+                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_LMENU, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
+                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_RMENU, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
+                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_CONTROL, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
+                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_SHIFT, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
+                                ];
+                                unsafe { SendInput(&clear_mods, std::mem::size_of::<INPUT>() as i32); }
+                                tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+
+                                // Send Escape to dismiss any ribbon/menu that may have activated
+                                let esc = [
+                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: windows::Win32::UI::Input::KeyboardAndMouse::VK_ESCAPE, wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } },
+                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: windows::Win32::UI::Input::KeyboardAndMouse::VK_ESCAPE, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
+                                ];
+                                unsafe { SendInput(&esc, std::mem::size_of::<INPUT>() as i32); }
+                                tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+
+                                // NOW safe to send Ctrl+A, Ctrl+C
                                 let sel_copy = [
                                     INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_CONTROL, wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } },
                                     INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VIRTUAL_KEY(0x41), wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } },
@@ -632,7 +723,7 @@ async fn async_main() -> Result<()> {
                                 ];
                                 unsafe { SendInput(&sel_copy, std::mem::size_of::<INPUT>() as i32); }
                             }
-                            tokio::time::sleep(std::time::Duration::from_millis(150)).await;
+                            tokio::time::sleep(std::time::Duration::from_millis(200)).await;
                             let clip = uia_reader.get_clipboard_text().unwrap_or_default();
                             info!("📋 Clipboard captured: {} chars", clip.len());
                             clip
@@ -787,10 +878,10 @@ async fn async_main() -> Result<()> {
                         let hwnd_val = *crate::hotkey::CAPTURED_HWND.lock().unwrap();
                         let _ = crate::injector::HumanizedInjector::set_clipboard(&report);
                         if hwnd_val != 0 {
-                            use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_SHOW};
+                            use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE};
                             use windows::Win32::Foundation::HWND;
                             let h = HWND(hwnd_val as *mut std::ffi::c_void);
-                            unsafe { let _ = ShowWindow(h, SW_SHOW); let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
+                            unsafe { let _ = ShowWindow(h, SW_RESTORE); let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
                             tokio::time::sleep(std::time::Duration::from_millis(400)).await;
                         }
                         injector.inject_replace_line();
@@ -819,10 +910,10 @@ async fn async_main() -> Result<()> {
                         let hwnd_val = *crate::hotkey::CAPTURED_HWND.lock().unwrap();
                         let _ = crate::injector::HumanizedInjector::set_clipboard(&kami_msg);
                         if hwnd_val != 0 {
-                            use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_SHOW};
+                            use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE};
                             use windows::Win32::Foundation::HWND;
                             let h = HWND(hwnd_val as *mut std::ffi::c_void);
-                            unsafe { let _ = ShowWindow(h, SW_SHOW); let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
+                            unsafe { let _ = ShowWindow(h, SW_RESTORE); let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
                             tokio::time::sleep(std::time::Duration::from_millis(400)).await;
                         }
                         injector.inject_replace_line();
@@ -863,10 +954,10 @@ async fn async_main() -> Result<()> {
                         let hwnd_val = *crate::hotkey::CAPTURED_HWND.lock().unwrap();
                         let _ = crate::injector::HumanizedInjector::set_clipboard(&plan_output);
                         if hwnd_val != 0 {
-                            use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_SHOW};
+                            use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE};
                             use windows::Win32::Foundation::HWND;
                             let h = HWND(hwnd_val as *mut std::ffi::c_void);
-                            unsafe { let _ = ShowWindow(h, SW_SHOW); let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
+                            unsafe { let _ = ShowWindow(h, SW_RESTORE); let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
                             tokio::time::sleep(std::time::Duration::from_millis(400)).await;
                         }
                         injector.inject_replace_line();
@@ -894,10 +985,10 @@ async fn async_main() -> Result<()> {
                     let hwnd_val = *crate::hotkey::CAPTURED_HWND.lock().unwrap();
                     let _ = crate::injector::HumanizedInjector::set_clipboard(&bullets);
                     if hwnd_val != 0 {
-                        use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_SHOW};
+                        use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE};
                         use windows::Win32::Foundation::HWND;
                         let h = HWND(hwnd_val as *mut std::ffi::c_void);
-                        unsafe { let _ = ShowWindow(h, SW_SHOW); let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
+                        unsafe { let _ = ShowWindow(h, SW_RESTORE); let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
                         tokio::time::sleep(std::time::Duration::from_millis(400)).await;
                     }
                     injector.inject_replace_line();
@@ -917,10 +1008,10 @@ async fn async_main() -> Result<()> {
                         let hwnd_val = *crate::hotkey::CAPTURED_HWND.lock().unwrap();
                         let _ = crate::injector::HumanizedInjector::set_clipboard(&explain_text);
                         if hwnd_val != 0 {
-                            use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_SHOW};
+                            use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE};
                             use windows::Win32::Foundation::HWND;
                             let h = HWND(hwnd_val as *mut std::ffi::c_void);
-                            unsafe { let _ = ShowWindow(h, SW_SHOW); let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
+                            unsafe { let _ = ShowWindow(h, SW_RESTORE); let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
                             tokio::time::sleep(std::time::Duration::from_millis(400)).await;
                         }
                         injector.inject_replace_line();
@@ -941,10 +1032,10 @@ async fn async_main() -> Result<()> {
                         let hwnd_val = *crate::hotkey::CAPTURED_HWND.lock().unwrap();
                         let _ = crate::injector::HumanizedInjector::set_clipboard(&formula_clean);
                         if hwnd_val != 0 {
-                            use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_SHOW};
+                            use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE};
                             use windows::Win32::Foundation::HWND;
                             let h = HWND(hwnd_val as *mut std::ffi::c_void);
-                            unsafe { let _ = ShowWindow(h, SW_SHOW); let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
+                            unsafe { let _ = ShowWindow(h, SW_RESTORE); let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
                             tokio::time::sleep(std::time::Duration::from_millis(400)).await;
                         }
                         injector.inject_replace_line();
@@ -1101,10 +1192,10 @@ async fn async_main() -> Result<()> {
                         let hwnd_val = *crate::hotkey::CAPTURED_HWND.lock().unwrap();
                         let _ = crate::injector::HumanizedInjector::set_clipboard(&clarification);
                         if hwnd_val != 0 {
-                            use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_SHOW};
+                            use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE};
                             use windows::Win32::Foundation::HWND;
                             let h = HWND(hwnd_val as *mut std::ffi::c_void);
-                            unsafe { let _ = ShowWindow(h, SW_SHOW); let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
+                            unsafe { let _ = ShowWindow(h, SW_RESTORE); let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
                             tokio::time::sleep(std::time::Duration::from_millis(400)).await;
                         }
                         injector.inject_replace_line();
@@ -1268,12 +1359,12 @@ async fn async_main() -> Result<()> {
                             let hwnd_val = *crate::hotkey::CAPTURED_HWND.lock().unwrap();
                             if hwnd_val != 0 {
                                 use windows::Win32::UI::WindowsAndMessaging::{
-                                    SetForegroundWindow, BringWindowToTop, ShowWindow, SW_SHOW,
+                                    SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE,
                                 };
                                 use windows::Win32::Foundation::HWND;
                                 let h = HWND(hwnd_val as *mut std::ffi::c_void);
                                 unsafe {
-                                    let _ = ShowWindow(h, SW_SHOW);
+                                    let _ = ShowWindow(h, SW_RESTORE);
                                     let _ = BringWindowToTop(h);
                                     let _ = SetForegroundWindow(h);
                                 }
