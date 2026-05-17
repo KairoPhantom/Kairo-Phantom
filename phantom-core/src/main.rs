@@ -1115,49 +1115,19 @@ async fn async_main() -> Result<()> {
                 // Add Command Mode Hint
                 system_prompt = format!("{}\n\n{}", system_prompt, command_mode.system_hint());
 
-                // Upgrade 5: PAHF Confidence Check (Pre-Action Clarification)
-                // Per kairo-gap.md §5 and PAHF research: if ConfidenceEngine < 0.4, inject a
-                // clarifying question instead of guessing. This prevents low-confidence outputs
-                // from polluting the memory system with wrong preferences.
+                // PAHF: Log confidence but NEVER block generation.
+                // The confidence engine scores a synthetic preview string, not actual AI output,
+                // so blocking based on this causes false negatives (good prompts get rejected).
                 let history = mem_machine.get_feedback_history(&app_label).unwrap_or_default();
                 if !history.is_empty() {
-                    // Generate a mock response preview to score against feedback history
                     let preview_hint = format!("{} {}", clean_prompt_for_llm, app_label);
                     let pahf_confidence = crate::memory::feedback::ConfidenceEngine::calculate_confidence(
                         &app_label,
                         &preview_hint,
                         &history,
                     );
-                    if pahf_confidence < 0.4 {
-                        // Inject a clarifying question rather than a potentially wrong guess
-                        let clarification = format!(
-                            "❓ Kairo needs clarification before generating:\n\
-                             \n\
-                             My confidence for this task in {} is low ({:.0}%) based on your feedback history.\n\
-                             \n\
-                             Could you clarify:\n\
-                             • Format preference: bullets / prose / table?\n\
-                             • Tone: formal / casual / technical?\n\
-                             • Length: concise (< 50 words) / standard / detailed?\n\
-                             \n\
-                             Type your preference and press Alt+M again to generate.",
-                            app_label,
-                            pahf_confidence * 100.0
-                        );
-                        let hwnd_val = crate::hotkey::CAPTURED_HWND.load(std::sync::atomic::Ordering::SeqCst);
-                        let _ = crate::injector::HumanizedInjector::set_clipboard(&clarification);
-                        if hwnd_val != 0 {
-                            use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE};
-                            use windows::Win32::Foundation::HWND;
-                            let h = HWND(hwnd_val as *mut std::ffi::c_void);
-                            unsafe { let _ = ShowWindow(h, SW_RESTORE); let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
-                            tokio::time::sleep(std::time::Duration::from_millis(400)).await;
-                        }
-                        injector.inject_replace_line();
-                        info!("❓ PAHF: Low confidence ({:.2}) — injected clarification request", pahf_confidence);
-                        continue;
-                    }
-                    info!("✅ PAHF: Confidence {:.2} — proceeding with generation", pahf_confidence);
+                    // Log only — never skip generation based on this score
+                    info!("📊 PAHF confidence: {:.2} (informational only — always generating)", pahf_confidence);
                 }
 
                 // F. Phase 3: Create Ghost Session with CancellationToken
@@ -1264,52 +1234,42 @@ async fn async_main() -> Result<()> {
                     }
                 }
 
-                // ── POST-STREAM: Clean up and inject the complete response ──────────
+                // ── POST-STREAM: Inject the complete response ──────────────────
                 if !was_cancelled && !full_response.is_empty() {
-                    // Strip [REPLACE] tag from WritingPipeline responses
                     let clean_response = full_response.replace("[REPLACE]", "").trim().to_string();
                     full_response = clean_response.clone();
 
                     if clean_response.is_empty() {
-                        warn!("⚠️  AI returned empty response after cleanup");
+                        warn!("⚠️  AI returned empty response");
                     } else {
-                        info!("📡 Stream complete: {} chars collected. Injecting...", clean_response.len());
+                        info!("📡 Stream complete: {} chars. Injecting...", clean_response.len());
 
-                        // Confidence check: only block if we have > 5 interactions of history.
-                        let confidence_score = crate::memory::feedback::ConfidenceEngine::calculate_confidence(&app_label, &clean_response, &history);
-                        if confidence_score < 0.4 && history.len() > 5 {
-                            info!("Low confidence ({:.2}) with {} history entries — skipping injection.", confidence_score, history.len());
-                            crate::toast_notification::show_progress_toast("Kairo: Low confidence. Press Alt+M again to clarify.");
-                            was_cancelled = true;
-                        } else {
-                            // ── PRODUCTION INJECTION ─────────────────────────────────────
-                            // 1. Set clipboard BEFORE focusing (Word locks clipboard on focus)
-                            let cb_ok = crate::injector::HumanizedInjector::set_clipboard(&clean_response);
-                            info!("Clipboard: {} ({} chars)", if cb_ok { "OK" } else { "FAILED" }, clean_response.len());
+                        // 1. Set clipboard BEFORE focusing (Word locks clipboard on focus)
+                        let cb_ok = crate::injector::HumanizedInjector::set_clipboard(&clean_response);
+                        info!("Clipboard: {} ({} chars)", if cb_ok { "OK" } else { "FAILED" }, clean_response.len());
 
-                            // 2. Focus target window
-                            let hwnd_val = crate::hotkey::CAPTURED_HWND.load(std::sync::atomic::Ordering::SeqCst);
-                            if hwnd_val != 0 {
-                                use windows::Win32::UI::WindowsAndMessaging::{
-                                    SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE,
-                                };
-                                use windows::Win32::Foundation::HWND;
-                                let h = HWND(hwnd_val as *mut std::ffi::c_void);
-                                unsafe {
-                                    let _ = ShowWindow(h, SW_RESTORE);
-                                    let _ = BringWindowToTop(h);
-                                    let _ = SetForegroundWindow(h);
-                                }
-                                info!("Window focused: HWND={}", hwnd_val);
-                                // 3. 400ms settle for Word document body focus
-                                tokio::time::sleep(std::time::Duration::from_millis(400)).await;
+                        // 2. Focus target window
+                        let hwnd_val = crate::hotkey::CAPTURED_HWND.load(std::sync::atomic::Ordering::SeqCst);
+                        if hwnd_val != 0 {
+                            use windows::Win32::UI::WindowsAndMessaging::{
+                                SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE,
+                            };
+                            use windows::Win32::Foundation::HWND;
+                            let h = HWND(hwnd_val as *mut std::ffi::c_void);
+                            unsafe {
+                                let _ = ShowWindow(h, SW_RESTORE);
+                                let _ = BringWindowToTop(h);
+                                let _ = SetForegroundWindow(h);
                             }
-
-                            // 4+5. Home + Shift+End (select prompt line) + Ctrl+V (paste)
-                            injector_clone.inject_replace_line();
-                            info!("✅ Injection complete: {} chars into HWND={}", clean_response.len(), hwnd_val);
-                            crate::toast_notification::show_completion_toast(clean_response.len(), "Kairo");
+                            info!("Window focused: HWND={}", hwnd_val);
+                            // 3. Wait for window focus to settle
+                            tokio::time::sleep(std::time::Duration::from_millis(400)).await;
                         }
+
+                        // 4. Home + Shift+End (select prompt line) + Ctrl+V (paste response)
+                        injector_clone.inject_replace_line();
+                        info!("✅ Injection complete: {} chars into HWND={}", clean_response.len(), hwnd_val);
+                        crate::toast_notification::show_completion_toast(clean_response.len(), "Kairo");
                     }
                 }
 
