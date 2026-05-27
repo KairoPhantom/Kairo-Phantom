@@ -191,12 +191,12 @@ async fn mem_benchmark_prime_generalisation() {
     );
 }
 
-/// Embedding dimension sanity check — vectors must be exactly 384-dim.
+/// Embedding dimension sanity check — vectors must be exactly 256-dim.
 #[test]
 fn mem_benchmark_embedding_dim_correct() {
     // This tests the embed_engine::embed function indirectly via MemMachine
-    // by checking the blob size stored. 384 f32s = 384 * 4 = 1536 bytes raw,
-    // plus bincode length prefix = 1540 bytes.
+    // by checking the blob size stored. 256 f32s = 256 * 4 = 1024 bytes raw,
+    // plus bincode length prefix = 1028 bytes.
     // We just verify no panic and the embed succeeds.
     use phantom_core::memory::mem_machine::MemMachine;
     use tempfile::tempdir;

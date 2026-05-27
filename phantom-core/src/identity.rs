@@ -409,3 +409,366 @@ impl SpiffeIdentity {
         }
     }
 }
+
+// ─── Permission Rings & AD/LDAP Connector ────────────────────────────────────
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub enum PermissionRing {
+    Standard = 0,
+    Legal = 1,
+    Admin = 2,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct LdapGroupMatcher {
+    pub enabled: bool,
+    pub admin_groups: Vec<String>,
+    pub legal_groups: Vec<String>,
+    pub standard_groups: Vec<String>,
+}
+
+impl LdapGroupMatcher {
+    pub fn new(enabled: bool, admin_groups: Vec<String>, legal_groups: Vec<String>, standard_groups: Vec<String>) -> Self {
+        Self {
+            enabled,
+            admin_groups,
+            legal_groups,
+            standard_groups,
+        }
+    }
+
+    /// Retrieve system groups from Windows whoami /groups or Unix id -Gn
+    pub fn get_system_groups() -> Vec<String> {
+        #[cfg(target_os = "windows")]
+        {
+            use std::process::Command;
+            if let Ok(output) = Command::new("whoami").arg("/groups").output() {
+                if let Ok(stdout) = String::from_utf8(output.stdout) {
+                    let mut groups = Vec::new();
+                    for line in stdout.lines() {
+                        let trimmed = line.trim();
+                        if trimmed.is_empty() || trimmed.starts_with("---") || trimmed.starts_with("GROUP INFORMATION") || trimmed.starts_with("Group Name") {
+                            continue;
+                        }
+                        let parts: Vec<&str> = trimmed.split_whitespace().collect();
+                        if !parts.is_empty() {
+                            groups.push(parts[0].to_string());
+                        }
+                    }
+                    return groups;
+                }
+            }
+            Vec::new()
+        }
+        #[cfg(not(target_os = "windows"))]
+        {
+            use std::process::Command;
+            if let Ok(output) = Command::new("id").arg("-Gn").output() {
+                if let Ok(stdout) = String::from_utf8(output.stdout) {
+                    return stdout.split_whitespace().map(|s| s.to_string()).collect();
+                }
+            }
+            Vec::new()
+        }
+    }
+
+    /// Get user permission ring based on mapped system groups
+    pub fn get_user_ring(&self) -> PermissionRing {
+        if !self.enabled {
+            return PermissionRing::Admin; // Standard fallback for local development
+        }
+        let system_groups = Self::get_system_groups();
+        self.get_user_ring_for_groups(&system_groups)
+    }
+
+    /// Pure helper to map a slice of groups to a PermissionRing for testability
+    pub fn get_user_ring_for_groups(&self, system_groups: &[String]) -> PermissionRing {
+        if !self.enabled {
+            return PermissionRing::Admin;
+        }
+        for admin_group in &self.admin_groups {
+            if system_groups.iter().any(|g| g.eq_ignore_ascii_case(admin_group) || g.contains(admin_group)) {
+                return PermissionRing::Admin;
+            }
+        }
+        for legal_group in &self.legal_groups {
+            if system_groups.iter().any(|g| g.eq_ignore_ascii_case(legal_group) || g.contains(legal_group)) {
+                return PermissionRing::Legal;
+            }
+        }
+        PermissionRing::Standard
+    }
+}
+
+// ─── Private Encrypted Ed25519 Signature Vault ────────────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TrustedKeys {
+    pub keys: Vec<String>,
+}
+
+pub struct SignatureVault {
+    pub trusted_keys_path: PathBuf,
+}
+
+impl SignatureVault {
+    pub fn new(config_dir: &PathBuf) -> Self {
+        let trusted_keys_path = config_dir.join("vault").join("trusted_keys.json");
+        Self { trusted_keys_path }
+    }
+
+    pub fn load_trusted_keys(&self) -> Vec<String> {
+        if self.trusted_keys_path.exists() {
+            if let Ok(contents) = std::fs::read_to_string(&self.trusted_keys_path) {
+                if let Ok(tk) = serde_json::from_str::<TrustedKeys>(&contents) {
+                    return tk.keys;
+                }
+            }
+        }
+        Vec::new()
+    }
+
+    pub fn add_trusted_key(&self, key_hex: &str) -> Result<(), String> {
+        let mut keys = self.load_trusted_keys();
+        if !keys.contains(&key_hex.to_string()) {
+            keys.push(key_hex.to_string());
+            let tk = TrustedKeys { keys };
+            if let Some(parent) = self.trusted_keys_path.parent() {
+                let _ = std::fs::create_dir_all(parent);
+            }
+            let json = serde_json::to_string_pretty(&tk)
+                .map_err(|e| format!("Failed to serialize trusted keys: {}", e))?;
+            std::fs::write(&self.trusted_keys_path, json)
+                .map_err(|e| format!("Failed to write trusted keys: {}", e))?;
+        }
+        Ok(())
+    }
+
+    pub fn verify_signature(&self, data: &[u8], signature_hex_or_b64: &str) -> bool {
+        use ed25519_dalek::{VerifyingKey, Signature, Verifier};
+
+        let sig_bytes = if let Ok(bytes) = hex_decode(signature_hex_or_b64) {
+            bytes
+        } else if let Ok(bytes) = base64_decode(signature_hex_or_b64) {
+            bytes
+        } else {
+            return false;
+        };
+
+        let sig_arr: [u8; 64] = match sig_bytes.try_into() {
+            Ok(arr) => arr,
+            Err(_) => return false,
+        };
+        let signature = Signature::from_bytes(&sig_arr);
+
+        let trusted_keys = self.load_trusted_keys();
+        for key_hex in trusted_keys {
+            if let Ok(key_bytes) = hex_decode(&key_hex) {
+                if let Ok(key_arr) = <[u8; 32]>::try_from(key_bytes) {
+                    if let Ok(verifying_key) = VerifyingKey::from_bytes(&key_arr) {
+                        if verifying_key.verify(data, &signature).is_ok() {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        false
+    }
+}
+
+fn base64_decode(input: &str) -> Result<Vec<u8>, &'static str> {
+    use base64::{Engine as _, engine::general_purpose};
+    general_purpose::STANDARD.decode(input.trim())
+        .map_err(|_| "Invalid base64")
+}
+
+// ─── Zero-Knowledge End-to-End Encrypted (E2EE) Sync ──────────────────────────
+
+pub struct AesGcmEncrypter;
+
+impl AesGcmEncrypter {
+    /// Derive a 256-bit AES key from the agent's private key hex using PBKDF2-HMAC-SHA256.
+    pub fn derive_key(private_key_hex: &str, salt: &[u8]) -> [u8; 32] {
+        let mut key = [0u8; 32];
+        let password = private_key_hex.as_bytes();
+        pbkdf2::pbkdf2_hmac::<sha2::Sha256>(password, salt, 100_000, &mut key);
+        key
+    }
+
+    /// Encrypt plaintext bytes using AES-256-GCM.
+    /// Returns: [Salt (16 bytes)] + [Nonce (12 bytes)] + [Ciphertext + Tag]
+    pub fn encrypt(plaintext: &[u8], private_key_hex: &str) -> Result<Vec<u8>, String> {
+        use aes_gcm::{
+            aead::{Aead, KeyInit},
+            Aes256Gcm, Nonce,
+        };
+        use rand::RngCore;
+
+        let mut salt = [0u8; 16];
+        let mut nonce_bytes = [0u8; 12];
+        rand::thread_rng().fill_bytes(&mut salt);
+        rand::thread_rng().fill_bytes(&mut nonce_bytes);
+
+        let key_bytes = Self::derive_key(private_key_hex, &salt);
+        let cipher = Aes256Gcm::new_from_slice(&key_bytes)
+            .map_err(|e| format!("Cipher init error: {}", e))?;
+        
+        let nonce = Nonce::from_slice(&nonce_bytes);
+        let ciphertext = cipher.encrypt(nonce, plaintext)
+            .map_err(|e| format!("Encryption error: {}", e))?;
+
+        let mut output = Vec::new();
+        output.extend_from_slice(&salt);
+        output.extend_from_slice(&nonce_bytes);
+        output.extend_from_slice(&ciphertext);
+        Ok(output)
+    }
+
+    /// Decrypt ciphertext using AES-256-GCM.
+    pub fn decrypt(encrypted_data: &[u8], private_key_hex: &str) -> Result<Vec<u8>, String> {
+        use aes_gcm::{
+            aead::{Aead, KeyInit},
+            Aes256Gcm, Nonce,
+        };
+
+        if encrypted_data.len() < 28 {
+            return Err("Encrypted data too short".to_string());
+        }
+        let salt = &encrypted_data[0..16];
+        let nonce_bytes = &encrypted_data[16..28];
+        let ciphertext = &encrypted_data[28..];
+
+        let key_bytes = Self::derive_key(private_key_hex, salt);
+        let cipher = Aes256Gcm::new_from_slice(&key_bytes)
+            .map_err(|e| format!("Cipher init error: {}", e))?;
+        
+        let nonce = Nonce::from_slice(nonce_bytes);
+        let plaintext = cipher.decrypt(nonce, ciphertext)
+            .map_err(|e| format!("Decryption error: {}", e))?;
+
+        Ok(plaintext)
+    }
+}
+
+pub struct CloudEncryptedSyncManager {
+    pub surreal_endpoint: String,
+    pub agent_private_key_hex: String,
+}
+
+impl CloudEncryptedSyncManager {
+    pub fn new(surreal_endpoint: &str, agent_private_key_hex: &str) -> Self {
+        Self {
+            surreal_endpoint: surreal_endpoint.to_string(),
+            agent_private_key_hex: agent_private_key_hex.to_string(),
+        }
+    }
+
+    pub fn encrypt_payload(&self, payload: &[u8]) -> Result<Vec<u8>, String> {
+        AesGcmEncrypter::encrypt(payload, &self.agent_private_key_hex)
+    }
+
+    pub fn decrypt_payload(&self, encrypted_payload: &[u8]) -> Result<Vec<u8>, String> {
+        AesGcmEncrypter::decrypt(encrypted_payload, &self.agent_private_key_hex)
+    }
+
+    pub async fn sync_to_cloud_encrypted(&self, plaintext_data: &[u8]) -> Result<(), String> {
+        info!("☁️  [E2EE Sync] Encrypting memory packet for cloud endpoint: {}", self.surreal_endpoint);
+        let encrypted = self.encrypt_payload(plaintext_data)?;
+        info!("🔐 [E2EE Sync] Successfully encrypted memory packet: {} bytes", encrypted.len());
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_ldap_group_matcher() {
+        let matcher = LdapGroupMatcher {
+            enabled: true,
+            admin_groups: vec!["Enterprise Admins".to_string(), "BUILTIN\\Administrators".to_string()],
+            legal_groups: vec!["Legal Compliance".to_string()],
+            standard_groups: vec!["Domain Users".to_string()],
+        };
+
+        // If disabled, defaults to Admin
+        let disabled_matcher = LdapGroupMatcher { enabled: false, ..Default::default() };
+        assert_eq!(disabled_matcher.get_user_ring_for_groups(&[]), PermissionRing::Admin);
+
+        // Test matching Admin ring
+        let admin_groups = vec!["Domain Users".to_string(), "BUILTIN\\Administrators".to_string()];
+        assert_eq!(matcher.get_user_ring_for_groups(&admin_groups), PermissionRing::Admin);
+
+        // Test matching Legal ring
+        let legal_groups = vec!["Domain Users".to_string(), "Legal Compliance".to_string()];
+        assert_eq!(matcher.get_user_ring_for_groups(&legal_groups), PermissionRing::Legal);
+
+        // Test matching Standard ring
+        let standard_groups = vec!["Domain Users".to_string()];
+        assert_eq!(matcher.get_user_ring_for_groups(&standard_groups), PermissionRing::Standard);
+
+        // Test fallback when no groups match
+        assert_eq!(matcher.get_user_ring_for_groups(&["Guest".to_string()]), PermissionRing::Standard);
+    }
+
+    #[test]
+    fn test_signature_vault_verification() {
+        use tempfile::tempdir;
+        use ed25519_dalek::{SigningKey, Signer};
+        use rand::rngs::OsRng;
+
+        let dir = tempdir().unwrap();
+        let vault = SignatureVault::new(&dir.path().to_path_buf());
+
+        // Generate test keys
+        let mut csprng = OsRng;
+        let signing_key = SigningKey::generate(&mut csprng);
+        let verifying_key = signing_key.verifying_key();
+        let pubkey_hex = hex_encode(verifying_key.to_bytes().as_ref());
+
+        // Verify key is not trusted yet
+        let payload = b"Hello, secure Waza sandbox plugin manifest!";
+        let signature = signing_key.sign(payload);
+        let signature_hex = hex_encode(signature.to_bytes().as_ref());
+
+        assert!(!vault.verify_signature(payload, &signature_hex));
+
+        // Add to trust vault
+        vault.add_trusted_key(&pubkey_hex).unwrap();
+        assert!(vault.load_trusted_keys().contains(&pubkey_hex));
+
+        // Verify signature matches now
+        assert!(vault.verify_signature(payload, &signature_hex));
+
+        // Untrusted signature should fail
+        let untrusted_signing_key = SigningKey::generate(&mut csprng);
+        let untrusted_sig = untrusted_signing_key.sign(payload);
+        let untrusted_sig_hex = hex_encode(untrusted_sig.to_bytes().as_ref());
+        assert!(!vault.verify_signature(payload, &untrusted_sig_hex));
+    }
+
+    #[test]
+    fn test_e2ee_cloud_sync_roundtrip() {
+        let display_name = "Secure Agent";
+        let instance = "Prod-Win11";
+        let identity = AgentIdentity::generate(display_name, instance);
+
+        let plaintext = b"Agent memory: client confidential doc draft v2. Extremely sensitive content.";
+        
+        // Encrypt using helper
+        let ciphertext = AesGcmEncrypter::encrypt(plaintext, &identity.private_key_hex).unwrap();
+        assert_ne!(ciphertext, plaintext.to_vec());
+
+        // Decrypt and compare
+        let decrypted = AesGcmEncrypter::decrypt(&ciphertext, &identity.private_key_hex).unwrap();
+        assert_eq!(decrypted, plaintext.to_vec());
+
+        // Encrypted sync manager
+        let sync_mgr = CloudEncryptedSyncManager::new("https://surreal-cloud.local:8000", &identity.private_key_hex);
+        let encrypted_payload = sync_mgr.encrypt_payload(plaintext).unwrap();
+        let decrypted_payload = sync_mgr.decrypt_payload(&encrypted_payload).unwrap();
+        assert_eq!(decrypted_payload, plaintext.to_vec());
+    }
+}

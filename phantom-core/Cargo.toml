@@ -26,9 +26,6 @@ path = "src/main.rs"
 # Async runtime
 tokio = { version = "1.44", features = ["full"] }
 
-# Windows UI Automation — reads text from any focused app
-uiautomation = "0.25"
-
 # Keyboard simulation — ghost types AI text into any app
 enigo = "0.2"
 
@@ -125,14 +122,28 @@ opentelemetry = "0.32.0"
 opentelemetry_sdk = "0.32.0"
 opentelemetry-otlp = "0.32.0"
 spiffe = "0.15.1"
+tree-sitter = "0.22"
+tree-sitter-rust = "0.21"
+tree-sitter-python = "0.21"
+
+# Domain 9: Enterprise Governance & Compliance
+jsonwebtoken = "9"           # MIT — JWT RS256/HS256 validation for Logto/OIDC SSO
+hmac = "0.12"                # MIT/Apache-2.0 — HMAC-SHA256 for audit chain sealing
+hex = "0.4"                  # MIT/Apache-2.0 — SHA-256 fingerprint encoding (runtime dep)
+
 
 # Real offline embeddings — all-MiniLM-L6-v2 (80 MB ONNX, <5 ms/embed, zero API calls)
 # Gated behind "local-embeddings" feature so CI stays fast; enable for production builds.
 fastembed = { version = "3", optional = true }
+aes-gcm = "0.10.3"
+pbkdf2 = "0.12.2"
 
 [features]
 default = []
 local-embeddings = ["dep:fastembed"]
+# Gates: Figma integration, collaborative docs, export engine, and voice (Domains 5-8)
+# These stay behind this flag until Phase 5 of the Foundation-First Hardening Plan is complete.
+advanced = []
 
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.58", features = [
@@ -147,6 +158,8 @@ windows = { version = "0.58", features = [
     "Win32_System_DataExchange",
     "Win32_System_Memory",
 ] }
+# Windows UI Automation — reads text from any focused Windows app
+uiautomation = "0.25"
 
 # Advancement 2: macOS background injection
 [target.'cfg(target_os = "macos")'.dependencies]
@@ -159,12 +172,17 @@ macos-accessibility-client = "0.0.2"
 name = "latency"
 harness = false
 
+[[bench]]
+name = "memory_benchmark"
+harness = false
+
 [dev-dependencies]
 proptest = "1.4"
 madsim = "0.2"
 autopilot = "0.4.0"
 hex = "0.4.3"
 criterion = { version = "0.5", features = ["async_tokio"] }
+rusqlite = { version = "0.32.0", features = ["bundled"] }  # Domain 10: tamper-detection test
 
 [lints.rust]
 dead_code = "allow"
@@ -183,3 +201,56 @@ non_binding_let_on_futures = "allow"
 let_underscore_future = "allow"
 doc_list_item_without_indentation = "allow"
 
+# ── Domain 10: Security Regression Tests ──────────────────────────────────────
+[[test]]
+name = "test_prompt_injection"
+path = "tests/security/test_prompt_injection.rs"
+
+[[test]]
+name = "test_wasm_sandbox"
+path = "tests/security/test_wasm_sandbox.rs"
+
+[[test]]
+name = "test_governance_gate"
+path = "tests/security/test_governance_gate.rs"
+
+[[test]]
+name = "test_audit_chain"
+path = "tests/security/test_audit_chain.rs"
+
+# ── Domain 9: Enterprise Governance E2E Tests ─────────────────────────────────────────────────────
+[[test]]
+name = "test_domain9_e2e"
+path = "tests/security/test_domain9_e2e.rs"
+
+# ── Domain 10: Security Hardening E2E Tests ───────────────────────────────────────────────────
+[[test]]
+name = "test_domain10_e2e"
+path = "tests/security/test_domain10_e2e.rs"
+
+# ── Domain 11: Cross-Platform Hardening Tests ─────────────────────────────────
+[[test]]
+name = "test_cross_platform"
+path = "tests/platform/test_cross_platform.rs"
+
+# ── Domain 11: Cross-Platform E2E Gate Certification ─────────────────────────
+[[test]]
+name = "test_domain11_e2e"
+path = "tests/security/test_domain11_e2e.rs"
+
+# ── Phase 1 Foundation Hardening: Protocol Enforcement Gate Tests ─────────────
+[[test]]
+name = "test_protocol_enforcement"
+path = "tests/core/test_protocol_enforcement.rs"
+
+[[test]]
+name = "test_sentinel_retry"
+path = "tests/core/test_sentinel_retry.rs"
+
+[[test]]
+name = "test_memory_benchmark"
+path = "tests/core/test_memory_benchmark.rs"
+
+[[test]]
+name = "test_three_layer_pipeline"
+path = "tests/pipeline/test_three_layer_pipeline.rs"

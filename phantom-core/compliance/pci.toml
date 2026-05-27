@@ -1,0 +1,131 @@
+# Kairo Phantom — PCI-DSS Compliance Rule Set
+# Loaded by EnterpriseComplianceScanner at startup.
+# Place at: ~/.kairo-phantom/compliance/pci.toml
+# Regulation: Payment Card Industry Data Security Standard v4.0
+
+regulation = "PCI-DSS"
+version = "4.0"
+description = "PCI-DSS cardholder data detection rules — protects Primary Account Numbers (PANs), CVVs, and track data"
+
+# ── Primary Account Numbers (PAN) ─────────────────────────────────────────────
+# PCI-DSS Requirement 3.3: Do not retain sensitive authentication data after authorization
+
+[[rules]]
+id = "PCI-PAN-VISA"
+description = "Visa card number (PAN)"
+pattern = "\\b4[0-9]{12}(?:[0-9]{3})?\\b"
+severity = "error"
+category = "PAN"
+notes = "Visa: 13 or 16 digits starting with 4. PCI-DSS Req 3.3.1"
+
+[[rules]]
+id = "PCI-PAN-MC"
+description = "Mastercard number (PAN)"
+pattern = "\\b(?:5[1-5][0-9]{14}|2[2-7][0-9]{14})\\b"
+severity = "error"
+category = "PAN"
+notes = "Mastercard: 16 digits starting with 51-55 or 2221-2720. PCI-DSS Req 3.3.1"
+
+[[rules]]
+id = "PCI-PAN-AMEX"
+description = "American Express card number (PAN)"
+pattern = "\\b3[47][0-9]{13}\\b"
+severity = "error"
+category = "PAN"
+notes = "Amex: 15 digits starting with 34 or 37. PCI-DSS Req 3.3.1"
+
+[[rules]]
+id = "PCI-PAN-DISCOVER"
+description = "Discover card number (PAN)"
+pattern = "\\b6(?:011|5[0-9]{2})[0-9]{12}\\b"
+severity = "error"
+category = "PAN"
+notes = "Discover: 16 digits starting with 6011 or 65. PCI-DSS Req 3.3.1"
+
+[[rules]]
+id = "PCI-PAN-DINERS"
+description = "Diners Club card number (PAN)"
+pattern = "\\b3(?:0[0-5]|[68][0-9])[0-9]{11}\\b"
+severity = "error"
+category = "PAN"
+notes = "Diners Club: 14 digits. PCI-DSS Req 3.3.1"
+
+[[rules]]
+id = "PCI-PAN-JCB"
+description = "JCB card number (PAN)"
+pattern = "\\b(?:2131|1800|35\\d{3})\\d{11}\\b"
+severity = "error"
+category = "PAN"
+notes = "JCB: 15-16 digits. PCI-DSS Req 3.3.1"
+
+[[rules]]
+id = "PCI-PAN-GENERIC"
+description = "Generic 16-digit card number with separators"
+pattern = "\\b(?:\\d{4}[-\\s]){3}\\d{4}\\b"
+severity = "error"
+category = "PAN"
+notes = "Formatted card number (1234 5678 9012 3456). PCI-DSS Req 3.3.1"
+
+# ── Sensitive Authentication Data (SAD) ─────────────────────────────────────
+# PCI-DSS Requirement 3.3.2: Do not store SAD even if encrypted
+
+[[rules]]
+id = "PCI-CVV-001"
+description = "Card Verification Value (CVV/CVC)"
+pattern = "(?i)(?:cvv|cvc|cvv2|cvc2|security\\s+code|card\\s+security)[\\s:=]+\\d{3,4}"
+severity = "error"
+category = "SAD"
+notes = "CVV/CVC must NEVER be stored post-authorization. PCI-DSS Req 3.3.2"
+
+[[rules]]
+id = "PCI-TRACK-001"
+description = "Magnetic stripe track data"
+pattern = "(?:%[Bb]\\d{13,19}\\^[A-Z/]{2,26}\\^\\d{4}|;\\d{13,19}=\\d{4})"
+severity = "error"
+category = "SAD"
+notes = "Track 1/2 magnetic stripe data. PCI-DSS Req 3.3.2 — must never be stored"
+
+[[rules]]
+id = "PCI-PIN-001"
+description = "PIN or PIN block reference"
+pattern = "(?i)\\b(?:pin|pin\\s+block|pin\\s+data)[\\s:=]+\\d{4,12}\\b"
+severity = "error"
+category = "SAD"
+notes = "Personal Identification Number. PCI-DSS Req 3.3.2"
+
+# ── Expiry Dates ───────────────────────────────────────────────────────────────
+
+[[rules]]
+id = "PCI-EXP-001"
+description = "Card expiry date with card context"
+pattern = "(?i)(?:exp(?:ir(?:y|ation))?|valid\\s+(?:thru|through))[\\s:=]+(?:0?[1-9]|1[0-2])[/\\-](?:\\d{2}|\\d{4})"
+severity = "warning"
+category = "CardholderData"
+notes = "Card expiry date (warning — may be legitimate in invoice templates)"
+
+# ── PCI Prohibited Phrases ────────────────────────────────────────────────────
+
+[[phrases]]
+id = "PCI-PHR-001"
+phrase = "cardholder data"
+severity = "warning"
+
+[[phrases]]
+id = "PCI-PHR-002"
+phrase = "sensitive authentication data"
+severity = "error"
+
+[[phrases]]
+id = "PCI-PHR-003"
+phrase = "track data"
+severity = "error"
+
+[[phrases]]
+id = "PCI-PHR-004"
+phrase = "card verification"
+severity = "warning"
+
+[[phrases]]
+id = "PCI-PHR-005"
+phrase = "primary account number"
+severity = "error"

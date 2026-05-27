@@ -1,5 +1,5 @@
 use wasmtime::*;
-use wasmtime_wasi::{WasiCtxBuilder, WasiCtx};
+use wasmtime_wasi::WasiCtxBuilder;
 use std::path::Path;
 
 pub struct WasmSandbox {
@@ -19,14 +19,14 @@ impl WasmSandbox {
         document_context: &str,
     ) -> Result<String, Box<dyn std::error::Error>> {
         let mut linker = Linker::new(&self.engine);
-        wasmtime_wasi::add_to_linker(&mut linker, |s| s)?;
+        wasmtime_wasi::preview1::add_to_linker_sync(&mut linker, |s| s)?;
 
-        let wasi = WasiCtxBuilder::new()
-            .env("PROMPT", input_prompt)?
-            .env("CONTEXT", document_context)?
-            .build();
+        let mut wasi_builder = WasiCtxBuilder::new();
+        wasi_builder.env("PROMPT", input_prompt);
+        wasi_builder.env("CONTEXT", document_context);
+        let p1_ctx = wasi_builder.build_p1();
 
-        let mut store = Store::new(&self.engine, wasi);
+        let mut store = Store::new(&self.engine, p1_ctx);
         let module = Module::from_file(&self.engine, wasm_path)?;
 
         let instance = linker.instantiate(&mut store, &module)?;

@@ -184,12 +184,73 @@ else
   warn "After install: ollama pull llama3.2"
 fi
 
+# ── Linux: Install accessibility tools ────────────────────────────────────────
+if [ "$PLATFORM" = "linux" ]; then
+  step "Checking Linux accessibility tools (Domain 11)..."
+
+  MISSING_TOOLS=()
+
+  # Detect display server
+  if [ -n "${WAYLAND_DISPLAY:-}" ]; then
+    DISPLAY_SERVER="wayland"
+    command -v ydotool &>/dev/null || MISSING_TOOLS+=("ydotool")
+    command -v wl-copy &>/dev/null || MISSING_TOOLS+=("wl-clipboard")
+  elif [ -n "${DISPLAY:-}" ]; then
+    DISPLAY_SERVER="x11"
+    command -v xdotool &>/dev/null || MISSING_TOOLS+=("xdotool")
+    command -v xclip &>/dev/null || MISSING_TOOLS+=("xclip")
+  else
+    DISPLAY_SERVER="unknown"
+    warn "No DISPLAY or WAYLAND_DISPLAY set — hotkeys require a display server"
+  fi
+
+  step "Display server: $DISPLAY_SERVER"
+
+  if [ ${#MISSING_TOOLS[@]} -gt 0 ]; then
+    warn "Missing accessibility tools: ${MISSING_TOOLS[*]}"
+    if command -v apt-get &>/dev/null; then
+      step "Installing via apt-get..."
+      sudo apt-get install -y "${MISSING_TOOLS[@]}" 2>/dev/null && ok "Tools installed" || \
+        warn "Auto-install failed. Run: sudo apt-get install ${MISSING_TOOLS[*]}"
+    elif command -v dnf &>/dev/null; then
+      warn "Run: sudo dnf install ${MISSING_TOOLS[*]}"
+    elif command -v pacman &>/dev/null; then
+      warn "Run: sudo pacman -S ${MISSING_TOOLS[*]}"
+    fi
+  else
+    ok "All accessibility tools available ($DISPLAY_SERVER)"
+  fi
+
+  # Check AT-SPI2 daemon (optional but improves text reading)
+  if command -v at-spi-bus-launcher &>/dev/null; then
+    ok "AT-SPI2 accessibility daemon: available"
+  else
+    warn "AT-SPI2 not found — install for better accessibility: sudo apt-get install at-spi2-core"
+    warn "Kairo will use clipboard-based text reading as fallback."
+  fi
+fi
+
 # ── macOS accessibility ───────────────────────────────────────────────────────
 if [ "$PLATFORM" = "macos" ]; then
   echo ""
-  warn "macOS: Grant Accessibility access in System Settings → Privacy → Accessibility"
-  warn "Add 'kairo-phantom' to the allowed apps list."
+  step "Checking macOS Accessibility permission (Domain 11)..."
+
+  # Test if accessibility permission is granted
+  if osascript -e 'tell application "System Events" to get name of first process whose frontmost is true' &>/dev/null 2>&1; then
+    ok "macOS Accessibility: permission granted"
+  else
+    warn "macOS: Accessibility permission NOT granted"
+    warn "Required for Alt+M hotkey and context capture."
+    warn ""
+    warn "To grant permission:"
+    warn "  1. Open System Settings → Privacy & Security → Accessibility"
+    warn "  2. Click '+' and add 'kairo-phantom' (in $BIN_DIR)"
+    warn "  3. Toggle it ON"
+    warn ""
+    warn "Or run: open 'x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility'"
+  fi
 fi
+
 
 # ── Done ──────────────────────────────────────────────────────────────────────
 header "Installation Complete!"

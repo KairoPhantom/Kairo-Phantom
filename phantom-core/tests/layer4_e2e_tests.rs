@@ -243,3 +243,88 @@ fn e2e_mcp_jsonrpc_structure_valid() {
     let deserialized: Value = serde_json::from_str(&serialized).unwrap();
     assert_eq!(deserialized["method"], "tools/call");
 }
+
+// ──────────────────────────────────────────────────────────────
+// E2E Test 9: B3 Parallel Swarm Execution
+//   Validates concurrent multi-agent fan-out with join_all
+// ──────────────────────────────────────────────────────────────
+#[tokio::test]
+async fn e2e_b3_parallel_swarm_returns_primary_and_alternatives() {
+    use phantom_core::swarm::{SwarmOrchestrator, ParallelConsultResult};
+    use phantom_core::document_context::{DocumentContext, DocKind};
+
+    let orchestrator = SwarmOrchestrator::new_for_test();
+
+    // Build a Word document context — ContentAgent should be primary
+    let ctx = DocumentContext::from_raw_text(
+        "rewrite this paragraph in formal English",
+        "We gotta improve our numbers cuz theyre not looking good lol.",
+        DocKind::WordDocument,
+    );
+
+    let result: ParallelConsultResult = orchestrator.parallel_consult(&ctx, "rewrite this paragraph in formal English", 2).await;
+
+    // Must return a valid primary agent
+    assert!(!result.primary_agent.is_empty(), "primary_agent must not be empty");
+
+    // Primary response must be the test stub ("test response")
+    assert_eq!(result.primary_response, "test response", 
+        "TestFallbackBackend must return 'test response'");
+
+    // Elapsed time must be measurable
+    assert!(result.elapsed_ms < 10_000, "Parallel consult must complete within 10s");
+
+    println!("✅ B3 ParallelSwarm: primary='{}' elapsed={}ms alternatives={}",
+        result.primary_agent, result.elapsed_ms, result.alternatives.len());
+}
+
+#[tokio::test]
+async fn e2e_b3_parallel_swarm_select_best_response_filters_errors() {
+    use phantom_core::swarm::SwarmOrchestrator;
+
+    // Mix of valid and error responses
+    let results = vec![
+        ("design".to_string(), "[design failed: timeout]".to_string()),
+        ("content".to_string(), "Here is a well-written formal paragraph.".to_string()),
+        ("reasoning".to_string(), "The analysis shows clear improvement in professional tone.".to_string()),
+    ];
+
+    // select_best_response should skip error-prefixed results
+    let best = SwarmOrchestrator::select_best_response(&results, 10);
+    assert!(best.is_some(), "Must find a valid response");
+    assert!(
+        best.unwrap().starts_with("Here is") || best.unwrap().starts_with("The analysis"),
+        "Best response must not be an error message, got: {:?}", best
+    );
+}
+
+#[tokio::test]
+async fn e2e_b3_parallel_swarm_empty_registry_safe() {
+    use phantom_core::swarm::SwarmOrchestrator;
+    use phantom_core::document_context::{DocumentContext, DocKind};
+    use phantom_core::swarm::ParallelConsultResult;
+    use phantom_core::config::SwarmConfig;
+    use phantom_core::ai::AiBackend;
+    use std::sync::Arc;
+
+    // Build an orchestrator with no agents registered
+    struct EmptyFallback;
+    #[async_trait::async_trait]
+    impl AiBackend for EmptyFallback {
+        async fn complete(&self, _s: &str, _p: &str) -> anyhow::Result<String> { Ok("fallback".to_string()) }
+        async fn stream_complete(&self, _s: &str, _p: &str, _tx: tokio::sync::mpsc::Sender<String>) -> anyhow::Result<()> { Ok(()) }
+    }
+
+    // Note: SwarmOrchestrator::new registers agents by default — this test
+    // validates that parallel_consult handles any registry size gracefully
+    let orchestrator = SwarmOrchestrator::new(SwarmConfig::default(), Arc::new(EmptyFallback));
+
+    let ctx = DocumentContext::from_raw_text("test", "test text", DocKind::PlainText);
+    let result: ParallelConsultResult = orchestrator.parallel_consult(&ctx, "test prompt", 1).await;
+
+    // Should always return something (either a real result or empty primary)
+    assert!(!result.primary_agent.is_empty() || result.primary_response.is_empty(),
+        "Empty primary agent implies empty primary response");
+    println!("✅ B3 empty registry safe: primary='{}'", result.primary_agent);
+}
+

@@ -1,9 +1,8 @@
-; KairoSetup.iss — Kairo Phantom One-Click Windows Installer (P0-B1)
+; KairoSetup.iss — Kairo Phantom One-Click Windows Installer
 ; Compile with Inno Setup 6: iscc installer\KairoSetup.iss
-; Prerequisites: Build phantom-core first: cd phantom-core && cargo build --release
 
 #define MyAppName "Kairo Phantom"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.1.0"
 #define MyAppPublisher "Kairo Phantom"
 #define MyAppURL "https://github.com/Kartik24Hulmukh/Kairo-Phantom"
 #define MyAppExeName "kairo-phantom.exe"
@@ -14,7 +13,7 @@ AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
-DefaultDirName={autopf}\KairoPhantom
+DefaultDirName={localappdata}\Kairo
 DefaultGroupName={#MyAppName}
 OutputDir=Output
 OutputBaseFilename=KairoSetup
@@ -35,10 +34,12 @@ Name: "startup"; Description: "Launch Kairo Phantom automatically when Windows s
 [Files]
 ; Main binary (built from cargo build --release)
 Source: "..\phantom-core\target\release\kairo-phantom.exe"; DestDir: "{app}"; Flags: ignoreversion
-; Default config
-Source: "config-template.toml"; DestDir: "{app}"; DestName: "config.toml"; Flags: ignoreversion onlyifdoesntexist
+; Default config deployed to %APPDATA%\Kairo
+Source: "config-template.toml"; DestDir: "{userappdata}\Kairo"; DestName: "config.toml"; Flags: ignoreversion onlyifdoesntexist
 ; Skills directory
 Source: "..\skills\*"; DestDir: "{app}\skills"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: DirExists('..\skills')
+; Python sidecar directory
+Source: "..\kairo-sidecar\*"; DestDir: "{app}\kairo-sidecar"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
@@ -50,6 +51,12 @@ Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: 
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "KairoPhantom"; ValueData: """{app}\{#MyAppExeName}"""; Flags: uninsdeletevalue; Tasks: startup
 
 [Run]
+; Silent download and install of Ollama if missing
+Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""& { if (!(Get-Command ollama -ErrorAction SilentlyContinue)) { Write-Host 'Downloading Ollama...'; Invoke-WebRequest -Uri 'https://ollama.com/download/OllamaSetup.exe' -OutFile '$env:TEMP\OllamaSetup.exe'; Start-Process '$env:TEMP\OllamaSetup.exe' -ArgumentList '/silent' -NoNewWindow -Wait; Start-Sleep -Seconds 5 } }"""; Flags: runhidden
+; Warmup background endpoints (pull qwen2.5:3b and qwen2.5:7b)
+Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""& { Start-Process ollama -ArgumentList 'serve' -NoNewWindow; Start-Sleep -Seconds 3; Start-Process ollama -ArgumentList 'pull qwen2.5:3b' -NoNewWindow -Wait; Start-Process ollama -ArgumentList 'pull qwen2.5:7b' -NoNewWindow -Wait }"""; Flags: runhidden
+; Bootstrap Python virtual environment and dependencies
+Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""& { cd '{app}\kairo-sidecar'; python -m venv .venv; .venv\Scripts\python -m pip install --upgrade pip; .venv\Scripts\pip install -r requirements.txt }"""; Flags: runhidden
 ; First-run: launch with onboarding flag
 Filename: "{app}\{#MyAppExeName}"; Parameters: "--first-run"; Description: "Launch {#MyAppName} now"; Flags: nowait postinstall skipifsilent
 
@@ -62,29 +69,15 @@ begin
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
-var
-  ResultCode: Integer;
 begin
   if CurStep = ssPostInstall then
   begin
-    // Create Kairo data directories
+    // Create Kairo data directories in %LOCALAPPDATA%
     ForceDirectories(ExpandConstant('{localappdata}\.kairo-phantom'));
     ForceDirectories(ExpandConstant('{localappdata}\.kairo-phantom\logs'));
     ForceDirectories(ExpandConstant('{localappdata}\.kairo-phantom\plugins'));
     ForceDirectories(ExpandConstant('{localappdata}\.kairo-phantom\compliance'));
-
-    if not OllamaInstalled then
-    begin
-      if MsgBox(
-        'Ollama (local AI engine) was not found on your system.' + #13#10 +
-        #13#10 +
-        'Kairo Phantom runs 100% offline using Ollama.' + #13#10 +
-        'Would you like to open the Ollama download page now?',
-        mbConfirmation, MB_YESNO
-      ) = IDYES then
-      begin
-        ShellExec('open', 'https://ollama.com/download/windows', '', '', SW_SHOW, ewNoWait, ResultCode);
-      end;
-    end;
+    // Create AppData directory
+    ForceDirectories(ExpandConstant('{userappdata}\Kairo'));
   end;
 end;

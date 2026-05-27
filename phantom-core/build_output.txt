@@ -1,0 +1,7 @@
+﻿cargo :     Finished `dev` profile [unoptimized] target(s) in 1.97s
+At line:1 char:1
++ cargo check --message-format short *>&1 | Out-File -FilePath "build_o ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (    Finished `d...get(s) in 1.97s:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 

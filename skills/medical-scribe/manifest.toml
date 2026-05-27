@@ -1,0 +1,9 @@
+id = "medical-scribe"
+name = "Medical Scribe"
+version = "1.0.0"
+description = "Converts clinical notes, patient encounters, and medical dictation into structured SOAP notes. Supports ICD-10 code suggestions, medication formatting, and clinical documentation standards."
+author = "Kairo Phantom Team"
+category = "medical"
+skill_md_url = "https://github.com/Kartik24Hulmukh/Kairo-Phantom/raw/main/skills/medical-scribe/SKILL.md"
+requires_kairo = "0.3.0"
+tags = ["medical", "clinical", "soap-notes", "healthcare", "documentation"]

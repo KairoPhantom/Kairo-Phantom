@@ -254,8 +254,11 @@ impl YjsPeer {
     pub fn new(config: YjsPeerConfig) -> Self {
         let client_id = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
-            .unwrap_or_default().as_nanos() as u64 & 0x00FF_FFFF_FFFF_FFFF;
-        
+            .unwrap_or_default().as_nanos() as u64 & 0x0000_0000_FFFF_FFFF;
+        Self::with_client_id(config, client_id)
+    }
+
+    pub fn with_client_id(config: YjsPeerConfig, client_id: u64) -> Self {
         info!("[YjsPeer] Created clientID: {}", client_id);
         let debounce = config.awareness_debounce_ms;
         
@@ -392,10 +395,25 @@ impl YjsPeer {
         self.primary_segment.export_state()
     }
 
+    pub fn doc_client_id(&self) -> u64 {
+        self.primary_segment.doc.client_id()
+    }
+
     pub fn apply_update(&self, update: &[u8]) -> Result<(), String> {
         self.primary_segment.apply_update(update)
     }
 }
+
+impl Drop for YjsPeer {
+    fn drop(&mut self) {
+        if let Ok(mut lock) = self.snapshot_task.try_lock() {
+            if let Some(handle) = lock.take() {
+                handle.abort();
+            }
+        }
+    }
+}
+
 
 // ─── Ghost Bridge ─────────────────────────────────────────────────────────────
 

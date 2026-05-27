@@ -134,10 +134,28 @@ impl AiBackend for SafeAiBackend {
 
 pub fn build_backend(config: &ModelConfig) -> Result<Arc<dyn AiBackend>> {
     let inner: Arc<dyn AiBackend> = match config.provider.as_str() {
-        "ollama" => Arc::new(OllamaBackend::new(
-            config.base_url.clone().unwrap_or_else(|| "http://localhost:11434".into()),
-            config.model_name.clone().unwrap_or_else(|| "llama3".into()),
-        )),
+        "ollama" => {
+            let base_url = config.base_url.clone().unwrap_or_else(|| "http://localhost:11434".into());
+            if base_url == "http://localhost:11434" || base_url == "http://127.0.0.1:11434" {
+                let model_name = config.model_name.clone().unwrap_or_else(|| "qwen2.5:7b".into());
+                let mapped_model = if model_name.starts_with("ollama/") {
+                    model_name
+                } else {
+                    format!("ollama/{}", model_name)
+                };
+                tracing::info!("🔄 AI: Routing default Ollama through Central LiteLLM Gateway: {}", mapped_model);
+                Arc::new(OpenAiBackend::new(
+                    "not-needed".to_string(),
+                    mapped_model,
+                    "http://localhost:4000/v1".to_string(),
+                ))
+            } else {
+                Arc::new(OllamaBackend::new(
+                    base_url,
+                    config.model_name.clone().unwrap_or_else(|| "llama3".into()),
+                ))
+            }
+        }
         "openai" => Arc::new(OpenAiBackend::new(
             config.api_key.clone().unwrap_or_default(),
             config.model_name.clone().unwrap_or_else(|| "gpt-4o".into()),

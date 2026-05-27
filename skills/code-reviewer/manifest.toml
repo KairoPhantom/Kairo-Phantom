@@ -1,0 +1,9 @@
+id = "code-reviewer"
+name = "Code Reviewer"
+version = "1.0.0"
+description = "Performs thorough code review: identifies bugs, security vulnerabilities, performance issues, and style violations. Outputs structured feedback with severity ratings and fix suggestions. Supports Rust, Python, TypeScript, Go."
+author = "Kairo Phantom Team"
+category = "developer"
+skill_md_url = "https://github.com/Kartik24Hulmukh/Kairo-Phantom/raw/main/skills/code-reviewer/SKILL.md"
+requires_kairo = "0.3.0"
+tags = ["code", "review", "security", "rust", "python", "typescript"]

@@ -245,6 +245,25 @@ impl GhostSession {
             alt, chars, confidence
         )
     }
+
+    /// Streams tokens with natural delay and jitter (60-120ms/char) to emulate realistic typing.
+    pub async fn stream_with_natural_delay(&self, token: &str) {
+        for ch in token.chars() {
+            if self.cancel_token.is_cancelled() {
+                break;
+            }
+            {
+                let mut buf = self.buffer.lock().await;
+                buf.text_a.push(ch);
+            }
+            let now_ns = std::time::SystemTime::now()
+                .duration_since(std::time::SystemTime::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0);
+            let delay_ms = 60 + (now_ns % 61) as u64; // 60 to 120 ms jitter
+            tokio::time::sleep(std::time::Duration::from_millis(delay_ms)).await;
+        }
+    }
 }
 
 // ─── Yjs CRDT Peer Mode ───────────────────────────────────────────────────────
@@ -365,3 +384,39 @@ impl UndoManager {
 impl Default for UndoManager {
     fn default() -> Self { Self::new() }
 }
+
+// ─── Pipeline Progress (Layer 3 overlay integration) ──────────────────────────
+
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub enum PipelineLayer {
+    IntentGate,
+    Planning,
+    AwaitingApproval,
+    Generating,
+    Streaming,
+    Verifying,
+    Complete,
+}
+
+impl PipelineLayer {
+    pub fn overlay_label(&self) -> &str {
+        match self {
+            PipelineLayer::IntentGate => "🎯 Layer 1: Intent Gate",
+            PipelineLayer::Planning => "📋 Layer 2: Planning Engine",
+            PipelineLayer::AwaitingApproval => "⏳ Awaiting Plan Approval (Alt+M to execute)",
+            PipelineLayer::Generating => "🧠 Routing Specialist Swarm",
+            PipelineLayer::Streaming => "⚡ Layer 3: Injecting Content",
+            PipelineLayer::Verifying => "🛡️ Scanning Compliance & Quality",
+            PipelineLayer::Complete => "✅ Complete",
+        }
+    }
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct PipelineProgress {
+    pub current_layer: PipelineLayer,
+    pub current_step: Option<usize>,
+    pub total_steps: Option<usize>,
+    pub details: String,
+}
+

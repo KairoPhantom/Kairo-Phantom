@@ -146,21 +146,30 @@ impl WazaSkillManager {
     }
 
     /// Scaffold a new skill: `kairo skill new <name>`
+    /// Writes to ~/.kairo-phantom/skills/<name>/ so `kairo skill list` finds it immediately.
     pub fn scaffold_skill(name: &str) -> Result<PathBuf> {
         let safe_name = name.to_lowercase().replace(' ', "-");
-        let skill_dir = PathBuf::from(format!("skills/{}", safe_name));
+
+        // Write to ~/.kairo-phantom/skills/ so `kairo skill list` finds it immediately.
+        // Falls back to ./skills/ in CI / test environments where $HOME is unavailable.
+        let skills_base = dirs::home_dir()
+            .map(|h| h.join(".kairo-phantom").join("skills"))
+            .unwrap_or_else(|| PathBuf::from("skills"));
+
+        let skill_dir = skills_base.join(&safe_name);
         std::fs::create_dir_all(&skill_dir)?;
 
         // SKILL.md template
         std::fs::write(skill_dir.join("SKILL.md"), format!(
             "# {}\n\n## What this skill does\n\nDescribe your skill here.\n\n\
-             ## Activation\n\nThis skill activates when...\n\n\
+             ## Activation\n\nThis skill activates when the user types:\n\n\
+             ```\n// {}: <your prompt here>\n```\n\n\
              ## System Prompt\n\n```\nYou are a specialist in...\n```\n\n\
-             ## Examples\n\n- Input: ...\n- Output: ...\n",
-            name
+             ## Examples\n\n- Input: `// {}: improve tone`\n- Output: ...\n",
+            name, safe_name, safe_name
         ))?;
 
-        // manifest.toml template
+        // manifest.toml template (valid TOML, parseable by list_installed)
         std::fs::write(skill_dir.join("manifest.toml"), format!(
             r#"id = "{}"
 name = "{}"
@@ -169,13 +178,13 @@ description = "A Kairo skill for ..."
 author = "Your Name"
 category = "general"
 skill_md_url = "https://github.com/YOUR/REPO/raw/main/skills/{}/SKILL.md"
-requires_kairo = "1.0.0"
+requires_kairo = "0.3.0"
 tags = ["custom"]
 "#,
             safe_name, name, safe_name
         ))?;
 
-        // Test harness
+        // Test harness (KMB-1 compatible)
         std::fs::write(skill_dir.join("test.toml"), format!(
             r#"# KMB-1 compatible test cases for {}
 [[tests]]
@@ -187,20 +196,32 @@ max_words = 100
         ))?;
 
         println!("✅ Scaffolded skill: {}", skill_dir.display());
-        println!("   Edit SKILL.md to define your skill's behavior.");
+        println!("   Edit {} to define your skill's behavior.", skill_dir.join("SKILL.md").display());
+        println!("   Edit {} to fill in metadata.", skill_dir.join("manifest.toml").display());
+        println!("   Run: kairo skill list   (to see it appear)");
         println!("   Run: kairo skill test {} to validate", safe_name);
 
         Ok(skill_dir)
     }
 
     fn verify_wasm_signature(wasm_bytes: &[u8], signature_b64: &str) -> Result<()> {
-        // Ed25519 verification (simplified — full impl uses ed25519-dalek)
-        // For now, just validate the signature is present and non-empty
         if signature_b64.is_empty() {
             anyhow::bail!("Empty WASM signature");
         }
-        // TODO: verify against Kairo's registry public key
-        tracing::info!("✅ WASM signature present (full verification in P3-A3)");
+        let config_dir = dirs::home_dir()
+            .unwrap_or_default()
+            .join(".kairo-phantom");
+        let vault = crate::identity::SignatureVault::new(&config_dir);
+        let trusted_keys = vault.load_trusted_keys();
+        if !trusted_keys.is_empty() {
+            if vault.verify_signature(wasm_bytes, signature_b64) {
+                tracing::info!("✅ WASM signature verified against trusted enterprise key vault.");
+            } else {
+                anyhow::bail!("WASM signature verification failed: not signed by any trusted enterprise key.");
+            }
+        } else {
+            tracing::warn!("⚠️  No trusted keys registered in SignatureVault — skipping strict signature verification.");
+        }
         Ok(())
     }
 }

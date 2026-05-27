@@ -1,0 +1,9 @@
+id = "marketing-copywriter"
+name = "Marketing Copywriter"
+version = "1.0.0"
+description = "Converts dry product descriptions and feature lists into compelling marketing copy. Specializes in landing page headlines, email subject lines, social media posts, and ad creative using AIDA and PAS frameworks."
+author = "Kairo Phantom Team"
+category = "marketing"
+skill_md_url = "https://github.com/Kartik24Hulmukh/Kairo-Phantom/raw/main/skills/marketing-copywriter/SKILL.md"
+requires_kairo = "0.3.0"
+tags = ["marketing", "copywriting", "sales", "landing-page", "email"]

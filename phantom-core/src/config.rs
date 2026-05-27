@@ -30,7 +30,120 @@ pub struct PhantomConfig {
     /// List of paths to plugin TOML files
     #[serde(default)]
     pub plugins: Vec<String>,
+
+    /// Voice dictation configuration (Domain 8: Multimodal Input)
+    #[serde(default)]
+    pub voice: VoiceConfig,
+
+    /// Text-to-speech configuration (Domain 8: Multimodal Input)
+    #[serde(default)]
+    pub tts: TtsConfig,
+
+    /// Wake word detection configuration (Domain 8: Multimodal Input)
+    #[serde(default)]
+    pub wake_word: WakeWordConfig,
+
+    /// Screen context capture configuration (Domain 8: Multimodal Input)
+    #[serde(default)]
+    pub screen_context: ScreenContextConfig,
+
+    /// Domain 9: Enterprise Governance & Compliance
+    #[serde(default)]
+    pub enterprise: EnterpriseConfig,
 }
+
+/// Domain 9 — Enterprise Governance & Compliance configuration.
+/// All sub-sections default to disabled/empty (zero breaking change).
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct EnterpriseConfig {
+    /// SSO & Identity (Logto/OIDC JWT validation)
+    #[serde(default)]
+    pub sso: SsoConfigSection,
+    /// SPIFFE agent identity
+    #[serde(default)]
+    pub spiffe: SpiffeConfigSection,
+    /// Audit log settings
+    #[serde(default)]
+    pub audit: AuditConfig,
+    /// Compliance scanning settings
+    #[serde(default)]
+    pub compliance: ComplianceConfig,
+    /// Enable RBAC for Waza agents
+    #[serde(default)]
+    pub rbac_enabled: bool,
+}
+
+/// SSO configuration section (mirrors enterprise::sso::SsoConfig)
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct SsoConfigSection {
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default)]
+    pub discovery_url: String,
+    #[serde(default)]
+    pub client_id: String,
+    #[serde(default)]
+    pub issuer: String,
+    #[serde(default)]
+    pub audience: String,
+    #[serde(default)]
+    pub jwt_secret: String,
+    #[serde(default = "default_idle_timeout")]
+    pub idle_timeout_secs: u64,
+}
+
+fn default_idle_timeout() -> u64 { 3600 }
+
+/// SPIFFE configuration section (mirrors enterprise::spiffe_identity::SpiffeConfig)
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SpiffeConfigSection {
+    #[serde(default = "spiffe_enabled_default")]
+    pub enabled: bool,
+    #[serde(default = "default_trust_domain")]
+    pub trust_domain: String,
+    #[serde(default = "default_agent_name")]
+    pub agent_name: String,
+    #[serde(default)]
+    pub agent_socket_path: Option<String>,
+}
+
+impl Default for SpiffeConfigSection {
+    fn default() -> Self {
+        Self {
+            enabled: spiffe_enabled_default(),
+            trust_domain: default_trust_domain(),
+            agent_name: default_agent_name(),
+            agent_socket_path: None,
+        }
+    }
+}
+
+fn spiffe_enabled_default() -> bool { true }
+fn default_trust_domain() -> String { "kairo-phantom.io".to_string() }
+fn default_agent_name() -> String { "ghost-writer".to_string() }
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct AuditConfig {
+    /// Path to audit DB (defaults to ~/.kairo-phantom/kairo_audit.db)
+    #[serde(default)]
+    pub db_path: Option<String>,
+    /// HMAC key for hourly chain sealing (base64-encoded 32 bytes)
+    #[serde(default)]
+    pub hmac_key_b64: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct ComplianceConfig {
+    /// Enable pre-injection compliance scanning
+    #[serde(default = "compliance_enabled_default")]
+    pub enabled: bool,
+    /// Block on error-level violations (vs just warning)
+    #[serde(default = "block_on_error_default")]
+    pub block_on_error: bool,
+}
+
+fn compliance_enabled_default() -> bool { true }
+fn block_on_error_default() -> bool { true }
 
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -83,6 +196,151 @@ fn default_hotkey() -> String { "ctrl+space".into() }
 fn default_typing_delay() -> u64 { 15 }
 fn default_provider() -> String { "ollama".into() }
 
+// ── Domain 8: Multimodal Input Configuration ─────────────────────────────────
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct VoiceConfig {
+    /// Enable voice dictation (Alt+V hotkey)
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+    /// Whisper.cpp model name (downloaded to ~/.kairo-phantom/models/)
+    #[serde(default = "default_whisper_model")]
+    pub whisper_model: String,
+    /// Language code for transcription
+    #[serde(default = "default_voice_lang")]
+    pub language: String,
+    /// Milliseconds of silence before auto-stopping recording
+    #[serde(default = "default_silence_threshold")]
+    pub silence_threshold_ms: u64,
+    /// Maximum recording duration in seconds
+    #[serde(default = "default_max_recording")]
+    pub max_recording_seconds: u64,
+
+    // ── Moonshine Voice (primary ASR engine) ──────────────────────────────
+
+    /// Use Moonshine Voice as primary ASR engine (MIT license, 107ms inference)
+    #[serde(default = "default_true")]
+    pub moonshine_enabled: bool,
+    /// Port of the Moonshine HTTP sidecar service
+    #[serde(default = "default_moonshine_port")]
+    pub moonshine_port: u16,
+    /// Moonshine model: "moonshine/moonshine-base" (26MB) or "moonshine/moonshine-medium" (245MB)
+    #[serde(default = "default_moonshine_model")]
+    pub moonshine_model: String,
+    /// Minimum Moonshine confidence score (0.0–1.0) below which whisper.cpp fallback is used
+    #[serde(default = "default_confidence_threshold")]
+    pub confidence_threshold: f32,
+    /// Use whisper.cpp as fallback when Moonshine fails or returns low confidence
+    #[serde(default = "default_true")]
+    pub whisper_fallback_enabled: bool,
+}
+
+impl Default for VoiceConfig {
+    fn default() -> Self {
+        VoiceConfig {
+            enabled: true,
+            whisper_model: default_whisper_model(),
+            language: default_voice_lang(),
+            silence_threshold_ms: default_silence_threshold(),
+            max_recording_seconds: default_max_recording(),
+            moonshine_enabled: true,
+            moonshine_port: default_moonshine_port(),
+            moonshine_model: default_moonshine_model(),
+            confidence_threshold: default_confidence_threshold(),
+            whisper_fallback_enabled: true,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct TtsConfig {
+    /// Enable text-to-speech (disabled by default)
+    #[serde(default)]
+    pub enabled: bool,
+    /// Voice model/name for TTS engine
+    #[serde(default = "default_tts_voice")]
+    pub voice_model: String,
+    /// Whether to automatically speak AI responses aloud
+    #[serde(default)]
+    pub speak_responses: bool,
+
+    // ── sherpa-onnx TTS ───────────────────────────────────────────────────
+
+    /// Use sherpa-onnx-offline-tts as primary TTS (Apache 2.0, requires model download)
+    #[serde(default = "default_true")]
+    pub sherpa_enabled: bool,
+    /// sherpa-onnx VITS voice model (en_US-amy-medium = ~63MB)
+    #[serde(default = "default_sherpa_model")]
+    pub sherpa_model: String,
+}
+
+impl Default for TtsConfig {
+    fn default() -> Self {
+        TtsConfig {
+            enabled: false,
+            voice_model: default_tts_voice(),
+            speak_responses: false,
+            sherpa_enabled: true,
+            sherpa_model: default_sherpa_model(),
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct WakeWordConfig {
+    /// Enable wake word detection (disabled by default)
+    #[serde(default)]
+    pub enabled: bool,
+    /// Wake word phrase
+    #[serde(default = "default_wake_phrase")]
+    pub phrase: String,
+    /// Detection sensitivity (0.0 = low, 1.0 = high)
+    #[serde(default = "default_sensitivity")]
+    pub sensitivity: f32,
+}
+
+impl Default for WakeWordConfig {
+    fn default() -> Self {
+        WakeWordConfig {
+            enabled: false,
+            phrase: default_wake_phrase(),
+            sensitivity: default_sensitivity(),
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ScreenContextConfig {
+    /// Enable screen context capture (Alt+Shift+M hotkey)
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+    /// Path to farscry binary (auto-detected from PATH if None)
+    #[serde(default)]
+    pub farscry_path: Option<String>,
+}
+
+impl Default for ScreenContextConfig {
+    fn default() -> Self {
+        ScreenContextConfig {
+            enabled: true,
+            farscry_path: None,
+        }
+    }
+}
+
+fn default_true() -> bool { true }
+fn default_whisper_model() -> String { "base.en".into() }
+fn default_voice_lang() -> String { "en".into() }
+fn default_silence_threshold() -> u64 { 1500 }
+fn default_max_recording() -> u64 { 120 }
+fn default_tts_voice() -> String { "Microsoft David".into() }
+fn default_wake_phrase() -> String { "hey kairo".into() }
+fn default_sensitivity() -> f32 { 0.5 }
+fn default_moonshine_port() -> u16 { 7439 }
+fn default_moonshine_model() -> String { "moonshine/moonshine-base".into() }
+fn default_confidence_threshold() -> f32 { 0.6 }
+fn default_sherpa_model() -> String { "en_US-amy-medium".into() }
+
 impl Default for PhantomConfig {
     fn default() -> Self {
         PhantomConfig {
@@ -92,6 +350,11 @@ impl Default for PhantomConfig {
             fallback: None,
             swarm: SwarmConfig::default(),
             plugins: Vec::new(),
+            voice: VoiceConfig::default(),
+            tts: TtsConfig::default(),
+            wake_word: WakeWordConfig::default(),
+            screen_context: ScreenContextConfig::default(),
+            enterprise: EnterpriseConfig::default(),
         }
     }
 }

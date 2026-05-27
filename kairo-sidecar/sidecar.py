@@ -23,6 +23,9 @@ import shutil
 from pathlib import Path
 from typing import Any, Optional
 
+# Enforce clean package imports
+sys.path.insert(0, str(Path(__file__).parent.resolve()))
+
 # ─── Logging ─────────────────────────────────────────────────────────────────
 
 log_path = Path.home() / ".kairo-phantom" / "sidecar.log"
@@ -154,7 +157,18 @@ def _write_docx(path: str, operations: list) -> dict:
     # Atomic write to temp then rename
     tmp_path = path.with_suffix(".docx.tmp")
     doc.save(str(tmp_path))
-    os.replace(str(tmp_path), str(path))
+    try:
+        os.replace(str(tmp_path), str(path))
+    except PermissionError:
+        # Word has the file open/locked
+        try:
+            tmp_path.unlink(missing_ok=True)
+        except Exception:
+            pass
+        return {
+            "error": "Word has this file open. Save and close the document first, then press Alt+M again.",
+            "path": str(path),
+        }
 
     # Remove backup on success
     if not errors:
@@ -193,19 +207,20 @@ def _op_insert_after_heading(doc, op: dict):
                 _add_paragraph_with_style(doc, text, style)
         return
 
-    # Insert after target_idx — find next heading or end of section
+    # Insert after target_idx — find last para before next heading
     insert_after = target_idx
     for j in range(target_idx + 1, len(doc.paragraphs)):
         if doc.paragraphs[j].style.name.startswith("Heading"):
             break
         insert_after = j
 
-    # Insert new paragraphs after insert_after
+    # FIX-5: Insert in FORWARD order by advancing ref_para after each insert
     ref_para = doc.paragraphs[insert_after]._element
-    for text in reversed(content):
+    for text in content:
         if text.strip():
             new_para = _make_paragraph(doc, text, style)
             ref_para.addnext(new_para._element)
+            ref_para = new_para._element  # advance so next item goes AFTER this one
 
 
 def _op_insert_paragraph(doc, op: dict):
@@ -390,7 +405,17 @@ def _write_xlsx(path: str, operations: list) -> dict:
 
     tmp_path = path.with_suffix(".xlsx.tmp")
     wb.save(str(tmp_path))
-    os.replace(str(tmp_path), str(path))
+    try:
+        os.replace(str(tmp_path), str(path))
+    except PermissionError:
+        try:
+            tmp_path.unlink(missing_ok=True)
+        except Exception:
+            pass
+        return {
+            "error": "Excel has this file open. Save and close the workbook first, then press Alt+M again.",
+            "path": str(path),
+        }
     if not errors:
         try:
             backup_path.unlink(missing_ok=True)
@@ -398,6 +423,7 @@ def _write_xlsx(path: str, operations: list) -> dict:
             pass
 
     return {"applied": len(applied), "cells": applied, "errors": errors}
+
 
 
 # ─── PPTX Operations ─────────────────────────────────────────────────────────
@@ -476,11 +502,49 @@ def _write_pptx(path: str, operations: list) -> dict:
                 continue
 
             tf = target_shape.text_frame
-            tf.clear()
-            for bullet in bullets:
-                p = tf.add_paragraph()
-                p.text = bullet
-                p.level = 0
+
+            # FIX-9: Preserve theme font — update existing paragraphs/runs instead of
+            # clearing the text frame (tf.clear() destroys run formatting/theme font).
+            # Strategy: reuse existing paragraphs where possible, add/remove as needed.
+            from pptx.util import Pt
+
+            # Snapshot existing run format from first paragraph (theme font, size, color)
+            existing_fmt = None
+            if tf.paragraphs and tf.paragraphs[0].runs:
+                r0 = tf.paragraphs[0].runs[0]
+                existing_fmt = {
+                    "bold": r0.font.bold,
+                    "size": r0.font.size,
+                    "color": r0.font.color.rgb if r0.font.color and r0.font.color.type else None,
+                }
+
+            # Clear text content but keep XML structure for theme font
+            for para in tf.paragraphs:
+                for run in para.runs:
+                    run.text = ""
+
+            # Write new bullets — reuse existing <a:p> elements, add/remove as needed
+            existing_paras = list(tf.paragraphs)
+            for i, bullet_text in enumerate(bullets):
+                if i < len(existing_paras):
+                    p = existing_paras[i]
+                    if p.runs:
+                        p.runs[0].text = bullet_text
+                        if existing_fmt:
+                            if existing_fmt["bold"] is not None:
+                                p.runs[0].font.bold = existing_fmt["bold"]
+                    else:
+                        run = p.add_run()
+                        run.text = bullet_text
+                else:
+                    p = tf.add_paragraph()
+                    p.text = bullet_text
+                    p.level = 0
+
+            # Remove excess paragraphs beyond bullet count
+            for i in range(len(bullets), len(existing_paras)):
+                para_elem = existing_paras[i]._p
+                para_elem.getparent().remove(para_elem)
 
             applied.append({"slide": slide_idx, "shape": shape_id, "bullets": bullets})
         except Exception as e:
@@ -488,7 +552,17 @@ def _write_pptx(path: str, operations: list) -> dict:
 
     tmp_path = path.with_suffix(".pptx.tmp")
     prs.save(str(tmp_path))
-    os.replace(str(tmp_path), str(path))
+    try:
+        os.replace(str(tmp_path), str(path))
+    except PermissionError:
+        try:
+            tmp_path.unlink(missing_ok=True)
+        except Exception:
+            pass
+        return {
+            "error": "PowerPoint has this file open. Save and close the presentation first, then press Alt+M again.",
+            "path": str(path),
+        }
     if not errors:
         try:
             backup_path.unlink(missing_ok=True)
@@ -496,6 +570,7 @@ def _write_pptx(path: str, operations: list) -> dict:
             pass
 
     return {"applied": len(applied), "errors": errors}
+
 
 
 # ─── Context extractor (for LLM prompt building) ─────────────────────────────
@@ -522,33 +597,18 @@ def _extract_context(path: str, active_cell: Optional[str] = None) -> dict:
 
 
 def _read_pdf(path: str) -> dict:
-    """3-tier PDF extraction: fitz → docling → error."""
-    # Tier 1: PyMuPDF (fast)
+    """3-tier PDF extraction: fitz → docling → mineru_vlm."""
+    from sidecar.parsers.pdf_parser import parse_pdf
     try:
-        import fitz
-        doc = fitz.open(path)
-        text = "\n".join(page.get_text() for page in doc)
-        doc.close()
-        if text.strip():
-            return {"full_text": text, "format": "pdf", "tier": "pymupdf"}
-    except ImportError:
-        pass
+        res = parse_pdf(path)
+        # Convert structured paragraphs to flat full_text if expected by old callers
+        if "full_text" not in res:
+            res["full_text"] = "\n".join(p["text"] for p in res.get("paragraphs", []))
+        return res
     except Exception as e:
-        log.warning(f"PyMuPDF failed: {e}")
+        log.error(f"parse_pdf failed: {e}")
+        return {"error": f"PDF parsing failed: {e}", "format": "pdf"}
 
-    # Tier 2: docling
-    try:
-        from docling.document_converter import DocumentConverter
-        converter = DocumentConverter()
-        result = converter.convert(path)
-        text = result.document.export_to_markdown()
-        return {"full_text": text, "format": "pdf", "tier": "docling"}
-    except ImportError:
-        pass
-    except Exception as e:
-        log.warning(f"Docling failed: {e}")
-
-    return {"error": "No PDF reader available — pip install pymupdf or docling", "format": "pdf"}
 
 
 # ─── TCP Server ──────────────────────────────────────────────────────────────
@@ -622,6 +682,151 @@ async def handle_request(data: dict) -> dict:
             active_cell = payload.get("active_cell")
             data_out = _extract_context(path, active_cell)
             return {"id": req_id, "ok": "error" not in data_out, "data": data_out}
+
+        # ─── Domain 5: Design & Figma Actions ───────────────────────────────
+        elif action == "figma_create":
+            from sidecar.parsers.design_bridge import UnifiedDesignBridge
+            bridge = UnifiedDesignBridge(offline_mode=True)
+            node_type = payload.get("node_type", "FRAME").upper()
+            name = payload.get("name", "Unnamed Node")
+            x = payload.get("x", 0)
+            y = payload.get("y", 0)
+            width = payload.get("width", 100)
+            height = payload.get("height", 100)
+            parent_id = payload.get("parent_id", "canvas-root")
+            characters = payload.get("characters", "")
+            fontSize = payload.get("fontSize", 14)
+            color_hex = payload.get("color_hex")
+            layout_mode = payload.get("layout_mode")
+            spacing = payload.get("spacing", 10)
+            padding_tb = payload.get("padding_tb", 0)
+            padding_lr = payload.get("padding_lr", 0)
+
+            res = {}
+            if node_type == "FRAME":
+                res = bridge.figma.create_frame(name, x, y, width, height, parent_id)
+            elif node_type == "TEXT":
+                res = bridge.figma.create_text_node(name, characters, fontSize, parent_id)
+            elif node_type == "RECTANGLE":
+                res = bridge.figma.create_rectangle(name, x, y, width, height, parent_id)
+            elif node_type == "COMPONENT":
+                res = bridge.figma.create_component(name, parent_id)
+            elif node_type == "SECTION":
+                res = bridge.figma.create_section(name, parent_id)
+            else:
+                res = {"ok": False, "error": f"Unsupported node type: {node_type}"}
+
+            if res.get("ok") and color_hex:
+                bridge.figma.set_fills(res["node_id"], color_hex)
+            if res.get("ok") and layout_mode and node_type in ("FRAME", "COMPONENT"):
+                bridge.figma.set_auto_layout(res["node_id"], layout_mode, spacing, padding_tb, padding_lr)
+
+            return {"id": req_id, "ok": res.get("ok", False), "data": res}
+
+        elif action == "design_ghost_write":
+            from sidecar.parsers.design_bridge import UnifiedDesignBridge
+            bridge = UnifiedDesignBridge(offline_mode=True)
+            window_title = payload.get("window_title", "")
+            tool = bridge.detect_active_design_tool(window_title)
+            
+            res = {"tool_detected": tool}
+            if tool == "figma":
+                # Create a sample text node to represent ghost design action
+                node = bridge.figma.create_text_node("Ghost Written Element", "Generated via Kairo Swarm", 16)
+                res.update(node)
+            elif tool == "penpot":
+                svg = payload.get("svg", "<svg><rect width='100' height='100' fill='#6140f0'/></svg>")
+                penpot_res = bridge.penpot.draw_svg(svg)
+                res.update(penpot_res)
+            elif tool == "tldraw":
+                shapes = payload.get("shapes", [{"type": "geo", "x": 100, "y": 100, "props": {"w": 100, "h": 50, "text": "Ghost"}}])
+                created = []
+                for s in shapes:
+                    s_type = s.get("type", "geo")
+                    s_x = s.get("x", 0.0)
+                    s_y = s.get("y", 0.0)
+                    s_props = s.get("props", {})
+                    created.append(bridge.tldraw.create_shape(s_type, s_x, s_y, s_props))
+                res["created_shapes"] = created
+            elif tool == "openpencil":
+                stroke = payload.get("stroke", {"points": [(0,0), (10,10)]})
+                op_res = bridge.openpencil.record_stroke(stroke)
+                res.update(op_res)
+            elif tool == "frameground":
+                filename = payload.get("filename", "frameground_canvas.html")
+                html = payload.get("html", "<div>Frameground</div>")
+                path_out = bridge.frameground.create_canvas(filename, html)
+                res["canvas_path"] = path_out
+            else:
+                res["error"] = "No active design tool matched window title."
+                res["ok"] = False
+                return {"id": req_id, "ok": False, "data": res}
+            
+            res["ok"] = True
+            return {"id": req_id, "ok": True, "data": res}
+
+        elif action == "generate_design_asset":
+            from sidecar.parsers.design_bridge import UnifiedDesignBridge
+            bridge = UnifiedDesignBridge(offline_mode=True)
+            prompt = payload.get("prompt", "")
+            style = payload.get("style", "default")
+            output_path = payload.get("output_path")
+            res = bridge.comfyui.generate_asset(prompt, style, output_path)
+            return {"id": req_id, "ok": res.get("ok", False), "data": res}
+
+        elif action == "tldraw_canvas":
+            from sidecar.parsers.design_bridge import UnifiedDesignBridge
+            bridge = UnifiedDesignBridge(offline_mode=True)
+            operation = payload.get("operation", "get_shapes")
+            
+            if operation == "create_shape":
+                shape_type = payload.get("shape_type", "geo")
+                x = payload.get("x", 0.0)
+                y = payload.get("y", 0.0)
+                props = payload.get("props", {})
+                res = bridge.tldraw.create_shape(shape_type, x, y, props)
+            elif operation == "update_shape":
+                shape_id = payload.get("shape_id", "")
+                x = payload.get("x")
+                y = payload.get("y")
+                props = payload.get("props")
+                res = bridge.tldraw.update_shape(shape_id, x, y, props)
+            elif operation == "delete_shape":
+                shape_id = payload.get("shape_id", "")
+                res = bridge.tldraw.delete_shape(shape_id)
+            elif operation == "draw_flowchart":
+                nodes = payload.get("nodes", [])
+                edges = payload.get("edges", [])
+                res = bridge.tldraw.draw_flowchart(nodes, edges)
+            else:
+                res = {"shapes": bridge.tldraw.get_canvas_shapes(), "ok": True}
+                
+            return {"id": req_id, "ok": res.get("ok", True), "data": res}
+
+        elif action == "extract_design_code":
+            from sidecar.parsers.design_bridge import UnifiedDesignBridge
+            bridge = UnifiedDesignBridge(offline_mode=True)
+            root_id = payload.get("root_id", "canvas-root")
+            html = bridge.transpile_figma_to_tailwind(root_id)
+            return {"id": req_id, "ok": True, "data": {"html": html}}
+
+        elif action == "learn_design_preference":
+            from sidecar.parsers.design_bridge import UnifiedDesignBridge
+            bridge = UnifiedDesignBridge(offline_mode=True)
+            tool = payload.get("tool", "default")
+            key = payload.get("key", "")
+            value = payload.get("value")
+            bridge.memory.learn_preference(tool, key, value)
+            return {"id": req_id, "ok": True}
+
+        elif action == "get_design_preference":
+            from sidecar.parsers.design_bridge import UnifiedDesignBridge
+            bridge = UnifiedDesignBridge(offline_mode=True)
+            tool = payload.get("tool", "default")
+            key = payload.get("key", "")
+            fallback = payload.get("fallback")
+            val = bridge.memory.get_preference(tool, key, fallback)
+            return {"id": req_id, "ok": True, "data": val}
 
         else:
             return {"id": req_id, "ok": False, "error": f"Unknown action: {action}"}

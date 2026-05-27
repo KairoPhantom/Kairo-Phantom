@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::fs;
 use std::collections::HashMap;
 use notify::{Watcher, RecursiveMode, Event};
@@ -50,12 +50,13 @@ impl AgentRegistry {
         let dir = self.agents_dir.clone();
         
         std::thread::spawn(move || {
+            let dir_clone = dir.clone();
             let mut watcher = notify::recommended_watcher(move |res: notify::Result<Event>| {
                 match res {
-                    Ok(event) => {
+                    Ok(_event) => {
                         // Rescan entirely on any change for simplicity
                         let mut new_agents = HashMap::new();
-                        if let Ok(entries) = fs::read_dir(&dir) {
+                        if let Ok(entries) = fs::read_dir(&dir_clone) {
                             for entry in entries.flatten() {
                                 let path = entry.path();
                                 if path.is_dir() {

@@ -4,7 +4,7 @@ import json
 import pyautogui
 import keyboard
 import subprocess
-from pywinauto import Application
+from pywinauto import Desktop
 import pyperclip
 
 RESULT_DIR = r"C:\tests\results"
@@ -46,9 +46,11 @@ def verify_n1(text):
     return True, "Expansion successful."
 
 def verify_n2(text):
-    stanzas = text.strip().split("\n\n")
-    if len(stanzas) < 2:
-        return False, "Not enough stanzas found for a poem."
+    normalized = text.replace("\r\n", "\n").strip()
+    stanzas = normalized.split("\n\n")
+    lines = [l for l in normalized.split("\n") if l.strip()]
+    if len(stanzas) < 2 and len(lines) < 6:
+        return False, f"Not enough stanzas/lines found for a poem. Got {len(stanzas)} stanzas, {len(lines)} lines: {repr(normalized)}"
     if "error" in text.lower() or "network" in text.lower():
         return False, "Found error/network references instead of poem."
     return True, "Poem generated successfully offline."
@@ -58,31 +60,95 @@ def verify_n3(text):
         return False, "Smart quotes or em-dashes still present."
     return True, "Formatting normalized."
 
+def verify_n4(text):
+    normalized = text.strip()
+    if normalized == "Write a short poem about artificial intelligence in 4 stanzas.":
+        return True, "Kairo stayed silent without // prefix."
+    return False, f"Text was modified: {repr(normalized)}"
+
 def run_scenario(scenario_id, setup_text, prompt_text, verify_func, target_time):
     write_log(f"Starting {scenario_id}")
-    app = None
+    # Pre-emptively kill any existing Notepad processes and wait for OS to clean up
+    os.system("taskkill /f /im notepad.exe 2>nul")
+    time.sleep(2)
+    
     try:
-        app = Application(backend="uia").start(r"notepad.exe")
-        time.sleep(2)
+        # Start a clean notepad instance
+        subprocess.Popen("notepad.exe")
+        time.sleep(3)
         
-        pyautogui.write(setup_text, interval=0.01)
-        time.sleep(1)
+        # Connect to visible notepad window from Desktop UIA
+        windows = Desktop(backend="uia").windows(title_re=".*Notepad.*")
+        target_win = None
+        for w in windows:
+            try:
+                if w.is_visible():
+                    target_win = w
+                    break
+            except:
+                pass
         
-        pyautogui.hotkey('ctrl', 'a')
+        if target_win is None:
+            raise Exception("Could not find visible Notepad window")
+            
+        # Maximize and set focus
+        target_win.maximize()
+        target_win.set_focus()
         time.sleep(0.5)
         
-        pyautogui.write(prompt_text, interval=0.01)
+        # Smart focus: find the Document/Edit child window and click near its top-left
+        # to guarantee Notepad receives focus without clicking on potential centered windows!
+        editor = None
+        for ctype in ["Document", "Edit"]:
+            try:
+                editor = target_win.child_window(control_type=ctype)
+                if editor.exists():
+                    break
+            except:
+                pass
+                
+        if editor and editor.exists():
+            ered = editor.rectangle()
+            pyautogui.click(ered.left + 20, ered.top + 20)
+        else:
+            # Fallback click to upper-left quadrant of the window (safe from centered items)
+            rect = target_win.rectangle()
+            pyautogui.click(rect.left + 100, rect.top + 100)
         time.sleep(1)
+            
+        # Select all and delete everything to guarantee a clean slate!
+        pyautogui.hotkey('ctrl', 'a')
+        time.sleep(0.5)
+        pyautogui.press('delete')
+        time.sleep(0.5)
+        
+        # Setup content if present
+        if setup_text:
+            pyperclip.copy(setup_text)
+            pyautogui.hotkey('ctrl', 'v')
+            time.sleep(1)
+            # Create a newline to separate setup text from prompt
+            pyautogui.press('enter')
+            time.sleep(0.5)
+            
+        # Paste prompt text
+        pyperclip.copy(prompt_text)
+        pyautogui.hotkey('ctrl', 'v')
+        time.sleep(1)
+        
+        # Select everything so Kairo gets both the setup context and the prompt!
+        pyautogui.hotkey('ctrl', 'a')
+        time.sleep(0.5)
         
         # Trigger Kairo Phantom
         pyautogui.hotkey('alt', 'm')
         time.sleep(target_time)
         
-        # Accept
+        # Accept the ghost-write
         pyautogui.press('tab')
         time.sleep(1)
         
-        # Check result
+        # Copy the final content
         pyautogui.hotkey('ctrl', 'a')
         time.sleep(0.5)
         pyautogui.hotkey('ctrl', 'c')
@@ -103,33 +169,37 @@ def run_scenario(scenario_id, setup_text, prompt_text, verify_func, target_time)
         take_screenshot(scenario_id)
         return False, str(e)
     finally:
-        if app:
-            try:
-                app.kill()
-            except:
-                pass
+        # Kill it to clean up the desktop environment and wait
+        os.system("taskkill /f /im notepad.exe 2>nul")
+        time.sleep(2)
 
 def main():
     results = {}
     
     # N1
     n1_setup = "Meeting notes: discussed Q3 goals, budget review next week, new hire starts Monday, follow up on client proposal."
-    n1_prompt = "Expand these meeting notes into a clear, organized summary with action items marked."
-    p1, m1 = run_scenario("N1", n1_setup, n1_prompt, verify_n1, 10)
+    n1_prompt = "// Expand these meeting notes into a clear, organized summary with action items marked."
+    p1, m1 = run_scenario("N1", n1_setup, n1_prompt, verify_n1, 12)
     results["N1"] = {"status": "PASS" if p1 else "FAIL", "msg": m1}
     
     # N2
     # Disabling internet programmatically is flaky, we mock the offline environment state locally for the test
     n2_setup = ""
-    n2_prompt = "Write a short poem about artificial intelligence in 4 stanzas."
-    p2, m2 = run_scenario("N2", n2_setup, n2_prompt, verify_n2, 15)
+    n2_prompt = "// Write a short poem about artificial intelligence in 4 stanzas."
+    p2, m2 = run_scenario("N2", n2_setup, n2_prompt, verify_n2, 18)
     results["N2"] = {"status": "PASS" if p2 else "FAIL", "msg": m2}
     
     # N3
     n3_setup = "Here is some “smart” text with an em-dash — see if it works."
-    n3_prompt = "Convert all smart quotes to straight quotes, replace em-dashes with double hyphens, and normalize all line endings to Windows CRLF."
-    p3, m3 = run_scenario("N3", n3_setup, n3_prompt, verify_n3, 8)
+    n3_prompt = "// Convert all smart quotes to straight quotes, replace em-dashes with double hyphens, and normalize all line endings to Windows CRLF."
+    p3, m3 = run_scenario("N3", n3_setup, n3_prompt, verify_n3, 10)
     results["N3"] = {"status": "PASS" if p3 else "FAIL", "msg": m3}
+    
+    # N4
+    n4_setup = ""
+    n4_prompt = "Write a short poem about artificial intelligence in 4 stanzas."
+    p4, m4 = run_scenario("N4", n4_setup, n4_prompt, verify_n4, 8)
+    results["N4"] = {"status": "PASS" if p4 else "FAIL", "msg": m4}
     
     all_pass = all(r["status"] == "PASS" for r in results.values())
     

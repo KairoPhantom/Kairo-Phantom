@@ -360,9 +360,20 @@ async fn kami_export(
 ) -> (StatusCode, Json<()>) {
     let res = match req.format.as_str() {
         "pdf" => crate::kami_export::KamiExporter::execute(crate::kami_export::KamiCommand::Pdf, req.content).await,
-        "reveal" => crate::kami_export::KamiExporter::execute(crate::kami_export::KamiCommand::RevealJs, req.content).await,
+        "reveal" | "slides" | "revealjs" => crate::kami_export::KamiExporter::execute(crate::kami_export::KamiCommand::Slides, req.content).await,
         "email" => crate::kami_export::KamiExporter::execute(crate::kami_export::KamiCommand::Email, req.content).await,
         "linkedin" => crate::kami_export::KamiExporter::execute(crate::kami_export::KamiCommand::LinkedIn, req.content).await,
+        "epub" => crate::kami_export::KamiExporter::execute(crate::kami_export::KamiCommand::Epub, req.content).await,
+        "book" => crate::kami_export::KamiExporter::execute(crate::kami_export::KamiCommand::Book, req.content).await,
+        "tweet" | "tweet-thread" => crate::kami_export::KamiExporter::execute(crate::kami_export::KamiCommand::TweetThread, req.content).await,
+        "podcast" => crate::kami_export::KamiExporter::execute(crate::kami_export::KamiCommand::Podcast, req.content).await,
+        "podcast-local" => crate::kami_export::KamiExporter::execute(crate::kami_export::KamiCommand::PodcastLocal, req.content).await,
+        "subtitles" => crate::kami_export::KamiExporter::execute(crate::kami_export::KamiCommand::Subtitles, req.content).await,
+        "quiz" => crate::kami_export::KamiExporter::execute(crate::kami_export::KamiCommand::Quiz, req.content).await,
+        "flashcards" => crate::kami_export::KamiExporter::execute(crate::kami_export::KamiCommand::Flashcards, req.content).await,
+        "mindmap" => crate::kami_export::KamiExporter::execute(crate::kami_export::KamiCommand::Mindmap, req.content).await,
+        "html" => crate::kami_export::KamiExporter::execute(crate::kami_export::KamiCommand::Html, req.content).await,
+        "all" => crate::kami_export::KamiExporter::execute(crate::kami_export::KamiCommand::All, req.content).await,
         _ => Err("Unsupported format".to_string()),
     };
 

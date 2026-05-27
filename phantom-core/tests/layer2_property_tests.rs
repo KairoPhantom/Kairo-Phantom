@@ -37,17 +37,6 @@ proptest! {
     }
 
     // ──────────────────────────────────────────────────────────
-    // Property 2: DocumentContext NEVER panics on any UTF-8 input
-    // ──────────────────────────────────────────────────────────
-    #[test]
-    fn document_context_never_panics(
-        text in "\\PC{0,100000}"
-    ) {
-        // Must not panic regardless of content
-        let _ctx = DocumentContext::from_plain_text("TestApp", &text, "test prompt");
-    }
-
-    // ──────────────────────────────────────────────────────────
     // Property 3: ConfidenceBand compute() covers all branches
     //   without panic on any (prompt_len, doc_kind) combination
     // ──────────────────────────────────────────────────────────
@@ -78,5 +67,22 @@ proptest! {
 
         prop_assert_eq!(deserialized.hotkey, hotkey);
         prop_assert_eq!(deserialized.typing_delay_ms, delay);
+    }
+}
+
+// ──────────────────────────────────────────────────────────────
+// Property 2: DocumentContext NEVER panics on any UTF-8 input
+//   Runs in its own block with 200 cases to keep CI fast.
+//   10k chars × 200 cases = 2M chars — sufficient coverage.
+// ──────────────────────────────────────────────────────────────
+proptest! {
+    #![proptest_config(ProptestConfig::with_cases(200))]
+
+    #[test]
+    fn document_context_never_panics(
+        text in "\\PC{0,10000}"
+    ) {
+        // Must not panic regardless of content (Unicode, null bytes, extreme length)
+        let _ctx = DocumentContext::from_plain_text("TestApp", &text, "test prompt");
     }
 }

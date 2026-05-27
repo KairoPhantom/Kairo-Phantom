@@ -33,18 +33,25 @@ mod embed_engine {
                 ..Default::default()
             })
         })?;
-        let results = engine.embed(vec![text], None)?;
-        Ok(results.into_iter().next().unwrap_or_else(|| vec![0.0f32; 384]))
+        let mut results = engine.embed(vec![text], None)?;
+        let mut vec = results.into_iter().next().unwrap_or_else(|| vec![0.0f32; DIM]);
+        if vec.len() > DIM {
+            vec.truncate(DIM);
+            // Re-normalise
+            let norm = (vec.iter().map(|x| x * x).sum::<f32>()).sqrt().max(1e-9);
+            for x in &mut vec { *x /= norm; }
+        }
+        Ok(vec)
     }
 
-    pub const DIM: usize = 384;
+    pub const DIM: usize = 256;
 }
 
 #[cfg(not(feature = "local-embeddings"))]
 mod embed_engine {
     use anyhow::Result;
 
-    /// Deterministic hash-based 384-dim vector. Bit-stable across runs.
+    /// Deterministic hash-based 256-dim vector. Bit-stable across runs.
     /// Produces diverse, non-zero vectors so cosine similarity is meaningful
     /// enough for integration tests, without any ONNX download.
     pub fn embed(text: &str) -> Result<Vec<f32>> {
@@ -66,7 +73,7 @@ mod embed_engine {
         Ok(vec)
     }
 
-    pub const DIM: usize = 384;
+    pub const DIM: usize = 256;
 }
 
 // ─── Cosine Similarity ────────────────────────────────────────────────────────
@@ -97,6 +104,27 @@ impl MemMachine {
         std::fs::create_dir_all(&vault_dir)?;
         let db_path = vault_dir.join("mem_machine.db");
         let conn = Connection::open(db_path)?;
+
+        // Dimension check on first record to handle automatic migration (e.g. from 384 to 256)
+        let mut dimension_mismatch = false;
+        if let Ok(mut stmt) = conn.prepare("SELECT embedding FROM semantic_memory LIMIT 1") {
+            if let Ok(mut rows) = stmt.query([]) {
+                if let Ok(Some(row)) = rows.next() {
+                    if let Ok(blob) = row.get::<_, Vec<u8>>(0) {
+                        if let Ok(vec) = bincode::deserialize::<Vec<f32>>(&blob) {
+                            if vec.len() != 256 {
+                                dimension_mismatch = true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if dimension_mismatch {
+            tracing::warn!("⚠️ MemMachine: Dimension mismatch detected in existing database. Re-creating semantic_memory table.");
+            let _ = conn.execute("DROP TABLE IF EXISTS semantic_memory", []);
+        }
 
         // Schema evolution: Added 'embedding' BLOB and 'context_graph' table
         conn.execute(
@@ -157,8 +185,11 @@ impl MemMachine {
         let timestamp = Utc::now().timestamp();
         let tags_str = tags.join(",");
 
-        // Generate a real embedding vector (fastembed ONNX model OR deterministic hash fallback)
-        let embedding_vec = embed_engine::embed(content).unwrap_or_else(|_| vec![0.0f32; embed_engine::DIM]);
+        // Try querying high-quality 256-dim Model2Vec embedding from sidecar first, with self-healing fallback
+        let embedding_vec = match crate::sidecar_client::embed_text(content).await {
+            Ok(vec) => vec,
+            Err(_) => embed_engine::embed(content).unwrap_or_else(|_| vec![0.0f32; embed_engine::DIM]),
+        };
         let embedding_blob = bincode::serialize(&embedding_vec)?;
 
         let conn = self.conn.lock().unwrap();
@@ -287,8 +318,10 @@ impl MemMachine {
         // Uses the real fastembed engine (feature = "local-embeddings") or the
         // deterministic hash-fallback — same code path, different quality level.
         if !results.is_empty() {
-            let query_vec = embed_engine::embed(query)
-                .unwrap_or_else(|_| vec![0.0f32; embed_engine::DIM]);
+            let query_vec = match crate::sidecar_client::embed_text(query).await {
+                Ok(vec) => vec,
+                Err(_) => embed_engine::embed(query).unwrap_or_else(|_| vec![0.0f32; embed_engine::DIM]),
+            };
 
             let mut scored: Vec<(f32, String)> = Vec::with_capacity(results.len());
             for (result_text, id) in results.iter().zip(seen_ids.iter()) {

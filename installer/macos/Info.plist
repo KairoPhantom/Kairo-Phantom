@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+    Kairo Phantom — macOS App Bundle Info.plist
+    ============================================
+    Domain 11: Platform-Specific Packaging (Gate 5)
+
+    NSAccessibilityUsageDescription is REQUIRED for:
+    - Reading text from focused UI elements via AXUIElement
+    - The Alt+M hotkey to capture document context
+    - Ghost-writing (injecting text) via CGEventPostToPid
+
+    Without this key, macOS Ventura+ will silently block all accessibility API calls.
+-->
+<plist version="1.0">
+<dict>
+    <!-- ── App Identity ─────────────────────────────────────────── -->
+    <key>CFBundleName</key>
+    <string>KairoPhantom</string>
+
+    <key>CFBundleDisplayName</key>
+    <string>Kairo Phantom</string>
+
+    <key>CFBundleIdentifier</key>
+    <string>com.kairo-phantom.app</string>
+
+    <key>CFBundleVersion</key>
+    <string>0.3.0</string>
+
+    <key>CFBundleShortVersionString</key>
+    <string>0.3.0</string>
+
+    <key>CFBundleExecutable</key>
+    <string>KairoPhantom</string>
+
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+
+    <!-- ── Platform Requirements ────────────────────────────────── -->
+    <key>LSMinimumSystemVersion</key>
+    <string>12.0</string>   <!-- macOS Monterey+ (AXUIElement stable) -->
+
+    <key>NSHighResolutionCapable</key>
+    <true/>
+
+    <!-- Run as menu-bar app (no dock icon, no window) -->
+    <key>LSUIElement</key>
+    <true/>
+
+    <!-- ── Privacy Descriptions (macOS Gatekeeper requirement) ──── -->
+
+    <!--
+        REQUIRED: Explains why Kairo Phantom needs Accessibility access.
+        macOS will show this string in the permission prompt in
+        System Settings → Privacy & Security → Accessibility.
+    -->
+    <key>NSAccessibilityUsageDescription</key>
+    <string>Kairo Phantom reads the text you are currently editing to understand context, then types AI-generated content directly into your application. Press Alt+M in any app to activate. No data is sent externally — all processing runs locally on your Mac.</string>
+
+    <!-- Microphone — for voice input (Domain 8) -->
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Kairo Phantom can listen for voice commands to activate ghost-writing without a keyboard. Microphone audio is processed locally using Moonshine (offline ASR) and is never sent to any server.</string>
+
+    <!-- ── Sparkle Auto-Updater (optional, enable when distributing) ── -->
+    <!--
+    <key>SUFeedURL</key>
+    <string>https://releases.kairo-phantom.dev/appcast-macos.xml</string>
+
+    <key>SUPublicEDKey</key>
+    <string>REPLACE_WITH_ED25519_PUBLIC_KEY</string>
+    -->
+
+    <!-- ── Document Types (optional, enables Finder integration) ─── -->
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>Kairo Memory Archive</string>
+            <key>CFBundleTypeExtensions</key>
+            <array>
+                <string>kami</string>
+            </array>
+            <key>CFBundleTypeRole</key>
+            <string>Viewer</string>
+        </dict>
+    </array>
+</dict>
+</plist>

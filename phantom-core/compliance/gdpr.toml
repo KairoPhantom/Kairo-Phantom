@@ -1,0 +1,121 @@
+# Kairo Phantom — GDPR Compliance Rule Set
+# Loaded by EnterpriseComplianceScanner at startup.
+# Place at: ~/.kairo-phantom/compliance/gdpr.toml
+# Regulation: General Data Protection Regulation (EU) 2016/679
+
+regulation = "GDPR"
+version = "2024-01"
+description = "GDPR Personal Data and Special Category Data detection rules"
+
+# ── National Identity Numbers ─────────────────────────────────────────────────
+
+[[rules]]
+id = "GDPR-NINO-001"
+description = "UK National Insurance Number"
+pattern = "\\b[A-CEGHJ-PR-TW-Z]{2}\\d{6}[A-D]\\b"
+severity = "warning"
+category = "PersonalData-National"
+notes = "UK NI numbers are personal data under GDPR Art. 9(1)"
+
+[[rules]]
+id = "GDPR-BSN-001"
+description = "Dutch BSN (Burger Service Nummer)"
+pattern = "\\b\\d{9}\\b"
+severity = "warning"
+category = "PersonalData-National"
+notes = "Dutch citizen service number — GDPR sensitive identifier"
+
+[[rules]]
+id = "GDPR-INSEE-001"
+description = "French INSEE / NIR number"
+pattern = "\\b[12]\\d{2}(?:0[1-9]|1[0-2])\\d{5}\\d{3}\\d{2}\\b"
+severity = "warning"
+category = "PersonalData-National"
+notes = "French national identification number"
+
+[[rules]]
+id = "GDPR-STEUER-001"
+description = "German Steueridentifikationsnummer"
+pattern = "\\b[1-9]\\d{2}\\s?\\d{3}\\s?\\d{3}\\s?\\d{3}\\b"
+severity = "warning"
+category = "PersonalData-National"
+notes = "German tax identification number"
+
+# ── Financial Data ────────────────────────────────────────────────────────────
+
+[[rules]]
+id = "GDPR-IBAN-001"
+description = "IBAN bank account number"
+pattern = "\\b[A-Z]{2}\\d{2}[A-Z0-9]{4}[0-9]{7}(?:[A-Z0-9]{0,16})?\\b"
+severity = "warning"
+category = "PersonalData-Financial"
+notes = "IBAN is personal financial data under GDPR"
+
+[[rules]]
+id = "GDPR-SORT-001"
+description = "UK Sort Code + Account Number"
+pattern = "\\b\\d{2}-\\d{2}-\\d{2}\\b"
+severity = "warning"
+category = "PersonalData-Financial"
+notes = "UK bank sort code pattern"
+
+# ── Biometric and Special Category Data ───────────────────────────────────────
+
+[[rules]]
+id = "GDPR-BIO-001"
+description = "Biometric data reference"
+pattern = "(?i)\\b(?:fingerprint|facial recognition|retina scan|iris scan|biometric|voiceprint)\\s+(?:data|template|record|sample)\\b"
+severity = "error"
+category = "SpecialCategory-Art9"
+notes = "GDPR Art. 9(1) — Biometric data processed for unique identification"
+
+[[rules]]
+id = "GDPR-HEALTH-001"
+description = "Health data reference"
+pattern = "(?i)\\b(?:diagnosis|treatment plan|medical history|prescription|blood type|genetic)\\s+(?:data|record|information)\\b"
+severity = "error"
+category = "SpecialCategory-Art9"
+notes = "GDPR Art. 9(1) — Data concerning health"
+
+[[rules]]
+id = "GDPR-RACE-001"
+description = "Racial/ethnic origin data"
+pattern = "(?i)\\b(?:racial|ethnic)\\s+origin\\b"
+severity = "error"
+category = "SpecialCategory-Art9"
+notes = "GDPR Art. 9(1) — Racial or ethnic origin"
+
+[[rules]]
+id = "GDPR-RELIG-001"
+description = "Religious beliefs data"
+pattern = "(?i)\\b(?:religious|philosophical)\\s+(?:belief|conviction|affiliation)\\b"
+severity = "warning"
+category = "SpecialCategory-Art9"
+notes = "GDPR Art. 9(1) — Religious or philosophical beliefs"
+
+# ── GDPR Prohibited Phrases ────────────────────────────────────────────────────
+
+[[phrases]]
+id = "GDPR-PHR-001"
+phrase = "personal data subject"
+severity = "warning"
+
+[[phrases]]
+id = "GDPR-PHR-002"
+phrase = "data subject rights"
+severity = "warning"
+
+[[phrases]]
+id = "GDPR-PHR-003"
+phrase = "right to erasure"
+severity = "warning"
+
+[[phrases]]
+id = "GDPR-PHR-004"
+phrase = "special category data"
+severity = "error"
+
+[[phrases]]
+id = "GDPR-PHR-005"
+phrase = "lawful basis for processing"
+severity = "warning"

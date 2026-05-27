@@ -1,0 +1,9 @@
+id = "academic-editor"
+name = "Academic Editor"
+version = "1.0.0"
+description = "Polishes academic writing: improves clarity, fixes passive voice, tightens argument structure, and ensures proper citation formatting (APA, MLA, Chicago). Targets PhD students, researchers, and professors."
+author = "Kairo Phantom Team"
+category = "academic"
+skill_md_url = "https://github.com/Kartik24Hulmukh/Kairo-Phantom/raw/main/skills/academic-editor/SKILL.md"
+requires_kairo = "0.3.0"
+tags = ["academic", "research", "editing", "thesis", "citations"]

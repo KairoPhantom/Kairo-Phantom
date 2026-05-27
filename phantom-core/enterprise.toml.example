@@ -1,0 +1,166 @@
+# Kairo Phantom — Enterprise Configuration Template
+# Domain 9: Enterprise Governance & Compliance
+#
+# Copy this file to: ~/.kairo-phantom/enterprise.toml
+# (or set KAIRO_ENTERPRISE_CONFIG env var to the path)
+#
+# ── QUICK START ─────────────────────────────────────────────────────────────────
+# 1. Set [sso] enabled = true and point endpoint at your Logto instance
+# 2. Generate SPIFFE identity: kairo agent identity show
+# 3. Set [audit] hmac_key_b64 to a 32-byte base64 key
+# 4. Verify audit chain: kairo audit-verify
+# 5. Export audit log: kairo siem-export --format json --output audit.json
+
+# ── SSO: Enterprise Identity (Logto / Okta / Entra ID) ──────────────────────────
+
+[sso]
+# Set to true to require SSO authentication before ghost-writing
+enabled = false
+
+# Your Logto (or other OIDC provider) base URL
+# For Logto: https://your-tenant.logto.app
+# For Okta:  https://your-org.okta.com
+# For Entra: https://login.microsoftonline.com/<tenant-id>
+endpoint = "https://your-logto-instance.example.com"
+
+# OAuth2 client credentials (from Logto admin console → Applications)
+client_id = ""
+client_secret = ""
+
+# JWT signing algorithm: "HS256" (symmetric) or "RS256" (asymmetric, recommended)
+jwt_algorithm = "HS256"
+
+# JWT secret (for HS256) — MUST be at least 32 bytes, randomly generated
+# Generate with: openssl rand -base64 32
+jwt_secret = ""
+
+# For RS256: path to the IdP's public key PEM file
+# Download from your Logto/Okta/Entra JWKS endpoint and convert to PEM
+# jwt_public_key_path = "~/.kairo-phantom/enterprise/sso_public_key.pem"
+
+# Session idle timeout in minutes (0 = no timeout)
+session_timeout_minutes = 60
+
+# Logto OIDC discovery URL (optional — auto-discovered from endpoint if omitted)
+# discovery_url = "https://your-logto-instance.example.com/oidc/.well-known/openid-configuration"
+
+# ── SPIFFE: Agent Identity ────────────────────────────────────────────────────────
+
+[spiffe]
+# Set to true to enable SPIFFE agent identity (Ed25519 keypair + SPIFFE URI)
+enabled = true
+
+# Trust domain for SPIFFE URI: spiffe://<trust_domain>/agent/<agent_name>
+# Use your organization's domain or "kairo-phantom.io" for local use
+trust_domain = "kairo-phantom.io"
+
+# Agent socket path for SPIRE workload API integration (optional)
+# Leave blank for local-first mode (Kairo generates its own Ed25519 keypair)
+# For SPIRE integration: /run/spire/sockets/agent.sock
+agent_socket_path = ""
+
+# ── AUDIT: Cryptographic Audit Chain ─────────────────────────────────────────────
+
+[audit]
+# Path to the enterprise audit SQLite database
+# Default: ~/.kairo-phantom/kairo_audit.db
+# db_path = "~/.kairo-phantom/kairo_audit.db"
+
+# HMAC-SHA256 key for hourly audit chain sealing (base64-encoded 32 bytes)
+# Generate with: openssl rand -base64 32
+# SECURITY NOTE: Store this in a secrets manager (HashiCorp Vault, AWS Secrets Manager)
+# in production. Never commit this key to version control.
+hmac_key_b64 = ""
+
+# Maximum database size in GB before automatic archive-and-prune
+max_db_size_gb = 10
+
+# Retention period in days (0 = keep forever)
+retention_days = 365
+
+# SIEM export format for automatic export: "json" | "cef" | "leef" | "csv"
+siem_format = "json"
+
+# ── COMPLIANCE: HIPAA / GDPR / PCI-DSS ────────────────────────────────────────────
+
+[compliance]
+# Set to true to enable compliance scanning on all ghost-write operations
+enabled = true
+
+# Regulations to enforce (scan for violations before injection)
+# Options: "hipaa", "gdpr", "pci"
+active_regulations = ["hipaa", "gdpr", "pci"]
+
+# Compliance rule files directory
+# Default: uses built-in rules from phantom-core/compliance/
+# Override to provide custom or extended rule sets
+# rules_dir = "~/.kairo-phantom/compliance/"
+
+# Behavior when compliance violation detected:
+# "block" = prevent ghost-write entirely (requires //! compliance-override)
+# "warn"  = show warning overlay, allow proceed
+# "log"   = log to audit only, no user-facing warning
+on_violation = "block"
+
+# Allow users to override compliance blocks with //! compliance-override
+# (override is always logged to audit)
+allow_override = true
+
+# ── RBAC: Role-Based Access Control for Waza Agents ──────────────────────────────
+
+[rbac]
+# Set to true to enforce RBAC on all Waza agent invocations
+enabled = false
+
+# Default policy for agents without explicit RBAC config
+# "permissive" = all authenticated users can use all agents
+# "restrictive" = deny unless explicitly allowed
+default_policy = "permissive"
+
+# Path to RBAC policy directory (one TOML file per agent)
+# policy_dir = "~/.kairo-phantom/rbac/"
+
+# Example policy file (~/.kairo-phantom/rbac/legal-review.toml):
+# [rbac]
+# allowed_roles = ["legal", "compliance", "partner"]
+# denied_roles = ["intern", "contractor"]
+# allowed_document_types = ["DOCX", "PDF"]
+# max_tokens_per_request = 2000
+# require_approval = false
+
+# ── DEPLOYMENT: Enterprise Rollout Settings ────────────────────────────────────────
+
+[deployment]
+# Machine identifier for audit logs (auto-detected from hostname if empty)
+# machine_id = "workstation-alice-001"
+
+# Department identifier for RBAC group membership
+# department = "legal"
+
+# Tolaria Bridge endpoint for centralized policy push
+# (enterprise admins push RBAC policies via the bridge)
+# tolaria_endpoint = "https://tolaria.your-company.com"
+# tolaria_api_key = ""
+
+# ── NETWORK: Zero-Trust Network Settings ──────────────────────────────────────────
+
+[network]
+# Kairo Phantom operates 100% offline by default.
+# The following settings only apply to SSO JWT validation
+# (JWT public keys are cached locally after first fetch).
+
+# Allow fetching JWT public keys from IdP JWKS endpoint on startup
+# Set to false for fully air-gapped deployments (pre-provision keys manually)
+allow_jwks_fetch = true
+
+# HTTP proxy for JWKS fetch (optional)
+# proxy = "http://proxy.your-company.com:8080"
+
+# ── DOCUMENTATION ─────────────────────────────────────────────────────────────────
+#
+# Full documentation: https://github.com/Kartik24Hulmukh/Kairo-Phantom/docs/enterprise/
+# OWASP compliance matrix: docs/security/OWASP_AGENTIC_TOP10_COMPLIANCE.md
+# Security policy: SECURITY.md
+# Third-party licenses: THIRD_PARTY_NOTICES.md
+#
+# Enterprise support: enterprise@kairo.ai

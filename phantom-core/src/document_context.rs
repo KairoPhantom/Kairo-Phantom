@@ -124,6 +124,8 @@ pub struct DocumentContext {
     /// Semantic chunks for large document processing
     pub chunks: Vec<String>,
     pub has_tracked_changes: bool,
+    /// Syntax-aware code context (only for DocKind::CodeFile)
+    pub code_context: Option<crate::code_context::CodeContext>,
 }
 
 impl DocumentContext {
@@ -145,6 +147,7 @@ impl DocumentContext {
             format_metadata: FormatMetadata::default(),
             app_name: None,
             chunks: vec![],
+            code_context: None,
         }
     }
 
@@ -194,7 +197,13 @@ impl DocumentContext {
             has_tracked_changes,
             format_metadata,
             app_name: None,
+            code_context: None,
         }
+    }
+
+    pub fn with_code_context(mut self, code_context: crate::code_context::CodeContext) -> Self {
+        self.code_context = Some(code_context);
+        self
     }
 
     /// Generate a structured system prompt fragment describing the document.
@@ -265,6 +274,36 @@ impl DocumentContext {
             frag.push_str("\n[END CONTENT]\n");
         }
 
+        if let Some(ref cc) = self.code_context {
+            frag.push_str("\n[CODE SYNTAX CONTEXT]\n");
+            frag.push_str(&format!("Language: {}\n", cc.language));
+            if let Some(ref class) = cc.enclosing_class {
+                frag.push_str(&format!("Enclosing Symbol/Class/Struct: {}\n", class));
+            }
+            if let Some(ref func) = cc.enclosing_function {
+                frag.push_str(&format!(
+                    "Enclosing Function: {} (Lines {}-{})\nSignature: {}\n",
+                    func.name, func.start_line, func.end_line, func.signature
+                ));
+            }
+            if !cc.imports.is_empty() {
+                frag.push_str("Imports/Use declarations:\n");
+                for imp in cc.imports.iter().take(10) {
+                    frag.push_str(&format!("  - {}\n", imp));
+                }
+            }
+            if !cc.nearby_symbols.is_empty() {
+                frag.push_str("Nearby symbols:\n");
+                for sym in cc.nearby_symbols.iter().take(10) {
+                    frag.push_str(&format!("  - {}\n", sym));
+                }
+            }
+            frag.push_str(&format!("Current Indentation: '{}' ({} spaces/tabs)\n", cc.indentation, cc.cursor_col));
+            frag.push_str("\nSurrounding Code (30 lines around cursor):\n");
+            frag.push_str(&cc.surrounding_code);
+            frag.push_str("\n[END CODE CONTEXT]\n");
+        }
+
         frag.push_str("\nMatch the existing formatting, style, and tone conventions precisely.");
         frag
     }
@@ -323,6 +362,44 @@ impl DocumentContextExtractor for PlainTextExtractor {
         let full_text = std::fs::read_to_string(path).ok()?;
 
         Some(DocumentContext::from_raw_text(prompt_text, &full_text, doc_kind))
+    }
+}
+
+pub struct CodeFileExtractor;
+
+impl DocumentContextExtractor for CodeFileExtractor {
+    fn supported_extensions(&self) -> &[&str] {
+        &["rs", "py", "go", "cs", "java", "ts", "tsx", "js", "jsx", "c", "cpp", "h", "hpp", "sh", "bat", "ps1"]
+    }
+
+    fn extract(
+        &self,
+        path: &std::path::Path,
+        prompt_text: &str,
+        _active_slide: Option<usize>,
+    ) -> Option<DocumentContext> {
+        let file_path = path.to_string_lossy().to_string();
+        
+        let source_code = std::fs::read_to_string(path).ok()?;
+        let mut cursor_line = 1;
+        
+        let clean_prompt = prompt_text.trim();
+        if !clean_prompt.is_empty() {
+            for (idx, line) in source_code.lines().enumerate() {
+                if line.trim() == clean_prompt {
+                    cursor_line = idx + 1;
+                    break;
+                }
+            }
+        }
+        
+        let code_ctx = crate::code_context::extract_code_context(&file_path, cursor_line).ok()?;
+        
+        let mut doc_ctx = DocumentContext::from_raw_text(prompt_text, &code_ctx.surrounding_code, DocKind::CodeFile);
+        doc_ctx.file_path = Some(path.to_path_buf());
+        doc_ctx = doc_ctx.with_code_context(code_ctx);
+        
+        Some(doc_ctx)
     }
 }
 
@@ -722,6 +799,7 @@ impl ExtractorRegistry {
         r.register(Box::new(crate::extractors::kreuzberg_ext::PdfExtractorAdapter));
         r.register(Box::new(crate::extractors::kreuzberg_ext::KreuzbergExtractorAdapter));
         r.register(Box::new(OfficeExtractor));
+        r.register(Box::new(CodeFileExtractor));
         r.register(Box::new(PlainTextExtractor));
         r
     }

@@ -62,13 +62,13 @@ Kairo Phantom v4.0 transforms from a text-only ghost-writer into a full **multim
 ---
 
 ## Immediate Fixes (Next Sprint — Before v4.0)
-- [ ] Auto-discover plugins from `~/.kairo-phantom/plugins/` directory
-- [ ] Add streaming indicator to overlay (pulsing ghost icon)
-- [ ] Log which agent was selected and why to a debug file
-- [ ] Fix: DynamicFingerprinter with no process/title fields always matches
-- [ ] Fix: AgentRegistry.select_best panics on empty registry
-- [ ] Add `kairo --version` CLI flag
-- [ ] Add `kairo plugin list` CLI subcommand
+- [x] Auto-discover plugins from `~/.kairo-phantom/plugins/` directory ✅ (main.rs:441-453)
+- [x] Add streaming indicator to overlay (pulsing ghost icon) ✅ (toast_notification.rs:start_streaming_indicator, main.rs:699)
+- [x] Log which agent was selected and why to a debug file ✅ (toast_notification.rs:log_agent_selection + swarm/mod.rs:172)
+- [x] Fix: DynamicFingerprinter with no process/title fields always matches ✅ (plugin.rs:108 guard)
+- [x] Fix: AgentRegistry.select_best panics on empty registry ✅ (plugin.rs:90 returns Option)
+- [x] Add `kairo --version` CLI flag ✅ (main.rs:194)
+- [x] Add `kairo plugin list` CLI subcommand ✅ (main.rs:432)
 
 ---
 

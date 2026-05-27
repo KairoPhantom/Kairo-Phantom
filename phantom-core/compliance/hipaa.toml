@@ -1,0 +1,101 @@
+# Kairo Phantom — HIPAA Compliance Rule Set
+# Loaded by EnterpriseComplianceScanner at startup.
+# Place at: ~/.kairo-phantom/compliance/hipaa.toml
+# Regulation: Health Insurance Portability and Accountability Act (45 CFR Parts 160 and 164)
+
+regulation = "HIPAA"
+version = "2024-01"
+description = "HIPAA Protected Health Information (PHI) detection rules"
+
+# ── PHI Identifiers (18 HIPAA Safe Harbor identifiers) ────────────────────────
+
+[[rules]]
+id = "HIPAA-SSN-001"
+description = "US Social Security Number"
+pattern = "\\b\\d{3}[-\\s]\\d{2}[-\\s]\\d{4}\\b"
+severity = "error"
+category = "PHI-Identifier"
+notes = "HIPAA Safe Harbor identifier #1 — Social Security numbers"
+
+[[rules]]
+id = "HIPAA-MRN-001"
+description = "Medical Record Number pattern"
+pattern = "(?i)\\b(?:mrn|medical record|patient id|patient number)[\\s:=]+[A-Z0-9\\-]{4,20}\\b"
+severity = "error"
+category = "PHI-Identifier"
+notes = "HIPAA Safe Harbor identifier #7 — Medical record numbers"
+
+[[rules]]
+id = "HIPAA-DOB-001"
+description = "Date of Birth (explicit label)"
+pattern = "(?i)\\b(?:dob|date of birth|born on|birth date)[\\s:=]+\\d{1,2}[/\\-]\\d{1,2}[/\\-]\\d{2,4}\\b"
+severity = "error"
+category = "PHI-Identifier"
+notes = "HIPAA Safe Harbor identifier #3 — Dates (birth dates)"
+
+[[rules]]
+id = "HIPAA-PHONE-001"
+description = "Phone number with PHI label"
+pattern = "(?i)\\b(?:patient|member)\\s+(?:phone|tel|mobile|cell)[\\s:=]+[\\(\\+\\d][\\d\\s\\(\\)\\-\\.]{9,20}\\b"
+severity = "warning"
+category = "PHI-Identifier"
+notes = "HIPAA Safe Harbor identifier #4 — Telephone numbers (when associated with patient)"
+
+[[rules]]
+id = "HIPAA-EMAIL-PHI-001"
+description = "Email address in PHI context"
+pattern = "(?i)\\b(?:patient|member|beneficiary)\\s+(?:email|e-mail)[\\s:=]+[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}"
+severity = "warning"
+category = "PHI-Identifier"
+notes = "HIPAA Safe Harbor identifier #5 — Email addresses (context-dependent)"
+
+[[rules]]
+id = "HIPAA-ACCOUNT-001"
+description = "Account/policy number in PHI context"
+pattern = "(?i)\\b(?:policy|account|claim|member|insurance)\\s+(?:number|no|num|#)[\\s:=]+[A-Z0-9\\-]{5,20}\\b"
+severity = "warning"
+category = "PHI-Identifier"
+notes = "HIPAA Safe Harbor identifier #8 — Health plan beneficiary numbers"
+
+[[rules]]
+id = "HIPAA-DIAG-001"
+description = "Diagnosis code (ICD-10)"
+pattern = "\\b[A-Z]\\d{2}(?:\\.\\d{1,4})?\\b"
+severity = "warning"
+category = "PHI-Clinical"
+notes = "ICD-10 diagnostic codes (context-sensitive — may be legitimate in clinical docs)"
+
+[[rules]]
+id = "HIPAA-NPI-001"
+description = "National Provider Identifier"
+pattern = "(?i)\\b(?:npi|national provider)[\\s:=]+\\d{10}\\b"
+severity = "error"
+category = "PHI-Identifier"
+notes = "Provider NPI number — HIPAA covered entity identifier"
+
+# ── Prohibited PHI Phrases ──────────────────────────────────────────────────
+
+[[phrases]]
+id = "HIPAA-PHR-001"
+phrase = "patient social security"
+severity = "error"
+
+[[phrases]]
+id = "HIPAA-PHR-002"
+phrase = "medical record number"
+severity = "error"
+
+[[phrases]]
+id = "HIPAA-PHR-003"
+phrase = "date of birth"
+severity = "warning"
+
+[[phrases]]
+id = "HIPAA-PHR-004"
+phrase = "protected health information"
+severity = "warning"
+
+[[phrases]]
+id = "HIPAA-PHR-005"
+phrase = "patient identifier"
+severity = "warning"

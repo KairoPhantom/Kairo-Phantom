@@ -31,6 +31,8 @@ pub mod mcp_client;
 pub mod mcp_bridge;
 pub mod image_pipeline;
 pub mod ghost_session;
+pub mod intent_gate;
+pub mod planning_engine;
 pub mod governance;
 pub mod yjs_peer;
 pub mod identity;
@@ -45,6 +47,8 @@ pub mod memory;
 pub mod guardrails;
 pub mod context7;
 pub mod command_protocol;
+/// Phase 1 Hardening: strict // protocol gate — returns None for non-command text.
+pub mod prompt_parser;
 pub mod pii_guard;
 pub mod response_validator;
 pub mod retry_policy;
@@ -53,12 +57,14 @@ pub mod quality_gate;
 pub mod writing_pipeline;
 pub mod verify;
 pub mod kami_export;
+pub mod pdf_context;             // Domain 4: PDF SmartContextCapture structs
 pub mod context_optimizer;
 pub mod background_worker;
 pub mod aws_emulation;
 pub mod skills;
 pub mod memory_vault;
 pub mod tolaria_bridge;
+pub mod collaborative;
 
 
 
@@ -73,6 +79,10 @@ pub enum PhantomEvent {
     SuggestionReady(String),
     /// User started typing — abort current AI stream
     UserTyping,
+    /// Domain 8: Alt+V — voice dictation trigger
+    VoicePressed,
+    /// Domain 8: Alt+Shift+M — screen context capture trigger
+    ScreenContextPressed,
     /// Shutdown signal
     Shutdown,
 }
@@ -105,4 +115,21 @@ pub mod section_summarizer;     // P2-A4: 3-bullet section summarizer
 pub mod sidecar_client;         // TCP client → Python sidecar (DOCX/XLSX/PPTX/PDF I/O)
 pub mod doc_prompt_builder;     // Format-specific LLM prompt builder + JSON op parser
 
+// ── Phase 4A: Markdown Section-Aware Writer ───────────────────────────────────
+pub mod md_writer;              // pulldown-cmark AST-aware markdown insertion
+pub mod code_context;
+pub mod code_injector;
 
+// ── Domain 8: Multimodal Input ──────────────────────────────────────────────
+pub mod voice_engine;
+pub mod screen_context;
+pub mod tts_engine;
+pub mod wake_word;
+
+// ── Domain 9: Enterprise Governance & Compliance ────────────────────────────
+pub mod enterprise;            // SSO, SPIFFE, audit chain, compliance, RBAC
+
+// ── Domain 10: Security Hardening & Penetration Testing ─────────────────────
+pub mod prompt_injection_firewall; // 50-detector 6-layer prompt injection firewall
+pub mod red_team;              // Autonomous red-team simulation (Decepticon-style)
+pub mod supply_chain;          // SBOM, license compliance, vulnerability audit

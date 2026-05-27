@@ -1,18 +1,29 @@
 use std::path::PathBuf;
 use std::fs;
 use chrono::Utc;
-use tokio::time::sleep;
-use std::time::Duration;
+use std::collections::HashMap;
 
 #[derive(Debug, PartialEq)]
 pub enum KamiCommand {
+    // Domain 7: Export & Publishing (sidecar-delegated)
     Pdf,
-    RevealJs,
+    Epub,
+    Slides,
+    Book,
     Email,
     LinkedIn,
     TweetThread,
+    Podcast,
+    PodcastLocal,
+    Subtitles,
+    Quiz,
+    Flashcards,
+    Mindmap,
+    Html,
+    All,
+    PressRelease,
+    // Legacy / inline-handled
     Notion,
-    SlidesGoogle,
     Summary,
     Translate(String),
     Proofread,
@@ -28,15 +39,27 @@ impl CommandParser {
                 let cmd_str = first_line.strip_prefix("// kami ").unwrap_or("").trim();
                 let parts: Vec<&str> = cmd_str.split_whitespace().collect();
                 if parts.is_empty() { return None; }
-                
+
                 let command = match parts[0].to_lowercase().as_str() {
                     "pdf" => KamiCommand::Pdf,
-                    "revealjs" => KamiCommand::RevealJs,
+                    "epub" => KamiCommand::Epub,
+                    "slides" | "revealjs" => KamiCommand::Slides,
+                    "book" => KamiCommand::Book,
                     "email" => KamiCommand::Email,
                     "linkedin" => KamiCommand::LinkedIn,
-                    "tweet-thread" => KamiCommand::TweetThread,
+                    "tweet" | "tweet-thread" => KamiCommand::TweetThread,
+                    "podcast" => {
+                        if parts.contains(&"--local") { KamiCommand::PodcastLocal }
+                        else { KamiCommand::Podcast }
+                    },
+                    "subtitles" => KamiCommand::Subtitles,
+                    "quiz" => KamiCommand::Quiz,
+                    "flashcards" => KamiCommand::Flashcards,
+                    "mindmap" => KamiCommand::Mindmap,
+                    "html" => KamiCommand::Html,
+                    "all" => KamiCommand::All,
+                    "press-release" => KamiCommand::PressRelease,
                     "notion" => KamiCommand::Notion,
-                    "slides-google" => KamiCommand::SlidesGoogle,
                     "summary" => KamiCommand::Summary,
                     "translate" => {
                         let lang = if parts.len() > 1 { parts[1].to_string() } else { "Spanish".to_string() };
@@ -45,7 +68,7 @@ impl CommandParser {
                     "proofread" => KamiCommand::Proofread,
                     _ => return None,
                 };
-                
+
                 let content = lines[1..].join("\n");
                 return Some((command, content));
             }
@@ -61,28 +84,188 @@ impl KamiExporter {
         let docs_dir = dirs::document_dir()
             .unwrap_or_else(|| PathBuf::from("."))
             .join("Kairo Exports");
-        
         fs::create_dir_all(&docs_dir).map_err(|e| e.to_string())?;
 
-        match command {
-            KamiCommand::Pdf => Self::handle_pdf(content).await,
-            KamiCommand::RevealJs => Self::handle_revealjs(content).await,
-            KamiCommand::Email => Self::handle_email(content).await,
-            KamiCommand::LinkedIn => Self::handle_linkedin(content).await,
-            KamiCommand::TweetThread => Self::handle_tweet_thread(content).await,
-            KamiCommand::Notion => Self::handle_notion(content).await,
-            KamiCommand::SlidesGoogle => Self::handle_slides_google(content).await,
-            KamiCommand::Summary => Self::handle_summary(content).await,
-            KamiCommand::Translate(lang) => Self::handle_translate(content, lang).await,
-            KamiCommand::Proofread => Self::handle_proofread(content).await,
-        }
-    }
+        let title = content
+            .lines()
+            .find(|l| l.starts_with("# "))
+            .map(|l| l.trim_start_matches('#').trim().to_string())
+            .unwrap_or_else(|| "Kairo Export".to_string());
 
-    fn get_desktop_pdf_path() -> PathBuf {
-        let timestamp = Utc::now().format("%Y%m%d_%H%M%S");
-        dirs::desktop_dir()
-            .unwrap_or_else(|| PathBuf::from("."))
-            .join(format!("kairo-export-{}.pdf", timestamp))
+        match command {
+            // ── Sidecar-delegated Domain 7 formats ──────────────────────────
+            KamiCommand::Pdf => {
+                Self::show_toast("Kairo: exporting as professional PDF...");
+                let result = crate::sidecar_client::kami_export_sidecar(
+                    "pdf", &HashMap::new(), &content, &title,
+                ).await.map_err(|e| e.to_string())?;
+                let notif = result.get("notification").and_then(|v| v.as_str()).unwrap_or("PDF exported");
+                Self::show_toast(notif);
+                Ok(())
+            }
+            KamiCommand::Epub => {
+                Self::show_toast("Kairo: exporting as EPUB e-book...");
+                let result = crate::sidecar_client::kami_export_sidecar(
+                    "epub", &HashMap::new(), &content, &title,
+                ).await.map_err(|e| e.to_string())?;
+                let notif = result.get("notification").and_then(|v| v.as_str()).unwrap_or("EPUB exported");
+                Self::show_toast(notif);
+                Ok(())
+            }
+            KamiCommand::Slides => {
+                Self::show_toast("Kairo: exporting as RevealJS slides...");
+                let result = crate::sidecar_client::kami_export_sidecar(
+                    "slides", &HashMap::new(), &content, &title,
+                ).await.map_err(|e| e.to_string())?;
+                let notif = result.get("notification").and_then(|v| v.as_str()).unwrap_or("Slides exported");
+                Self::show_toast(notif);
+                Ok(())
+            }
+            KamiCommand::Book => {
+                Self::show_toast("Kairo: exporting as HTML book...");
+                let result = crate::sidecar_client::kami_export_sidecar(
+                    "book", &HashMap::new(), &content, &title,
+                ).await.map_err(|e| e.to_string())?;
+                let notif = result.get("notification").and_then(|v| v.as_str()).unwrap_or("Book exported");
+                Self::show_toast(notif);
+                Ok(())
+            }
+            KamiCommand::Email => {
+                Self::show_toast("Kairo: formatting as email...");
+                let result = crate::sidecar_client::kami_export_sidecar(
+                    "email", &HashMap::new(), &content, &title,
+                ).await.map_err(|e| e.to_string())?;
+                let notif = result.get("notification").and_then(|v| v.as_str()).unwrap_or("Email copied to clipboard");
+                Self::show_toast(notif);
+                Ok(())
+            }
+            KamiCommand::LinkedIn => {
+                Self::show_toast("Kairo: formatting for LinkedIn...");
+                let result = crate::sidecar_client::kami_export_sidecar(
+                    "linkedin", &HashMap::new(), &content, &title,
+                ).await.map_err(|e| e.to_string())?;
+                let notif = result.get("notification").and_then(|v| v.as_str()).unwrap_or("LinkedIn post copied");
+                Self::show_toast(notif);
+                Ok(())
+            }
+            KamiCommand::TweetThread => {
+                Self::show_toast("Kairo: formatting tweet thread...");
+                let result = crate::sidecar_client::kami_export_sidecar(
+                    "tweet", &HashMap::new(), &content, &title,
+                ).await.map_err(|e| e.to_string())?;
+                let notif = result.get("notification").and_then(|v| v.as_str()).unwrap_or("Tweet thread copied");
+                Self::show_toast(notif);
+                Ok(())
+            }
+            KamiCommand::Podcast => {
+                Self::show_toast("Kairo: generating podcast dialogue (cloud)...");
+                let result = crate::sidecar_client::kami_export_sidecar(
+                    "podcast", &HashMap::new(), &content, &title,
+                ).await.map_err(|e| e.to_string())?;
+                let notif = result.get("notification").and_then(|v| v.as_str()).unwrap_or("Podcast exported");
+                Self::show_toast(notif);
+                Ok(())
+            }
+            KamiCommand::PodcastLocal => {
+                Self::show_toast("Kairo: generating local podcast dialogue...");
+                let mut args = HashMap::new();
+                args.insert("local".to_string(), "true".to_string());
+                let result = crate::sidecar_client::kami_export_sidecar(
+                    "podcast", &args, &content, &title,
+                ).await.map_err(|e| e.to_string())?;
+                let notif = result.get("notification").and_then(|v| v.as_str()).unwrap_or("Local podcast exported");
+                Self::show_toast(notif);
+                Ok(())
+            }
+            KamiCommand::Subtitles => {
+                Self::show_toast("Kairo: generating subtitles...");
+                let result = crate::sidecar_client::kami_export_sidecar(
+                    "subtitles", &HashMap::new(), &content, &title,
+                ).await.map_err(|e| e.to_string())?;
+                let notif = result.get("notification").and_then(|v| v.as_str()).unwrap_or("Subtitles exported");
+                Self::show_toast(notif);
+                Ok(())
+            }
+            KamiCommand::Quiz => {
+                Self::show_toast("Kairo: generating quiz...");
+                let result = crate::sidecar_client::kami_export_sidecar(
+                    "quiz", &HashMap::new(), &content, &title,
+                ).await.map_err(|e| e.to_string())?;
+                let notif = result.get("notification").and_then(|v| v.as_str()).unwrap_or("Quiz generated");
+                Self::show_toast(notif);
+                Ok(())
+            }
+            KamiCommand::Flashcards => {
+                Self::show_toast("Kairo: generating flashcards...");
+                let result = crate::sidecar_client::kami_export_sidecar(
+                    "flashcards", &HashMap::new(), &content, &title,
+                ).await.map_err(|e| e.to_string())?;
+                let notif = result.get("notification").and_then(|v| v.as_str()).unwrap_or("Flashcards generated");
+                Self::show_toast(notif);
+                Ok(())
+            }
+            KamiCommand::Mindmap => {
+                Self::show_toast("Kairo: generating mind map...");
+                let result = crate::sidecar_client::kami_export_sidecar(
+                    "mindmap", &HashMap::new(), &content, &title,
+                ).await.map_err(|e| e.to_string())?;
+                let notif = result.get("notification").and_then(|v| v.as_str()).unwrap_or("Mind map generated");
+                Self::show_toast(notif);
+                Ok(())
+            }
+            KamiCommand::Html => {
+                Self::show_toast("Kairo: exporting as HTML...");
+                let result = crate::sidecar_client::kami_export_sidecar(
+                    "html", &HashMap::new(), &content, &title,
+                ).await.map_err(|e| e.to_string())?;
+                let notif = result.get("notification").and_then(|v| v.as_str()).unwrap_or("HTML exported");
+                Self::show_toast(notif);
+                Ok(())
+            }
+            KamiCommand::All => {
+                Self::show_toast("Kairo: batch exporting all formats...");
+                let result = crate::sidecar_client::kami_export_sidecar(
+                    "all", &HashMap::new(), &content, &title,
+                ).await.map_err(|e| e.to_string())?;
+                let notif = result.get("notification").and_then(|v| v.as_str()).unwrap_or("All formats exported");
+                Self::show_toast(notif);
+                Ok(())
+            }
+            KamiCommand::PressRelease => {
+                Self::show_toast("Kairo: formatting as press release...");
+                let result = crate::sidecar_client::kami_export_sidecar(
+                    "press_release", &HashMap::new(), &content, &title,
+                ).await.map_err(|e| e.to_string())?;
+                let notif = result.get("notification").and_then(|v| v.as_str()).unwrap_or("Press release copied");
+                Self::show_toast(notif);
+                Ok(())
+            }
+            KamiCommand::Summary => {
+                Self::show_toast("Kairo: generating summary...");
+                let result = crate::sidecar_client::kami_export_sidecar(
+                    "summary", &HashMap::new(), &content, &title,
+                ).await.map_err(|e| e.to_string())?;
+                let notif = result.get("notification").and_then(|v| v.as_str()).unwrap_or("Summary exported");
+                Self::show_toast(notif);
+                Ok(())
+            }
+            // ── Legacy inline handlers ───────────────────────────────────────
+            KamiCommand::Notion => {
+                Self::show_toast("Kairo: copying to Notion clipboard...");
+                Self::copy_to_clipboard(&content);
+                Ok(())
+            }
+            KamiCommand::Translate(lang) => {
+                Self::show_toast(&format!("Kairo: translating to {}...", lang));
+                Self::copy_to_clipboard(&format!("[Kairo Translation to {}]\n\n{}", lang, content));
+                Ok(())
+            }
+            KamiCommand::Proofread => {
+                Self::show_toast("Kairo: proofreading...");
+                Self::copy_to_clipboard(&format!("[Kairo Proofread]\n\n{}", content));
+                Ok(())
+            }
+        }
     }
 
     fn get_export_path(ext: &str) -> PathBuf {
@@ -93,104 +276,25 @@ impl KamiExporter {
             .join(format!("kairo-export-{}.{}", timestamp, ext))
     }
 
-    async fn handle_pdf(content: String) -> Result<(), String> {
-        Self::show_toast("Kairo: exporting as PDF...");
-        let pdf_path = Self::get_desktop_pdf_path();
-        
-        // Mocking PDF conversion via wkhtmltopdf
-        let html_content = format!(
-            "<html><head><style>body{{font-family:sans-serif; margin:40px;}}</style></head><body>{}</body></html>", 
-            content.replace("\n", "<br>")
-        );
-        let temp_html = std::env::temp_dir().join("kairo_temp.html");
-        fs::write(&temp_html, html_content).unwrap();
-        
-        // Command::new("wkhtmltopdf").arg(temp_html).arg(&pdf_path).output().unwrap();
-        fs::write(&pdf_path, "PDF Binary Stub").map_err(|e| e.to_string())?;
-        
-        Ok(())
-    }
-
-    async fn handle_revealjs(content: String) -> Result<(), String> {
-        Self::show_toast("Kairo: exporting as RevealJS...");
-        let path = Self::get_export_path("html");
-        let slides = content.replace("## ", "</section><section><h2>");
-        let html = format!("<html><body><div class='reveal'><div class='slides'><section>{}</section></div></div></body></html>", slides);
-        fs::write(&path, html).map_err(|e| e.to_string())?;
-        Ok(())
-    }
-
-    async fn handle_email(content: String) -> Result<(), String> {
-        Self::show_toast("Kairo: exporting as email...");
-        let subject = content.lines().find(|l| l.starts_with("# ")).unwrap_or("# Default Subject").replace("# ", "");
-        let email = format!("Subject: {}\n\n{}\n\nBest regards,\nUser", subject, content);
-        Self::copy_to_clipboard(&email);
-        Ok(())
-    }
-
-    async fn handle_linkedin(content: String) -> Result<(), String> {
-        Self::show_toast("Kairo: exporting for LinkedIn...");
-        // Reformat logic mock
-        let mut clean = content.replace("#", "").replace("*", "");
-        if clean.len() > 1300 { clean.truncate(1300); }
-        let li_post = format!("{}\n\nThoughts? 👇", clean);
-        Self::copy_to_clipboard(&li_post);
-        Ok(())
-    }
-
-    async fn handle_tweet_thread(content: String) -> Result<(), String> {
-        Self::show_toast("Kairo: exporting as Tweet thread...");
-        let clean = content.replace("#", "").replace("*", "");
-        let mut tweets = Vec::new();
-        for (i, chunk) in clean.chars().collect::<Vec<char>>().chunks(270).enumerate() {
-            tweets.push(format!("({}/N) {}", i+1, chunk.iter().collect::<String>()));
-        }
-        Self::copy_to_clipboard(&tweets.join("\n\n"));
-        Ok(())
-    }
-
-    async fn handle_notion(content: String) -> Result<(), String> {
-        Self::show_toast("Kairo: exporting for Notion...");
-        Self::copy_to_clipboard(&content);
-        Ok(())
-    }
-
-    async fn handle_slides_google(_content: String) -> Result<(), String> {
-        Self::show_toast("Kairo: exporting to Google Slides...");
-        // API Flow mock
-        sleep(Duration::from_millis(500)).await;
-        println!("Opening OAuth window for Google Slides...");
-        Ok(())
-    }
-
-    async fn handle_summary(_content: String) -> Result<(), String> {
-        Self::show_toast("Kairo: generating summary...");
-        // Inject at top mock
-        sleep(Duration::from_millis(500)).await;
-        println!("Injecting summary via Enigo...");
-        Ok(())
-    }
-
-    async fn handle_translate(_content: String, lang: String) -> Result<(), String> {
-        Self::show_toast(&format!("Kairo: translating to {}...", lang));
-        sleep(Duration::from_millis(500)).await;
-        println!("Ghost-typing translation...");
-        Ok(())
-    }
-
-    async fn handle_proofread(_content: String) -> Result<(), String> {
-        Self::show_toast("Kairo: proofreading...");
-        sleep(Duration::from_millis(500)).await;
-        println!("Showing Tauri diff panel...");
-        Ok(())
-    }
-
     fn show_toast(msg: &str) {
-        println!("{}", msg);
+        // Production: integrates with toast_notification.rs or system tray.
+        // For CLI/test: write to stderr so it doesn't pollute stdout.
+        eprintln!("[KAIRO] {}", msg);
     }
 
     fn copy_to_clipboard(text: &str) {
-        // Mock using arboard or similar
-        println!("Copied to clipboard: {}...", &text[0..std::cmp::min(text.len(), 40)]);
+        #[cfg(target_os = "windows")]
+        {
+            use std::process::Command;
+            // Use PowerShell here-string to avoid escaping issues with double-quotes inside text.
+            let ps_script = format!("Set-Clipboard -Value @\"\n{}\n\"@", text);
+            let _ = Command::new("powershell")
+                .args(["-NoProfile", "-NonInteractive", "-Command", &ps_script])
+                .output();
+        }
+        #[cfg(not(target_os = "windows"))]
+        {
+            eprintln!("[KAIRO clipboard] {}...", &text[..std::cmp::min(text.len(), 60)]);
+        }
     }
 }

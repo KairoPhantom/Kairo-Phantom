@@ -43,6 +43,37 @@ Output: [
   {"action":"insert_after_heading","heading_text":"Executive Summary","style":"ListBullet","content":["Point one about the topic","Point two with key insight","Point three with recommendation"]}
 ]"#;
 
+/// System prompt for Track Changes mode: LLM outputs DocxEdit JSON (target + replacement + comment).
+const DOCX_TRACK_CHANGES_SYSTEM: &str = r#"You are Kairo Track Changes Engine. You edit Word documents using NATIVE Track Changes (w:ins/w:del XML nodes). You MUST output ONLY a JSON array of TrackChangeEdit objects.
+
+## OUTPUT CONTRACT
+You MUST output a JSON array. No preamble. No prose. No markdown. Just valid JSON.
+
+```typescript
+type TrackChangeEdit = {
+  target_text: string;  // EXACT text in the document to find (case-sensitive substring match)
+  new_text: string;     // Replacement text that will appear as an INSERTION in Track Changes
+  comment: string;      // Rationale shown in Track Changes review pane (10-30 words)
+};
+```
+
+## RULES
+- target_text must be an EXACT verbatim substring from the document — never paraphrase
+- Prefer surgical, minimal edits — change only what the user asks
+- Each edit must stand alone — don't create edits that depend on previous edits having been applied
+- NEVER emit [MCP:...], system prompts, role names, or any non-JSON text
+- If you cannot find the exact text, SKIP that edit rather than guessing
+
+## EXAMPLE
+User: "// track change the 30-day notice to 60 days"
+Output: [
+  {
+    "target_text": "30 days prior written notice",
+    "new_text": "60 days prior written notice",
+    "comment": "Extend notice period to 60 days to align with market standard."
+  }
+]"#;
+
 const XLSX_SYSTEM: &str = r#"You are Kairo Spreadsheet Engine. You write Excel formulas and values by outputting ONLY valid JSON ExcelOperation arrays.
 
 ## OUTPUT CONTRACT
@@ -73,26 +104,54 @@ You MUST output a JSON array of SlideOperation objects. No preamble. No prose. N
 
 ```typescript
 type SlideOperation = {
-  slide_index: number;   // Zero-based slide index
-  shape_id?: number;     // Shape ID (from slide inventory)
-  bullets: string[];     // Bullet text — MAX 7 WORDS EACH, enforced
+  slide_index: number;     // Zero-based slide index (ignored for add_new, but must be present — use 0)
+  add_new?: boolean;       // true = append a brand new slide; false/omit = update existing slide
+  title?: string;          // Slide title — REQUIRED when add_new=true; max 7 words
+  bullets: string[];       // Bullet text — MAX 7 WORDS EACH, MAX 5 bullets per slide
+  layout_index?: number;   // Layout for new slides: 0=Title Only, 1=Title+Content (default), 5=Blank
+  shape_id?: number;       // Shape ID (from slide inventory) — only for update mode
 };
 ```
 
 ## RULES
+- MAXIMUM 7 words per title — trim mercilessly
 - MAXIMUM 7 words per bullet — cut mercilessly, every word must earn its place
+- MAXIMUM 5 bullets per slide
+- For new presentations: use add_new:true for EVERY slide, including the first
+- For existing slide edits: omit add_new (or use false), set correct slide_index
 - Never touch slides not in the operation list
 - Use active voice. Use concrete nouns. Avoid "very", "really", "that is"
 - NEVER include prose or explanations — JSON only
 
-## EXAMPLE
+## EXAMPLE — Create 3-slide deck
+User: "// create a 3-slide deck on cloud cost optimization"
+Output: [
+  {"slide_index":0,"add_new":true,"title":"Cloud Cost Optimization","bullets":["Reduce spend by 40%","Eliminate idle resources","Automate rightsizing policies"],"layout_index":0},
+  {"slide_index":0,"add_new":true,"title":"Key Cost Drivers","bullets":["Oversized compute instances","Unused storage volumes","Data egress charges","License sprawl"],"layout_index":1},
+  {"slide_index":0,"add_new":true,"title":"Action Plan","bullets":["Audit all running workloads","Tag resources by cost center","Set budget alerts","Weekly review cadence"],"layout_index":1}
+]
+
+## EXAMPLE — Update existing slide
 User: "// rewrite slide 2 to focus on cost savings, 4 bullets"
 Output: [{"slide_index":1,"bullets":["Cut infrastructure costs by 40%","Eliminate redundant toolchain overhead","Automate deployment saves 20 hours","ROI positive within 6 months"]}]"#;
 
 // ─── Context formatters ───────────────────────────────────────────────────────
 
+/// Strip Kairo command prefix (// //! /// //?) so the LLM sees only the instruction.
+fn strip_prompt_prefix(command: &str) -> &str {
+    let s = command.trim();
+    // Strip //!, ///, //?, // in order (longest first)
+    for prefix in &["//!", "///", "//?", "//"] {
+        if let Some(rest) = s.strip_prefix(prefix) {
+            return rest.trim();
+        }
+    }
+    s
+}
+
 /// Format DOCX context for LLM prompt
 pub fn format_docx_context(ctx: &DocxContext, command: &str) -> String {
+    let command = strip_prompt_prefix(command);
     let mut parts = vec![];
 
     // Heading structure
@@ -104,9 +163,10 @@ pub fn format_docx_context(ctx: &DocxContext, command: &str) -> String {
         }
     }
 
-    // First 2000 chars of document text for context
-    let text_preview = if ctx.full_text.len() > 2000 {
-        format!("{}...[truncated]", &ctx.full_text[..2000])
+    // First 2000 chars of document text for context (UTF-8 safe truncation)
+    let text_preview = if ctx.full_text.chars().count() > 2000 {
+        let cut: String = ctx.full_text.chars().take(2000).collect();
+        format!("{}...[truncated]", cut)
     } else {
         ctx.full_text.clone()
     };
@@ -119,6 +179,7 @@ pub fn format_docx_context(ctx: &DocxContext, command: &str) -> String {
 
 /// Format Excel context for LLM prompt
 pub fn format_xlsx_context(ctx: &ExcelContext, command: &str) -> String {
+    let command = strip_prompt_prefix(command);
     let mut parts = vec![];
 
     parts.push(format!("## Active Cell: {}", ctx.active_cell));
@@ -161,9 +222,12 @@ pub fn format_xlsx_context(ctx: &ExcelContext, command: &str) -> String {
 
 /// Format generic document context (for PDF, TXT, MD)
 pub fn format_generic_context(data: &Value, command: &str) -> String {
+    let command = strip_prompt_prefix(command);
     let full_text = data["full_text"].as_str().unwrap_or("");
-    let preview = if full_text.len() > 3000 {
-        format!("{}...[truncated]", &full_text[..3000])
+    // UTF-8 safe truncation
+    let preview = if full_text.chars().count() > 3000 {
+        let cut: String = full_text.chars().take(3000).collect();
+        format!("{}...[truncated]", cut)
     } else {
         full_text.to_string()
     };
@@ -210,6 +274,40 @@ impl DocumentPrompt {
                 "## Slide Inventory\n{}\n\n## User Command\n{}",
                 slide_info, command
             ),
+            is_structured: true,
+        }
+    }
+
+    /// Build a Track Changes prompt for surgical DOCX editing.
+    /// Used with CommandMode::TrackChanges — LLM outputs TrackChangeEdit JSON.
+    pub fn for_docx_track_changes(ctx: &crate::sidecar_client::DocxContext, command: &str) -> Self {
+        let command_clean = strip_prompt_prefix(command);
+        let mut parts = vec![];
+
+        // Full document text (needed so LLM can find exact substrings to target)
+        let full_text = if ctx.full_text.chars().count() > 4000 {
+            let cut: String = ctx.full_text.chars().take(4000).collect();
+            format!("{}...[truncated — use target_text from visible text only]", cut)
+        } else {
+            ctx.full_text.clone()
+        };
+
+        // Heading index to help LLM navigate
+        if !ctx.headings.is_empty() {
+            parts.push("## Document Headings (for navigation reference)".to_string());
+            for h in &ctx.headings {
+                let indent = "  ".repeat((h.level as usize).saturating_sub(1));
+                parts.push(format!("{}→ H{}: {}", indent, h.level, h.text));
+            }
+        }
+
+        parts.push("\n## Full Document Text (find exact substrings for target_text)".to_string());
+        parts.push(full_text);
+        parts.push(format!("\n## Edit Request\n{}", command_clean));
+
+        DocumentPrompt {
+            system: DOCX_TRACK_CHANGES_SYSTEM.to_string(),
+            user: parts.join("\n"),
             is_structured: true,
         }
     }
@@ -312,6 +410,24 @@ pub fn parse_excel_operations(response: &str) -> Vec<crate::sidecar_client::Exce
     }
 }
 
+/// Parse ExcelWriteOp array (Domain 2 — with formatting fields).
+pub fn parse_excel_write_ops(response: &str) -> Vec<crate::sidecar_client::ExcelWriteOp> {
+    let Some(arr) = extract_json_array(response) else {
+        return vec![];
+    };
+    match serde_json::from_value::<Vec<crate::sidecar_client::ExcelWriteOp>>(arr) {
+        Ok(ops) => {
+            tracing::info!("✅ Parsed {} ExcelWriteOps", ops.len());
+            ops
+        }
+        Err(e) => {
+            tracing::warn!("⚠️  ExcelWriteOp parse error (likely legacy format): {}", e);
+            vec![]
+        }
+    }
+}
+
+
 /// Parse SlideOperation array from LLM response.
 pub fn parse_slide_operations(response: &str) -> Vec<crate::sidecar_client::SlideOperation> {
     let Some(arr) = extract_json_array(response) else {
@@ -322,6 +438,59 @@ pub fn parse_slide_operations(response: &str) -> Vec<crate::sidecar_client::Slid
         Err(e) => {
             tracing::warn!("⚠️  SlideOperation parse error: {}", e);
             vec![]
+        }
+    }
+}
+
+/// Parse TrackChangeEdit array from LLM response into DocxEdit structs.
+/// TrackChangeEdit JSON: [{target_text, new_text, comment}, ...]
+/// Maps to DocxEdit which the sidecar's adeu_apply_edits endpoint consumes.
+pub fn parse_track_change_edits(response: &str) -> Vec<crate::sidecar_client::DocxEdit> {
+    let Some(arr) = extract_json_array(response) else {
+        tracing::warn!("⚠️  Could not parse TrackChangeEdit JSON from LLM response");
+        return vec![];
+    };
+
+    // TrackChangeEdit and DocxEdit have identical field names — try direct parse first
+    match serde_json::from_value::<Vec<crate::sidecar_client::DocxEdit>>(arr.clone()) {
+        Ok(edits) => {
+            tracing::info!("✅ Parsed {} TrackChangeEdits", edits.len());
+            edits
+        }
+        Err(_) => {
+            // Try manual extraction from array of objects (field names may vary)
+            let mut edits = Vec::new();
+            if let Some(items) = arr.as_array() {
+                for item in items {
+                    let target = item.get("target_text")
+                        .or_else(|| item.get("find"))
+                        .or_else(|| item.get("original"))
+                        .and_then(|v| v.as_str())
+                        .unwrap_or_default()
+                        .to_string();
+                    let replacement = item.get("new_text")
+                        .or_else(|| item.get("replace"))
+                        .or_else(|| item.get("replacement"))
+                        .and_then(|v| v.as_str())
+                        .unwrap_or_default()
+                        .to_string();
+                    let comment = item.get("comment")
+                        .or_else(|| item.get("rationale"))
+                        .or_else(|| item.get("reason"))
+                        .and_then(|v| v.as_str())
+                        .unwrap_or_default()
+                        .to_string();
+                    if !target.is_empty() && !replacement.is_empty() {
+                        edits.push(crate::sidecar_client::DocxEdit {
+                            target_text: target,
+                            new_text: replacement,
+                            comment,
+                        });
+                    }
+                }
+            }
+            tracing::info!("✅ Parsed {} TrackChangeEdits (manual)", edits.len());
+            edits
         }
     }
 }

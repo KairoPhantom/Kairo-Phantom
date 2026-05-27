@@ -1,0 +1,10 @@
+{
+  "kairo_docops_2k": {
+    "file_name": "kairo_docops_2k.jsonl",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+    }
+  }
+}
