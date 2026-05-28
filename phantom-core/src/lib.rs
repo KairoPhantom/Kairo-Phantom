@@ -36,11 +36,8 @@ pub mod planning_engine;
 pub mod governance;
 pub mod yjs_peer;
 pub mod identity;
-pub mod wasm_sandbox;
 pub mod extractors;
 pub mod perf_engine;
-pub mod wgpu_effects;
-pub mod chaos;
 pub mod sentinel;
 pub mod persona;
 pub mod memory;
@@ -60,7 +57,6 @@ pub mod kami_export;
 pub mod pdf_context;             // Domain 4: PDF SmartContextCapture structs
 pub mod context_optimizer;
 pub mod background_worker;
-pub mod aws_emulation;
 pub mod skills;
 pub mod memory_vault;
 pub mod tolaria_bridge;
@@ -83,13 +79,11 @@ pub enum PhantomEvent {
     VoicePressed,
     /// Domain 8: Alt+Shift+M — screen context capture trigger
     ScreenContextPressed,
+    /// User pressed Ctrl+Shift+Z — undo last injection
+    UndoPressed,
     /// Shutdown signal
     Shutdown,
 }
-pub mod telemetry;
-pub mod eval;
-pub mod xa11y;
-pub mod inference;
 pub mod mcp_auth;
 
 pub mod waza_sdk;
@@ -100,16 +94,13 @@ pub mod toast_notification;     // P0-B2: PAHF toast overlay (replaces doc injec
 pub mod startup_timer;          // P0-A1: Startup checkpoint profiler
 pub mod memory_seeder;          // P1-A2: Seed MemMachine from existing doc folder
 pub mod kpx_export;             // P1-A4: .kpx portable memory export/import
-pub mod health_check;           // P2-A1: Document health check (passive voice, consistency)
-pub mod compliance_scanner;     // P2-A3: HIPAA/GDPR/custom compliance clause scanner
-pub mod owasp_compliance;       // P2-C1: OWASP Agentic Top 10 compliance matrix
-pub mod deep_presenter;         // P2-A7: DeepPresenter-9B local PPT generation bridge
-pub mod waza_registry;          // P3-A2/B1: Waza Skills marketplace + skill builder CLI
-pub mod siem_export;            // P4-A2: CEF/LEEF/JSON-lines SIEM audit log export
-pub mod cross_doc_consistency;  // P2-A2: Cross-document consistency engine
-pub mod lan_sync;               // P1-A1: LAN memory sync — UDP discovery + TCP transfer
-pub mod excel_formula;          // P2-A5: Excel formula explainer + generator
-pub mod section_summarizer;     // P2-A4: 3-bullet section summarizer
+pub mod health_check;
+pub mod deep_presenter;
+pub mod waza_registry;
+pub mod cross_doc_consistency;
+pub mod lan_sync;
+pub mod excel_formula;
+pub mod section_summarizer;
 
 // ── Phase 1: Python Sidecar + Document-Native Pipeline ────────────────────────
 pub mod sidecar_client;         // TCP client → Python sidecar (DOCX/XLSX/PPTX/PDF I/O)
@@ -127,9 +118,4 @@ pub mod tts_engine;
 pub mod wake_word;
 
 // ── Domain 9: Enterprise Governance & Compliance ────────────────────────────
-pub mod enterprise;            // SSO, SPIFFE, audit chain, compliance, RBAC
-
-// ── Domain 10: Security Hardening & Penetration Testing ─────────────────────
 pub mod prompt_injection_firewall; // 50-detector 6-layer prompt injection firewall
-pub mod red_team;              // Autonomous red-team simulation (Decepticon-style)
-pub mod supply_chain;          // SBOM, license compliance, vulnerability audit

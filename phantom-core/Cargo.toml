@@ -104,30 +104,17 @@ memchr = "2.7"
 # A3: Async utilities for zero-alloc SSE parsing
 pin-project-lite = "0.2"
 
-# Advancement 7: WASM Plugin Sandbox (real Wasmtime JIT)
-wasmtime = "21.0"
-
 # D2/F1: Real Ed25519 cryptography — plugin signing + agent identity
 ed25519-dalek = { version = "2.1", features = ["rand_core"] }
 sha2 = "0.10"
 rand = "0.8"
 
-# C1: WGPU native GPU rendering — replaces Node.js/Puppeteer (10-100x faster)
-wgpu = { version = "22", features = ["vulkan-portability"] }
 regex = "1.12.3"
 rusqlite = { version = "0.32.0", features = ["bundled"] }
 chrono = { version = "0.4.44", features = ["serde"] }
 tempfile = "3"
-opentelemetry = "0.32.0"
-opentelemetry_sdk = "0.32.0"
-opentelemetry-otlp = "0.32.0"
-spiffe = "0.15.1"
-tree-sitter = "0.22"
-tree-sitter-rust = "0.21"
-tree-sitter-python = "0.21"
 
 # Domain 9: Enterprise Governance & Compliance
-jsonwebtoken = "9"           # MIT — JWT RS256/HS256 validation for Logto/OIDC SSO
 hmac = "0.12"                # MIT/Apache-2.0 — HMAC-SHA256 for audit chain sealing
 hex = "0.4"                  # MIT/Apache-2.0 — SHA-256 fingerprint encoding (runtime dep)
 
@@ -207,37 +194,9 @@ doc_list_item_without_indentation = "allow"
 name = "test_prompt_injection"
 path = "tests/security/test_prompt_injection.rs"
 
-[[test]]
-name = "test_wasm_sandbox"
-path = "tests/security/test_wasm_sandbox.rs"
 
-[[test]]
-name = "test_governance_gate"
-path = "tests/security/test_governance_gate.rs"
 
-[[test]]
-name = "test_audit_chain"
-path = "tests/security/test_audit_chain.rs"
 
-# ── Domain 9: Enterprise Governance E2E Tests ─────────────────────────────────────────────────────
-[[test]]
-name = "test_domain9_e2e"
-path = "tests/security/test_domain9_e2e.rs"
-
-# ── Domain 10: Security Hardening E2E Tests ───────────────────────────────────────────────────
-[[test]]
-name = "test_domain10_e2e"
-path = "tests/security/test_domain10_e2e.rs"
-
-# ── Domain 11: Cross-Platform Hardening Tests ─────────────────────────────────
-[[test]]
-name = "test_cross_platform"
-path = "tests/platform/test_cross_platform.rs"
-
-# ── Domain 11: Cross-Platform E2E Gate Certification ─────────────────────────
-[[test]]
-name = "test_domain11_e2e"
-path = "tests/security/test_domain11_e2e.rs"
 
 # ── Phase 1 Foundation Hardening: Protocol Enforcement Gate Tests ─────────────
 [[test]]

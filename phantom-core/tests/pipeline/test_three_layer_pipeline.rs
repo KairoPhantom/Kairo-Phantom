@@ -19,7 +19,6 @@ use phantom_core::planning_engine::{PlanningEngine, Plan, StepStatus};
 use phantom_core::context::{AppContext, AppEnvironment};
 use phantom_core::document_context::{DocumentContext, DocKind};
 use phantom_core::sentinel::SentinelSanitizer;
-use phantom_core::compliance_scanner::ComplianceScanner;
 use phantom_core::command_protocol::CommandMode;
 
 // ─── Mock AI Backend ──────────────────────────────────────────────────────────
@@ -102,7 +101,6 @@ async fn test_consecutive_50_ops_three_layer_pipeline() {
         violate_compliance: false,
     });
 
-    let scanner = ComplianceScanner::load();
     let sanitizer = SentinelSanitizer::new();
 
     // Latency counters in microseconds
@@ -173,9 +171,7 @@ async fn test_consecutive_50_ops_three_layer_pipeline() {
         let is_leak_free = sanitizer.scan_output(&response);
         assert!(is_leak_free, "Response must not leak system prompt directives");
 
-        // 2. Assert Compliance Scanner checks out
-        let violations = scanner.scan(&response);
-        assert!(violations.is_empty(), "Stress test response must not violate compliance");
+
 
         println!(
             "[{}/50] Scenario passed: Specialist={:?}, Intent={:?}, Latency: Gate={}µs, Planning={}µs",
@@ -215,83 +211,7 @@ async fn test_sentinel_leakage_is_caught_and_fails() {
     assert!(!is_safe, "Sentinel must detect and fail prompt leakage");
 }
 
-#[tokio::test]
-async fn test_compliance_scanner_detects_violations() {
-    let violative_backend = MockAiBackend {
-        leak_prompt: false,
-        violate_compliance: true,
-    };
-    let response = violative_backend.complete("Persona", "test prompt").await.unwrap();
 
-    let scanner = ComplianceScanner::load();
-    let violations = scanner.scan(&response);
-    assert!(!violations.is_empty(), "Compliance scanner must find violations in violative response");
-    assert!(violations.iter().any(|v| v.rule_id == "HIPAA-001" || v.severity == "error" || v.severity == "warning"));
-}
-
-// ─── NEW: Output Compliance Gate Logic Tests ─────────────────────────────────
-
-/// Verify that error-level violations in LLM OUTPUT are caught and would be blocked.
-/// This maps to the `continue` path added to main.rs after the post-stream compliance gate.
-#[tokio::test]
-async fn test_output_compliance_gate_blocks_error_violations() {
-    // Simulate LLM returning response with SSN (HIPAA-001 error)
-    let llm_output = "[REPLACE] Patient details: SSN 123-45-6789, DOB 1980-01-01, MRN 99821.";
-
-    let scanner = ComplianceScanner::load();
-    let violations = scanner.scan(llm_output);
-
-    // Must find error violations
-    let error_violations: Vec<_> = violations.iter()
-        .filter(|v| v.severity == "error")
-        .collect();
-
-    assert!(!error_violations.is_empty(),
-        "Post-stream compliance gate must detect error-level violations in LLM output");
-
-    // Confirm the rule IDs are what we expect (HIPAA-001 for SSN)
-    assert!(
-        error_violations.iter().any(|v| v.rule_id == "HIPAA-001"),
-        "Must detect HIPAA-001 (SSN) as error-level in LLM output"
-    );
-
-    println!(
-        "✅ Output compliance gate: {} error violation(s) detected — injection would be BLOCKED",
-        error_violations.len()
-    );
-}
-
-/// Verify that warning-level violations in LLM OUTPUT produce non-empty violations
-/// but the scanner does not erroneously classify them as errors (advisory path).
-#[tokio::test]
-async fn test_output_compliance_gate_allows_warning_violations_with_advisory() {
-    // MRN is warning-level (HIPAA-002), not error
-    let llm_output = "[REPLACE] The patient's medical record number (MRN) must be handled carefully.";
-
-    let scanner = ComplianceScanner::load();
-    let violations = scanner.scan(llm_output);
-
-    let error_violations: Vec<_> = violations.iter()
-        .filter(|v| v.severity == "error")
-        .collect();
-
-    let warn_violations: Vec<_> = violations.iter()
-        .filter(|v| v.severity == "warning")
-        .collect();
-
-    // No errors — injection must proceed
-    assert!(error_violations.is_empty(),
-        "MRN mention is HIPAA-002 (warning), not error — injection should NOT be blocked");
-
-    // Warning present — advisory toast should fire
-    assert!(!warn_violations.is_empty(),
-        "MRN mention must produce at least one warning-level violation for advisory toast");
-
-    println!(
-        "✅ Output compliance gate: {} warning(s) — injection ADVISORY, not blocked",
-        warn_violations.len()
-    );
-}
 
 
 

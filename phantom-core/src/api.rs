@@ -339,13 +339,6 @@ async fn generate_image(
     }
 }
 
-/// POST /bedrock/invoke — Tier 8 AWS Emulation
-async fn aws_bedrock_invoke(
-    State(_state): State<ApiState>,
-    Json(req): Json<crate::aws_emulation::BedrockInvokeRequest>,
-) -> Json<crate::aws_emulation::BedrockInvokeResponse> {
-    Json(crate::aws_emulation::AwsEmulation::handle_invoke(req).await)
-}
 
 #[derive(Deserialize)]
 pub struct KamiExportRequest {
@@ -411,7 +404,6 @@ pub async fn start_api_server(state: ApiState) {
         .route("/app", get(get_app))
         .route("/agent", post(set_agent))
         .route("/generate_image", post(generate_image))
-        .route("/bedrock/invoke", post(aws_bedrock_invoke))
         .route("/kami/export", post(kami_export))
         .route("/mobile/sync", post(mobile_sync_post))
         .with_state(state);

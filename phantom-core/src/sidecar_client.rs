@@ -1065,9 +1065,9 @@ pub async fn launch_sidecar() {
                     .spawn()
                 {
                     Ok(mut child) => {
-                        // Ping retry loop: ping every 1 second for up to 10 attempts
+                        // Ping retry loop: ping every 1 second for up to 30 attempts
                         let mut ping_success = false;
-                        for i in 1..=10 {
+                        for i in 1..=30 {
                             tokio::time::sleep(std::time::Duration::from_secs(1)).await;
                             if ping().await {
                                 tracing::info!("✅ Sidecar ready on port {} (attempt {})", SIDECAR_PORT, i);

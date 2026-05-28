@@ -19,11 +19,8 @@ mod planning_engine;
 mod governance;
 mod yjs_peer;
 mod identity;
-mod wasm_sandbox;
 mod extractors;
 mod perf_engine;
-mod wgpu_effects;
-pub mod chaos;
 mod sentinel;
 mod persona;
 mod memory;
@@ -43,15 +40,10 @@ mod kami_export;
 mod pdf_context;              // Domain 4: PDF SmartContextCapture structs
 mod context_optimizer;
 mod background_worker;
-mod aws_emulation;
 mod skills;
 mod memory_vault;
 mod tolaria_bridge;
 mod integration;
-mod telemetry;
-mod eval;
-mod xa11y;
-mod inference;
 mod mcp_auth;
 mod waza_sdk;
 pub mod collaborative;
@@ -63,11 +55,8 @@ mod startup_timer;
 mod memory_seeder;
 mod kpx_export;
 mod health_check;
-mod compliance_scanner;
-mod owasp_compliance;
 mod deep_presenter;
 mod waza_registry;
-mod siem_export;
 mod cross_doc_consistency;
 mod lan_sync;
 mod excel_formula;
@@ -84,11 +73,7 @@ mod screen_context;
 mod tts_engine;
 mod wake_word;
 
-// ── Domain 9: Enterprise Governance & Compliance ─────────────────────────────
-mod enterprise;
-
 use identity::IdentityManager;
-use wasm_sandbox::WasmPluginRegistry;
 
 use ghost_session::ConfidenceBand;
 use governance::{AuditLogger, AuditEvent, AuditOutcome};
@@ -127,6 +112,8 @@ pub enum PhantomEvent {
     VoicePressed,
     /// Domain 8: Alt+Shift+M — screen context capture trigger
     ScreenContextPressed,
+    /// User pressed Ctrl+Shift+Z — undo last injection
+    UndoPressed,
     /// Shutdown signal
     Shutdown,
 }
@@ -288,111 +275,7 @@ async fn async_main() -> Result<()> {
         return Ok(());
     }
 
-    // kairo owasp-report — print OWASP compliance matrix
-    if args.len() >= 2 && args[1] == "owasp-report" {
-        let report = owasp_compliance::generate_markdown_report();
-        let output_path = "KAIRO_OWASP_COMPLIANCE.md";
-        std::fs::write(output_path, &report)?;
-        println!("✅ OWASP Compliance Matrix written to: {}", output_path);
-        println!("\n{}", owasp_compliance::generate_ciso_summary());
-        return Ok(());
-    }
 
-    // kairo siem-export [--format cef|leef|json] [--output file]
-    if args.len() >= 2 && args[1] == "siem-export" {
-        return siem_export::run_siem_export_command(&args[2..]).await;
-    }
-
-    // ── Domain 9: Enterprise Governance & Compliance ─────────────────────────
-
-    // kairo audit-verify — verify SHA-256 chain integrity of the enterprise audit log
-    if args.len() >= 2 && args[1] == "audit-verify" {
-        use crate::enterprise::audit::EnterpriseAuditLogger;
-        match EnterpriseAuditLogger::from_env() {
-            Ok(logger) => {
-                println!("🔍 Verifying enterprise audit chain...");
-                match logger.verify_chain() {
-                    Ok(r) => println!("{}", r),
-                    Err(e) => println!("❌ Chain verification failed: {}", e),
-                }
-            }
-            Err(e) => println!("❌ Audit logger init failed: {}", e),
-        }
-        return Ok(());
-    }
-
-    // kairo audit-export [--since YYYY-MM-DD] [--until YYYY-MM-DD] [--format json|csv]
-    if args.len() >= 2 && args[1] == "audit-export" {
-        use crate::enterprise::audit::EnterpriseAuditLogger;
-        let since: Option<i64> = args.iter().position(|a| a == "--since")
-            .and_then(|i| args.get(i + 1))
-            .and_then(|s| chrono::DateTime::parse_from_rfc3339(&format!("{}T00:00:00Z", s)).ok())
-            .map(|dt| dt.timestamp());
-        let until: Option<i64> = args.iter().position(|a| a == "--until")
-            .and_then(|i| args.get(i + 1))
-            .and_then(|s| chrono::DateTime::parse_from_rfc3339(&format!("{}T23:59:59Z", s)).ok())
-            .map(|dt| dt.timestamp());
-        let _format = args.iter().position(|a| a == "--format")
-            .and_then(|i| args.get(i + 1)).map(|s| s.as_str()).unwrap_or("json");
-        match EnterpriseAuditLogger::from_env() {
-            Ok(logger) => {
-                println!("📤 Exporting audit log (json)...");
-                match logger.export_json(since, until) {
-                    Ok(rows) => {
-                        for row in &rows { println!("{}", row); }
-                        println!("✅ {} records exported.", rows.len());
-                    }
-                    Err(e) => println!("❌ Export failed: {}", e),
-                }
-            }
-            Err(e) => println!("❌ Audit logger init failed: {}", e),
-        }
-        return Ok(());
-    }
-
-    // kairo rbac-check --agent <agent-id> --user <email> --roles <role1,role2>
-    if args.len() >= 2 && args[1] == "rbac-check" {
-        use crate::enterprise::rbac::{RbacEngine, RbacPolicy};
-        let agent_id = args.iter().position(|a| a == "--agent")
-            .and_then(|i| args.get(i + 1)).cloned().unwrap_or_else(|| "default-agent".to_string());
-        let user_email = args.iter().position(|a| a == "--user")
-            .and_then(|i| args.get(i + 1)).cloned().unwrap_or_else(|| "user@kairo.local".to_string());
-        let roles: Vec<String> = args.iter().position(|a| a == "--roles")
-            .and_then(|i| args.get(i + 1))
-            .map(|s| s.split(',').map(|r| r.trim().to_string()).collect())
-            .unwrap_or_else(|| vec!["user".to_string()]);
-        // Load policy from Waza registry or use permissive default
-        let policy = RbacPolicy::permissive();
-        let out = RbacEngine::policy_check_cli(&agent_id, &user_email, &roles, &policy);
-        println!("{}", out);
-        return Ok(());
-    }
-
-    // kairo agent identity show — display this agent's SPIFFE identity
-    if args.len() >= 4 && args[1] == "agent" && args[2] == "identity" && args[3] == "show" {
-        use crate::enterprise::spiffe_identity::{SpiffeAgent, SpiffeConfig};
-        let config_dir = dirs::home_dir().unwrap_or_default().join(".kairo-phantom");
-        let id_path = config_dir.join("enterprise").join("spiffe_identity.json");
-        let config = SpiffeConfig {
-            enabled: true,
-            trust_domain: "kairo-phantom.io".to_string(),
-            agent_name: "ghost-writer".to_string(),
-            agent_socket_path: None,
-        };
-        match SpiffeAgent::load_or_create(&config) {
-            Ok(agent) => {
-                println!("🔐 SPIFFE Agent Identity");
-                println!("  SPIFFE ID:   {}", agent.identity.spiffe_id);
-                println!("  Trust Domain: {}", agent.identity.trust_domain);
-                println!("  Agent Name:  {}", agent.identity.agent_name);
-                println!("  Fingerprint: {}", agent.identity.cert_fingerprint);
-                println!("  Public Key:  {}...", &agent.identity.public_key_b64[..32.min(agent.identity.public_key_b64.len())]);
-                println!("  Identity file: {}", id_path.display());
-            }
-            Err(e) => println!("❌ SPIFFE identity load failed: {}", e),
-        }
-        return Ok(());
-    }
 
     // kairo memory sync <discover|pull <peer>|serve>
     if args.len() >= 3 && args[1] == "memory" && args[2] == "sync" {
@@ -595,17 +478,7 @@ async fn async_main() -> Result<()> {
     let identity_manager = IdentityManager::load(&kairo_config_dir);
     info!("🔑 Agent identity loaded: {}", &identity_manager.identity.agent_id[..16]);
 
-    // ── Advancement 7: WASM Plugin Sandbox ───────────────────────────────────
-    let wasm_plugin_dir = kairo_config_dir.join("plugins");
-    let mut wasm_registry = WasmPluginRegistry::new(wasm_plugin_dir, None);
-    wasm_registry.scan_and_load();
-    if wasm_registry.plugin_count() > 0 {
-        info!("🔌 WASM plugins loaded: {}", wasm_registry.plugin_count());
-        for name in wasm_registry.list_plugins() {
-            info!("   • {}", name);
-        }
-    }
-    let _wasm_registry = Arc::new(wasm_registry);
+
 
     // ── Waza Skill Architecture — per kairo-intel.md §3.1 ───────────────────
     let skill_manager = Arc::new(crate::skills::SkillManager::new());
@@ -1482,30 +1355,7 @@ async fn async_main() -> Result<()> {
                     }
                 }
 
-                // ── P2.3: Compliance Scanner — run on every ghost session ────────────
-                {
-                    let scanner = compliance_scanner::ComplianceScanner::load();
-                    let violations = scanner.scan(&doc_ctx.full_text);
-                    if !violations.is_empty() {
-                        let violation_summary = violations.iter()
-                            .map(|v| {
-                                let phrase_preview: String = v.matched_phrase.chars().take(40).collect();
-                                format!("⚠️  {} [{}]: '{}'", v.rule_id, v.severity, phrase_preview)
-                            })
-                            .collect::<Vec<_>>()
-                            .join("\n");
-                        warn!("🔒 Compliance scanner: {} violations found:\n{}", violations.len(), violation_summary);
-                        // Log to audit trail but don't block — compliance is advisory
-                        audit_logger.log_ghost_session(
-                            AuditEvent::GhostSessionStarted,
-                            AuditOutcome::Pending,
-                            &format!("COMPLIANCE_SCAN:{}", app_label),
-                            &identity_manager.identity.agent_id,
-                            config.model.model_name.as_deref().unwrap_or("default"),
-                            violations.len() as usize,
-                        );
-                    }
-                }
+
 
                 let (target_backend, agent_profile) = swarm_engine.route(&doc_ctx, &command_mode).await;
                 let _agent_id = agent_profile.agent_type.clone();
@@ -1612,52 +1462,87 @@ async fn async_main() -> Result<()> {
                     ) || intent_analysis.confidence > 0.85;
 
                     if !skip_planning && intent_analysis.intent_type != crate::intent_gate::IntentType::Unknown {
-                        info!("📋 [L2] Generating plan for: {}", intent_analysis.intent_summary);
-                        crate::toast_notification::show_progress_toast("Kairo: Planning... 📋");
-                        
-                        let plan = crate::planning_engine::PlanningEngine::generate(
-                            &intent_analysis,
-                            &clean_prompt_for_llm,
-                            &doc_ctx,
-                            &target_backend,
-                        ).await;
-                        
-                        let plan_doc_str = plan.to_document_string();
-                        info!("📋 [L2] Plan generated ({} steps)", plan.steps.len());
-                        
-                        // Store pending plan for next Alt+M
-                        {
-                            let mut lock = pending_plan.lock().unwrap();
-                            *lock = Some(crate::planning_engine::PendingPlan {
-                                plan,
-                                original_prompt: clean_prompt_for_llm.clone(),
-                                doc_specialist: intent_analysis.doc_specialist.clone(),
-                            });
-                        }
-                        
-                        // Inject plan into document
-                        let _ = crate::injector::HumanizedInjector::set_clipboard(&plan_doc_str);
-                        let hwnd_val = crate::hotkey::CAPTURED_HWND.load(std::sync::atomic::Ordering::SeqCst);
-                        if hwnd_val != 0 {
-                            use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE};
-                            use windows::Win32::Foundation::HWND;
-                            let h = HWND(hwnd_val as *mut std::ffi::c_void);
-                            unsafe { 
-                                if windows::Win32::UI::WindowsAndMessaging::IsIconic(h).as_bool() { 
-                                    let _ = windows::Win32::UI::WindowsAndMessaging::ShowWindow(h, windows::Win32::UI::WindowsAndMessaging::SW_RESTORE); 
-                                } 
-                                let _ = BringWindowToTop(h); 
-                                let _ = SetForegroundWindow(h); 
+                        let confidence = intent_analysis.confidence;
+                        if confidence >= 0.50 && confidence <= 0.85 {
+                            // Medium confidence: generate plan synchronously and run inline
+                            info!("📋 [L2] Generating inline plan for medium confidence ({:.0}%)", confidence * 100.0);
+                            crate::toast_notification::show_progress_toast("Kairo: Reasoning... 📋");
+                            
+                            let plan = crate::planning_engine::PlanningEngine::generate(
+                                &intent_analysis,
+                                &clean_prompt_for_llm,
+                                &doc_ctx,
+                                &target_backend,
+                            ).await;
+                            
+                            let plan_doc_str = plan.to_document_string();
+                            info!("📋 [L2] Inline plan generated ({} steps)", plan.steps.len());
+                            
+                            // Store in pending plan lock (so it's saved in memory)
+                            {
+                                let mut lock = pending_plan.lock().unwrap();
+                                *lock = Some(crate::planning_engine::PendingPlan {
+                                    plan: plan.clone(),
+                                    original_prompt: clean_prompt_for_llm.clone(),
+                                    doc_specialist: intent_analysis.doc_specialist.clone(),
+                                });
                             }
-                            tokio::time::sleep(std::time::Duration::from_millis(400)).await;
+                            
+                            // Guide context for final LLM call
+                            intent_hint = format!(
+                                "{}\n\nUSER PLAN EXECUTION DIRECTIVE (Inline Plan):\n{}\nExecute the tasks described in this plan and produce the final combined result. Begin your response with exactly [REPLACE] as required by the prime directive.",
+                                intent_analysis.system_hint(),
+                                plan_doc_str
+                            );
+                        } else {
+                            // Low confidence: require user review/approval by writing plan draft to document
+                            info!("📋 [L2] Generating plan for low confidence ({:.0}%)", confidence * 100.0);
+                            crate::toast_notification::show_progress_toast("Kairo: Planning... 📋");
+                            
+                            let plan = crate::planning_engine::PlanningEngine::generate(
+                                &intent_analysis,
+                                &clean_prompt_for_llm,
+                                &doc_ctx,
+                                &target_backend,
+                            ).await;
+                            
+                            let plan_doc_str = plan.to_document_string();
+                            info!("📋 [L2] Plan generated ({} steps)", plan.steps.len());
+                            
+                            // Store pending plan for next Alt+M
+                            {
+                                let mut lock = pending_plan.lock().unwrap();
+                                *lock = Some(crate::planning_engine::PendingPlan {
+                                    plan,
+                                    original_prompt: clean_prompt_for_llm.clone(),
+                                    doc_specialist: intent_analysis.doc_specialist.clone(),
+                                });
+                            }
+                            
+                            // Inject plan into document
+                            let _ = crate::injector::HumanizedInjector::set_clipboard(&plan_doc_str);
+                            let hwnd_val = crate::hotkey::CAPTURED_HWND.load(std::sync::atomic::Ordering::SeqCst);
+                            if hwnd_val != 0 {
+                                use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE};
+                                use windows::Win32::Foundation::HWND;
+                                let h = HWND(hwnd_val as *mut std::ffi::c_void);
+                                unsafe { 
+                                    if windows::Win32::UI::WindowsAndMessaging::IsIconic(h).as_bool() { 
+                                        let _ = windows::Win32::UI::WindowsAndMessaging::ShowWindow(h, windows::Win32::UI::WindowsAndMessaging::SW_RESTORE); 
+                                    } 
+                                    let _ = BringWindowToTop(h); 
+                                    let _ = SetForegroundWindow(h); 
+                                 }
+                                tokio::time::sleep(std::time::Duration::from_millis(400)).await;
+                            }
+                            injector.inject_replace_line();
+                            crate::toast_notification::show_progress_toast("Plan ready — press Alt+M to execute, Esc to cancel");
+                            last_processed_prompt = String::new(); // allow execution
+                            continue;
                         }
-                        injector.inject_replace_line();
-                        crate::toast_notification::show_progress_toast("Plan ready — press Alt+M to execute, Esc to cancel");
-                        last_processed_prompt = String::new(); // allow execution
-                        continue;
+                    } else {
+                        intent_hint = intent_analysis.system_hint().to_string();
                     }
-
-                    intent_hint = intent_analysis.system_hint().to_string();
                 } else if let Some(ref pending) = active_plan {
                     intent_hint = format!(
                         "USER PLAN EXECUTION DIRECTIVE:\nThe user approved the following execution plan:\n{}\nExecute the tasks described in this plan and produce the final combined result. Begin your response with exactly [REPLACE] as required by the prime directive.",
@@ -2165,17 +2050,6 @@ async fn async_main() -> Result<()> {
                             // If still blocked after retries, show error overlay and skip injection
                             if retry_response.contains("[BLOCKED") {
                                 warn!("🚨 [SENTINEL] All retries failed — blocking injection and showing error");
-                                audit_logger.log_ghost_session(
-                                    AuditEvent::GhostSessionBlocked,
-                                    AuditOutcome::Blocked,
-                                    &format!("SENTINEL_LEAK:{}", app_label),
-                                    kairo_agent_id,
-                                    config.model.model_name.as_deref().unwrap_or("default"),
-                                    prompt_char_count,
-                                );
-                                crate::toast_notification::show_progress_toast(
-                                    "Kairo: Security policy violation detected. Injection blocked."
-                                );
                                 continue;
                             }
                         } else {
@@ -2184,68 +2058,6 @@ async fn async_main() -> Result<()> {
                         }
                     }
 
-                    // ── POST-STREAM COMPLIANCE SCAN (Layer 3 final gate) ──────────────
-                    // The compliance scanner MUST run on the LLM OUTPUT (clean_response)
-                    // before any injection. This is the last line of defence against the
-                    // model hallucinating sensitive data (SSNs, MRNs, GDPR PII) into docs.
-                    //
-                    // Policy:
-                    //   error   → BLOCK injection entirely, audit log, show overlay
-                    //   warning → ALLOW but log + toast advisory
-                    //   info    → ALLOW silently (just trace-level log)
-                    {
-                        let output_scanner = compliance_scanner::ComplianceScanner::load();
-                        let output_violations = output_scanner.scan(&clean_response);
-                        if !output_violations.is_empty() {
-                            let error_violations: Vec<_> = output_violations.iter()
-                                .filter(|v| v.severity == "error")
-                                .collect();
-                            let warn_violations: Vec<_> = output_violations.iter()
-                                .filter(|v| v.severity == "warning")
-                                .collect();
-
-                            if !error_violations.is_empty() {
-                                // BLOCK: LLM response contains error-level compliance violations
-                                let summary = error_violations.iter()
-                                    .map(|v| format!("[{} {}] '{}'", v.rule_id, v.regulation, v.matched_phrase))
-                                    .collect::<Vec<_>>()
-                                    .join(", ");
-                                warn!("🚨 [COMPLIANCE-OUTPUT] Blocking injection — error violations in LLM response: {}", summary);
-                                audit_logger.log_ghost_session(
-                                    AuditEvent::GhostSessionBlocked,
-                                    AuditOutcome::Blocked,
-                                    &format!("COMPLIANCE_OUTPUT_BLOCKED:{}", app_label),
-                                    kairo_agent_id,
-                                    config.model.model_name.as_deref().unwrap_or("default"),
-                                    error_violations.len(),
-                                );
-                                crate::toast_notification::show_progress_toast(
-                                    &format!("⚠️ Kairo: Compliance violation in AI output ({} error(s)). Injection blocked.", error_violations.len())
-                                );
-                                continue; // skip injection entirely
-                            }
-
-                            if !warn_violations.is_empty() {
-                                // ADVISORY: log and toast but allow injection
-                                let summary = warn_violations.iter()
-                                    .map(|v| format!("[{} {}]", v.rule_id, v.regulation))
-                                    .collect::<Vec<_>>()
-                                    .join(", ");
-                                warn!("⚠️  [COMPLIANCE-OUTPUT] Advisory violations in LLM response: {} — injecting with audit log", summary);
-                                audit_logger.log_ghost_session(
-                                    AuditEvent::GhostSessionStarted,
-                                    AuditOutcome::Pending,
-                                    &format!("COMPLIANCE_OUTPUT_ADVISORY:{}", app_label),
-                                    kairo_agent_id,
-                                    config.model.model_name.as_deref().unwrap_or("default"),
-                                    warn_violations.len(),
-                                );
-                                crate::toast_notification::show_progress_toast(
-                                    &format!("ℹ️ Kairo: {} compliance advisory in AI output — review recommended.", warn_violations.len())
-                                );
-                            }
-                        }
-                    }
 
                     full_response = clean_response.clone();
 
@@ -2934,6 +2746,14 @@ async fn async_main() -> Result<()> {
                                     VIRTUAL_KEY, KEYBD_EVENT_FLAGS,
                                 };
 
+                                // Record injection for undo before sending input
+                                let injected_text_for_undo = format!("\n{}", clean_response);
+                                crate::injector::HumanizedInjector::record_injection(
+                                    "",
+                                    &injected_text_for_undo,
+                                    hwnd_val as isize
+                                );
+
                                 let inputs = [
                                     // End — move to end of prompt line
                                     INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_END, wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } },
@@ -3204,6 +3024,14 @@ async fn async_main() -> Result<()> {
                     crdt_session.insert_ai_text(&full_response);
                 }
             }
+            PhantomEvent::UndoPressed => {
+                info!("↩️ UndoPressed event received, executing atomic undo");
+                if crate::injector::HumanizedInjector::perform_undo() {
+                    crate::toast_notification::show_progress_toast("Kairo: Undo complete ↩️");
+                } else {
+                    crate::toast_notification::show_progress_toast("Kairo: Nothing to undo");
+                }
+            }
             PhantomEvent::UserTyping => {
                 info!("🛑 User typing — cancelling active ghost session");
                 let lock = active_cancel_token.lock().unwrap();
@@ -3373,12 +3201,7 @@ fn print_help() {
     println!("  seed <folder>          Seed MemMachine from existing documents");
     println!("  import <file.kpx>      Import a .kpx memory export");
     println!("  export-memory          Export memory as .kpx file");
-    println!("  owasp-report           Generate OWASP Agentic Top 10 compliance matrix");
-    println!("  siem-export            Export audit log (--format cef|leef|json, --output file)");
-    println!("  audit-verify           Verify SHA-256 chain integrity of enterprise audit log");
-    println!("  audit-export           Export audit records [--since YYYY-MM-DD] [--until YYYY-MM-DD]");
-    println!("  rbac-check             Check RBAC policy [--agent <id>] [--user <email>] [--roles <r1,r2>]");
-    println!("  agent identity show    Show this agent's SPIFFE identity and fingerprint");
+
     println!("  memory sync            Discover/sync LAN peers (discover|pull <addr>|serve)");
     println!("  skill <sub>            Manage skills (list|add <url>|remove <name>|new <name>)");
     println!("  verify                 Verify system facts");

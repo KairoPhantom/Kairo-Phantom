@@ -11,7 +11,7 @@ use std::time::Duration;
 #[cfg(windows)]
 use windows::Win32::UI::Input::KeyboardAndMouse::{
     SendInput, INPUT, INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_KEYUP, KEYEVENTF_UNICODE,
-    VK_BACK, VK_ESCAPE, VK_RETURN, VK_CONTROL, VK_END, VK_HOME, VK_SHIFT, VK_DELETE,
+    VK_BACK, VK_ESCAPE, VK_RETURN, VK_CONTROL, VK_END, VK_HOME, VK_SHIFT, VK_DELETE, VK_LEFT,
     VIRTUAL_KEY, KEYBD_EVENT_FLAGS,
 };
 #[cfg(windows)]
@@ -424,4 +424,170 @@ impl HumanizedInjector {
             if !self.inject_char(c, cancel).await { break; }
         }
     }
+
+    pub fn select_backward(count: usize) {
+        #[cfg(windows)]
+        {
+            use windows::Win32::UI::Input::KeyboardAndMouse::{
+                SendInput, INPUT, INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_KEYUP, VK_SHIFT, VK_LEFT,
+                KEYBD_EVENT_FLAGS,
+            };
+            
+            if count == 0 { return; }
+            tracing::info!("Selecting backward by {} characters", count);
+            
+            let mut inputs = Vec::with_capacity(2 + count * 2);
+            
+            // Shift Down
+            inputs.push(INPUT {
+                r#type: INPUT_KEYBOARD,
+                Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
+                    ki: KEYBDINPUT {
+                        wVk: VK_SHIFT,
+                        wScan: 0,
+                        dwFlags: KEYBD_EVENT_FLAGS(0),
+                        time: 0,
+                        dwExtraInfo: 0,
+                    },
+                },
+            });
+            
+            for _ in 0..count {
+                // Left Down
+                inputs.push(INPUT {
+                    r#type: INPUT_KEYBOARD,
+                    Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
+                        ki: KEYBDINPUT {
+                            wVk: VK_LEFT,
+                            wScan: 0,
+                            dwFlags: KEYBD_EVENT_FLAGS(0),
+                            time: 0,
+                            dwExtraInfo: 0,
+                        },
+                    },
+                });
+                // Left Up
+                inputs.push(INPUT {
+                    r#type: INPUT_KEYBOARD,
+                    Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
+                        ki: KEYBDINPUT {
+                            wVk: VK_LEFT,
+                            wScan: 0,
+                            dwFlags: KEYEVENTF_KEYUP,
+                            time: 0,
+                            dwExtraInfo: 0,
+                        },
+                    },
+                });
+            }
+            
+            // Shift Up
+            inputs.push(INPUT {
+                r#type: INPUT_KEYBOARD,
+                Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
+                    ki: KEYBDINPUT {
+                        wVk: VK_SHIFT,
+                        wScan: 0,
+                        dwFlags: KEYEVENTF_KEYUP,
+                        time: 0,
+                        dwExtraInfo: 0,
+                    },
+                },
+            });
+            
+            unsafe {
+                SendInput(&inputs, std::mem::size_of::<INPUT>() as i32);
+            }
+        }
+    }
+
+    pub fn record_injection(original_text: &str, injected_text: &str, hwnd: isize) {
+        if let Ok(mut buffer) = UNDO_BUFFER.lock() {
+            buffer.push(UndoRecord {
+                original_text: original_text.to_string(),
+                injected_text: injected_text.to_string(),
+                hwnd,
+                timestamp: std::time::Instant::now(),
+            });
+            if buffer.len() > UNDO_BUFFER_LIMIT {
+                buffer.remove(0);
+            }
+            tracing::info!("Recorded injection for undo. Buffer size: {}", buffer.len());
+        }
+    }
+
+    pub fn perform_undo() -> bool {
+        let record = {
+            let mut buffer = match UNDO_BUFFER.lock() {
+                Ok(b) => b,
+                Err(_) => return false,
+            };
+            buffer.pop()
+        };
+        
+        if let Some(record) = record {
+            tracing::info!("Performing undo for hwnd: {}", record.hwnd);
+            #[cfg(windows)]
+            {
+                use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, GetForegroundWindow};
+                use windows::Win32::Foundation::HWND;
+                
+                // Focus the window
+                let h = HWND(record.hwnd as *mut std::ffi::c_void);
+                unsafe {
+                    let fg = GetForegroundWindow();
+                    if fg.0 != h.0 {
+                        let _ = BringWindowToTop(h);
+                        let _ = SetForegroundWindow(h);
+                        thread::sleep(Duration::from_millis(200));
+                    }
+                }
+                
+                // Save current clipboard
+                let original_clipboard = Self::get_clipboard();
+                
+                // Set clipboard to original text
+                let _ = Self::set_clipboard(&record.original_text);
+                thread::sleep(Duration::from_millis(30));
+                
+                // Select back injected_text character count
+                let char_count = record.injected_text.chars().count();
+                Self::select_backward(char_count);
+                thread::sleep(Duration::from_millis(50));
+                
+                // Paste (replaces selection with original_text)
+                Self::send_ctrl_v();
+                thread::sleep(Duration::from_millis(150));
+                
+                // Restore clipboard
+                if let Some(orig) = original_clipboard {
+                    let _ = Self::set_clipboard(&orig);
+                }
+                
+                tracing::info!("Undo execution complete");
+                true
+            }
+            #[cfg(not(windows))]
+            {
+                true
+            }
+        } else {
+            tracing::warn!("No undo records available");
+            false
+        }
+    }
 }
+
+#[derive(Debug, Clone)]
+pub struct UndoRecord {
+    pub original_text: String,
+    pub injected_text: String,
+    pub hwnd: isize,
+    pub timestamp: std::time::Instant,
+}
+
+use once_cell::sync::Lazy;
+use std::sync::Mutex;
+
+pub static UNDO_BUFFER: Lazy<Mutex<Vec<UndoRecord>>> = Lazy::new(|| Mutex::new(Vec::new()));
+const UNDO_BUFFER_LIMIT: usize = 10;

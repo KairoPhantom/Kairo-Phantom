@@ -8,7 +8,6 @@
 // ============================================================
 use phantom_core::ghost_session::{GhostSession, ConfidenceBand};
 use phantom_core::config::PhantomConfig;
-use phantom_core::chaos::{FAULT_UIA_TIMEOUT, FAULT_CLIPBOARD_FAILURE, FAULT_SSE_DISCONNECT, FAULT_OLLAMA_SLOW};
 use std::sync::atomic::Ordering::Relaxed;
 
 /// Deterministic pseudo-random number generator (LCG seeded)
@@ -36,11 +35,6 @@ impl DeterministicRng {
 fn run_simulation(seed: u64) -> Result<(), u64> {
     let mut rng = DeterministicRng::new(seed);
     
-    // Deterministically set fault injection state
-    FAULT_UIA_TIMEOUT.store(rng.next_bool(), Relaxed);
-    FAULT_CLIPBOARD_FAILURE.store(rng.next_bool(), Relaxed);
-    FAULT_SSE_DISCONNECT.store(rng.next_bool(), Relaxed);
-    FAULT_OLLAMA_SLOW.store(rng.next_bool(), Relaxed);
     
     // Generate deterministic test scenario
     let prompt_len = (rng.next_range(500) + 5) as usize;
@@ -74,11 +68,6 @@ fn run_simulation(seed: u64) -> Result<(), u64> {
         }
     }
     
-    // Reset all faults
-    FAULT_UIA_TIMEOUT.store(false, Relaxed);
-    FAULT_CLIPBOARD_FAILURE.store(false, Relaxed);
-    FAULT_SSE_DISCONNECT.store(false, Relaxed);
-    FAULT_OLLAMA_SLOW.store(false, Relaxed);
     
     Ok(())
 }

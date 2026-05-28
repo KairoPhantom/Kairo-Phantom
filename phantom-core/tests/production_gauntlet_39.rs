@@ -11,7 +11,6 @@ use phantom_core::governance::{AuditLogger, AuditEvent, AuditOutcome, SessionGov
 use phantom_core::ghost_session::{GhostSession, ConfidenceBand, SessionState};
 use phantom_core::command_protocol::CommandMode;
 use phantom_core::memory::feedback::{FeedbackClassifier, ConfidenceEngine};
-use phantom_core::chaos::{FAULT_UIA_TIMEOUT, FAULT_CLIPBOARD_FAILURE, FAULT_SSE_DISCONNECT, FAULT_OLLAMA_SLOW};
 use phantom_core::config::PhantomConfig;
 use phantom_core::document_context::{DocumentContext, DocKind};
 use std::sync::atomic::Ordering;
@@ -373,27 +372,9 @@ fn gov_003_toolgate_blocks_system_dirs() {
     assert!(!gate.validate_token_usage(99999), "Huge token request must fail");
 }
 
-// ── CHAOS-001: Ollama unavailable — fallback config ───────────
-#[test]
-fn chaos_001_ollama_unavailable_fallback_config_exists() {
-    FAULT_OLLAMA_SLOW.store(true, Ordering::Relaxed);
-    let cfg = PhantomConfig::default();
-    // System must not panic when Ollama is marked slow/unavailable
-    let _ = cfg.fallback.is_some(); // fallback may be None in defaults
-    FAULT_OLLAMA_SLOW.store(false, Ordering::Relaxed);
-}
 
-// ── CHAOS-002: Clipboard failure — SendInput fallback path ────
-#[test]
-fn chaos_002_clipboard_failure_flag_survives() {
-    FAULT_CLIPBOARD_FAILURE.store(true, Ordering::Relaxed);
-    // System-level: injector's set_clipboard() would return false,
-    // triggering type_text_sendinput. Here we verify the fault flag
-    // itself works and that session creation is unaffected.
-    let s = GhostSession::new("inject via clipboard", 20, ConfidenceBand::High);
-    assert!(matches!(s.state, SessionState::Streaming));
-    FAULT_CLIPBOARD_FAILURE.store(false, Ordering::Relaxed);
-}
+
+
 
 // ── CHAOS-003: Rapid Alt+M double-press ───────────────────────
 #[test]
@@ -408,20 +389,7 @@ fn chaos_003_rapid_double_press_no_race() {
     assert!(start.elapsed() < Duration::from_millis(100), "No blocking");
 }
 
-// ── CHAOS-004: Empty UIA — graceful handling ──────────────────
-#[test]
-fn chaos_004_empty_uia_text_no_crash() {
-    FAULT_UIA_TIMEOUT.store(true, Ordering::Relaxed);
-    // Simulate empty UIA result
-    let empty_text = "";
-    // ConfidenceBand on empty = Low
-    let band = ConfidenceBand::compute(empty_text, "Unknown");
-    assert!(matches!(band, ConfidenceBand::Low));
-    // Session with empty prompt must not panic
-    let s = GhostSession::new(empty_text, 0, ConfidenceBand::Low);
-    assert_eq!(s.prompt_char_count, 0);
-    FAULT_UIA_TIMEOUT.store(false, Ordering::Relaxed);
-}
+
 
 // ── CHAOS-005: Focus loss — CAPTURED_HWND stays valid ─────────
 #[test]

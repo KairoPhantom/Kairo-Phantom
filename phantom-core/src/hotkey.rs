@@ -35,6 +35,7 @@ use crate::PhantomEvent;
 static GLOBAL_TX: Lazy<Mutex<Option<Sender<PhantomEvent>>>> = Lazy::new(|| Mutex::new(None));
 static ALT_PRESSED: AtomicBool = AtomicBool::new(false);
 static SHIFT_PRESSED: AtomicBool = AtomicBool::new(false);
+static CONTROL_PRESSED: AtomicBool = AtomicBool::new(false);
 
 /// HWND of the window that had focus when Alt+M fired (Windows only).
 /// On non-Windows platforms this is always 0.
@@ -130,13 +131,25 @@ impl HotkeyWatcher {
                     EventType::KeyRelease(Key::ShiftLeft) | EventType::KeyRelease(Key::ShiftRight) => {
                         SHIFT_PRESSED.store(false, Ordering::SeqCst);
                     }
+                    EventType::KeyPress(Key::ControlLeft) | EventType::KeyPress(Key::ControlRight) => {
+                        CONTROL_PRESSED.store(true, Ordering::SeqCst);
+                    }
+                    EventType::KeyRelease(Key::ControlLeft) | EventType::KeyRelease(Key::ControlRight) => {
+                        CONTROL_PRESSED.store(false, Ordering::SeqCst);
+                    }
 
                     EventType::KeyPress(key) => {
                         let alt = ALT_PRESSED.load(Ordering::SeqCst);
                         let shift = SHIFT_PRESSED.load(Ordering::SeqCst);
+                        let ctrl = CONTROL_PRESSED.load(Ordering::SeqCst);
 
+                        // Ctrl+Shift+Z → Undo
+                        if ctrl && shift && key == Key::KeyZ {
+                            info!("↩️ Ctrl+Shift+Z detected (rdev)! Undo triggered.");
+                            send_event(PhantomEvent::UndoPressed);
+                        }
                         // Alt+Shift+M → Screen Context (must check before Alt+M)
-                        if alt && shift && key == Key::KeyM {
+                        else if alt && shift && key == Key::KeyM {
                             info!("📸 Alt+Shift+M detected (rdev)! Screen Context triggered.");
                             send_event(PhantomEvent::ScreenContextPressed);
                         }
@@ -188,6 +201,7 @@ use windows::Win32::Foundation::{LPARAM, LRESULT, WPARAM, HWND};
 #[cfg(windows)]
 use windows::Win32::UI::Input::KeyboardAndMouse::{
     VK_MENU, VK_LMENU, VK_RMENU, VK_SHIFT, VK_LSHIFT, VK_RSHIFT,
+    VK_CONTROL, VK_LCONTROL, VK_RCONTROL,
 };
 
 #[cfg(windows)]
@@ -224,6 +238,28 @@ unsafe extern "system" fn low_level_keyboard_proc(
     if is_shift_vk {
         SHIFT_PRESSED.store(is_down, Ordering::SeqCst);
         return CallNextHookEx(None, code, wparam, lparam);
+    }
+
+    // Track Ctrl state (same principle — pass through, only track)
+    let is_ctrl_vk = kbd.vkCode == VK_CONTROL.0 as u32
+        || kbd.vkCode == VK_LCONTROL.0 as u32
+        || kbd.vkCode == VK_RCONTROL.0 as u32;
+
+    if is_ctrl_vk {
+        CONTROL_PRESSED.store(is_down, Ordering::SeqCst);
+        return CallNextHookEx(None, code, wparam, lparam);
+    }
+
+    // ── Ctrl+Shift+Z: Undo last injection ──────────────────────────────
+    if kbd.vkCode == 0x5A /* Z */ && is_down
+       && CONTROL_PRESSED.load(Ordering::SeqCst)
+       && SHIFT_PRESSED.load(Ordering::SeqCst)
+    {
+        let hwnd: HWND = GetForegroundWindow();
+        CAPTURED_HWND.store(hwnd.0 as isize, Ordering::SeqCst);
+        info!("↩️ Ctrl+Shift+Z detected! Triggering Undo. HWND={:?}", hwnd.0);
+        send_event(PhantomEvent::UndoPressed);
+        return LRESULT(1); // Suppress 'Z'
     }
 
     // ── Alt+Shift+M: Screen Context (must check BEFORE Alt+M) ─────────────

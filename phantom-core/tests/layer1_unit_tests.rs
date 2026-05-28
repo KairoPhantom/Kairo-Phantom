@@ -6,8 +6,6 @@
 /// ============================================================
 use phantom_core::ghost_session::{GhostSession, ConfidenceBand, SessionState};
 use phantom_core::config::PhantomConfig;
-use phantom_core::chaos::{FAULT_UIA_TIMEOUT, FAULT_CLIPBOARD_FAILURE,
-                           FAULT_SSE_DISCONNECT, FAULT_OLLAMA_SLOW};
 use std::sync::atomic::Ordering;
 
 // ─── ConfidenceBand ───────────────────────────────────────────
@@ -114,50 +112,4 @@ fn unit_config_serialization_no_panic() {
     assert!(result.is_ok(), "Default config must serialize without error");
 }
 
-// ─── Chaos Module ─────────────────────────────────────────────
 
-#[test]
-fn unit_chaos_flags_default_false() {
-    // All fault flags must start disabled (safe by default)
-    assert!(!FAULT_UIA_TIMEOUT.load(Ordering::Relaxed));
-    assert!(!FAULT_CLIPBOARD_FAILURE.load(Ordering::Relaxed));
-    assert!(!FAULT_SSE_DISCONNECT.load(Ordering::Relaxed));
-    assert!(!FAULT_OLLAMA_SLOW.load(Ordering::Relaxed));
-}
-
-#[test]
-fn unit_chaos_flag_toggle_works() {
-    // Store true, verify, store false, verify
-    FAULT_UIA_TIMEOUT.store(true, Ordering::Relaxed);
-    assert!(FAULT_UIA_TIMEOUT.load(Ordering::Relaxed));
-    FAULT_UIA_TIMEOUT.store(false, Ordering::Relaxed);
-    assert!(!FAULT_UIA_TIMEOUT.load(Ordering::Relaxed));
-}
-
-#[test]
-fn unit_chaos_macro_executes_action_when_fault_active() {
-    use std::sync::atomic::Ordering::Relaxed;
-    FAULT_CLIPBOARD_FAILURE.store(true, Ordering::Relaxed);
-    
-    let mut executed = false;
-    // Inline the macro logic since cross-crate macros need #[macro_export]
-    if FAULT_CLIPBOARD_FAILURE.load(Relaxed) {
-        executed = true;
-    }
-    
-    assert!(executed, "fault flag executes action when active");
-    FAULT_CLIPBOARD_FAILURE.store(false, Ordering::Relaxed);
-}
-
-#[test]
-fn unit_chaos_macro_skips_action_when_fault_inactive() {
-    use std::sync::atomic::Ordering::Relaxed;
-    FAULT_CLIPBOARD_FAILURE.store(false, Ordering::Relaxed);
-    
-    let mut executed = false;
-    if FAULT_CLIPBOARD_FAILURE.load(Relaxed) {
-        executed = true;
-    }
-    
-    assert!(!executed, "fault flag skips action when inactive");
-}

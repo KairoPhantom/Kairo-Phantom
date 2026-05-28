@@ -1,15 +1,34 @@
 //! Toast Notification — P0-B2
-//! Native Windows balloon notifications via Shell_NotifyIconW.
-//! Replaces the old PowerShell NotifyIcon approach with zero-process-spawn overhead.
-//! V4: Added streaming indicator (pulsing ghost icon) + agent selection debug logging.
+//! Custom topmost, click-through GDI-rendered overlay window for premium visual feedback.
+//! Replaces native system balloon notifications with a sleek dark-mode card near the text cursor.
 
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, Ordering, AtomicIsize};
 use std::sync::Arc;
+use once_cell::sync::Lazy;
+use std::sync::Mutex;
+
+// ─── Shared State for Custom Overlay ──────────────────────────────────────────
+
+#[derive(Clone, Copy, Debug)]
+pub enum OverlayColor {
+    Info,     // Blue/Indigo
+    Success,  // Green
+    Error,    // Red
+}
+
+struct OverlayData {
+    title: String,
+    body: String,
+    color_type: OverlayColor,
+    duration_ms: u32,
+}
+
+static PENDING_OVERLAY_DATA: Lazy<Mutex<Option<OverlayData>>> = Lazy::new(|| Mutex::new(None));
+static OVERLAY_HWND: AtomicIsize = AtomicIsize::new(0);
+const WM_SHOWOVERLAY: u32 = windows::Win32::UI::WindowsAndMessaging::WM_USER + 2;
 
 // ─── Native Windows Balloon Notification Backend ──────────────────────────────
-//
-// Uses Shell_NotifyIconW with NIF_INFO to show balloon tips from a hidden window.
-// A persistent tray icon is created lazily on first use and reused for all toasts.
+// Keep original balloon code as fallback or for tray icon registration if needed.
 
 #[cfg(windows)]
 mod win_balloon {
@@ -28,18 +47,14 @@ mod win_balloon {
         WS_OVERLAPPEDWINDOW,
     };
 
-    /// Balloon icon types — maps to NIIF_* constants.
     #[repr(u32)]
     #[derive(Clone, Copy)]
     pub enum BalloonIcon {
-        Info = 0x00000001,    // NIIF_INFO
-        Warning = 0x00000002, // NIIF_WARNING
+        Info = 0x00000001,
+        Warning = 0x00000002,
     }
 
-    /// WM_USER + 1 — the callback message the tray icon sends to our hidden window.
     const WM_TRAYICON: u32 = WM_USER + 1;
-
-    /// The hidden HWND used as the tray icon's owner. Created once, lives forever.
     static TRAY_STATE: OnceCell<Mutex<TrayState>> = OnceCell::new();
 
     struct TrayState {
@@ -47,13 +62,9 @@ mod win_balloon {
         icon_added: bool,
     }
 
-    // SAFETY: HWND is a pointer-sized handle that Windows guarantees is valid
-    // across threads. We protect mutation with a Mutex.
     unsafe impl Send for TrayState {}
 
-    /// Encode a Rust &str into a null-terminated UTF-16 buffer of exactly `N` u16s.
-    /// Truncates if the string is too long.
-    fn encode_wide<const N: usize>(s: &str) -> [u16; N] {
+    pub fn encode_wide<const N: usize>(s: &str) -> [u16; N] {
         let mut buf = [0u16; N];
         for (i, unit) in s.encode_utf16().take(N - 1).enumerate() {
             buf[i] = unit;
@@ -61,7 +72,6 @@ mod win_balloon {
         buf
     }
 
-    /// Minimal window-proc — just forwards everything to DefWindowProcW.
     unsafe extern "system" fn wnd_proc(
         hwnd: HWND,
         msg: u32,
@@ -71,7 +81,6 @@ mod win_balloon {
         unsafe { DefWindowProcW(hwnd, msg, wparam, lparam) }
     }
 
-    /// Create the hidden message-only window and register the window class.
     fn create_hidden_hwnd() -> HWND {
         unsafe {
             let class_name = encode_wide::<64>("KairoPhantomTrayClass");
@@ -99,14 +108,10 @@ mod win_balloon {
                 HINSTANCE::default(),
                 None,
             ).unwrap_or(HWND::default());
-            if hwnd == HWND::default() {
-                tracing::error!("Failed to create hidden HWND for tray icon");
-            }
             hwnd
         }
     }
 
-    /// Show (or update) a balloon notification in the system tray.
     pub fn show_balloon(title: &str, message: &str, icon: BalloonIcon) {
         let state = TRAY_STATE.get_or_init(|| {
             Mutex::new(TrayState {
@@ -115,19 +120,12 @@ mod win_balloon {
             })
         });
 
-        let Ok(mut guard) = state.lock() else {
-            tracing::warn!("Tray state mutex poisoned — falling back to log-only");
-            return;
-        };
-
+        let Ok(mut guard) = state.lock() else { return; };
         let hwnd = guard.hwnd;
-        if hwnd == HWND::default() {
-            return;
-        }
+        if hwnd == HWND::default() { return; }
 
         unsafe {
-            let h_icon = LoadIconW(HINSTANCE::default(), IDI_APPLICATION)
-                .unwrap_or_default();
+            let h_icon = LoadIconW(HINSTANCE::default(), IDI_APPLICATION).unwrap_or_default();
 
             let mut nid = NOTIFYICONDATAW {
                 cbSize: std::mem::size_of::<NOTIFYICONDATAW>() as u32,
@@ -154,106 +152,308 @@ mod win_balloon {
     }
 }
 
+// ─── Custom GDI Overlay UI Implementation ──────────────────────────────────────
+
+#[cfg(windows)]
+fn get_target_position() -> (i32, i32) {
+    use windows::Win32::UI::WindowsAndMessaging::{GetForegroundWindow, GetWindowThreadProcessId, GetGUIThreadInfo, GUITHREADINFO, GetCursorPos};
+    use windows::Win32::Graphics::Gdi::ClientToScreen;
+    use windows::Win32::Foundation::{HWND, POINT};
+
+    unsafe {
+        let active_hwnd = GetForegroundWindow();
+        if active_hwnd != HWND::default() {
+            let thread_id = GetWindowThreadProcessId(active_hwnd, None);
+            let mut gui = GUITHREADINFO::default();
+            gui.cbSize = std::mem::size_of::<GUITHREADINFO>() as u32;
+            if GetGUIThreadInfo(thread_id, &mut gui).is_ok() && gui.hwndCaret != HWND::default() {
+                let mut pt = POINT { x: gui.rcCaret.left, y: gui.rcCaret.bottom };
+                if ClientToScreen(gui.hwndCaret, &mut pt).as_bool() && (pt.x != 0 || pt.y != 0) {
+                    return (pt.x + 15, pt.y + 15);
+                }
+            }
+        }
+        let mut pt = POINT::default();
+        if GetCursorPos(&mut pt).is_ok() {
+            return (pt.x + 15, pt.y + 15);
+        }
+        (100, 100)
+    }
+}
+
+#[cfg(windows)]
+unsafe extern "system" fn overlay_wnd_proc(
+    hwnd: windows::Win32::Foundation::HWND,
+    msg: u32,
+    wparam: windows::Win32::Foundation::WPARAM,
+    lparam: windows::Win32::Foundation::LPARAM,
+) -> windows::Win32::Foundation::LRESULT {
+    use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, WPARAM, COLORREF};
+    use windows::Win32::Graphics::Gdi::{
+        BeginPaint, EndPaint, PAINTSTRUCT, CreateSolidBrush, FillRect, SetBkMode,
+        SetTextColor, DrawTextW, CreateFontW, SelectObject, DeleteObject, TRANSPARENT,
+        DT_LEFT, DT_WORDBREAK, DT_NOPREFIX, HFONT, HBRUSH, HDC, InvalidateRect,
+    };
+    use windows::Win32::UI::WindowsAndMessaging::{
+        DefWindowProcW, SetWindowPos, SetTimer, KillTimer, ShowWindow,
+        HWND_TOPMOST, SWP_NOACTIVATE, SWP_SHOWWINDOW, SW_HIDE,
+    };
+    use windows::core::PCWSTR;
+
+    match msg {
+        windows::Win32::UI::WindowsAndMessaging::WM_PAINT => {
+            let mut ps = PAINTSTRUCT::default();
+            let hdc = BeginPaint(hwnd, &mut ps);
+            
+            // Draw background (#181825 in BBGGRR -> 0x00251818)
+            let bg_brush = CreateSolidBrush(COLORREF(0x00251818));
+            let mut rect = ps.rcPaint;
+            FillRect(hdc, &rect, bg_brush);
+            let _ = DeleteObject(bg_brush);
+            
+            let msg_data = PENDING_OVERLAY_DATA.lock().unwrap();
+            if let Some(ref data) = *msg_data {
+                // Accent indicator bar on the left (6px wide)
+                let accent_color = match data.color_type {
+                    OverlayColor::Info => COLORREF(0x00fa8989),    // #89b4fa
+                    OverlayColor::Success => COLORREF(0x00a1e3a6), // #a6e3a1
+                    OverlayColor::Error => COLORREF(0x00a88bf3),   // #f38ba8
+                };
+                let accent_brush = CreateSolidBrush(accent_color);
+                let accent_rect = windows::Win32::Foundation::RECT {
+                    left: 0,
+                    top: 0,
+                    right: 6,
+                    bottom: rect.bottom,
+                };
+                FillRect(hdc, &accent_rect, accent_brush);
+                let _ = DeleteObject(accent_brush);
+                
+                // Draw title
+                let font_name: Vec<u16> = "Segoe UI\0".encode_utf16().collect();
+                let font_title = CreateFontW(
+                    16, 0, 0, 0, 700, 0, 0, 0, 0, 0, 0, 0, 0, PCWSTR(font_name.as_ptr())
+                );
+                let old_font = SelectObject(hdc, font_title);
+                let _ = SetBkMode(hdc, TRANSPARENT);
+                let _ = SetTextColor(hdc, COLORREF(0x00f4d6cd)); // #cdd6f4
+                
+                let mut title_rect = windows::Win32::Foundation::RECT {
+                    left: 16,
+                    top: 10,
+                    right: rect.right - 10,
+                    bottom: 30,
+                };
+                let mut wide_title: Vec<u16> = data.title.encode_utf16().collect();
+                let _ = DrawTextW(hdc, &mut wide_title, &mut title_rect, DT_LEFT | DT_NOPREFIX);
+                let _ = SelectObject(hdc, old_font);
+                let _ = DeleteObject(font_title);
+                
+                // Draw body text
+                let font_body = CreateFontW(
+                    13, 0, 0, 0, 400, 0, 0, 0, 0, 0, 0, 0, 0, PCWSTR(font_name.as_ptr())
+                );
+                let old_font = SelectObject(hdc, font_body);
+                let _ = SetTextColor(hdc, COLORREF(0x00c8adad)); // #a6adc8
+                
+                let mut body_rect = windows::Win32::Foundation::RECT {
+                    left: 16,
+                    top: 32,
+                    right: rect.right - 10,
+                    bottom: rect.bottom - 5,
+                };
+                let mut wide_body: Vec<u16> = data.body.encode_utf16().collect();
+                let _ = DrawTextW(hdc, &mut wide_body, &mut body_rect, DT_LEFT | DT_WORDBREAK | DT_NOPREFIX);
+                
+                let _ = SelectObject(hdc, old_font);
+                let _ = DeleteObject(font_body);
+            }
+            
+            // Border outline (#cba6f7 in BBGGRR -> 0x00f7a6cb)
+            let border_brush = CreateSolidBrush(COLORREF(0x00f7a6cb));
+            windows::Win32::Graphics::Gdi::FrameRect(hdc, &rect, border_brush);
+            let _ = DeleteObject(border_brush);
+            
+            let _ = EndPaint(hwnd, &ps);
+            LRESULT(0)
+        }
+        WM_SHOWOVERLAY => {
+            let duration = if let Some(ref data) = *PENDING_OVERLAY_DATA.lock().unwrap() {
+                data.duration_ms
+            } else {
+                3000
+            };
+            
+            let (x, y) = get_target_position();
+            
+            let _ = SetWindowPos(
+                hwnd,
+                HWND_TOPMOST,
+                x,
+                y,
+                320,
+                80,
+                SWP_NOACTIVATE | SWP_SHOWWINDOW,
+            );
+            
+            let _ = InvalidateRect(hwnd, None, true);
+            
+            let _ = KillTimer(hwnd, 1);
+            let _ = SetTimer(hwnd, 1, duration, None);
+            LRESULT(0)
+        }
+        windows::Win32::UI::WindowsAndMessaging::WM_TIMER => {
+            let _ = KillTimer(hwnd, wparam.0);
+            let _ = ShowWindow(hwnd, SW_HIDE);
+            LRESULT(0)
+        }
+        _ => DefWindowProcW(hwnd, msg, wparam, lparam),
+    }
+}
+
+#[cfg(windows)]
+fn spawn_overlay_thread() {
+    std::thread::spawn(|| unsafe {
+        use windows::core::PCWSTR;
+        use windows::Win32::Foundation::{HINSTANCE, HWND, COLORREF};
+        use windows::Win32::UI::WindowsAndMessaging::{
+            RegisterClassW, CreateWindowExW, GetMessageW, TranslateMessage, DispatchMessageW,
+            CS_HREDRAW, CS_VREDRAW, WNDCLASSW, WS_POPUP, WS_EX_TOPMOST, WS_EX_TRANSPARENT,
+            WS_EX_LAYERED, WS_EX_TOOLWINDOW, SetLayeredWindowAttributes, LWA_ALPHA, MSG, PostMessageW,
+        };
+
+        let class_name = win_balloon::encode_wide::<64>("KairoOverlayWindowClass");
+        let wc = WNDCLASSW {
+            style: CS_HREDRAW | CS_VREDRAW,
+            lpfnWndProc: Some(overlay_wnd_proc),
+            hInstance: HINSTANCE::default(),
+            lpszClassName: PCWSTR(class_name.as_ptr()),
+            ..Default::default()
+        };
+        RegisterClassW(&wc);
+        
+        let font_title_name: Vec<u16> = "Kairo Overlay\0".encode_utf16().collect();
+        let hwnd = CreateWindowExW(
+            WS_EX_TOPMOST | WS_EX_TRANSPARENT | WS_EX_LAYERED | WS_EX_TOOLWINDOW,
+            PCWSTR(class_name.as_ptr()),
+            PCWSTR(font_title_name.as_ptr()),
+            WS_POPUP,
+            100, 100, 320, 80,
+            HWND::default(),
+            None,
+            HINSTANCE::default(),
+            None,
+        ).unwrap_or(HWND::default());
+        
+        if hwnd == HWND::default() {
+            tracing::error!("Failed to create overlay window");
+            return;
+        }
+        
+        let _ = SetLayeredWindowAttributes(hwnd, COLORREF(0), 235, LWA_ALPHA);
+        OVERLAY_HWND.store(hwnd.0 as isize, Ordering::SeqCst);
+        
+        let _ = PostMessageW(hwnd, WM_SHOWOVERLAY, windows::Win32::Foundation::WPARAM(0), windows::Win32::Foundation::LPARAM(0));
+        
+        let mut msg = MSG::default();
+        while GetMessageW(&mut msg, None, 0, 0).as_bool() {
+            let _ = TranslateMessage(&msg);
+            DispatchMessageW(&msg);
+        }
+    });
+}
+
+pub fn show_overlay(title: &str, body: &str, color: OverlayColor, duration_ms: u32) {
+    tracing::info!("Overlay ({}): {}", title, body);
+    #[cfg(windows)]
+    {
+        {
+            let mut data = PENDING_OVERLAY_DATA.lock().unwrap();
+            *data = Some(OverlayData {
+                title: title.to_string(),
+                body: body.to_string(),
+                color_type: color,
+                duration_ms,
+            });
+        }
+        
+        let hwnd_val = OVERLAY_HWND.load(Ordering::SeqCst);
+        if hwnd_val == 0 {
+            spawn_overlay_thread();
+            // Wait for window creation
+            for _ in 0..10 {
+                let h = OVERLAY_HWND.load(Ordering::SeqCst);
+                if h != 0 {
+                    unsafe {
+                        let _ = windows::Win32::UI::WindowsAndMessaging::PostMessageW(
+                            windows::Win32::Foundation::HWND(h as *mut std::ffi::c_void),
+                            WM_SHOWOVERLAY,
+                            windows::Win32::Foundation::WPARAM(0),
+                            windows::Win32::Foundation::LPARAM(0)
+                        );
+                    }
+                    break;
+                }
+                std::thread::sleep(std::time::Duration::from_millis(30));
+            }
+        } else {
+            unsafe {
+                let _ = windows::Win32::UI::WindowsAndMessaging::PostMessageW(
+                    windows::Win32::Foundation::HWND(hwnd_val as *mut std::ffi::c_void),
+                    WM_SHOWOVERLAY,
+                    windows::Win32::Foundation::WPARAM(0),
+                    windows::Win32::Foundation::LPARAM(0)
+                );
+            }
+        }
+    }
+}
+
 // ─── Public API ───────────────────────────────────────────────────────────────
 
-/// Show a Windows toast notification for a PAHF clarification request.
-/// Replaces the old behavior of injecting the question text into the document.
+/// Show a Windows overlay notification for a PAHF clarification request.
 pub fn show_clarification_toast(question: &str) {
-    tracing::info!("🔔 PAHF clarification (toast): {}", question);
-
-    #[cfg(windows)]
-    {
-        win_balloon::show_balloon(
-            "Kairo Phantom \u{1F480}",
-            question,
-            win_balloon::BalloonIcon::Info,
-        );
-    }
-
-    #[cfg(not(windows))]
-    {
-        eprintln!("[Kairo] Clarification needed: {}", question);
-    }
+    show_overlay(
+        "Clarification Required ❓",
+        question,
+        OverlayColor::Info,
+        5000,
+    );
 }
 
-/// Show a completion toast when Kairo finishes generating.
+/// Show a completion overlay when Kairo finishes generating.
 pub fn show_completion_toast(chars_injected: usize, agent_name: &str) {
-    tracing::info!("✅ Completion toast: {} chars from {}", chars_injected, agent_name);
-
-    #[cfg(windows)]
-    {
-        let body = format!("{} generated {} characters", agent_name, chars_injected);
-        win_balloon::show_balloon(
-            "Kairo Phantom \u{1F480}",
-            &body,
-            win_balloon::BalloonIcon::Info,
-        );
-    }
-
-    #[cfg(not(windows))]
-    {
-        println!("[Kairo] ✅ {} generated {} characters", agent_name, chars_injected);
-    }
+    let body = format!("{} injected {} characters", agent_name, chars_injected);
+    show_overlay(
+        "Generation Complete ✅",
+        &body,
+        OverlayColor::Success,
+        4000,
+    );
 }
 
-/// Show a progress toast for long-running operations (e.g. Ollama model pull).
+/// Show a progress overlay for long-running operations.
 pub fn show_progress_toast(message: &str) {
-    tracing::info!("⏳ Progress toast: {}", message);
-
-    #[cfg(windows)]
-    {
-        win_balloon::show_balloon(
-            "Kairo Phantom \u{1F480}",
-            message,
-            win_balloon::BalloonIcon::Info,
-        );
-    }
-
-    #[cfg(not(windows))]
-    {
-        println!("[Kairo] {}", message);
-    }
+    show_overlay(
+        "Kairo Assistant 🧠",
+        message,
+        OverlayColor::Info,
+        3000,
+    );
 }
 
-/// Show an error toast for failures and warnings.
+/// Show an error overlay for failures and warnings.
 pub fn show_error_toast(message: &str) {
-    tracing::warn!("❌ Error toast: {}", message);
-
-    #[cfg(windows)]
-    {
-        win_balloon::show_balloon(
-            "Kairo Phantom \u{1F480}",
-            message,
-            win_balloon::BalloonIcon::Warning,
-        );
-    }
-
-    #[cfg(not(windows))]
-    {
-        eprintln!("[Kairo] ❌ {}", message);
-    }
+    show_overlay(
+        "Error Encountered ❌",
+        message,
+        OverlayColor::Error,
+        5000,
+    );
 }
 
 // ─── V4: Streaming Indicator (Pulsing Ghost Icon) ─────────────────────────────
-//
-// When AI streaming is in progress, show a pulsing tray icon animation in the
-// Windows system tray. The animation runs until `stop_flag` is set to `true`.
-// This fulfills the V4 immediate fix: "Add streaming indicator to overlay".
 
-/// Shows a pulsing ghost icon in the system tray while streaming is active.
-///
-/// The caller receives an `Arc<AtomicBool>` stop handle. Set it to `true` to
-/// terminate the animation. The animation automatically stops after `timeout_secs`.
-///
-/// Returns the stop handle so the caller can cancel early (e.g., on Esc).
-///
-/// # Usage
-/// ```ignore
-/// let stop = start_streaming_indicator("content", 30);
-/// // ... streaming happens ...
-/// stop.store(true, std::sync::atomic::Ordering::SeqCst);
-/// show_completion_toast(256, "content");
-/// ```
 pub fn start_streaming_indicator(agent_id: &str, timeout_secs: u64) -> Arc<AtomicBool> {
     let stop_flag = Arc::new(AtomicBool::new(false));
     let stop_clone = stop_flag.clone();
@@ -271,7 +471,6 @@ pub fn start_streaming_indicator(agent_id: &str, timeout_secs: u64) -> Arc<Atomi
             let icon = frames[frame_idx % frames.len()];
             tracing::debug!("[StreamingIndicator] {} Kairo AI ({}) — generating...", icon, agent_label);
 
-            // On Windows, update the console title as a lightweight visual indicator
             #[cfg(windows)]
             {
                 let _ = std::process::Command::new("powershell")
@@ -290,7 +489,6 @@ pub fn start_streaming_indicator(agent_id: &str, timeout_secs: u64) -> Arc<Atomi
 
         tracing::info!("👻 Streaming indicator: stopped (agent={})", agent_label);
 
-        // Restore console title
         #[cfg(windows)]
         {
             let _ = std::process::Command::new("powershell")
@@ -306,28 +504,19 @@ pub fn start_streaming_indicator(agent_id: &str, timeout_secs: u64) -> Arc<Atomi
 }
 
 // ─── V4: Agent Selection Debug Logger ─────────────────────────────────────────
-//
-// Fulfills V4 immediate fix: "Log which agent was selected and why to a debug file".
 
-/// Log agent selection decisions to ~/.kairo-phantom/agent_debug.jsonl.
-/// Each line is a JSON object with timestamp, agent_id, score, doc_kind, and prompt_preview.
 pub fn log_agent_selection(agent_id: &str, score: u8, doc_kind: &str, prompt_preview: &str) {
-    let kairo_dir = dirs::home_dir()
-        .unwrap_or_default()
-        .join(".kairo-phantom");
+    let kairo_dir = dirs::home_dir().unwrap_or_default().join(".kairo-phantom");
     let log_path = kairo_dir.join("agent_debug.jsonl");
 
     let timestamp = chrono::Utc::now().to_rfc3339();
-    // Truncate prompt preview to avoid giant log entries
-    let safe_prompt = prompt_preview.chars().take(120).collect::<String>()
-        .replace('"', "'");
+    let safe_prompt = prompt_preview.chars().take(120).collect::<String>().replace('"', "'");
 
     let entry = format!(
         r#"{{"ts":"{}","agent":"{}","score":{},"doc_kind":"{}","prompt":"{}"}}"#,
         timestamp, agent_id, score, doc_kind, safe_prompt
     );
 
-    // Append to JSONL (non-blocking best-effort)
     if let Ok(mut file) = std::fs::OpenOptions::new()
         .create(true)
         .append(true)

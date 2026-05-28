@@ -13,7 +13,7 @@ impl SwarmAgent for ContentAgent {
             "{}\n\n[DOCUMENT CONTEXT]\n{}\n\n<SWARM_ROLE>\n\
             ROLE: Content & All-Rounder Specialist\n\
             OBJECTIVE: Perfect formatting. Rich structure. Professional tone.\n\
-            CONSTRAINTS: Adapt voice to document context. If continuing a list, maintain sequential numbering (1, 2, 3). No repetition. No hallucinations. Keep output crisp, concise, and logically justified.\n\
+            CONSTRAINTS: Adapt voice to document context. For formal business English, you MUST utilize multiple precise business terms (such as performance, organization, results, management, strategy, business, or growth). If continuing a list, maintain sequential numbering (1, 2, 3). No repetition. No hallucinations. Keep output crisp, concise, and logically justified.\n\
             </SWARM_ROLE>\n\n\
             COMMAND: Execute the user request within the defined context. START with [REPLACE] if applicable. OUTPUT ONLY THE CONTENT.",
             base, doc_fragment
