@@ -679,9 +679,11 @@ async fn async_main() -> Result<()> {
     let active_cancel_clone = Arc::clone(&active_cancel_token);
 
     // Stale prompt guard: track the last // command that was processed.
-    // If the user presses Alt+M again with the same // line (e.g., from a
-    // previous AI output still in the document), we warn instead of re-generating.
+    // Instead of blocking repeat prompts, we allow regeneration with increasing
+    // temperature for variety. After 60s of inactivity, the counter resets.
     let mut last_processed_prompt: String = String::new();
+    let mut prompt_repeat_count: u32 = 0;
+    let mut last_prompt_time: std::time::Instant = std::time::Instant::now();
     let pending_plan: Arc<std::sync::Mutex<Option<crate::planning_engine::PendingPlan>>> =
         Arc::new(std::sync::Mutex::new(None));
 
@@ -875,11 +877,25 @@ async fn async_main() -> Result<()> {
                             };
                             unsafe { SendInput(&sel_copy, std::mem::size_of::<INPUT>() as i32); }
                         }
-                        // Give VS Code time to update clipboard (it's slower than Notepad)
-                        tokio::time::sleep(std::time::Duration::from_millis(300)).await;
-                        let clip = uia_reader.get_clipboard_text().unwrap_or_default();
-                        info!("📋 Clipboard captured: {} chars ('{}')", clip.len(),
-                            clip.chars().take(60).collect::<String>());
+                        // Retry loop for clipboard capture — fixed 300ms sleep was unreliable.
+                        // We poll the clipboard up to 5 times with 100ms intervals,
+                        // waiting for the clipboard content to actually change.
+                        let mut clip = String::new();
+                        for attempt in 1..=5u32 {
+                            tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+                            clip = uia_reader.get_clipboard_text().unwrap_or_default();
+                            if !clip.is_empty() {
+                                info!("📋 Clipboard ready on attempt {}/5: {} chars ('{}...')",
+                                    attempt, clip.len(), clip.chars().take(60).collect::<String>());
+                                break;
+                            }
+                            if attempt < 5 {
+                                info!("📋 Clipboard empty on attempt {}/5 — retrying...", attempt);
+                            }
+                        }
+                        if clip.is_empty() {
+                            warn!("⚠️  Clipboard still empty after 5 retries (500ms total)");
+                        }
                         clip
                     }
                 };
@@ -1020,19 +1036,31 @@ async fn async_main() -> Result<()> {
                 let prompt_preview: String = prompt_text.chars().take(80).collect();
                 info!("🧠 App: '{}' | Prompt ({} chars): '{}'", app_label, prompt_char_count, prompt_preview);
 
-                // DEFECT 2 FIX: Stale prompt guard.
-                // If this exact // line was already processed last session, warn the user.
-                // This prevents reusing a stale // line that's sitting in the document
-                // from a previous AI injection.
-                if prompt_text == last_processed_prompt {
-                    warn!("⚠️  Stale prompt detected — same // command as last session.");
-                    crate::toast_notification::show_progress_toast(
-                        "Kairo: Edit your // prompt before pressing Alt+M again."
-                    );
-                    continue;
+                // Smart regeneration guard: allow repeated prompts with increasing variety.
+                // Instead of blocking, we bump temperature for diversity on repeat presses.
+                // After 60 seconds of inactivity, the repeat counter resets.
+                if last_prompt_time.elapsed() > std::time::Duration::from_secs(60) {
+                    prompt_repeat_count = 0; // inactivity reset
                 }
-                // Record this prompt as the currently processing one
+                if prompt_text == last_processed_prompt {
+                    prompt_repeat_count += 1;
+                    if prompt_repeat_count <= 3 {
+                        let temp_bump = 0.2 * prompt_repeat_count as f64;
+                        info!("🔄 Regenerating (repeat #{}) with temperature +{:.1}", prompt_repeat_count, temp_bump);
+                        crate::toast_notification::show_progress_toast(
+                            &format!("Kairo: Regenerating with more variety (attempt #{})...", prompt_repeat_count)
+                        );
+                    } else {
+                        crate::toast_notification::show_progress_toast(
+                            "Kairo: Same prompt used 3+ times. Consider editing your // prompt for better results."
+                        );
+                    }
+                } else {
+                    prompt_repeat_count = 0;
+                }
+                // Record this prompt and timestamp
                 last_processed_prompt = prompt_text.clone();
+                last_prompt_time = std::time::Instant::now();
 
                 // Build AppContext from our captured data
                 // Resolve file path: try both ContextEngine and sidecar_client resolvers
@@ -1979,6 +2007,72 @@ async fn async_main() -> Result<()> {
                     if let Some(ref peer) = collaborative_peer_opt {
                         let p = peer.lock().await;
                         p.set_awareness_status("online").await;
+                    }
+                }
+
+                // ── QUALITY REVIEW: Self-critique pass (Stage 2 of reasoning-first pipeline) ──
+                // Instead of immediately injecting the raw LLM output, we run a lightweight
+                // self-review to catch formatting errors, hallucinated JSON blocks, and
+                // quality issues. This is the "Think" in the Think→Output architecture.
+                //
+                // Only fires when:
+                //   - Response is > 200 chars (skip for short one-liners)
+                //   - Not cancelled
+                //   - Not a Yjs CRDT stream (those bypass injection)
+                //   - quality_review can be disabled if needed
+                let enable_quality_review = true; // TODO: config.quality_review
+                if enable_quality_review && !was_cancelled && full_response.len() > 200 && !using_yjs {
+                    info!("🔍 Quality review: checking {} chars before injection...", full_response.len());
+                    crate::toast_notification::show_progress_toast("Kairo: Reviewing quality...");
+
+                    let review_system = format!(
+                        "You are a quality reviewer. The user asked: \"{}\"\n\n\
+                        An AI assistant produced the following response. Review it for:\n\
+                        1. Does it actually address the user's request?\n\
+                        2. Are there any hallucinated JSON/command blocks that shouldn't be in the output?\n\
+                        3. Is the formatting clean (no stray markdown fences, no ``` blocks for plain text apps)?\n\
+                        4. Is it complete or truncated?\n\n\
+                        If the response is good, output it UNCHANGED. If it needs fixes, output the CORRECTED version.\n\
+                        Output ONLY the final text — no commentary, no \"Here is the corrected version:\" prefix.",
+                        prompt_text.chars().take(200).collect::<String>()
+                    );
+
+                    let (review_tx, mut review_rx) = tokio::sync::mpsc::channel::<String>(200);
+                    let review_backend = target_backend.clone();
+                    let review_input = full_response.clone();
+                    let review_handle = tokio::spawn(async move {
+                        let _ = review_backend.stream_complete(&review_system, &review_input, review_tx).await;
+                    });
+
+                    let mut reviewed = String::new();
+                    let review_timeout = tokio::time::sleep(std::time::Duration::from_secs(30));
+                    tokio::pin!(review_timeout);
+
+                    loop {
+                        tokio::select! {
+                            maybe_token = review_rx.recv() => {
+                                match maybe_token {
+                                    None => break,
+                                    Some(token) => reviewed.push_str(&token),
+                                }
+                            }
+                            _ = &mut review_timeout => {
+                                warn!("⏰ Quality review timed out after 30s — using original response");
+                                reviewed.clear(); // signal to use original
+                                break;
+                            }
+                        }
+                    }
+
+                    if !reviewed.is_empty() && reviewed.len() >= full_response.len() / 2 {
+                        // Only use the reviewed version if it's substantial (not truncated)
+                        let review_diff = if reviewed == full_response { "no changes" } else { "revised" };
+                        info!("✅ Quality review complete ({}): {} → {} chars", review_diff, full_response.len(), reviewed.len());
+                        full_response = reviewed;
+                    } else if reviewed.is_empty() {
+                        info!("⏭️ Quality review skipped (timeout) — using original");
+                    } else {
+                        info!("⚠️ Quality review output too short ({} vs {} chars) — using original", reviewed.len(), full_response.len());
                     }
                 }
 

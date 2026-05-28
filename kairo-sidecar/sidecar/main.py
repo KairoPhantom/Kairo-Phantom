@@ -7,73 +7,104 @@ from pathlib import Path
 # Enforce clean package imports
 sys.path.insert(0, str(Path(__file__).parent.parent.resolve()))
 
-from sidecar.ipc import start_named_pipe_server
-from sidecar.parsers.docx_parser import parse_docx
-from sidecar.parsers.xlsx_parser import parse_xlsx
-from sidecar.parsers.pptx_parser import parse_pptx
-from sidecar.parsers.context_extractor import extract_context
-from sidecar.writers.docx_writer import write_docx
-from sidecar.writers.xlsx_writer import write_xlsx
-from sidecar.writers.pptx_writer import write_pptx
-from sidecar.embeddings import embed_text, embed_texts
-from sidecar.schemas.docx_schema import DocxResponse
-from sidecar.schemas.prompt_builder import build_docx_prompt
-from sidecar.llm_caller import call_with_schema
-from sidecar.exporters.quarkdown_compiler import compile_quarkdown
-from sidecar.exporters.kami_handlers import KamiCommandHandler
+# ─── Core Imports ─────────────────────────────────────────────────────────────
+CORE_AVAILABLE = True
+CORE_ERROR = None
+try:
+    from sidecar.ipc import start_named_pipe_server
+    from sidecar.parsers.docx_parser import parse_docx
+    from sidecar.parsers.xlsx_parser import parse_xlsx
+    from sidecar.parsers.pptx_parser import parse_pptx
+    from sidecar.parsers.context_extractor import extract_context
+    from sidecar.writers.docx_writer import write_docx
+    from sidecar.writers.xlsx_writer import write_xlsx
+    from sidecar.writers.pptx_writer import write_pptx
+    from sidecar.embeddings import embed_text, embed_texts
+    from sidecar.schemas.docx_schema import DocxResponse
+    from sidecar.schemas.prompt_builder import build_docx_prompt
+    from sidecar.llm_caller import call_with_schema
+    from sidecar.exporters.quarkdown_compiler import compile_quarkdown
+    from sidecar.exporters.kami_handlers import KamiCommandHandler
+except Exception as e:
+    CORE_AVAILABLE = False
+    CORE_ERROR = f"missing dependency or core module: {e}"
 
 # ─── Domain 1: Word / DOCX Native Track Changes ───────────────────────────────
-from sidecar.parsers.adeu_bridge import (
-    adeu_read_document,
-    adeu_apply_edits,
-    adeu_read_live_document,
-    adeu_sanitize,
-)
-from sidecar.parsers.safedocx_bridge import (
-    safedocx_read_file,
-    safedocx_grep_and_replace,
-    safedocx_batch_edits,
-)
-from sidecar.parsers.legal_redline import (
-    analyze_contract,
-    detect_cuad_clauses,
-    generate_redlines_for_clause,
-    generate_contract_summary,
-)
+DOMAIN1_AVAILABLE = True
+DOMAIN1_ERROR = None
+try:
+    from sidecar.parsers.adeu_bridge import (
+        adeu_read_document,
+        adeu_apply_edits,
+        adeu_read_live_document,
+        adeu_sanitize,
+    )
+    from sidecar.parsers.safedocx_bridge import (
+        safedocx_read_file,
+        safedocx_grep_and_replace,
+        safedocx_batch_edits,
+    )
+    from sidecar.parsers.legal_redline import (
+        analyze_contract,
+        detect_cuad_clauses,
+        generate_redlines_for_clause,
+        generate_contract_summary,
+    )
+except Exception as e:
+    DOMAIN1_AVAILABLE = False
+    DOMAIN1_ERROR = f"missing dependency or COM library: {e}"
 
 # ─── Domain 2: Excel / Spreadsheet ───────────────────────────────────────────
-from sidecar.parsers.excelmcp_bridge import (
-    get_workbook_blueprint as bridge_get_workbook_blueprint,
-    excelmcp_read_range,
-    excelmcp_write_range,
-    excelmcp_write_cell,
-    excelmcp_fill_formula,
-    excelmcp_create_chart,
-    excelmcp_create_pivot_table,
-    excelmcp_screenshot_range,
-)
-from sidecar.parsers.forge_bridge import (
-    validate_formula,
-    explain_formula,
-    validate_formula_batch,
-)
-from sidecar.parsers.excel_context import (
-    ExcelContextCapture,
-    get_workbook_overview,
-    get_active_cell_context,
-    format_excel_context_for_prompt,
-)
-from sidecar.parsers.xlsx_parser import write_xlsx_with_formatting
+DOMAIN2_AVAILABLE = True
+DOMAIN2_ERROR = None
+try:
+    from sidecar.parsers.excelmcp_bridge import (
+        get_workbook_blueprint as bridge_get_workbook_blueprint,
+        excelmcp_read_range,
+        excelmcp_write_range,
+        excelmcp_write_cell,
+        excelmcp_fill_formula,
+        excelmcp_create_chart,
+        excelmcp_create_pivot_table,
+        excelmcp_screenshot_range,
+    )
+    from sidecar.parsers.forge_bridge import (
+        validate_formula,
+        explain_formula,
+        validate_formula_batch,
+    )
+    from sidecar.parsers.excel_context import (
+        ExcelContextCapture,
+        get_workbook_overview,
+        get_active_cell_context,
+        format_excel_context_for_prompt,
+    )
+    from sidecar.parsers.xlsx_parser import write_xlsx_with_formatting
+except Exception as e:
+    DOMAIN2_AVAILABLE = False
+    DOMAIN2_ERROR = f"missing dependency or spreadsheet library: {e}"
 
 # ─── Domain 3: PowerPoint / Presentations ─────────────────────────────────────
-from sidecar.parsers.pptx_mcp_bridge import PptxMcpBridge
-from sidecar.parsers.pptx_context import PptxContextCapture
-from sidecar.parsers.deeppresenter_bridge import DeepPresenterBridge
-from sidecar.parsers.slide_image_gen import SlideImageGenerator, ImageBackend
+DOMAIN3_AVAILABLE = True
+DOMAIN3_ERROR = None
+try:
+    from sidecar.parsers.pptx_mcp_bridge import PptxMcpBridge
+    from sidecar.parsers.pptx_context import PptxContextCapture
+    from sidecar.parsers.deeppresenter_bridge import DeepPresenterBridge
+    from sidecar.parsers.slide_image_gen import SlideImageGenerator, ImageBackend
+except Exception as e:
+    DOMAIN3_AVAILABLE = False
+    DOMAIN3_ERROR = f"missing dependency or pptx library: {e}"
 
 # ─── Domain 4: PDF Extraction & AI-Ready Data ─────────────────────────────────
-from sidecar.parsers.pdf_extraction_engine import PdfExtractionEngine
-from sidecar.exporters.kami_pdf_exporter import KamiPdfExporter
+DOMAIN4_AVAILABLE = True
+DOMAIN4_ERROR = None
+try:
+    from sidecar.parsers.pdf_extraction_engine import PdfExtractionEngine
+    from sidecar.exporters.kami_pdf_exporter import KamiPdfExporter
+except Exception as e:
+    DOMAIN4_AVAILABLE = False
+    DOMAIN4_ERROR = f"missing dependency or pdf library: {e}"
 
 
 # ─── Logging ─────────────────────────────────────────────────────────────────
@@ -90,6 +121,18 @@ logging.basicConfig(
 )
 log = logging.getLogger("kairo-sidecar.main")
 
+# Log available domains on startup
+if not CORE_AVAILABLE:
+    log.error(f"Core imports failed: {CORE_ERROR}")
+if not DOMAIN1_AVAILABLE:
+    log.warning(f"Domain 1 (Word/DOCX) imports failed: {DOMAIN1_ERROR}")
+if not DOMAIN2_AVAILABLE:
+    log.warning(f"Domain 2 (Excel) imports failed: {DOMAIN2_ERROR}")
+if not DOMAIN3_AVAILABLE:
+    log.warning(f"Domain 3 (PowerPoint) imports failed: {DOMAIN3_ERROR}")
+if not DOMAIN4_AVAILABLE:
+    log.warning(f"Domain 4 (PDF) imports failed: {DOMAIN4_ERROR}")
+
 async def handle_request(req: dict) -> dict:
     req_id = req.get("id", "unknown")
     action = req.get("action", "")
@@ -97,6 +140,40 @@ async def handle_request(req: dict) -> dict:
     payload = req.get("payload", {})
 
     log.info(f"Request [{req_id}] action={action} path={path}")
+
+    # Check module/domain availability before routing request
+    core_actions = {
+        "read_docx", "write_docx", "read_xlsx", "write_xlsx", "read_pptx",
+        "write_pptx", "extract_context", "embed_text", "embed_texts",
+        "llm_structured_docx", "compile_quarkdown"
+    }
+    domain1_actions = {
+        "adeu_read", "adeu_apply_edits", "adeu_read_live", "adeu_sanitize",
+        "safedocx_read", "safedocx_edit", "analyze_contract", "detect_clauses",
+        "generate_redline"
+    }
+    domain2_actions = {
+        "get_workbook_blueprint", "validate_formula", "explain_formula",
+        "write_xlsx_formatted", "excelmcp_create_chart", "excelmcp_create_pivot",
+        "excel_smart_context", "excelmcp_fill_formula"
+    }
+    domain3_actions = {
+        "pptx_context_capture", "deeppresenter_generate", "slide_image_generate"
+    }
+    domain4_actions = {
+        "pdf_extract", "pdf_kami_export"
+    }
+
+    if action in core_actions and not CORE_AVAILABLE:
+        return {"id": req_id, "ok": False, "error": f"Core actions unavailable: {CORE_ERROR}"}
+    if action in domain1_actions and not DOMAIN1_AVAILABLE:
+        return {"id": req_id, "ok": False, "error": f"Domain 1 (Word/DOCX) unavailable: {DOMAIN1_ERROR}"}
+    if action in domain2_actions and not DOMAIN2_AVAILABLE:
+        return {"id": req_id, "ok": False, "error": f"Domain 2 (Excel) unavailable: {DOMAIN2_ERROR}"}
+    if action in domain3_actions and not DOMAIN3_AVAILABLE:
+        return {"id": req_id, "ok": False, "error": f"Domain 3 (PowerPoint) unavailable: {DOMAIN3_ERROR}"}
+    if action in domain4_actions and not DOMAIN4_AVAILABLE:
+        return {"id": req_id, "ok": False, "error": f"Domain 4 (PDF) unavailable: {DOMAIN4_ERROR}"}
 
     try:
         if action == "ping":

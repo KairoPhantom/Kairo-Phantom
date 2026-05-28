@@ -236,6 +236,9 @@ impl HumanizedInjector {
 
         #[cfg(windows)]
         {
+            // Save original clipboard
+            let original_clipboard = Self::get_clipboard();
+
             // Step 1: Set clipboard FIRST
             if !Self::set_clipboard(text) {
                 tracing::warn!("Clipboard set failed, trying SendInput char-by-char");
@@ -246,6 +249,16 @@ impl HumanizedInjector {
 
             // Step 2: Select current line (Home + Shift+End) then paste (Ctrl+V)
             self.inject_replace_line();
+
+            // Step 3: Wait and restore original clipboard
+            thread::sleep(Duration::from_millis(150));
+            if let Some(orig) = original_clipboard {
+                if !Self::set_clipboard(&orig) {
+                    tracing::warn!("Failed to restore original clipboard content");
+                } else {
+                    tracing::info!("Clipboard restored to original content");
+                }
+            }
 
             for word in text.split_whitespace().take(5) {
                 tracing::debug!("Injected: {}", word);
@@ -298,6 +311,41 @@ impl HumanizedInjector {
             if delay > 0 {
                 thread::sleep(Duration::from_millis(delay));
             }
+        }
+    }
+
+    /// Get Windows clipboard content (Unicode text).
+    #[cfg(windows)]
+    pub fn get_clipboard() -> Option<String> {
+        use windows::Win32::System::DataExchange::{GetClipboardData, OpenClipboard, CloseClipboard};
+        use windows::Win32::System::Memory::{GlobalLock, GlobalUnlock};
+        use windows::Win32::Foundation::HGLOBAL;
+
+        unsafe {
+            // Retry up to 5 times — clipboard may be locked by Word momentarily
+            for attempt in 0..5 {
+                if OpenClipboard(None).is_ok() {
+                    let handle = GetClipboardData(13); // CF_UNICODETEXT
+                    if let Ok(handle) = handle {
+                        let hglobal = HGLOBAL(handle.0 as _);
+                        let ptr = GlobalLock(hglobal) as *const u16;
+                        if !ptr.is_null() {
+                            let mut len = 0;
+                            while *ptr.add(len) != 0 {
+                                len += 1;
+                            }
+                            let slice = std::slice::from_raw_parts(ptr, len);
+                            let text = String::from_utf16_lossy(slice);
+                            let _ = GlobalUnlock(hglobal);
+                            let _ = CloseClipboard();
+                            return Some(text);
+                        }
+                    }
+                    let _ = CloseClipboard();
+                }
+                thread::sleep(Duration::from_millis(20));
+            }
+            None
         }
     }
 

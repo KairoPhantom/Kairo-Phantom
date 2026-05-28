@@ -1,11 +1,160 @@
 //! Toast Notification — P0-B2
-//! Replaces PAHF document injection with non-intrusive Windows toast overlays.
-//! Shows clarification requests as balloon/toast notifications, not in-document text.
+//! Native Windows balloon notifications via Shell_NotifyIconW.
+//! Replaces the old PowerShell NotifyIcon approach with zero-process-spawn overhead.
 //! V4: Added streaming indicator (pulsing ghost icon) + agent selection debug logging.
 
-use std::process::Command;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+
+// ─── Native Windows Balloon Notification Backend ──────────────────────────────
+//
+// Uses Shell_NotifyIconW with NIF_INFO to show balloon tips from a hidden window.
+// A persistent tray icon is created lazily on first use and reused for all toasts.
+
+#[cfg(windows)]
+mod win_balloon {
+    use once_cell::sync::OnceCell;
+    use std::sync::Mutex;
+
+    use windows::core::PCWSTR;
+    use windows::Win32::Foundation::{HINSTANCE, HWND, LPARAM, LRESULT, WPARAM};
+    use windows::Win32::UI::Shell::{
+        Shell_NotifyIconW, NIF_ICON, NIF_INFO, NIF_MESSAGE, NIF_TIP, NIM_ADD,
+        NIM_MODIFY, NOTIFYICONDATAW, NOTIFYICONDATAW_0,
+    };
+    use windows::Win32::UI::WindowsAndMessaging::{
+        CreateWindowExW, DefWindowProcW, LoadIconW, RegisterClassW, CS_HREDRAW,
+        CS_VREDRAW, IDI_APPLICATION, WINDOW_EX_STYLE, WM_USER, WNDCLASSW,
+        WS_OVERLAPPEDWINDOW,
+    };
+
+    /// Balloon icon types — maps to NIIF_* constants.
+    #[repr(u32)]
+    #[derive(Clone, Copy)]
+    pub enum BalloonIcon {
+        Info = 0x00000001,    // NIIF_INFO
+        Warning = 0x00000002, // NIIF_WARNING
+    }
+
+    /// WM_USER + 1 — the callback message the tray icon sends to our hidden window.
+    const WM_TRAYICON: u32 = WM_USER + 1;
+
+    /// The hidden HWND used as the tray icon's owner. Created once, lives forever.
+    static TRAY_STATE: OnceCell<Mutex<TrayState>> = OnceCell::new();
+
+    struct TrayState {
+        hwnd: HWND,
+        icon_added: bool,
+    }
+
+    // SAFETY: HWND is a pointer-sized handle that Windows guarantees is valid
+    // across threads. We protect mutation with a Mutex.
+    unsafe impl Send for TrayState {}
+
+    /// Encode a Rust &str into a null-terminated UTF-16 buffer of exactly `N` u16s.
+    /// Truncates if the string is too long.
+    fn encode_wide<const N: usize>(s: &str) -> [u16; N] {
+        let mut buf = [0u16; N];
+        for (i, unit) in s.encode_utf16().take(N - 1).enumerate() {
+            buf[i] = unit;
+        }
+        buf
+    }
+
+    /// Minimal window-proc — just forwards everything to DefWindowProcW.
+    unsafe extern "system" fn wnd_proc(
+        hwnd: HWND,
+        msg: u32,
+        wparam: WPARAM,
+        lparam: LPARAM,
+    ) -> LRESULT {
+        unsafe { DefWindowProcW(hwnd, msg, wparam, lparam) }
+    }
+
+    /// Create the hidden message-only window and register the window class.
+    fn create_hidden_hwnd() -> HWND {
+        unsafe {
+            let class_name = encode_wide::<64>("KairoPhantomTrayClass");
+
+            let wc = WNDCLASSW {
+                style: CS_HREDRAW | CS_VREDRAW,
+                lpfnWndProc: Some(wnd_proc),
+                hInstance: HINSTANCE::default(),
+                lpszClassName: PCWSTR(class_name.as_ptr()),
+                ..Default::default()
+            };
+            RegisterClassW(&wc);
+
+            let hwnd = CreateWindowExW(
+                WINDOW_EX_STYLE::default(),
+                PCWSTR(class_name.as_ptr()),
+                PCWSTR::null(),
+                WS_OVERLAPPEDWINDOW,
+                0,
+                0,
+                0,
+                0,
+                HWND::default(),
+                None,
+                HINSTANCE::default(),
+                None,
+            ).unwrap_or(HWND::default());
+            if hwnd == HWND::default() {
+                tracing::error!("Failed to create hidden HWND for tray icon");
+            }
+            hwnd
+        }
+    }
+
+    /// Show (or update) a balloon notification in the system tray.
+    pub fn show_balloon(title: &str, message: &str, icon: BalloonIcon) {
+        let state = TRAY_STATE.get_or_init(|| {
+            Mutex::new(TrayState {
+                hwnd: create_hidden_hwnd(),
+                icon_added: false,
+            })
+        });
+
+        let Ok(mut guard) = state.lock() else {
+            tracing::warn!("Tray state mutex poisoned — falling back to log-only");
+            return;
+        };
+
+        let hwnd = guard.hwnd;
+        if hwnd == HWND::default() {
+            return;
+        }
+
+        unsafe {
+            let h_icon = LoadIconW(HINSTANCE::default(), IDI_APPLICATION)
+                .unwrap_or_default();
+
+            let mut nid = NOTIFYICONDATAW {
+                cbSize: std::mem::size_of::<NOTIFYICONDATAW>() as u32,
+                hWnd: hwnd,
+                uID: 1,
+                uFlags: NIF_ICON | NIF_MESSAGE | NIF_TIP | NIF_INFO,
+                uCallbackMessage: WM_TRAYICON,
+                hIcon: h_icon,
+                szTip: encode_wide::<128>("Kairo Phantom"),
+                szInfo: encode_wide::<256>(message),
+                szInfoTitle: encode_wide::<64>(title),
+                Anonymous: NOTIFYICONDATAW_0::default(),
+                ..Default::default()
+            };
+            nid.dwInfoFlags = windows::Win32::UI::Shell::NOTIFY_ICON_INFOTIP_FLAGS(icon as u32);
+
+            if !guard.icon_added {
+                let _ = Shell_NotifyIconW(NIM_ADD, &nid);
+                guard.icon_added = true;
+            } else {
+                let _ = Shell_NotifyIconW(NIM_MODIFY, &nid);
+            }
+        }
+    }
+}
+
+// ─── Public API ───────────────────────────────────────────────────────────────
 
 /// Show a Windows toast notification for a PAHF clarification request.
 /// Replaces the old behavior of injecting the question text into the document.
@@ -14,29 +163,15 @@ pub fn show_clarification_toast(question: &str) {
 
     #[cfg(windows)]
     {
-        // Escape single quotes for PowerShell
-        let safe_q = question.replace('\'', "''").replace('"', "'");
-        let script = format!(
-            r#"Add-Type -AssemblyName System.Windows.Forms
-$n = New-Object System.Windows.Forms.NotifyIcon
-$n.Icon = [System.Drawing.SystemIcons]::Information
-$n.BalloonTipIcon = 'Info'
-$n.BalloonTipTitle = '👻 Kairo needs clarification'
-$n.BalloonTipText = '{}'
-$n.Visible = $true
-$n.ShowBalloonTip(8000)
-Start-Sleep -Seconds 8
-$n.Dispose()"#,
-            safe_q
+        win_balloon::show_balloon(
+            "Kairo Phantom \u{1F480}",
+            question,
+            win_balloon::BalloonIcon::Info,
         );
-        let _ = Command::new("powershell")
-            .args(["-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command", &script])
-            .spawn();
     }
 
     #[cfg(not(windows))]
     {
-        // Fallback: print to stderr so it doesn't pollute injected text
         eprintln!("[Kairo] Clarification needed: {}", question);
     }
 }
@@ -47,22 +182,17 @@ pub fn show_completion_toast(chars_injected: usize, agent_name: &str) {
 
     #[cfg(windows)]
     {
-        let script = format!(
-            r#"Add-Type -AssemblyName System.Windows.Forms
-$n = New-Object System.Windows.Forms.NotifyIcon
-$n.Icon = [System.Drawing.SystemIcons]::Information
-$n.BalloonTipIcon = 'Info'
-$n.BalloonTipTitle = '✅ Kairo Complete'
-$n.BalloonTipText = '{} generated {} characters'
-$n.Visible = $true
-$n.ShowBalloonTip(3000)
-Start-Sleep -Seconds 3
-$n.Dispose()"#,
-            agent_name, chars_injected
+        let body = format!("{} generated {} characters", agent_name, chars_injected);
+        win_balloon::show_balloon(
+            "Kairo Phantom \u{1F480}",
+            &body,
+            win_balloon::BalloonIcon::Info,
         );
-        let _ = Command::new("powershell")
-            .args(["-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command", &script])
-            .spawn();
+    }
+
+    #[cfg(not(windows))]
+    {
+        println!("[Kairo] ✅ {} generated {} characters", agent_name, chars_injected);
     }
 }
 
@@ -72,23 +202,35 @@ pub fn show_progress_toast(message: &str) {
 
     #[cfg(windows)]
     {
-        let safe_msg = message.replace('\'', "''");
-        let script = format!(
-            r#"Add-Type -AssemblyName System.Windows.Forms
-$n = New-Object System.Windows.Forms.NotifyIcon
-$n.Icon = [System.Drawing.SystemIcons]::Information
-$n.BalloonTipIcon = 'Info'
-$n.BalloonTipTitle = '👻 Kairo Phantom'
-$n.BalloonTipText = '{}'
-$n.Visible = $true
-$n.ShowBalloonTip(5000)
-Start-Sleep -Seconds 5
-$n.Dispose()"#,
-            safe_msg
+        win_balloon::show_balloon(
+            "Kairo Phantom \u{1F480}",
+            message,
+            win_balloon::BalloonIcon::Info,
         );
-        let _ = Command::new("powershell")
-            .args(["-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command", &script])
-            .spawn();
+    }
+
+    #[cfg(not(windows))]
+    {
+        println!("[Kairo] {}", message);
+    }
+}
+
+/// Show an error toast for failures and warnings.
+pub fn show_error_toast(message: &str) {
+    tracing::warn!("❌ Error toast: {}", message);
+
+    #[cfg(windows)]
+    {
+        win_balloon::show_balloon(
+            "Kairo Phantom \u{1F480}",
+            message,
+            win_balloon::BalloonIcon::Warning,
+        );
+    }
+
+    #[cfg(not(windows))]
+    {
+        eprintln!("[Kairo] ❌ {}", message);
     }
 }
 
@@ -132,7 +274,7 @@ pub fn start_streaming_indicator(agent_id: &str, timeout_secs: u64) -> Arc<Atomi
             // On Windows, update the console title as a lightweight visual indicator
             #[cfg(windows)]
             {
-                let _ = Command::new("powershell")
+                let _ = std::process::Command::new("powershell")
                     .args([
                         "-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden",
                         "-Command",
@@ -151,7 +293,7 @@ pub fn start_streaming_indicator(agent_id: &str, timeout_secs: u64) -> Arc<Atomi
         // Restore console title
         #[cfg(windows)]
         {
-            let _ = Command::new("powershell")
+            let _ = std::process::Command::new("powershell")
                 .args([
                     "-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden",
                     "-Command", "$Host.UI.RawUI.WindowTitle = 'Kairo Phantom'",
@@ -197,4 +339,3 @@ pub fn log_agent_selection(agent_id: &str, score: u8, doc_kind: &str, prompt_pre
 
     tracing::debug!("[AgentDebug] {}", entry);
 }
-

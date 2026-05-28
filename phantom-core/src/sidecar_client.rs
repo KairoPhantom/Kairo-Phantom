@@ -996,6 +996,12 @@ fn find_in_recent_files(fname: &str) -> Option<String> {
 
 /// Launch the Python sidecar as a background process.
 /// Called once at daemon startup. Monitors and auto-restarts on crash.
+///
+/// Improvements over the original silent-failure launcher:
+/// - stderr is captured to `~/.kairo-phantom/sidecar-error.log` for debugging
+/// - Tries `python`, `python3`, then `py` (Windows Python Launcher)
+/// - Retry-pings every 1s for up to 10 attempts instead of a single 3s wait
+/// - Shows a toast notification if the sidecar fails to start
 pub async fn launch_sidecar() {
     use std::process::Stdio;
     use tokio::process::Command;
@@ -1025,11 +1031,11 @@ pub async fn launch_sidecar() {
 
     let sidecar_path = match sidecar_path {
         Some(p) => {
-            tracing::info!("ðŸ Found sidecar at: {:?}", p);
+            tracing::info!("🐍 Found sidecar at: {:?}", p);
             p
         }
         None => {
-            tracing::warn!("âš ï¸  Sidecar not found in any candidate path â€” document-native mode disabled");
+            tracing::warn!("⚠️  Sidecar not found in any candidate path — document-native mode disabled");
             tracing::warn!("   To enable: place sidecar.py at <project_root>/kairo-sidecar/sidecar.py");
             return;
         }
@@ -1038,31 +1044,63 @@ pub async fn launch_sidecar() {
     tokio::spawn(async move {
         let mut backoff_secs = 2u64;
         loop {
-            tracing::info!("ðŸ Launching Python sidecar: {:?}", sidecar_path);
-            match Command::new("python")
-                .arg(&sidecar_path)
-                .stdout(Stdio::null())
-                .stderr(Stdio::null())
-                .spawn()
-            {
-                Ok(mut child) => {
-                    // Wait for sidecar to start
-                    tokio::time::sleep(std::time::Duration::from_secs(3)).await;
-                    // Ping to confirm it's up
-                    if ping().await {
-                        tracing::info!("âœ… Sidecar ready on port {}", SIDECAR_PORT);
-                        backoff_secs = 2;
+            let log_dir = dirs::home_dir().unwrap_or_default().join(".kairo-phantom");
+            let _ = std::fs::create_dir_all(&log_dir);
+            let log_file_path = log_dir.join("sidecar-error.log");
+
+            let py_execs = vec!["python", "python3", "py"];
+            let mut started = false;
+
+            for exec in py_execs {
+                tracing::info!("🐍 Attempting to launch Python sidecar using '{}': {:?}", exec, sidecar_path);
+                
+                let stderr_file = std::fs::File::create(&log_file_path)
+                    .map(Stdio::from)
+                    .unwrap_or_else(|_| Stdio::null());
+
+                match Command::new(exec)
+                    .arg(&sidecar_path)
+                    .stdout(Stdio::null())
+                    .stderr(stderr_file)
+                    .spawn()
+                {
+                    Ok(mut child) => {
+                        // Ping retry loop: ping every 1 second for up to 10 attempts
+                        let mut ping_success = false;
+                        for i in 1..=10 {
+                            tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+                            if ping().await {
+                                tracing::info!("✅ Sidecar ready on port {} (attempt {})", SIDECAR_PORT, i);
+                                ping_success = true;
+                                break;
+                            }
+                        }
+
+                        if ping_success {
+                            started = true;
+                            backoff_secs = 2;
+                            // Wait for child to exit
+                            let _ = child.wait().await;
+                            tracing::warn!("⚠️  Sidecar process exited — restarting in {}s", backoff_secs);
+                            break; // break the exec loop to run the backoff/retry loop of the main thread
+                        } else {
+                            tracing::warn!("⚠️  Sidecar spawned via '{}' but failed to respond to pings", exec);
+                            let _ = child.kill().await;
+                        }
                     }
-                    // Wait for child to exit
-                    let _ = child.wait().await;
-                    tracing::warn!("âš ï¸  Sidecar process exited â€” restarting in {}s", backoff_secs);
-                }
-                Err(e) => {
-                    tracing::warn!("âš ï¸  Failed to spawn sidecar: {} â€” retrying in {}s", e, backoff_secs);
+                    Err(e) => {
+                        tracing::warn!("⚠️  Failed to spawn sidecar with '{}': {}", exec, e);
+                    }
                 }
             }
-            tokio::time::sleep(std::time::Duration::from_secs(backoff_secs)).await;
-            backoff_secs = (backoff_secs * 2).min(60);
+
+            if !started {
+                tracing::error!("❌ All Python executables failed to start the sidecar.");
+                crate::toast_notification::show_error_toast("Kairo Sidecar failed to start. Check ~/.kairo-phantom/sidecar-error.log");
+                
+                tokio::time::sleep(std::time::Duration::from_secs(backoff_secs)).await;
+                backoff_secs = (backoff_secs * 2).min(60);
+            }
         }
     });
 }
