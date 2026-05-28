@@ -3,7 +3,7 @@
 
 use tauri::{
     AppHandle, Emitter, Manager, WebviewWindow,
-    tray::{TrayIconBuilder, TrayIconEvent},
+    tray::TrayIconBuilder,
     menu::{Menu, MenuItem},
 };
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut};

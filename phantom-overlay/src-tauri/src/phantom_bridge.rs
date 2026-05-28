@@ -15,6 +15,7 @@ struct MaterializeRequest {
 #[derive(Deserialize)]
 struct MaterializeResponse {
     suggestion: String,
+    #[allow(dead_code)]
     word_count: usize,
 }
 
@@ -39,6 +40,7 @@ impl PhantomBridge {
     }
 
     /// Ping phantom-core to check if it's running
+    #[allow(dead_code)]
     pub async fn ping() -> bool {
         let client = Client::new();
         client

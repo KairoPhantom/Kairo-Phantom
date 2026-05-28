@@ -8,6 +8,7 @@ use serde_json::{json, Value};
 
 #[derive(Deserialize, Debug)]
 struct JsonRpcRequest {
+    #[allow(dead_code)]
     jsonrpc: String,
     id: Option<Value>,
     method: String,

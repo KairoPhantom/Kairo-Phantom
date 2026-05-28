@@ -16,7 +16,12 @@ Usage:
 Requires: kairo-phantom.exe running on port 7437
 """
 
-import requests, json, time, sys, os, re, subprocess
+import requests, json, time, sys, os, re, subprocess, io
+# Force UTF-8 output on Windows (avoids cp1252 UnicodeEncodeError)
+if sys.stdout.encoding != "utf-8":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+if sys.stderr.encoding != "utf-8":
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 from pathlib import Path
 from datetime import datetime
 
