@@ -20,7 +20,7 @@
 // Uses `rdev::listen()` (already in Cargo.toml) which provides global keyboard
 // events on macOS (via CGEvent tap) and Linux (via X11 / evdev).
 //
-// Hotkeys: Alt+M (ghost-write), Alt+V (voice), Alt+Shift+M (screen context)
+// Hotkeys: Alt+Ctrl+M (ghost-write), Alt+V (voice), Alt+Shift+M (screen context)
 
 use tokio::sync::mpsc::Sender;
 use tracing::{info, warn, error};
@@ -37,9 +37,11 @@ static ALT_PRESSED: AtomicBool = AtomicBool::new(false);
 static SHIFT_PRESSED: AtomicBool = AtomicBool::new(false);
 static CONTROL_PRESSED: AtomicBool = AtomicBool::new(false);
 
-/// HWND of the window that had focus when Alt+M fired (Windows only).
+/// HWND of the window that had focus when Alt+Ctrl+M fired (Windows only).
 /// On non-Windows platforms this is always 0.
 pub static CAPTURED_HWND: AtomicIsize = AtomicIsize::new(0);
+pub static SKILL_SAVE_PENDING: AtomicBool = AtomicBool::new(false);
+pub static CUA_PENDING: AtomicBool = AtomicBool::new(false);
 
 // ── HotkeyWatcher — platform-agnostic entry point ────────────────────────────
 
@@ -90,7 +92,7 @@ impl HotkeyWatcher {
                     0,
                 ).expect("Failed to install WH_KEYBOARD_LL hook");
 
-                info!("✅ Keyboard hook active (Windows WH_KEYBOARD_LL). Listening for Alt+M.");
+                info!("✅ Keyboard hook active (Windows WH_KEYBOARD_LL). Listening for Alt+Ctrl+M.");
                 info!("   Alt events pass through unmodified — no stuck key risk.");
 
                 let mut msg = MSG::default();
@@ -112,7 +114,7 @@ impl HotkeyWatcher {
         use rdev::{listen, EventType, Key};
 
         std::thread::spawn(move || {
-            info!("✅ Keyboard hook active (rdev cross-platform). Listening for Alt+M.");
+            info!("✅ Keyboard hook active (rdev cross-platform). Listening for Alt+Ctrl+M.");
 
             // rdev::listen blocks the thread and calls the callback for every event.
             // We cannot return a Result from listen's callback, so we use the atomics.
@@ -139,6 +141,48 @@ impl HotkeyWatcher {
                     }
 
                     EventType::KeyPress(key) => {
+                        if CUA_PENDING.load(Ordering::SeqCst) {
+                            let is_modifier = matches!(
+                                key,
+                                Key::Alt | Key::AltGr | Key::ShiftLeft | Key::ShiftRight | Key::ControlLeft | Key::ControlRight
+                            );
+                            if !is_modifier {
+                                if key == Key::Tab {
+                                    info!("🎯 Intercepted Tab keypress for CUA approval (rdev)!");
+                                    CUA_PENDING.store(false, Ordering::SeqCst);
+                                    send_event(PhantomEvent::CuaApproved);
+                                } else if key == Key::Escape {
+                                    info!("❌ CUA cancelled by Escape keypress (rdev).");
+                                    CUA_PENDING.store(false, Ordering::SeqCst);
+                                    send_event(PhantomEvent::CuaCancelled);
+                                } else {
+                                    info!("❌ CUA cancelled because user pressed another key (rdev).");
+                                    CUA_PENDING.store(false, Ordering::SeqCst);
+                                    send_event(PhantomEvent::CuaCancelled);
+                                }
+                                return;
+                            }
+                        }
+
+                        if SKILL_SAVE_PENDING.load(Ordering::SeqCst) {
+                            let is_modifier = matches!(
+                                key,
+                                Key::Alt | Key::AltGr | Key::ShiftLeft | Key::ShiftRight | Key::ControlLeft | Key::ControlRight
+                            );
+                            if !is_modifier {
+                                if key == Key::Tab {
+                                    info!("🎯 Intercepted Tab keypress (rdev)!");
+                                    SKILL_SAVE_PENDING.store(false, Ordering::SeqCst);
+                                    send_event(PhantomEvent::SkillSaveApproved);
+                                } else {
+                                    info!("❌ Skill save cancelled because user pressed another key (rdev).");
+                                    SKILL_SAVE_PENDING.store(false, Ordering::SeqCst);
+                                    send_event(PhantomEvent::SkillSaveCancelled);
+                                }
+                                return;
+                            }
+                        }
+
                         let alt = ALT_PRESSED.load(Ordering::SeqCst);
                         let shift = SHIFT_PRESSED.load(Ordering::SeqCst);
                         let ctrl = CONTROL_PRESSED.load(Ordering::SeqCst);
@@ -148,7 +192,7 @@ impl HotkeyWatcher {
                             info!("↩️ Ctrl+Shift+Z detected (rdev)! Undo triggered.");
                             send_event(PhantomEvent::UndoPressed);
                         }
-                        // Alt+Shift+M → Screen Context (must check before Alt+M)
+                        // Alt+Shift+M → Screen Context (must check before Alt+Ctrl+M)
                         else if alt && shift && key == Key::KeyM {
                             info!("📸 Alt+Shift+M detected (rdev)! Screen Context triggered.");
                             send_event(PhantomEvent::ScreenContextPressed);
@@ -158,9 +202,9 @@ impl HotkeyWatcher {
                             info!("🎤 Alt+V detected (rdev)! Voice Dictation triggered.");
                             send_event(PhantomEvent::VoicePressed);
                         }
-                        // Alt+M (no Shift) → Ghost-Write
-                        else if alt && !shift && key == Key::KeyM {
-                            info!("🔥 Alt+M detected (rdev)! Ghost-Write triggered.");
+                        // Alt+Ctrl+M (no Shift) → Ghost-Write
+                        else if alt && ctrl && !shift && key == Key::KeyM {
+                            info!("🔥 Alt+Ctrl+M detected (rdev)! Ghost-Write triggered.");
                             send_event(PhantomEvent::HotkeyPressed);
                         }
                     }
@@ -188,7 +232,7 @@ fn send_event(event: PhantomEvent) {
 // ── Windows: Low-Level Keyboard Hook Callback ─────────────────────────────────
 //
 // This function is only compiled on Windows. It captures the exact HWND that
-// was focused when Alt+M fired — critical for the injector to type into the
+// was focused when Alt+Ctrl+M fired — critical for the injector to type into the
 // correct window.
 
 #[cfg(windows)]
@@ -250,6 +294,37 @@ unsafe extern "system" fn low_level_keyboard_proc(
         return CallNextHookEx(None, code, wparam, lparam);
     }
 
+    if CUA_PENDING.load(Ordering::SeqCst) && is_down {
+        if kbd.vkCode == 0x09 { // Tab
+            info!("🎯 Intercepted Tab keypress for CUA approval!");
+            CUA_PENDING.store(false, Ordering::SeqCst);
+            send_event(PhantomEvent::CuaApproved);
+            return LRESULT(1); // Suppress Tab keystroke
+        } else if kbd.vkCode == 0x1B { // Esc
+            info!("❌ CUA cancelled by user pressing Escape.");
+            CUA_PENDING.store(false, Ordering::SeqCst);
+            send_event(PhantomEvent::CuaCancelled);
+            return LRESULT(1); // Suppress Esc keystroke
+        } else {
+            info!("❌ CUA cancelled because user pressed another key.");
+            CUA_PENDING.store(false, Ordering::SeqCst);
+            send_event(PhantomEvent::CuaCancelled);
+        }
+    }
+
+    if SKILL_SAVE_PENDING.load(Ordering::SeqCst) && is_down {
+        if kbd.vkCode == 0x09 {
+            info!("🎯 Intercepted Tab keypress for dynamic skill save approval!");
+            SKILL_SAVE_PENDING.store(false, Ordering::SeqCst);
+            send_event(PhantomEvent::SkillSaveApproved);
+            return LRESULT(1); // Suppress Tab keystroke
+        } else {
+            info!("❌ Skill save cancelled because user pressed another key.");
+            SKILL_SAVE_PENDING.store(false, Ordering::SeqCst);
+            send_event(PhantomEvent::SkillSaveCancelled);
+        }
+    }
+
     // ── Ctrl+Shift+Z: Undo last injection ──────────────────────────────
     if kbd.vkCode == 0x5A /* Z */ && is_down
        && CONTROL_PRESSED.load(Ordering::SeqCst)
@@ -262,7 +337,7 @@ unsafe extern "system" fn low_level_keyboard_proc(
         return LRESULT(1); // Suppress 'Z'
     }
 
-    // ── Alt+Shift+M: Screen Context (must check BEFORE Alt+M) ─────────────
+    // ── Alt+Shift+M: Screen Context (must check BEFORE Alt+Ctrl+M) ─────────────
     if kbd.vkCode == 0x4D && is_down
        && ALT_PRESSED.load(Ordering::SeqCst)
        && SHIFT_PRESSED.load(Ordering::SeqCst)
@@ -283,16 +358,22 @@ unsafe extern "system" fn low_level_keyboard_proc(
         return LRESULT(1); // Suppress 'V'
     }
 
-    // ── Alt+M: Ghost-Write (original hotkey) ──────────────────────────────
-    if kbd.vkCode == 0x4D && is_down && ALT_PRESSED.load(Ordering::SeqCst)
+    // ── Alt+Ctrl+M: Ghost-Write (CUA 1000x hotkey) ─────────────────────────
+    if kbd.vkCode == 0x4D && is_down
+       && ALT_PRESSED.load(Ordering::SeqCst)
+       && CONTROL_PRESSED.load(Ordering::SeqCst)
        && !SHIFT_PRESSED.load(Ordering::SeqCst)  // NOT Alt+Shift+M
     {
         let hwnd: HWND = GetForegroundWindow();
         CAPTURED_HWND.store(hwnd.0 as isize, Ordering::SeqCst);
-        info!("🔥 Alt+M detected! HWND={:?}", hwnd.0);
+        info!("🔥 Alt+Ctrl+M detected! HWND={:?}", hwnd.0);
         send_event(PhantomEvent::HotkeyPressed);
         return LRESULT(1); // SUPPRESS ONLY 'M'
     }
+
+    // MEMMACHINE_TAB_HOOK: On Tab approval, record interaction for style learning
+    // Send IPC message: {"event": "tab_approved", "domain": domain, "timestamp": ...}
+    // This triggers MemorySeeder.record_interaction() in the Python sidecar
 
     // All other keys pass through unchanged
     CallNextHookEx(None, code, wparam, lparam)
@@ -307,13 +388,23 @@ mod tests {
         assert!(!ALT_PRESSED.load(Ordering::SeqCst));
         assert!(!SHIFT_PRESSED.load(Ordering::SeqCst));
         assert_eq!(CAPTURED_HWND.load(Ordering::SeqCst), 0);
+        assert!(!SKILL_SAVE_PENDING.load(Ordering::SeqCst));
+    }
+
+    #[test]
+    fn test_skill_save_pending_toggle() {
+        assert!(!SKILL_SAVE_PENDING.load(Ordering::SeqCst));
+        SKILL_SAVE_PENDING.store(true, Ordering::SeqCst);
+        assert!(SKILL_SAVE_PENDING.load(Ordering::SeqCst));
+        SKILL_SAVE_PENDING.store(false, Ordering::SeqCst);
+        assert!(!SKILL_SAVE_PENDING.load(Ordering::SeqCst));
     }
 
     #[test]
     fn test_hotkey_watcher_construction() {
         let (tx, _rx) = tokio::sync::mpsc::channel(10);
-        let watcher = HotkeyWatcher::new("Alt+M".to_string(), tx);
-        assert_eq!(watcher.hotkey_str, "Alt+M");
+        let watcher = HotkeyWatcher::new("Alt+Ctrl+M".to_string(), tx);
+        assert_eq!(watcher.hotkey_str, "Alt+Ctrl+M");
     }
 
     #[test]

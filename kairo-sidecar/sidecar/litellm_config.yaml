@@ -1,4 +1,49 @@
 model_list:
+  # Tier 1: kairo-fast — fine-tuned 4B, ~70% traffic, simple ops <=150 tokens
+  # Spec: timeout=6s (4B model should respond in ~400ms; 6s is safety margin)
+  - model_name: kairo-fast
+    litellm_params:
+      model: ollama/kairo-docwriter-4b
+      api_base: http://localhost:11434
+      timeout: 6
+      stream: true
+  # Tier 1 fallback: use qwen2.5:7b until kairo-docwriter-4b is fine-tuned
+  - model_name: kairo-fast
+    litellm_params:
+      model: ollama/qwen2.5:7b
+      api_base: http://localhost:11434
+      timeout: 12
+      stream: false
+
+  # Tier 2: kairo-standard — Qwen2.5-7B, ~25% traffic, medium complexity
+  # Spec: timeout=12s
+  - model_name: kairo-standard
+    litellm_params:
+      model: ollama/qwen2.5:7b
+      api_base: http://localhost:11434
+      timeout: 12
+      stream: false
+
+  # Tier 3: kairo-think — Qwen3-8B with reasoning disabled, ~4% traffic, legal/medical
+  # Spec: timeout=25s; extra_body disables chain-of-thought <think> tokens
+  - model_name: kairo-think
+    litellm_params:
+      model: ollama/qwen3:8b
+      api_base: http://localhost:11434
+      timeout: 25
+      stream: false
+      extra_body: {"think": false}
+
+  # Tier 4: kairo-cloud — Claude Sonnet 4.6 (opt-in only), ~1% traffic, web search required
+  # Spec: model=claude-sonnet-4-6 (NOT 4-5); timeout=30s
+  - model_name: kairo-cloud
+    litellm_params:
+      model: anthropic/claude-sonnet-4-6
+      api_key: os.environ/ANTHROPIC_API_KEY
+      timeout: 30
+      stream: false
+
+  # Legacy aliases for backward compatibility
   - model_name: ollama/qwen2.5:7b
     litellm_params:
       model: ollama/qwen2.5:7b
@@ -16,6 +61,21 @@ model_list:
       model: gemini/gemini-2.5-flash
       api_key: os.environ/GEMINI_API_KEY
 
+router_settings:
+  routing_strategy: usage-based-routing-v2
+  fallbacks:
+    - kairo-fast:
+        - kairo-standard
+        - kairo-cloud
+    - kairo-standard:
+        - kairo-cloud
+    - kairo-think:
+        - kairo-cloud
+  num_retries: 2
+  retry_after: 0.5
+
 litellm_settings:
   drop_params: true
   set_verbose: false
+  success_callback: []
+  failure_callback: []

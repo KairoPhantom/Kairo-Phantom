@@ -120,7 +120,7 @@ async fn test_consecutive_50_ops_three_layer_pipeline() {
 
         // ─── LAYER 1: Intent Gate ───
         let gate_start = Instant::now();
-        let intent_analysis = IntentGate::analyze(&prompt, &app_ctx, &doc_ctx, &CommandMode::GhostWrite);
+        let intent_analysis = IntentGate::analyze(&prompt, &app_ctx, &doc_ctx, &CommandMode::GhostWrite, None);
         let gate_elapsed = gate_start.elapsed().as_micros() as u64;
         total_intent_gate_us += gate_elapsed;
         intent_gate_count += 1;

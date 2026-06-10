@@ -1,0 +1,21 @@
+PackageIdentifier: KairoPhantom.KairoPhantom
+PackageVersion: 1.0.0
+PackageLocale: en-US
+PackageName: Kairo Phantom
+Publisher: Kairo Phantom
+ShortDescription: AI that writes into your Word docs, runs 100% offline, remembers your style
+Tags:
+  - ai
+  - productivity
+  - writing
+  - local
+  - offline
+ReleaseNotes: |-
+  - Initial release
+  - python-docx write-back: correct paragraph styles
+  - MemMachine cross-session style recall
+  - 4-tier LiteLLM routing
+  - 12/12 production gates passing
+ReleaseNotesUrl: https://github.com/Kartik24Hulmukh/Kairo-Phantom/releases/tag/v1.0.0
+ManifestType: locale
+ManifestVersion: 1.6.0

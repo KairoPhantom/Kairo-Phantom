@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.singleton.1.6.0.schema.json
+
+PackageIdentifier: Kartik24Hulmukh.KairoPhantom
+PackageVersion: 3.9.0
+PackageName: Kairo Phantom
+Publisher: Kartik24Hulmukh
+License: MIT
+Moniker: kairo-phantom
+Tags:
+  - ai
+  - copilot
+  - office
+  - local
+  - offline
+  - word
+  - excel
+ShortDescription: Local-first offline AI writing and execution copilot that integrates directly into Windows documents.
+Description: >-
+  Kairo Phantom is a local-first, air-gapped AI copilot designed to work directly inside Microsoft Word, Excel, and other Windows applications.
+  It uses a fine-tuned Qwen-4B model locally via Ollama to execute formatting and content tasks, and stores personalized style guides locally in MemMachine.
+InstallerType: inno
+Installers:
+  - Architecture: x64
+    InstallerUrl: https://github.com/Kartik24Hulmukh/Kairo-Phantom/releases/download/v3.9.0/KairoSetup.exe
+    InstallerSha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+    InstallerSwitches:
+      Silent: /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
+      SilentWithProgress: /SILENT /SUPPRESSMSGBOXES /NORESTART
+ManifestType: singleton
+ManifestVersion: 1.6.0

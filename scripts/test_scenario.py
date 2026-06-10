@@ -375,12 +375,12 @@ def run(sid):
                 print(f"  ERR in check: {e}")
                 ok_all = False
         if ok_all:
-            print(f"  ✅ [{sid}] PASSED (attempt {attempt})")
+            print(f"  [PASS] [{sid}] PASSED (attempt {attempt})")
             return True
         if attempt < 3:
             print(f"  Retrying in 10s...")
             time.sleep(10)
-    print(f"  ❌ [{sid}] FAILED after 3 attempts")
+    print(f"  [FAIL] [{sid}] FAILED after 3 attempts")
     return False
 
 if __name__ == "__main__":
@@ -395,7 +395,7 @@ if __name__ == "__main__":
     failed = [k for k,v in results.items() if v is False]
     skipped = [k for k,v in results.items() if v is None]
     for sid, ok in results.items():
-        mark = "✅" if ok else ("❌" if ok is False else "⏭️")
+        mark = "[PASS]" if ok else ("[FAIL]" if ok is False else "[SKIP]")
         print(f"  {mark} {sid}")
     total = len(passed) + len(failed)
     print(f"\n  Score: {len(passed)}/{total} ({100*len(passed)//total if total else 0}%)")

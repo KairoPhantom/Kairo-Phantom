@@ -5,7 +5,7 @@ import logging
 log = logging.getLogger("kairo-sidecar.pptx_context")
 
 class PptxContextCapture:
-    """Captures rich presentation context before every Alt+M."""
+    """Captures rich presentation context before every Alt+Ctrl+M."""
 
     def __init__(self):
         self.bridge = PptxMcpBridge()

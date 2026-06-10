@@ -1,0 +1,38 @@
+# Kairo Phantom — Main Configuration
+# All paths are relative to the user's home directory unless absolute.
+
+[memmachine]
+# SQLite DB for MemMachine interaction history
+db_path = "~/.kairo/memmachine.db"
+# Max interactions to keep per domain
+max_history_per_domain = 500
+# Recall limit (number of recent interactions returned on query)
+recall_limit = 5
+
+[llm]
+# Default model for domain masters (7B for quality, 3B for speed)
+default_model = "ollama/qwen2.5:7b"
+# Classification model (smaller, faster)
+classifier_model = "ollama/qwen2.5:3b"
+# LiteLLM proxy endpoint
+litellm_base_url = "http://localhost:4000"
+# First-token latency targets (milliseconds)
+latency_target_7b_ms = 2000
+latency_target_3b_ms = 600
+
+[kairo_eye]
+# AppWatcher poll interval in milliseconds
+poll_interval_ms = 500
+# Preload cache max entries
+preload_cache_max = 20
+# Farscry capture region (width x height)
+farscry_width = 400
+farscry_height = 300
+
+[safety]
+# Never auto-send emails or forms
+block_auto_send = true
+# Always use show_only for terminal commands
+terminal_show_only = true
+# Block outbound connections in offline mode
+offline_mode = false

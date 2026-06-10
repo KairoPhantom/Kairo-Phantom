@@ -20,16 +20,16 @@ $KairoDir = "$env:USERPROFILE\.kairo-phantom"
 $ConfigPath = "$KairoDir\config.toml"
 
 function Write-Step { param($msg) Write-Host "  $msg" -ForegroundColor Cyan }
-function Write-Ok   { param($msg) Write-Host "  ✅ $msg" -ForegroundColor Green }
-function Write-Warn { param($msg) Write-Host "  ⚠️  $msg" -ForegroundColor Yellow }
-function Write-Err  { param($msg) Write-Host "  ❌ $msg" -ForegroundColor Red; exit 1 }
+function Write-Ok   { param($msg) Write-Host "  [OK] $msg" -ForegroundColor Green }
+function Write-Warn { param($msg) Write-Host "  [WARN] $msg" -ForegroundColor Yellow }
+function Write-Err  { param($msg) Write-Host "  [ERR] $msg" -ForegroundColor Red; exit 1 }
 
 Write-Host ""
-Write-Host "  👻 Kairo Phantom v$KairoVersion — Universal AI Document Copilot" -ForegroundColor Magenta
-Write-Host "  ─────────────────────────────────────────────────────────────" -ForegroundColor DarkGray
+Write-Host "  Kairo Phantom v$KairoVersion - Universal AI Document Copilot" -ForegroundColor Magenta
+Write-Host "  -------------------------------------------------------------" -ForegroundColor DarkGray
 Write-Host ""
 
-# ─── Check Prerequisites ──────────────────────────────────────────────────────
+# --- Check Prerequisites ------------------------------------------------------
 
 Write-Step "Checking prerequisites..."
 
@@ -60,39 +60,96 @@ if (-not (Get-Command "python" -ErrorAction SilentlyContinue)) {
     $PythonAvailable = $true
 }
 
-# Check Ollama
+# Check Ollama (version check + instructions if missing)
+$OllamaAvailable = $false
 $OllamaRunning = $false
 try {
-    $ollamaResp = Invoke-RestMethod -Uri "http://localhost:11434/api/tags" -TimeoutSec 3 -ErrorAction SilentlyContinue
-    Write-Ok "Ollama: running (offline AI mode available)"
-    $OllamaRunning = $true
+    $t = Measure-Command {
+        $ollamaVer = (ollama --version 2>&1)
+        $OllamaAvailable = $true
+        Write-Ok "Ollama: $ollamaVer"
+    }
+    Write-Step "  (Ollama version check: $([math]::Round($t.TotalMilliseconds))ms)"
 } catch {
-    Write-Warn "Ollama not running. For offline AI:"
-    Write-Warn "  winget install Ollama.Ollama"
-    Write-Warn "  ollama pull qwen2.5-coder:14b"
+    Write-Warn "Ollama CLI not found. For offline AI mode:"
+    Write-Warn "  1. Install: winget install Ollama.Ollama"
+    Write-Warn "  2. Then run this installer again, or pull models manually:"
+    Write-Warn "       ollama pull qwen2.5:3b"
+    Write-Warn "       ollama pull qwen2.5:7b"
     Write-Warn "Kairo will use cloud fallback (requires OpenAI API key in config)"
 }
 
-# ─── Install Python Dependencies ──────────────────────────────────────────────
+try {
+    $t = Measure-Command {
+        $ollamaResp = Invoke-RestMethod -Uri "http://localhost:11434/api/tags" -TimeoutSec 3 -ErrorAction SilentlyContinue
+        $OllamaRunning = $true
+        Write-Ok "Ollama server: running (offline AI mode available)"
+    }
+} catch {
+    Write-Warn "Ollama server not running. Start it with: ollama serve"
+}
 
-if ($PythonAvailable) {
-    Write-Step "Installing Python dependencies (python-pptx, pillow)..."
+# Pull required models if Ollama is available
+if ($OllamaAvailable -and $OllamaRunning) {
+    # Air-gap compliance: disable Ollama telemetry and external connections
+    [System.Environment]::SetEnvironmentVariable('OLLAMA_NOPRUNE', '1', 'Machine')
+    [System.Environment]::SetEnvironmentVariable('OLLAMA_ANALYTICS', '0', 'Machine')
+
+    Write-Step "Pulling required Ollama models (qwen2.5:3b, qwen2.5:7b)..."
     try {
-        python -m pip install python-pptx pillow requests --quiet
-        Write-Ok "python-pptx installed"
+        $t = Measure-Command {
+            Write-Step "  Pulling qwen2.5:3b (fast classifier model)..."
+            ollama pull qwen2.5:3b 2>&1 | Select-Object -Last 3
+            Write-Ok "qwen2.5:3b ready"
+        }
+        Write-Step "  (qwen2.5:3b pull: $([math]::Round($t.TotalSeconds))s)"
     } catch {
-        Write-Warn "Failed to install python-pptx: $_"
-        Write-Warn "PPTX bridge will be disabled. Run: pip install python-pptx pillow"
+        Write-Warn "Failed to pull qwen2.5:3b: $_ — pull manually: ollama pull qwen2.5:3b"
+    }
+    try {
+        $t = Measure-Command {
+            Write-Step "  Pulling qwen2.5:7b (main generation model)..."
+            ollama pull qwen2.5:7b 2>&1 | Select-Object -Last 3
+            Write-Ok "qwen2.5:7b ready"
+        }
+        Write-Step "  (qwen2.5:7b pull: $([math]::Round($t.TotalSeconds))s)"
+    } catch {
+        Write-Warn "Failed to pull qwen2.5:7b: $_ — pull manually: ollama pull qwen2.5:7b"
     }
 }
 
-# ─── Build Kairo Phantom ──────────────────────────────────────────────────────
+# --- Install Python Dependencies ----------------------------------------------
+
+if ($PythonAvailable) {
+    # Install from requirements.txt if present, otherwise install known deps
+    $SidecarReqFile = "$ScriptDir\kairo-sidecar\requirements.txt"
+    Write-Step "Installing Python dependencies..."
+    try {
+        $t = Measure-Command {
+            if (Test-Path $SidecarReqFile) {
+                Write-Step "  Installing from kairo-sidecar/requirements.txt..."
+                python -m pip install -r $SidecarReqFile --quiet
+                Write-Ok "requirements.txt dependencies installed"
+            } else {
+                Write-Step "  Installing core Python dependencies (python-pptx, pillow, requests)..."
+                python -m pip install python-pptx pillow requests --quiet
+                Write-Ok "Core Python dependencies installed"
+            }
+        }
+        Write-Step "  (Python deps install: $([math]::Round($t.TotalSeconds))s)"
+    } catch {
+        Write-Warn "Failed to install Python dependencies: $_"
+        Write-Warn "Run manually: pip install -r kairo-sidecar/requirements.txt"
+    }
+}
+
+# --- Build Kairo Phantom ------------------------------------------------------
 
 Write-Step "Building kairo-phantom (this may take 2-5 minutes)..."
 
 # Find the repo root
-$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-if (-not $ScriptDir) { $ScriptDir = Get-Location }
+$ScriptPath = if ($MyInvocation.MyCommand) { $MyInvocation.MyCommand.Path } else { $null }
+$ScriptDir = if ($ScriptPath) { Split-Path -Parent $ScriptPath } else { Get-Location }
 
 # If running as a piped install, clone the repo
 if (-not (Test-Path "$ScriptDir\phantom-core")) {
@@ -123,7 +180,7 @@ if (Test-Path "$ScriptDir\mcp-servers\kairo-mcp") {
 
 Set-Location $ScriptDir
 
-# ─── Install Binaries to PATH ─────────────────────────────────────────────────
+# --- Install Binaries to PATH -------------------------------------------------
 
 Write-Step "Installing binaries..."
 
@@ -153,7 +210,7 @@ if ($CurrentPath -notlike "*$BinDir*") {
     Write-Ok "Added $BinDir to PATH"
 }
 
-# ─── Create Default Config ────────────────────────────────────────────────────
+# --- Create Default Config ----------------------------------------------------
 
 Write-Step "Creating default configuration..."
 
@@ -201,7 +258,7 @@ enabled = false
 audit_logging = false
 strict_plugin_governance = false
 
-hotkey = "alt+m"
+hotkey = "alt+ctrl+m"
 typing_delay_ms = 8
 plugins = []
 "@
@@ -217,7 +274,7 @@ if (Test-Path "$ScriptDir\plugins") {
     Write-Ok "Hero plugins installed (finance, legal, design)"
 }
 
-# ─── Configure MCP for Claude Code, Cursor, Goose ────────────────────────────
+# --- Configure MCP for Claude Code, Cursor, Goose ----------------------------
 
 Write-Step "Configuring MCP integrations..."
 
@@ -227,7 +284,7 @@ $McpConfig = @{
         kairo = @{
             command = $McpBinPath
             args = @()
-            description = "Kairo Phantom — Universal AI Document Copilot"
+            description = "Kairo Phantom - Universal AI Document Copilot"
         }
     }
 }
@@ -260,16 +317,21 @@ if (Test-Path $GooseConfigDir) {
 # Kairo MCP config (for reference)
 Set-Content -Path "$KairoDir\mcp.json" -Value $McpJson -Encoding UTF8
 
-# ─── Summary ─────────────────────────────────────────────────────────────────
+# --- Summary -----------------------------------------------------------------
 
 Write-Host ""
-Write-Host "  ─────────────────────────────────────────────────────────────" -ForegroundColor DarkGray
-Write-Host "  ✅ Kairo Phantom v$KairoVersion installed successfully!" -ForegroundColor Green
+Write-Host "  -------------------------------------------------------------" -ForegroundColor DarkGray
+Write-Host "  Kairo Phantom v$KairoVersion installed successfully!" -ForegroundColor Green
 Write-Host ""
 Write-Host "  Quick Start:" -ForegroundColor White
 Write-Host "    1. Start Kairo:   kairo-phantom" -ForegroundColor Cyan
-Write-Host "    2. In any app:    type a prompt → press Alt+M" -ForegroundColor Cyan
+Write-Host "    2. In any app:    type a prompt -> press Alt+Ctrl+M" -ForegroundColor Cyan
 Write-Host "    3. Ghost session: Tab to accept, Esc to cancel" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "  Alt+Ctrl+M Hotkey:" -ForegroundColor White
+Write-Host "    The Alt+Ctrl+M hotkey is registered by kairo-phantom automatically" -ForegroundColor DarkGray
+Write-Host "    when it starts. No separate hotkey registration is required." -ForegroundColor DarkGray
+Write-Host "    If it doesn't respond, ensure kairo-phantom is running." -ForegroundColor DarkGray
 Write-Host ""
 Write-Host "  Config:  $ConfigPath" -ForegroundColor DarkGray
 Write-Host "  Plugins: $KairoDir\plugins\" -ForegroundColor DarkGray
@@ -277,12 +339,13 @@ Write-Host "  Logs:    $KairoDir\logs\" -ForegroundColor DarkGray
 Write-Host ""
 
 if (-not $OllamaRunning) {
-    Write-Host "  🔌 For offline AI mode:" -ForegroundColor Yellow
+    Write-Host "  For offline AI mode:" -ForegroundColor Yellow
     Write-Host "     winget install Ollama.Ollama" -ForegroundColor Yellow
-    Write-Host "     ollama pull qwen2.5-coder:14b" -ForegroundColor Yellow
+    Write-Host "     ollama pull qwen2.5:3b" -ForegroundColor Yellow
+    Write-Host "     ollama pull qwen2.5:7b" -ForegroundColor Yellow
     Write-Host ""
 }
 
-Write-Host "  📚 Docs:  https://github.com/your-org/kairo-phantom" -ForegroundColor DarkGray
-Write-Host "  💬 Chat:  https://discord.gg/kairo-phantom" -ForegroundColor DarkGray
+Write-Host "  Docs:  https://github.com/Kartik24Hulmukh/Kairo-Phantom" -ForegroundColor DarkGray
+Write-Host "  Chat:  https://discord.gg/kairo-phantom" -ForegroundColor DarkGray
 Write-Host ""

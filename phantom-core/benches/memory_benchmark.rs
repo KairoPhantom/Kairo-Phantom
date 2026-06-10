@@ -179,7 +179,7 @@ fn bench_semantic_coherence(c: &mut Criterion) {
 
 fn bench_composite_score(c: &mut Criterion) {
     c.bench_function("kmb1_composite_score", |b| {
-        b.iter(|| kmb1_score())
+        b.iter(kmb1_score)
     });
 }
 

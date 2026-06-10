@@ -20,8 +20,17 @@ def main():
     log.info("Starting LiteLLM local gateway on port 4000...")
     config_path = Path(__file__).parent / "litellm_config.yaml"
     
-    # Run litellm command: python -m litellm --config litellm_config.yaml --port 4000
-    cmd = [sys.executable, "-m", "litellm", "--config", str(config_path), "--port", str(port)]
+    # Run litellm command using the proxy entrypoint directly to support all package managers
+    cmd = [
+        sys.executable, 
+        "-c", "from litellm.proxy.proxy_cli import run_server; run_server()", 
+        "--config", str(config_path), 
+        "--port", str(port)
+    ]
+    
+    import os
+    env = os.environ.copy()
+    env["PYTHONIOENCODING"] = "utf-8"
     
     try:
         # Hide console window on Windows to run completely silently in background
@@ -35,6 +44,7 @@ def main():
             cmd,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
+            env=env,
             startupinfo=startupinfo,
             close_fds=True
         )

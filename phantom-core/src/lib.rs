@@ -58,6 +58,7 @@ pub mod pdf_context;             // Domain 4: PDF SmartContextCapture structs
 pub mod context_optimizer;
 pub mod background_worker;
 pub mod skills;
+pub mod skill_factory;
 pub mod memory_vault;
 pub mod tolaria_bridge;
 pub mod collaborative;
@@ -81,6 +82,14 @@ pub enum PhantomEvent {
     ScreenContextPressed,
     /// User pressed Ctrl+Shift+Z — undo last injection
     UndoPressed,
+    /// Skill save approved by the user (pressing Tab)
+    SkillSaveApproved,
+    /// Skill save cancelled by the user (other keys/typing)
+    SkillSaveCancelled,
+    /// CUA execution approved by the user (pressing Tab)
+    CuaApproved,
+    /// CUA execution cancelled by the user (other keys/Escape)
+    CuaCancelled,
     /// Shutdown signal
     Shutdown,
 }
@@ -119,3 +128,13 @@ pub mod wake_word;
 
 // ── Domain 9: Enterprise Governance & Compliance ────────────────────────────
 pub mod prompt_injection_firewall; // 50-detector 6-layer prompt injection firewall
+
+// ── FarScry: Foreground App Watcher ─────────────────────────────────────────
+pub mod app_watcher;               // Win32 foreground window polling → AppChangedEvent
+
+// ── CUA: Computer Use Agent ──────────────────────────────────────────────────
+// UIA-first GUI automation (Tier 3 — only when File API + UIA SetValue + MCP all fail)
+// Core types (CuaAction, CuaContext, etc.) are always available.
+// Implementation modules (cua_gate, cua_executor, cua_planner, config) are gated
+// behind #[cfg(feature = "cua")] — default builds have zero CUA code.
+pub mod cua;

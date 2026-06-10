@@ -74,7 +74,7 @@ fn normalize_homoglyphs(s: &str) -> String {
         '\u{03BF}' => 'o',  // ο → o
         '\u{03C1}' => 'p',  // ρ → p
         // Fullwidth ASCII
-        c if c >= '\u{FF01}' && c <= '\u{FF5E}' => {
+        c if ('\u{FF01}'..='\u{FF5E}').contains(&c) => {
             char::from_u32(c as u32 - 0xFEE0).unwrap_or(c)
         }
         c => c,
@@ -362,11 +362,18 @@ fn redact_pii(text: &str) -> String {
     result
 }
 
-fn regex_match(text: &str, _pattern: &str) -> bool {
-    // In production: use the regex crate. Here we use simple heuristics
-    // to avoid adding a regex dependency in this module (already in Cargo.toml).
-    // The full pii_guard.rs handles regex-based PII detection.
-    false // Placeholder — pii_guard.rs handles the real work
+fn regex_match(text: &str, pattern: &str) -> bool {
+    // Use the regex crate (already a dependency in Cargo.toml) for real pattern matching.
+    // This replaces the former placeholder that always returned false, which made
+    // email and SSN PII detection in contains_pii() a complete no-op.
+    match regex::Regex::new(pattern) {
+        Ok(re) => re.is_match(text),
+        Err(e) => {
+            // Invalid pattern — log and fail safe (allow rather than false-positive block)
+            tracing::warn!("[PromptShield] regex_match: invalid pattern '{}': {}", pattern, e);
+            false
+        }
+    }
 }
 
 // ─── Main PromptShield ────────────────────────────────────────────────────────

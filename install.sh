@@ -22,7 +22,7 @@ step()   { echo -e "  ${BLUE}→${RESET} $1"; }
 
 header "Kairo Phantom v${KAIRO_VERSION} Installer"
 echo -e "  The AI ghost-writer that works in ANY app."
-echo -e "  Hotkey: Alt+M | Read context | Stream AI | Ghost type\n"
+echo -e "  Hotkey: Alt+Ctrl+M | Read context | Stream AI | Ghost type\n"
 
 # ── Detect OS ─────────────────────────────────────────────────────────────────
 OS="$(uname -s)"
@@ -79,7 +79,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
 
 [kairo]
 version = "0.3.0"
-hotkey = "AltM"
+hotkey = "AltCtrlM"
 log_level = "info"
 
 [ai]
@@ -240,7 +240,7 @@ if [ "$PLATFORM" = "macos" ]; then
     ok "macOS Accessibility: permission granted"
   else
     warn "macOS: Accessibility permission NOT granted"
-    warn "Required for Alt+M hotkey and context capture."
+    warn "Required for Alt+Ctrl+M hotkey and context capture."
     warn ""
     warn "To grant permission:"
     warn "  1. Open System Settings → Privacy & Security → Accessibility"
@@ -255,7 +255,7 @@ fi
 # ── Done ──────────────────────────────────────────────────────────────────────
 header "Installation Complete!"
 echo -e "  ${BOLD}Start Kairo:${RESET}  kairo-phantom"
-echo -e "  ${BOLD}Hotkey:${RESET}       Alt+M (anywhere!)"
+echo -e "  ${BOLD}Hotkey:${RESET}       Alt+Ctrl+M (anywhere!)"
 echo -e "  ${BOLD}Config:${RESET}       $CONFIG_FILE"
 echo -e "  ${BOLD}Plugins:${RESET}      $PLUGINS_DIR"
 echo ""
@@ -266,7 +266,7 @@ echo -e "     → Gemini:  gemini_api_key = \"AIza...\""
 echo -e "     → Or use Ollama (offline, already configured)"
 echo ""
 echo -e "  2. Open any document (Word, Google Docs, Notion, VS Code...)"
-echo -e "  3. Press Alt+M, type your request, press Enter"
+echo -e "  3. Press Alt+Ctrl+M, type your request, press Enter"
 echo -e "  4. Watch Kairo write ✨"
 echo ""
 echo -e "  ${CYAN}Documentation: https://github.com/your-org/kairo-phantom${RESET}"

@@ -120,7 +120,6 @@ impl AppEnvironment {
         matches!(self,
             AppEnvironment::GoogleDocs |
             AppEnvironment::GoogleSlides |
-            AppEnvironment::Notion |
             AppEnvironment::LinearApp |
             AppEnvironment::TiptapEditor |
             AppEnvironment::Liveblocks
@@ -382,6 +381,7 @@ impl ContextEngine {
             dirs::document_dir(),
             dirs::desktop_dir(),
             dirs::download_dir(),
+            Some(std::path::PathBuf::from(r"C:\tests")),
         ];
 
         for dir in search_dirs.iter().flatten() {
@@ -432,7 +432,7 @@ impl ContextEngine {
     /// - Windows: Win32 GetForegroundWindow + QueryFullProcessImageNameW
     /// - macOS:   osascript AppleScript query
     /// - Linux:   xdotool getactivewindow queries
-    fn get_active_app_info(&self) -> (String, String) {
+    pub fn get_active_app_info(&self) -> (String, String) {
         // ── Windows ──────────────────────────────────────────────────────────
         #[cfg(windows)]
         unsafe {

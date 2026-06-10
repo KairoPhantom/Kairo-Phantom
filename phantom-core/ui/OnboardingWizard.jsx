@@ -8,7 +8,7 @@ export default function OnboardingWizard() {
   const [localModel, setLocalModel] = useState('');
   const [availableModels, setAvailableModels] = useState([]);
   const [detecting, setDetecting] = useState(false);
-  const [hotkey, setHotkey] = useState('Alt+M');
+  const [hotkey, setHotkey] = useState('Alt+Ctrl+M');
   const [hotkeyTested, setHotkeyTested] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [typedText, setTypedText] = useState('');

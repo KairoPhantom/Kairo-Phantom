@@ -35,7 +35,7 @@ impl ExcelFormulaEngine {
     pub fn should_handle(prompt: &str, doc_kind: &str) -> bool {
         if !doc_kind.to_lowercase().contains("excel") { return false; }
         let kw = ["=", "formula", "vlookup", "sumif", "countif", "index", "match",
-                   "pivot", "sum(", "if(", "iferror", "xlookup", "average"];
+                   "sum(", "if(", "iferror", "xlookup", "average"];
         let pl = prompt.to_lowercase();
         kw.iter().any(|k| pl.contains(k))
     }

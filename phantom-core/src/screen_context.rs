@@ -155,7 +155,7 @@ impl ScreenContextEngine {
                     biHeight: -height, // Top-down
                     biPlanes: 1,
                     biBitCount: 24,
-                    biCompression: BI_RGB.0 as u32,
+                    biCompression: BI_RGB.0,
                     ..Default::default()
                 },
                 ..Default::default()

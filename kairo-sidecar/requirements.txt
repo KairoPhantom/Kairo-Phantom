@@ -8,3 +8,11 @@ mammoth>=1.6.0
 beautifulsoup4>=4.12.0
 PyMuPDF>=1.23.0
 reportlab>=4.0.0
+# Docling — structured document parser (DOCX/PPTX/PDF with heading levels, tables)
+docling>=2.0.0
+# WeasyPrint — HTML→PDF rendering for PDF output pipeline
+weasyprint>=60.0
+# numpy — cosine similarity in multi-doc context assembler
+numpy>=1.24.0
+# docx2python — fallback DOCX parser (if docling/mammoth fail)
+docx2python>=2.0.0

@@ -1,5 +1,5 @@
-/// PhantomBridge — connects the Tauri overlay to the phantom-core engine
-/// via HTTP IPC on localhost:7437 (the phantom-core daemon port)
+//! PhantomBridge — connects the Tauri overlay to the phantom-core engine
+//! via HTTP IPC on localhost:7437 (the phantom-core daemon port)
 
 use anyhow::Result;
 use reqwest::Client;

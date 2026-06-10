@@ -310,7 +310,25 @@ TOTAL                                   173       ✅ ALL GREEN
 
 ---
 
-## 11. Security Contact
+## 11. CUA Module Safety Analysis
+
+Kairo's Computer Use Agent (CUA) module implements a multi-layered, deterministic security sandbox to prevent unauthorized GUI control and ensure robust governance:
+
+- **Governance Gate**: Hard-coded, prompt-immune Win32 window title blocklist (preventing interaction with Task Manager, Registry Editor, User Account Control, and major password managers) and DPI-aware coordinate bounds checks relative to the target window rectangle.
+- **Rate Limiter**: Capped at a maximum of 10 actions per 60 seconds (with a hard maximum limit of 30) to prevent rapid automated tool abuse.
+- **User-in-the-loop**: Plans must be explicitly approved by pressing Tab via the Ghost Review Panel overlay; any keystroke (specifically Esc) immediately halts CUA activity.
+- **Audit Trail**: Every action (inputs, targets, and SHA-256 before/after screenshot hashes) is logged to an append-only, tamper-resistant audit file.
+
+### OWASP Agentic Top 10 Mapping
+
+| Control | Description | Mitigation |
+|---------|-------------|------------|
+| **AT3: Tool Abuse** | LLM taking unsafe actions in GUI | Deterministic Governance Gate filters commands. CUA is only triggered as a Tier 3 last resort (e.g. Canva) with explicit user approval required for every step. |
+| **AT4: Data Exfiltration** | Outbound exfiltration of data | System is verified 100% offline. Pre- and post-execution screenshots are captured and hashed locally to verify changes, preventing optical exfiltration. |
+
+---
+
+## 12. Security Contact
 
 **Report Classification**: INTERNAL — SECURITY SENSITIVE  
 **Disclosure Policy**: Responsible disclosure via GitHub security advisories  

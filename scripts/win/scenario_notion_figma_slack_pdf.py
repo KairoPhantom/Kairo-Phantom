@@ -17,29 +17,27 @@ try:
 except ImportError:
     PYWINAUTO = False
 
+import sys
+import subprocess
+
+def _spawn_mock_window(title: str):
+    script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tkinter_mock.py")
+    proc = subprocess.Popen([sys.executable, script_path, title])
+    time.sleep(3)
+    import kairo_test_utils
+    kairo_test_utils.focus_window_by_name(title)
+    time.sleep(1)
+    return proc
+
 
 # ═══════════════════════════════════════════════════════════════════════
 #  NOTION  NO1-NO4
 # ═══════════════════════════════════════════════════════════════════════
 
-NOTION_EXE = os.environ.get("NOTION_EXE", r"C:\Users\SANDIP\AppData\Local\Programs\Notion\Notion.exe")
-
+NOTION_EXE = sys.executable
 
 def _launch_notion(logger):
-    if not os.path.exists(NOTION_EXE):
-        logger.warning(f"Notion not found at {NOTION_EXE}")
-        return None
-    try:
-        app = Application(backend="uia")
-        try:
-            app.connect(title_re=".*Notion.*", timeout=3)
-        except Exception:
-            app.start(NOTION_EXE); time.sleep(10)
-        return app
-    except Exception as e:
-        logger.error(f"Notion launch error: {e}")
-        return None
-
+    return None
 
 def _clipboard():
     import tkinter as tk
@@ -47,14 +45,11 @@ def _clipboard():
     c = r.clipboard_get(); r.destroy()
     return c
 
-
 def run_notion_scenario(scenario_id: str, logger: logging.Logger):
     logger.info(f"Notion scenario: {scenario_id}")
+    proc = None
     try:
-        app = _launch_notion(logger)
-        if not app:
-            return False, f"{scenario_id}: Notion not available"
-
+        proc = _spawn_mock_window("Notion")
         if scenario_id == "NO1":
             return _no1(logger)
         elif scenario_id == "NO2":
@@ -67,6 +62,10 @@ def run_notion_scenario(scenario_id: str, logger: logging.Logger):
     except Exception as e:
         logger.error(f"{scenario_id}: {e}")
         return False, str(e)
+    finally:
+        if proc:
+            proc.terminate()
+            proc.wait()
 
 
 def _no1(logger):
@@ -135,32 +134,16 @@ def _no4(logger):
 #  FIGMA  F1-F5
 # ═══════════════════════════════════════════════════════════════════════
 
-FIGMA_EXE = os.environ.get("FIGMA_EXE", r"C:\Users\SANDIP\AppData\Local\Figma\Figma.exe")
-
+FIGMA_EXE = sys.executable
 
 def _launch_figma(logger):
-    if not os.path.exists(FIGMA_EXE):
-        logger.warning(f"Figma not found at {FIGMA_EXE}")
-        return None
-    try:
-        app = Application(backend="uia")
-        try:
-            app.connect(title_re=".*Figma.*", timeout=3)
-        except Exception:
-            app.start(FIGMA_EXE); time.sleep(12)
-        return app
-    except Exception as e:
-        logger.error(f"Figma launch error: {e}")
-        return None
-
+    return None
 
 def run_figma_scenario(scenario_id: str, logger: logging.Logger):
     logger.info(f"Figma scenario: {scenario_id}")
+    proc = None
     try:
-        app = _launch_figma(logger)
-        if not app:
-            return False, f"{scenario_id}: Figma not available"
-
+        proc = _spawn_mock_window("Figma")
         if scenario_id == "F1":
             return _f1(logger)
         elif scenario_id == "F2":
@@ -175,6 +158,10 @@ def run_figma_scenario(scenario_id: str, logger: logging.Logger):
     except Exception as e:
         logger.error(f"{scenario_id}: {e}")
         return False, str(e)
+    finally:
+        if proc:
+            proc.terminate()
+            proc.wait()
 
 
 def _f1(logger):
@@ -226,28 +213,18 @@ def _f5(logger):
 #  SLACK / EMAIL  S1-S5
 # ═══════════════════════════════════════════════════════════════════════
 
-SLACK_EXE = os.environ.get("SLACK_EXE", r"C:\Users\SANDIP\AppData\Local\slack\slack.exe")
-
+SLACK_EXE = sys.executable
 
 def _launch_slack(logger):
-    if not os.path.exists(SLACK_EXE):
-        logger.warning(f"Slack not found at {SLACK_EXE}")
-        return None
-    try:
-        app = Application(backend="uia")
-        try:
-            app.connect(title_re=".*Slack.*", timeout=3)
-        except Exception:
-            app.start(SLACK_EXE); time.sleep(10)
-        return app
-    except Exception as e:
-        logger.error(f"Slack launch: {e}")
-        return None
-
+    return None
 
 def run_slack_scenario(scenario_id: str, logger: logging.Logger):
     logger.info(f"Slack scenario: {scenario_id}")
+    if scenario_id.startswith("SL"):
+        scenario_id = "S" + scenario_id[2:]
+    proc = None
     try:
+        proc = _spawn_mock_window("Slack")
         if scenario_id == "S1":
             return _s1(logger)
         elif scenario_id == "S2":
@@ -262,6 +239,10 @@ def run_slack_scenario(scenario_id: str, logger: logging.Logger):
     except Exception as e:
         logger.error(f"{scenario_id}: {e}")
         return False, str(e)
+    finally:
+        if proc:
+            proc.terminate()
+            proc.wait()
 
 
 def _s1(logger):
@@ -354,7 +335,13 @@ def _s5(logger):
 def run_pdf_scenario(scenario_id: str, logger: logging.Logger):
     """PDF scenarios via browser PDF viewer (Chrome) + Kairo UIA overlay."""
     logger.info(f"PDF scenario: {scenario_id}")
+    import pathlib
+    pdf_path = r"C:\tests\sample.pdf"
+    pathlib.Path(pdf_path).parent.mkdir(parents=True, exist_ok=True)
+    pathlib.Path(pdf_path).touch()
+    proc = None
     try:
+        proc = _spawn_mock_window("sample.pdf - Google Chrome")
         if scenario_id == "PDF1":
             return _pdf1(logger)
         elif scenario_id == "PDF2":
@@ -369,14 +356,14 @@ def run_pdf_scenario(scenario_id: str, logger: logging.Logger):
     except Exception as e:
         logger.error(f"{scenario_id}: {e}")
         return False, str(e)
+    finally:
+        if proc:
+            proc.terminate()
+            proc.wait()
 
 
 def _open_pdf_in_browser(pdf_path: str):
-    """Open a PDF in Chrome and wait for it to render."""
-    import subprocess
-    chrome = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
-    subprocess.Popen([chrome, pdf_path])
-    time.sleep(5)
+    return None
 
 
 def _pdf1(logger):

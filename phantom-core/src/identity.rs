@@ -3,7 +3,7 @@
 /// F2: Append-only audit log (JSONL) with tamper-evident hash chain
 /// F3: JIT permission revocation with scoped TTL tokens
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 use tracing::{info, warn};
 
@@ -50,7 +50,7 @@ impl AgentIdentity {
     }
 
     /// Load identity from disk, or generate a new one.
-    pub fn load_or_create(config_dir: &PathBuf) -> Self {
+    pub fn load_or_create(config_dir: &Path) -> Self {
         let path = config_dir.join("identity.json");
         if path.exists() {
             if let Ok(contents) = std::fs::read_to_string(&path) {
@@ -68,7 +68,7 @@ impl AgentIdentity {
         identity
     }
 
-    pub fn save(&self, config_dir: &PathBuf) {
+    pub fn save(&self, config_dir: &Path) {
         let _ = std::fs::create_dir_all(config_dir);
         let path = config_dir.join("identity.json");
         match serde_json::to_string_pretty(self) {
@@ -244,7 +244,7 @@ impl TamperEvidentAuditLog {
         Self { path, last_hash: std::sync::Mutex::new(last_hash) }
     }
 
-    fn read_last_hash(path: &PathBuf) -> String {
+    fn read_last_hash(path: &Path) -> String {
         if !path.exists() { return "genesis".to_string(); }
         let contents = std::fs::read_to_string(path).unwrap_or_default();
         // Find last non-empty line
@@ -304,7 +304,7 @@ pub struct IdentityManager {
 }
 
 impl IdentityManager {
-    pub fn load(config_dir: &PathBuf) -> Self {
+    pub fn load(config_dir: &Path) -> Self {
         let identity = AgentIdentity::load_or_create(config_dir);
         info!("[IdentityManager] Agent: {} | Instance: {}", identity.display_name, identity.instance);
 
@@ -512,7 +512,7 @@ pub struct SignatureVault {
 }
 
 impl SignatureVault {
-    pub fn new(config_dir: &PathBuf) -> Self {
+    pub fn new(config_dir: &Path) -> Self {
         let trusted_keys_path = config_dir.join("vault").join("trusted_keys.json");
         Self { trusted_keys_path }
     }
@@ -720,7 +720,7 @@ mod tests {
         use rand::rngs::OsRng;
 
         let dir = tempdir().unwrap();
-        let vault = SignatureVault::new(&dir.path().to_path_buf());
+        let vault = SignatureVault::new(dir.path());
 
         // Generate test keys
         let mut csprng = OsRng;

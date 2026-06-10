@@ -11,6 +11,7 @@ use std::path::Path;
 use anyhow::{Result, Context as AnyhowContext};
 use serde::{Serialize, Deserialize};
 
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum LineEnding {
     CRLF,
@@ -64,187 +65,392 @@ pub fn detect_language(ext: &str) -> String {
 }
 
 
-/// Extract lexical context (fallback for non-AST languages or failed parsing)
-fn extract_lexical_context(
-    lines: &[String],
-    language: &str,
-    cursor_idx: usize,
-    cursor_line_text: &str,
-) -> (Option<FunctionInfo>, Option<String>, Vec<String>, Vec<String>) {
-    let mut enclosing_function = None;
-    let mut enclosing_class = None;
-    let mut imports = Vec::new();
-    let mut nearby_symbols = Vec::new();
+#[derive(Debug, Clone)]
+struct DeclInfo {
+    name: String,
+    signature: String,
+    start_line: usize, // 1-indexed
+    end_line: usize,   // 1-indexed
+    is_class: bool,
+}
 
-    match language {
-        "python" => {
-            let mut current_idx = cursor_idx;
-            while current_idx > 0 {
-                current_idx -= 1;
-                let line_text = &lines[current_idx];
-                let trimmed = line_text.trim_start();
-                if trimmed.starts_with("def ") && enclosing_function.is_none() {
-                    let func_indent = line_text.len() - trimmed.len();
-                    let cursor_line_indent = cursor_line_text.len() - cursor_line_text.trim_start().len();
-                    if cursor_idx == current_idx || cursor_line_indent > func_indent || cursor_line_text.trim().is_empty() {
-                        let parts: Vec<&str> = trimmed.split_whitespace().collect();
-                        if parts.len() > 1 {
-                            let func_name = parts[1].split('(').next().unwrap_or("").to_string();
-                            let mut end_line = lines.len();
-                            for check_idx in (current_idx + 1)..lines.len() {
-                                let check_line = &lines[check_idx];
-                                let check_trimmed = check_line.trim_start();
-                                if !check_trimmed.is_empty() {
-                                    let check_indent = check_line.len() - check_trimmed.len();
-                                    if check_indent <= func_indent {
-                                        end_line = check_idx;
-                                        break;
-                                    }
-                                }
-                            }
-                            enclosing_function = Some(FunctionInfo {
-                                name: func_name,
-                                signature: trimmed.to_string(),
-                                start_line: current_idx + 1,
-                                end_line,
-                            });
-                        }
-                    }
-                } else if trimmed.starts_with("class ") && enclosing_class.is_none() {
-                    let parts: Vec<&str> = trimmed.split_whitespace().collect();
-                    if parts.len() > 1 {
-                        let class_name = parts[1].split(':').next().unwrap_or("").split('(').next().unwrap_or("").to_string();
-                        enclosing_class = Some(class_name);
-                    }
+fn find_matching_brace(lines: &[String], start_line_idx: usize) -> Option<usize> {
+    let mut depth = 0;
+    let mut found_first = false;
+    
+    // Track string and comment states
+    let mut in_string = false;
+    let mut string_char = ' ';
+    let mut in_multiline_comment = false;
+    let mut escaped = false;
+    
+    for (idx, line) in lines.iter().enumerate().skip(start_line_idx) {
+        let mut chars = line.chars().peekable();
+        
+        while let Some(c) = chars.next() {
+            if escaped {
+                escaped = false;
+                continue;
+            }
+            
+            if in_string {
+                if c == '\\' {
+                    escaped = true;
+                } else if c == string_char {
+                    in_string = false;
+                }
+                continue;
+            }
+            
+            if in_multiline_comment {
+                if c == '*' && chars.peek() == Some(&'/') {
+                    chars.next();
+                    in_multiline_comment = false;
+                }
+                continue;
+            }
+            
+            // Check for comments
+            if c == '/' {
+                if chars.peek() == Some(&'/') {
+                    break;
+                } else if chars.peek() == Some(&'*') {
+                    chars.next();
+                    in_multiline_comment = true;
+                    continue;
                 }
             }
-
-            for line in lines {
-                let trimmed = line.trim();
-                if trimmed.starts_with("import ") || trimmed.starts_with("from ") {
-                    imports.push(trimmed.to_string());
-                }
+            
+            // Check for string start
+            if c == '"' || c == '\'' || c == '`' {
+                in_string = true;
+                string_char = c;
+                continue;
             }
-
-            let symbol_start = cursor_idx.saturating_sub(20);
-            let symbol_end = std::cmp::min(lines.len(), cursor_idx + 21);
-            for line in &lines[symbol_start..symbol_end] {
-                let trimmed = line.trim();
-                if trimmed.starts_with("def ") || trimmed.starts_with("class ") {
-                    nearby_symbols.push(trimmed.to_string());
+            
+            if c == '{' {
+                if !found_first {
+                    found_first = true;
+                }
+                depth += 1;
+            } else if c == '}' && found_first {
+                depth -= 1;
+                if depth == 0 {
+                    return Some(idx);
                 }
             }
         }
-        "rust" => {
-            let mut current_idx = cursor_idx;
-            let mut brace_count: usize = 0;
-            while current_idx > 0 {
-                current_idx -= 1;
-                let line_text = &lines[current_idx];
-                let trimmed = line_text.trim();
-                
-                if trimmed.contains('}') { brace_count += 1; }
-                if trimmed.contains('{') { brace_count = brace_count.saturating_sub(1); }
+    }
+    None
+}
 
-                if (trimmed.contains("fn ") || trimmed.starts_with("fn ")) && brace_count == 0 && enclosing_function.is_none() {
-                    let parts: Vec<&str> = trimmed.split("fn ").collect();
-                    if parts.len() > 1 {
-                        let name_part = parts[1].split('(').next().unwrap_or("").trim();
-                        if !name_part.is_empty() {
-                            let mut b_count = 0;
-                            let mut end_line = lines.len();
-                            for (idx, l) in lines.iter().enumerate().skip(current_idx) {
-                                if l.contains('{') { b_count += 1; }
-                                if l.contains('}') { b_count -= 1; }
-                                if b_count == 0 && idx > current_idx {
-                                    end_line = idx + 1;
-                                    break;
-                                }
-                            }
-                            enclosing_function = Some(FunctionInfo {
-                                name: name_part.to_string(),
-                                signature: trimmed.to_string(),
-                                start_line: current_idx + 1,
-                                end_line,
-                            });
-                        }
-                    }
-                } else if (trimmed.starts_with("impl") || trimmed.starts_with("pub struct") || trimmed.starts_with("struct ")) && enclosing_class.is_none() {
-                    let parts: Vec<&str> = trimmed.split_whitespace().collect();
-                    if parts.len() > 1 {
-                        if trimmed.starts_with("impl") {
-                            let target = parts.get(1).map(|&s| s.trim_end_matches('{').trim()).unwrap_or("");
-                            enclosing_class = Some(target.to_string());
-                        } else {
-                            let idx = if parts[0] == "pub" { 2 } else { 1 };
-                            let target = parts.get(idx).map(|&s| s.trim_end_matches('{').trim()).unwrap_or("");
-                            enclosing_class = Some(target.to_string());
-                        }
-                    }
-                }
-            }
+fn extract_brace_context(
+    lines: &[String],
+    language: &str,
+    cursor_line: usize,
+) -> (Option<FunctionInfo>, Option<String>, Vec<String>, Vec<String>) {
+    let mut declarations = Vec::new();
+    let mut imports = Vec::new();
+    let mut nearby_symbols = Vec::new();
 
-            for line in lines {
-                let trimmed = line.trim();
+    // 1. Gather imports and find all declarations
+    for idx in 0..lines.len() {
+        let line = &lines[idx];
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+
+        // Gather imports
+        match language {
+            "rust" => {
                 if trimmed.starts_with("use ") {
                     imports.push(trimmed.to_string());
                 }
             }
-
-            let symbol_start = cursor_idx.saturating_sub(20);
-            let symbol_end = std::cmp::min(lines.len(), cursor_idx + 21);
-            for line in &lines[symbol_start..symbol_end] {
-                let trimmed = line.trim();
-                if trimmed.contains("fn ") || trimmed.starts_with("struct ") || trimmed.starts_with("impl ") {
-                    nearby_symbols.push(trimmed.to_string());
+            "go" => {
+                if trimmed.starts_with("import ") {
+                    imports.push(trimmed.to_string());
                 }
             }
-        }
-        _ => {
-            let mut current_idx = cursor_idx;
-            while current_idx > 0 {
-                current_idx -= 1;
-                let line_text = &lines[current_idx];
-                let trimmed = line_text.trim();
-                if (trimmed.contains("function ") || trimmed.contains("func ") || trimmed.contains("void ") || trimmed.contains("int ") || trimmed.contains("public ")) 
-                    && trimmed.contains('(') {
-                    let parts: Vec<&str> = trimmed.split('(').collect();
-                    let name_words: Vec<&str> = parts[0].split_whitespace().collect();
-                    if let Some(&name) = name_words.last() {
-                        let name_clean = name.trim_start_matches('*').to_string();
-                        let mut b_count = 0;
-                        let mut end_line = lines.len();
-                        for (idx, l) in lines.iter().enumerate().skip(current_idx) {
-                            if l.contains('{') { b_count += 1; }
-                            if l.contains('}') { b_count -= 1; }
-                            if b_count == 0 && idx > current_idx {
-                                    end_line = idx + 1;
-                                    break;
-                            }
-                        }
-                        enclosing_function = Some(FunctionInfo {
-                            name: name_clean,
-                            signature: trimmed.to_string(),
-                            start_line: current_idx + 1,
-                            end_line,
-                        });
-                        break;
-                    }
-                } else if trimmed.starts_with("class ") {
-                    enclosing_class = Some(trimmed.to_string());
-                }
-            }
-
-            for line in lines {
-                let trimmed = line.trim();
+            _ => {
                 if trimmed.starts_with("import ") || trimmed.starts_with("using ") || trimmed.starts_with("include ") || trimmed.starts_with("require(") {
                     imports.push(trimmed.to_string());
                 }
             }
         }
+
+        let mut is_func = false;
+        let mut is_cls = false;
+        let mut name = String::new();
+
+        if language == "rust" {
+            if let Some(fn_idx) = trimmed.find("fn ") {
+                let valid = fn_idx == 0 || trimmed.chars().nth(fn_idx - 1).is_some_and(|c| c.is_whitespace() || c == ':');
+                if valid {
+                    is_func = true;
+                    let after_fn = &trimmed[fn_idx + 3..];
+                    name = after_fn.split(|c: char| !c.is_alphanumeric() && c != '_').next().unwrap_or("").to_string();
+                }
+            } else if trimmed.starts_with("impl ") {
+                is_cls = true;
+                let parts: Vec<&str> = trimmed.split_whitespace().collect();
+                if parts.len() > 1 {
+                    if let Some(for_idx) = parts.iter().position(|&s| s == "for") {
+                        name = parts.get(for_idx + 1).map(|&s| s.trim_end_matches('{').trim()).unwrap_or("").to_string();
+                    } else {
+                        name = parts.get(1).map(|&s| s.trim_end_matches('{').trim()).unwrap_or("").to_string();
+                        if name.contains('<') {
+                            name = name.split('<').next().unwrap_or("").to_string();
+                        }
+                    }
+                }
+            } else if trimmed.starts_with("pub struct ") || trimmed.starts_with("struct ") {
+                is_cls = true;
+                let parts: Vec<&str> = trimmed.split_whitespace().collect();
+                let idx = if parts[0] == "pub" { 2 } else { 1 };
+                name = parts.get(idx).map(|&s| s.trim_end_matches('{').trim()).unwrap_or("").to_string();
+            } else if trimmed.starts_with("pub enum ") || trimmed.starts_with("enum ") {
+                is_cls = true;
+                let parts: Vec<&str> = trimmed.split_whitespace().collect();
+                let idx = if parts[0] == "pub" { 2 } else { 1 };
+                name = parts.get(idx).map(|&s| s.trim_end_matches('{').trim()).unwrap_or("").to_string();
+            } else if trimmed.starts_with("pub trait ") || trimmed.starts_with("trait ") {
+                is_cls = true;
+                let parts: Vec<&str> = trimmed.split_whitespace().collect();
+                let idx = if parts[0] == "pub" { 2 } else { 1 };
+                name = parts.get(idx).map(|&s| s.trim_end_matches('{').trim()).unwrap_or("").to_string();
+            }
+        } else if language == "go" {
+            if let Some(func_idx) = trimmed.find("func ") {
+                let valid = func_idx == 0 || trimmed.chars().nth(func_idx - 1).is_some_and(|c| c.is_whitespace());
+                if valid {
+                    is_func = true;
+                    let after_func = &trimmed[func_idx + 5..].trim();
+                    if after_func.starts_with('(') {
+                        if let Some(close_paren) = after_func.find(')') {
+                            let after_recv = &after_func[close_paren + 1..].trim();
+                            name = after_recv.split(|c: char| !c.is_alphanumeric() && c != '_').next().unwrap_or("").to_string();
+                        }
+                    } else {
+                        name = after_func.split(|c: char| !c.is_alphanumeric() && c != '_').next().unwrap_or("").to_string();
+                    }
+                }
+            } else if trimmed.contains("struct {")
+                || (trimmed.contains("struct") && trimmed.contains("type "))
+                || trimmed.contains("interface {")
+                || (trimmed.contains("interface") && trimmed.contains("type "))
+            {
+                is_cls = true;
+                let parts: Vec<&str> = trimmed.split_whitespace().collect();
+                if parts.len() > 1 && parts[0] == "type" {
+                    name = parts[1].to_string();
+                }
+            }
+        } else {
+            if trimmed.contains("class ") {
+                is_cls = true;
+                let parts: Vec<&str> = trimmed.split("class ").collect();
+                if parts.len() > 1 {
+                    name = parts[1].split_whitespace().next().unwrap_or("").trim_end_matches('{').trim().to_string();
+                }
+            } else if trimmed.contains("interface ") {
+                is_cls = true;
+                let parts: Vec<&str> = trimmed.split("interface ").collect();
+                if parts.len() > 1 {
+                    name = parts[1].split_whitespace().next().unwrap_or("").trim_end_matches('{').trim().to_string();
+                }
+            } else if trimmed.contains("function ") {
+                is_func = true;
+                let parts: Vec<&str> = trimmed.split("function ").collect();
+                if parts.len() > 1 {
+                    name = parts[1].split(|c: char| !c.is_alphanumeric() && c != '_').next().unwrap_or("").to_string();
+                }
+            } else if trimmed.contains("=>") {
+                is_func = true;
+                let parts: Vec<&str> = trimmed.split('=').collect();
+                if parts.len() > 1 {
+                    let var_parts: Vec<&str> = parts[0].split_whitespace().collect();
+                    if let Some(&var_name) = var_parts.last() {
+                        name = var_name.to_string();
+                    }
+                }
+            } else if trimmed.contains('(') && (trimmed.contains("public ") || trimmed.contains("private ") || trimmed.contains("protected ") || trimmed.contains("void ") || trimmed.contains("fn ")) {
+                is_func = true;
+                let parts: Vec<&str> = trimmed.split('(').collect();
+                let name_words: Vec<&str> = parts[0].split_whitespace().collect();
+                if let Some(&n) = name_words.last() {
+                    name = n.trim_start_matches('*').to_string();
+                }
+            }
+        }
+
+        if (is_func || is_cls) && !name.is_empty() {
+            if let Some(end_line_idx) = find_matching_brace(lines, idx) {
+                declarations.push(DeclInfo {
+                    name,
+                    signature: trimmed.to_string(),
+                    start_line: idx + 1,
+                    end_line: end_line_idx + 1,
+                    is_class: is_cls,
+                });
+            }
+        }
+    }
+
+    // 2. Resolve enclosing function and class
+    let mut enclosing_function = None;
+    let mut enclosing_class = None;
+
+    let mut min_func_span = usize::MAX;
+    let mut min_class_span = usize::MAX;
+
+    for decl in &declarations {
+        if cursor_line >= decl.start_line && cursor_line <= decl.end_line {
+            let span = decl.end_line - decl.start_line;
+            if decl.is_class {
+                if span < min_class_span {
+                    min_class_span = span;
+                    enclosing_class = Some(decl.name.clone());
+                }
+            } else {
+                if span < min_func_span {
+                    min_func_span = span;
+                    enclosing_function = Some(FunctionInfo {
+                        name: decl.name.clone(),
+                        signature: decl.signature.clone(),
+                        start_line: decl.start_line,
+                        end_line: decl.end_line,
+                    });
+                }
+            }
+        }
+    }
+
+    // 3. Extract nearby symbols (functions/classes within 20 lines of cursor)
+    let start_symbol_line = cursor_line.saturating_sub(20);
+    let end_symbol_line = cursor_line + 20;
+
+    for decl in &declarations {
+        if decl.start_line >= start_symbol_line && decl.start_line <= end_symbol_line {
+            nearby_symbols.push(decl.signature.clone());
+        }
     }
 
     (enclosing_function, enclosing_class, imports, nearby_symbols)
+}
+
+fn extract_python_context(
+    lines: &[String],
+    cursor_line: usize,
+) -> (Option<FunctionInfo>, Option<String>, Vec<String>, Vec<String>) {
+    let mut declarations = Vec::new();
+    let mut imports = Vec::new();
+    let mut nearby_symbols = Vec::new();
+
+    let mut stack: Vec<(String, String, usize, usize, bool)> = Vec::new();
+
+    for (idx, line) in lines.iter().enumerate() {
+        let trimmed = line.trim();
+        
+        if trimmed.starts_with("import ") || trimmed.starts_with("from ") {
+            imports.push(trimmed.to_string());
+            continue;
+        }
+
+        if trimmed.is_empty() || trimmed.starts_with('#') {
+            continue;
+        }
+
+        let indent = line.chars().take_while(|c| c.is_whitespace()).count();
+
+        while let Some(top) = stack.last() {
+            if indent <= top.3 {
+                let popped = stack.pop().unwrap();
+                declarations.push(DeclInfo {
+                    name: popped.0,
+                    signature: popped.1,
+                    start_line: popped.2,
+                    end_line: idx,
+                    is_class: popped.4,
+                });
+            } else {
+                break;
+            }
+        }
+
+        if let Some(after_def) = trimmed.strip_prefix("def ") {
+            let name = after_def.split(|c: char| !c.is_alphanumeric() && c != '_').next().unwrap_or("").to_string();
+            stack.push((name, trimmed.to_string(), idx + 1, indent, false));
+        } else if let Some(after_class) = trimmed.strip_prefix("class ") {
+            let name = after_class.split(|c: char| !c.is_alphanumeric() && c != '_').next().unwrap_or("").to_string();
+            stack.push((name, trimmed.to_string(), idx + 1, indent, true));
+        }
+    }
+
+    let end_file_line = lines.len();
+    while let Some(popped) = stack.pop() {
+        declarations.push(DeclInfo {
+            name: popped.0,
+            signature: popped.1,
+            start_line: popped.2,
+            end_line: end_file_line,
+            is_class: popped.4,
+        });
+    }
+
+    let mut enclosing_function = None;
+    let mut enclosing_class = None;
+
+    let mut min_func_span = usize::MAX;
+    let mut min_class_span = usize::MAX;
+
+    for decl in &declarations {
+        if cursor_line >= decl.start_line && cursor_line <= decl.end_line {
+            let span = decl.end_line - decl.start_line;
+            if decl.is_class {
+                if span < min_class_span {
+                    min_class_span = span;
+                    enclosing_class = Some(decl.name.clone());
+                }
+            } else {
+                if span < min_func_span {
+                    min_func_span = span;
+                    enclosing_function = Some(FunctionInfo {
+                        name: decl.name.clone(),
+                        signature: decl.signature.clone(),
+                        start_line: decl.start_line,
+                        end_line: decl.end_line,
+                    });
+                }
+            }
+        }
+    }
+
+    let start_symbol_line = cursor_line.saturating_sub(20);
+    let end_symbol_line = cursor_line + 20;
+
+    for decl in &declarations {
+        if decl.start_line >= start_symbol_line && decl.start_line <= end_symbol_line {
+            nearby_symbols.push(decl.signature.clone());
+        }
+    }
+
+    (enclosing_function, enclosing_class, imports, nearby_symbols)
+}
+
+fn extract_lexical_context(
+    lines: &[String],
+    language: &str,
+    cursor_idx: usize,
+    _cursor_line_text: &str,
+) -> (Option<FunctionInfo>, Option<String>, Vec<String>, Vec<String>) {
+    let cursor_line = cursor_idx + 1;
+    if language == "python" {
+        extract_python_context(lines, cursor_line)
+    } else {
+        extract_brace_context(lines, language, cursor_line)
+    }
 }
 
 /// Extract context from a source code file. Uses tree-sitter AST parsing where supported,

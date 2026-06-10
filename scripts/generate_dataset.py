@@ -2,7 +2,7 @@
 """
 Kairo DocOps Dataset Generator (Sprint 7)
 =========================================
-Synthesizes a 2,000-line high-fidelity training dataset (kairo_docops_2k.jsonl)
+Synthesizes a 3,500-line high-fidelity training dataset (kairo_docops_3500.jsonl)
 matching the precise JSON output schemas of Kairo's specialist agents.
 """
 import os
@@ -11,7 +11,8 @@ import random
 from pathlib import Path
 
 OUTPUT_DIR = Path(__file__).parent.parent / "training_data"
-OUTPUT_FILE = OUTPUT_DIR / "kairo_docops_2k.jsonl"
+OUTPUT_FILE_3500 = OUTPUT_DIR / "kairo_docops_3500.jsonl"
+OUTPUT_FILE_2000 = OUTPUT_DIR / "kairo_docops_2k.jsonl"
 
 def generate_docx_headings(count=200):
     examples = []
@@ -141,7 +142,7 @@ def generate_docx_rewrites(count=200):
         })
     return examples
 
-def generate_docx_tables(count=200):
+def generate_docx_tables(count=100):
     examples = []
     
     for i in range(count):
@@ -247,6 +248,40 @@ def generate_xlsx_explanations(count=200):
         })
     return examples
 
+def generate_excel_supplement(count=200):
+    examples = []
+    topics = ["Total Revenue", "Average Cost", "Sales Tax", "Net Profit", "Growth Rate", "Max Value", "Count Entries"]
+    formulas = ["=SUM(A1:A10)", "=AVERAGE(B1:B20)", "=C1*0.08", "=D1-E1", "=(F2-F1)/F1", "=MAX(G1:G100)", "=COUNT(H1:H50)"]
+    for i in range(count):
+        idx = random.randint(0, len(topics) - 1)
+        topic = topics[idx]
+        formula = formulas[idx]
+        cell = f"{random.choice(['A','B','C','D','E','F'])}{random.randint(1, 100)}"
+        instruction = f"Calculate the {topic.lower()} in cell {cell} using an Excel formula."
+        
+        input_data = {
+            "document_context": {
+                "active_sheet": "Sheet1",
+                "cell_range": f"{cell}:{cell}"
+            },
+            "mem_context": "User prefers uppercase formula names."
+        }
+        output_data = {
+            "operations": [{
+                "type": "write_cell",
+                "cell": cell,
+                "value": formula
+            }],
+            "confidence": 0.95,
+            "reasoning": f"Calculated {topic.lower()} with standard formula."
+        }
+        examples.append({
+            "instruction": instruction,
+            "input": json.dumps(input_data),
+            "output": json.dumps(output_data)
+        })
+    return examples
+
 def generate_pptx_concision(count=200):
     examples = []
     paragraphs = [
@@ -319,6 +354,48 @@ def generate_pptx_titles(count=200):
         })
     return examples
 
+def generate_slide_supplement(count=100):
+    examples = []
+    titles = ["Project Timeline", "Market Overview", "Q3 Performance", "Risk Factors", "Next Steps"]
+    for i in range(count):
+        title = random.choice(titles)
+        slide_idx = random.randint(0, 10)
+        instruction = f"Create a slide titled '{title}' with bullet points summarizing key achievements."
+        input_data = {
+            "document_context": {
+                "slide_count": slide_idx + 1,
+                "current_slide_index": slide_idx
+            },
+            "mem_context": "User prefers concise slide points."
+        }
+        output_data = {
+            "operations": [
+                {
+                    "type": "insert_slide",
+                    "index": slide_idx + 1,
+                    "layout": "Title and Content"
+                },
+                {
+                    "type": "set_slide_title",
+                    "index": slide_idx + 1,
+                    "title": title
+                },
+                {
+                    "type": "set_slide_bullets",
+                    "index": slide_idx + 1,
+                    "bullets": ["Completed phase 1 on time", "Exceeded Q3 goals by 15%", "Identified cost saving options"]
+                }
+            ],
+            "confidence": 0.9,
+            "reasoning": "Added new slide and populated standard title/bullets structure."
+        }
+        examples.append({
+            "instruction": instruction,
+            "input": json.dumps(input_data),
+            "output": json.dumps(output_data)
+        })
+    return examples
+
 def generate_code_docstrings(count=200):
     examples = []
     methods = [
@@ -348,36 +425,94 @@ def generate_code_docstrings(count=200):
         })
     return examples
 
-def generate_multi_ops(count=200):
+def generate_code_supplement(count=300):
     examples = []
-    
+    funcs = ["calculate_primes", "parse_json_file", "connect_to_database", "validate_email_address", "sort_array_descending"]
+    languages = ["Python", "Rust", "JavaScript", "Go", "C++"]
     for i in range(count):
-        index = random.randint(1, 5)
-        instruction = f"Perform multiple ops: Add a heading at {index} and replace paragraph {index+1}."
+        func = random.choice(funcs)
+        lang = random.choice(languages)
+        instruction = f"Add a comprehensive docstring to the {lang} function '{func}' explaining inputs and return types."
         input_data = {
-            "document_context": {"paragraph_count": index + 5},
-            "mem_context": "Sequence operations requested."
+            "document_context": {
+                "language": lang,
+                "code_snippet": f"def {func}(data):\n    pass"
+            },
+            "mem_context": "User prefers Google-style docstrings."
         }
-        
         output_data = {
-            "operations": [
-                {
-                    "type": "insert_paragraph",
-                    "after_paragraph_index": index,
-                    "style": "Heading2",
-                    "runs": [{"text": "Key Highlights", "bold": True, "italic": False}]
-                },
-                {
-                    "type": "replace_paragraph",
-                    "paragraph_index": index + 1,
-                    "style": "Normal",
-                    "runs": [{"text": "Optimized memory layers.", "bold": False, "italic": False}]
-                }
-            ],
-            "confidence": round(random.uniform(0.8, 0.95), 2),
-            "reasoning": "Deploying multi-step structured edit sequence."
+            "operations": [{
+                "type": "insert_docstring",
+                "function_name": func,
+                "docstring": f'"""\nBrief description of {func}.\n\nArgs:\n    data: The input data.\n\nReturns:\n    The processed result.\n"""'
+            }],
+            "confidence": 0.92,
+            "reasoning": "Generated Google-style docstring explaining parameters."
         }
-        
+        examples.append({
+            "instruction": instruction,
+            "input": json.dumps(input_data),
+            "output": json.dumps(output_data)
+        })
+    return examples
+
+def generate_negative_examples(count=500):
+    examples = []
+    queries = [
+        "What is the capital of France?",
+        "Tell me a programming joke.",
+        "How do I cook pasta?",
+        "Explain quantum computing in simple terms.",
+        "Why is the sky blue?",
+        "How far is the moon from Earth?",
+        "Recommend a good sci-fi movie."
+    ]
+    for i in range(count):
+        query = random.choice(queries)
+        instruction = f"Answer this general query: {query}"
+        input_data = {
+            "document_context": {},
+            "mem_context": ""
+        }
+        output_data = {
+            "operations": [],
+            "confidence": 1.0,
+            "reasoning": "This is a general query that does not require any document editing operations. Returning empty operations."
+        }
+        examples.append({
+            "instruction": instruction,
+            "input": json.dumps(input_data),
+            "output": json.dumps(output_data)
+        })
+    return examples
+
+def generate_routing_examples(count=200):
+    examples = []
+    prompts = [
+        ("Fix this Python syntax error", "vscode", "code", "debug", "simple"),
+        ("Write a professional cover letter for a software engineer", "word", "word", "insert", "simple"),
+        ("Explain this Excel formula", "excel", "excel", "explain", "simple"),
+        ("Create a slide titled Project Timeline", "powerpoint", "slides", "insert", "simple"),
+        ("Draft a reply email apologizing for the delay", "outlook", "email", "reply", "simple"),
+        ("Optimize this SQL query for faster join execution", "vscode", "code", "optimize", "complex"),
+        ("Refactor this long React component into subcomponents", "vscode", "code", "refactor", "complex"),
+        ("Review this legal agreement for liability limits", "word", "word", "review", "complex")
+    ]
+    for i in range(count):
+        prompt, app, domain, task_type, complexity = random.choice(prompts)
+        instruction = f"Route this prompt to the correct model tier: {prompt}"
+        input_data = {
+            "prompt": prompt,
+            "app": app,
+            "document_context": {},
+            "mem_context": ""
+        }
+        output_data = {
+            "domain": domain,
+            "task_type": task_type,
+            "complexity": complexity,
+            "confidence": round(random.uniform(0.9, 0.99), 2)
+        }
         examples.append({
             "instruction": instruction,
             "input": json.dumps(input_data),
@@ -386,31 +521,46 @@ def generate_multi_ops(count=200):
     return examples
 
 def main():
-    print("🚀 Synthesizing Kairo DocOps 2,000-line ML fine-tuning dataset...")
+    print("Synthesizing Kairo DocOps 3,500-line ML fine-tuning dataset...")
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     
     dataset = []
-    dataset.extend(generate_docx_headings(200))
-    dataset.extend(generate_docx_bullets(200))
-    dataset.extend(generate_docx_rewrites(200))
-    dataset.extend(generate_docx_tables(200))
+    dataset.extend(generate_docx_headings(300))
+    dataset.extend(generate_docx_bullets(300))
+    dataset.extend(generate_docx_rewrites(300))
+    dataset.extend(generate_docx_tables(300))
+    
     dataset.extend(generate_xlsx_formulas(200))
     dataset.extend(generate_xlsx_explanations(200))
+    dataset.extend(generate_excel_supplement(200))
+    
     dataset.extend(generate_pptx_concision(200))
     dataset.extend(generate_pptx_titles(200))
+    dataset.extend(generate_slide_supplement(100))
+    
     dataset.extend(generate_code_docstrings(200))
-    dataset.extend(generate_multi_ops(200))
+    dataset.extend(generate_code_supplement(300))
+    
+    dataset.extend(generate_negative_examples(500))
+    dataset.extend(generate_routing_examples(200))
     
     random.shuffle(dataset)
     
-    # Assert length is exactly 2,000 examples
-    assert len(dataset) == 2000, f"Expected exactly 2000 examples, got {len(dataset)}"
+    # Assert length is exactly 3,500 examples
+    assert len(dataset) == 3500, f"Expected exactly 3500 examples, got {len(dataset)}"
     
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+    with open(OUTPUT_FILE_3500, "w", encoding="utf-8") as f:
         for entry in dataset:
             f.write(json.dumps(entry) + "\n")
             
-    print(f"✅ Successfully compiled 2,000 diverse, schema-compliant examples into:\n   -> {OUTPUT_FILE}")
+    print(f"Successfully compiled 3,500 diverse, schema-compliant examples into:\n   -> {OUTPUT_FILE_3500}")
+    
+    # Write first 2000 shuffled examples to kairo_docops_2k.jsonl for backward compatibility
+    with open(OUTPUT_FILE_2000, "w", encoding="utf-8") as f:
+        for entry in dataset[:2000]:
+            f.write(json.dumps(entry) + "\n")
+            
+    print(f"Successfully compiled 2,000 subset examples into:\n   -> {OUTPUT_FILE_2000}")
 
 if __name__ == "__main__":
     main()

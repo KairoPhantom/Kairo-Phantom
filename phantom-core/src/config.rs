@@ -50,6 +50,10 @@ pub struct PhantomConfig {
     /// Domain 9: Enterprise Governance & Compliance
     #[serde(default)]
     pub enterprise: EnterpriseConfig,
+
+    /// List of folders to index for Document Graph Memory
+    #[serde(default = "default_document_graph_folders")]
+    pub document_graph_folders: Vec<String>,
 }
 
 /// Domain 9 — Enterprise Governance & Compliance configuration.
@@ -341,6 +345,17 @@ fn default_moonshine_model() -> String { "moonshine/moonshine-base".into() }
 fn default_confidence_threshold() -> f32 { 0.6 }
 fn default_sherpa_model() -> String { "en_US-amy-medium".into() }
 
+fn default_document_graph_folders() -> Vec<String> {
+    vec![
+        dirs::home_dir()
+            .unwrap_or_default()
+            .join("Documents")
+            .join("Kairo")
+            .to_string_lossy()
+            .to_string()
+    ]
+}
+
 impl Default for PhantomConfig {
     fn default() -> Self {
         PhantomConfig {
@@ -355,6 +370,7 @@ impl Default for PhantomConfig {
             wake_word: WakeWordConfig::default(),
             screen_context: ScreenContextConfig::default(),
             enterprise: EnterpriseConfig::default(),
+            document_graph_folders: default_document_graph_folders(),
         }
     }
 }

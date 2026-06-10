@@ -1,4 +1,5 @@
 pub mod mem_machine;
+pub mod document_graph;
 pub mod mem_gas;
 pub mod feedback;
 pub mod optimizer;

@@ -403,7 +403,7 @@ impl PipelineLayer {
         match self {
             PipelineLayer::IntentGate => "🎯 Layer 1: Intent Gate",
             PipelineLayer::Planning => "📋 Layer 2: Planning Engine",
-            PipelineLayer::AwaitingApproval => "⏳ Awaiting Plan Approval (Alt+M to execute)",
+            PipelineLayer::AwaitingApproval => "⏳ Awaiting Plan Approval (Alt+Ctrl+M to execute)",
             PipelineLayer::Generating => "🧠 Routing Specialist Swarm",
             PipelineLayer::Streaming => "⚡ Layer 3: Injecting Content",
             PipelineLayer::Verifying => "🛡️ Scanning Compliance & Quality",

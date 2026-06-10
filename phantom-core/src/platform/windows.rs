@@ -63,6 +63,23 @@ impl AccessibilityReader for WindowsUiaReader {
         Ok(String::new())
     }
 
+    /// Set the text of the currently focused UI element directly via UIAutomation ValuePattern.
+    fn set_focused_text(&self, text: &str) -> Result<()> {
+        let automation = UIAutomation::new()
+            .context("Failed to initialize Windows UIAutomation")?;
+
+        let focused = automation
+            .get_focused_element()
+            .context("No focused element found")?;
+
+        if let Ok(pat) = focused.get_pattern::<uiautomation::patterns::UIValuePattern>() {
+            pat.set_value(text).context("Failed to set value via ValuePattern")?;
+            return Ok(());
+        }
+
+        anyhow::bail!("ValuePattern not supported on focused element")
+    }
+
     /// Read text from the Windows clipboard using Win32 API.
     /// CF_UNICODETEXT (format 13) for Unicode content.
     fn get_clipboard_text(&self) -> Result<String> {

@@ -275,11 +275,12 @@ def main():
             print(f"  {agent['agentId']:<25} [{ids}]")
         sys.exit(0)
 
-    # -- Determine which agents / scenarios to run ----------------------------
     if args.agent:
         agents_to_run = [args.agent]
     else:
-        agents_to_run = AGENT_ORDER
+        manifest_agents = [a["agentId"] for a in manifest["agents"]]
+        order_map = {a: i for i, a in enumerate(AGENT_ORDER)}
+        agents_to_run = sorted(manifest_agents, key=lambda a: order_map.get(a, 999))
 
     # Build (agent_id, [scenario_ids]) pairs
     work_items = []

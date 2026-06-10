@@ -228,11 +228,34 @@ impl HumanizedInjector {
         }
     }
 
+    pub fn inject_via_value_pattern(&self, text: &str) -> bool {
+        #[cfg(windows)]
+        {
+            use uiautomation::core::UIAutomation;
+            if let Ok(automation) = UIAutomation::new() {
+                if let Ok(focused) = automation.get_focused_element() {
+                    if let Ok(pat) = focused.get_pattern::<uiautomation::patterns::UIValuePattern>() {
+                        if pat.set_value(text).is_ok() {
+                            tracing::info!("Successfully injected text using UIAutomation ValuePattern");
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        false
+    }
+
     /// All-in-one: set clipboard + select line + paste.
     /// This is the main entry point called from main.rs ghost session handler.
     /// Caller must have already called BringWindowToTop + SetForegroundWindow + 300ms sleep.
     pub fn inject_via_clipboard(&self, text: &str) -> bool {
         if text.is_empty() { return true; }
+
+        // Try direct UIAutomation ValuePattern set first (e.g. browser input fields)
+        if self.inject_via_value_pattern(text) {
+            return true;
+        }
 
         #[cfg(windows)]
         {
@@ -406,7 +429,7 @@ impl HumanizedInjector {
     /// Escape any ribbon/menu mode. NOT called in main flow (removed — it sent ESC into apps).
     pub fn escape_ribbon_mode(&self) {
         // Intentionally a no-op. Double-ESC was destroying Word document state.
-        // The hook consumes Alt+M at the low-level (LRESULT(1)) so no cleanup needed.
+        // The hook consumes Alt+Ctrl+M at the low-level (LRESULT(1)) so no cleanup needed.
     }
 
     /// Undo ghost char — no-op (hook consumes the key).

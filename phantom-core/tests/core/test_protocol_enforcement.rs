@@ -24,7 +24,7 @@ fn test_prompt_parser_ignores_non_command_text() {
         // Code without // prefix
         "let x = 5;",
         "function main() {",
-        // Accidental triggers - user selected text and hit Alt+M
+        // Accidental triggers - user selected text and hit Alt+Ctrl+M
         "This is a long paragraph about the company's strategic vision for 2026.",
         "Introduction\n\nKairo Phantom is an AI ghost-writer.",
         // Empty / whitespace

@@ -95,7 +95,7 @@ auto_detect = true
 [hotkey]
 key = "m"
 alt = true
-ctrl = false
+ctrl = true
 shift = false
 
 typing_delay_ms = 0
@@ -126,7 +126,7 @@ def main():
     print("🎉 Kairo Phantom is ready!")
     print("\nTo start:")
     print("  kairo-phantom")
-    print("\nThen press Alt+M in any app to ghost-write!")
+    print("\nThen press Alt+Ctrl+M in any app to ghost-write!")
     print("\nFor MCP integration with Claude Code:")
     print("  cargo install --path mcp-servers/kairo-mcp")
     print("  Add to ~/.claude/mcp_settings.json:")

@@ -112,7 +112,7 @@ kairo skill test my-agent "// rewrite this in my-agent style"
 
 1. Open Word
 2. Type `// [one of your routing keywords]`
-3. Press `Alt+M`
+3. Press `Alt+Ctrl+M`
 4. Kairo should route to your agent (the swarm log shows which agent handled it)
 
 ---

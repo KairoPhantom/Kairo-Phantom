@@ -80,7 +80,7 @@ async fn run_t6_clipboard_failure_fallback() {
 
 async fn run_t7_rapid_hotkey_spam() {
     println!("▶️ Executing T7: Rapid hotkey spam resilience...");
-    // Simulates Alt+M pressed 10 times in 2 seconds to ensure no state corruption
+    // Simulates Alt+Ctrl+M pressed 10 times in 2 seconds to ensure no state corruption
     for _ in 0..10 {
         sleep(Duration::from_millis(20)).await;
     }

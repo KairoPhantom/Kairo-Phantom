@@ -7,6 +7,13 @@ from pathlib import Path
 # Enforce clean package imports
 sys.path.insert(0, str(Path(__file__).parent.parent.resolve()))
 
+# ─── Install crash handler FIRST (before any other imports can fail) ──────────
+try:
+    from sidecar.crash_reporter import install_crash_handler
+    install_crash_handler()
+except Exception:  # noqa
+    pass  # Never let crash reporter setup crash the sidecar
+
 # ─── Core Imports ─────────────────────────────────────────────────────────────
 CORE_AVAILABLE = True
 CORE_ERROR = None
@@ -145,7 +152,11 @@ async def handle_request(req: dict) -> dict:
     core_actions = {
         "read_docx", "write_docx", "read_xlsx", "write_xlsx", "read_pptx",
         "write_pptx", "extract_context", "embed_text", "embed_texts",
-        "llm_structured_docx", "compile_quarkdown"
+        "llm_structured_docx", "llm_structured_xlsx", "llm_structured_pptx",
+        "llm_structured_code", "llm_structured_pdf", "llm_structured_browser",
+        "llm_structured_terminal", "llm_structured_email", "llm_structured_notes",
+        "llm_structured_design", "llm_structured_media", "llm_structured_data",
+        "compile_quarkdown"
     }
     domain1_actions = {
         "adeu_read", "adeu_apply_edits", "adeu_read_live", "adeu_sanitize",
@@ -180,12 +191,38 @@ async def handle_request(req: dict) -> dict:
             return {"id": req_id, "ok": True, "data": {"pong": True, "version": "1.2.0"}}
 
         elif action == "read_docx":
-            data = parse_docx(path)
-            return {"id": req_id, "ok": "error" not in data, "data": data}
+            raw_data = parse_docx(path)
+            if "error" in raw_data:
+                return {"id": req_id, "ok": False, "error": raw_data["error"]}
+            paragraphs = raw_data.get("paragraphs", [])
+            p_mapped = []
+            for p in paragraphs:
+                p_copy = p.copy()
+                p_copy["is_heading"] = p.get("level", 0) > 0
+                p_mapped.append(p_copy)
+            data = {
+                "full_text": "\n".join([p.get("text", "") for p in paragraphs]),
+                "headings": [
+                    {
+                        "index": p["index"],
+                        "level": p.get("level", 1),
+                        "text": p.get("text", "")
+                    } for p in paragraphs if p.get("level", 0) > 0
+                ],
+                "paragraphs": p_mapped,
+                "paragraph_count": len(paragraphs),
+                "tables": raw_data.get("tables", []),
+                "metadata": raw_data.get("metadata", {})
+            }
+            return {"id": req_id, "ok": True, "data": data}
 
         elif action == "write_docx":
             ops = payload.get("operations", [])
-            data = write_docx(path, ops)
+            from sidecar.masters.word_master import WordWriter, WordContextExtractor
+            extractor = WordContextExtractor()
+            context = extractor.extract(path, 0)
+            writer = WordWriter()
+            data = writer.apply_operations(path, ops, context)
             return {"id": req_id, "ok": "error" not in data, "data": data}
 
         elif action == "read_xlsx":
@@ -222,24 +259,52 @@ async def handle_request(req: dict) -> dict:
             vectors = embed_texts(texts)
             return {"id": req_id, "ok": True, "data": {"vectors": vectors}}
 
-        elif action == "llm_structured_docx":
+        elif action.startswith("llm_structured_"):
+            suffix = action[15:]
+            domain_map = {
+                "docx": "word",
+                "xlsx": "excel",
+                "pptx": "powerpoint",
+                "code": "code",
+                "pdf": "pdf",
+                "browser": "browser",
+                "terminal": "terminal",
+                "email": "email",
+                "notes": "notes",
+                "design": "design",
+                "media": "media",
+                "data": "data"
+            }
+            domain = domain_map.get(suffix, suffix)
             user_instruction = payload.get("user_instruction", "")
             mem_context = payload.get("mem_context", "")
-            document_context = payload.get("document_context")
-            if not document_context and path:
-                document_context = parse_docx(path)
-            
-            prompt = build_docx_prompt(user_instruction, document_context, mem_context)
+            if domain == "word":
+                cursor_info = payload.get("cursor_paragraph_index", 0)
+            elif domain == "excel":
+                cursor_info = payload.get("active_cell", "A1")
+            elif domain == "powerpoint":
+                cursor_info = payload.get("slide_index", 0)
+            elif domain == "code":
+                cursor_info = payload.get("cursor_line", 1)
+            elif domain == "notes":
+                cursor_info = payload.get("cursor_line", 1)
+            else:
+                cursor_info = payload.get("cursor_info", None)
+
             model_name = payload.get("model", "ollama/qwen2.5:7b")
             
-            # Execute LLM Structured Output with validation & self-correcting retries
-            validated_response = call_with_schema(prompt, DocxResponse, model=model_name)
+            from sidecar.router import DomainMasterRouter
+            router = DomainMasterRouter()
             
-            return {
-                "id": req_id,
-                "ok": True,
-                "data": validated_response.model_dump()
-            }
+            res = await router.route_llm_request(
+                domain=domain,
+                file_path=path,
+                user_instruction=user_instruction,
+                mem_context=mem_context,
+                cursor_info=cursor_info,
+                model_name=model_name
+            )
+            return {"id": req_id, "ok": res.get("ok", False), "data": res.get("data"), "error": res.get("error")}
 
         elif action == "compile_quarkdown":
             content = payload.get("content", "")
@@ -344,7 +409,7 @@ async def handle_request(req: dict) -> dict:
         elif action == "write_xlsx_formatted":
             ops = payload.get("operations", [])
             res = write_xlsx_with_formatting(path, ops)
-            return {"id": req_id, **res}
+            return {"id": req_id, "ok": "error" not in res, **res}
 
         elif action == "excelmcp_create_chart":
             source_range = payload.get("source_range", "")
@@ -352,7 +417,7 @@ async def handle_request(req: dict) -> dict:
             title = payload.get("title", "Chart")
             target_sheet = payload.get("target_sheet") or None
             res = excelmcp_create_chart(path, source_range, chart_type, title, target_sheet)
-            return {"id": req_id, **res}
+            return {"id": req_id, "ok": "error" not in res, **res}
 
         elif action == "excelmcp_create_pivot":
             source_range = payload.get("source_range", "")
@@ -361,7 +426,7 @@ async def handle_request(req: dict) -> dict:
             values = payload.get("values", [])
             target_sheet = payload.get("target_sheet") or None
             res = excelmcp_create_pivot_table(path, source_range, rows, columns, values, target_sheet)
-            return {"id": req_id, **res}
+            return {"id": req_id, "ok": "error" not in res, **res}
 
         elif action == "excel_smart_context":
             active_cell = payload.get("active_cell")
@@ -762,24 +827,346 @@ async def handle_request(req: dict) -> dict:
             success = svc.speak(text, voice=voice)
             return {"id": req_id, "ok": success, "data": {"spoken": text, "engine": svc.active_engine}}
 
+
+        elif action == "tab_approved" or req.get("event_type") == "tab_approved":
+            # Record this Tab approval as a MemMachine training signal
+            from sidecar.mem_machine import MemorySeeder
+            mem_seeder = MemorySeeder()
+            domain = payload.get("domain", "word")
+            prompt = payload.get("prompt", "")
+            user_id = payload.get("user_id", "local")
+            try:
+                mem_seeder.seed_operation(
+                    domain=domain,
+                    operation={"op": "tab_approved", "user_prompt": prompt},
+                    result={"summary": "User approved injection via Tab"},
+                    user_correction=None,
+                    user_id=user_id,
+                )
+            except Exception as e:
+                log.warning(f"MemorySeeder tab_approved failed: {e}")
+            return {"id": req_id, "ok": True}
+
+        # ─── Domain 9: VLM CUA (Qwen2.5-VL) Actions ─────────────────────────
+
+        elif action == "vlm_status":
+            # Check VLM download state and hardware tier
+            try:
+                from sidecar.cua.vlm_config import get_vlm_config
+                from sidecar.cua.vlm_download_manager import get_background_downloader
+                config = get_vlm_config()
+                dl = get_background_downloader()
+                return {
+                    "id": req_id,
+                    "ok": True,
+                    "data": {
+                        "available": dl.is_ready,
+                        "downloading": dl.is_downloading,
+                        "download_percent": dl.download_progress.percent,
+                        "hardware_tier": config.hardware_tier,
+                        "model_name": config.selected_model.ollama_name,
+                        "model_description": config.selected_model.description,
+                        "vram_gb": config.vram_gb,
+                        "gpu_available": config.gpu_available,
+                    }
+                }
+            except Exception as e:
+                return {"id": req_id, "ok": False, "error": f"VLM status error: {e}"}
+
+        elif action == "vlm_start_download":
+            # Start the background VLM model download (non-blocking)
+            try:
+                from sidecar.cua.vlm_download_manager import get_background_downloader
+                dl = get_background_downloader()
+                dl.start()
+                return {
+                    "id": req_id,
+                    "ok": True,
+                    "data": {
+                        "started": True,
+                        "already_ready": dl.is_ready,
+                        "message": "VLM download started in background" if not dl.is_ready else "VLM already ready",
+                    }
+                }
+            except Exception as e:
+                return {"id": req_id, "ok": False, "error": f"VLM download start error: {e}"}
+
+        elif action == "vlm_ground":
+            # Find a UI element in a screenshot using VLM grounding
+            screenshot = payload.get("screenshot", "")
+            description = payload.get("description", "")
+            if not screenshot or not description:
+                return {"id": req_id, "ok": False, "error": "Missing screenshot or description"}
+            try:
+                from sidecar.cua.vlm_grounding import get_vlm_engine
+                engine = get_vlm_engine()
+                result = await engine.ground_element(screenshot, description)
+                return {
+                    "id": req_id,
+                    "ok": True,
+                    "data": {
+                        "found": result.found,
+                        "x": result.x,
+                        "y": result.y,
+                        "confidence": result.confidence,
+                        "description": result.description,
+                        "latency_ms": result.latency_ms,
+                    }
+                }
+            except Exception as e:
+                return {"id": req_id, "ok": False, "error": f"VLM grounding error: {e}"}
+
+        elif action == "vlm_verify":
+            # Semantically verify a CUA action result
+            before = payload.get("before_screenshot", "")
+            after = payload.get("after_screenshot", "")
+            expected = payload.get("expected_result", "")
+            if not before or not after:
+                return {"id": req_id, "ok": False, "error": "Missing before or after screenshot"}
+            try:
+                from sidecar.cua.vlm_grounding import get_vlm_engine
+                engine = get_vlm_engine()
+                result = await engine.verify_action(before, after, expected)
+                return {
+                    "id": req_id,
+                    "ok": True,
+                    "data": {
+                        "success": result.success,
+                        "confidence": result.confidence,
+                        "explanation": result.explanation,
+                        "latency_ms": result.latency_ms,
+                    }
+                }
+            except Exception as e:
+                return {"id": req_id, "ok": False, "error": f"VLM verify error: {e}"}
+
+        elif action == "vlm_describe_screen":
+            # Generate structured screen description for cross-app orchestration
+            screenshot = payload.get("screenshot", "")
+            if not screenshot:
+                return {"id": req_id, "ok": False, "error": "Missing screenshot path"}
+            try:
+                from sidecar.cua.vlm_grounding import get_vlm_engine
+                engine = get_vlm_engine()
+                result = await engine.describe_screen(screenshot)
+                return {
+                    "id": req_id,
+                    "ok": True,
+                    "data": {
+                        "app_name": result.app_name,
+                        "elements": result.elements,
+                        "description": result.raw_description,
+                        "latency_ms": result.latency_ms,
+                    }
+                }
+            except Exception as e:
+                return {"id": req_id, "ok": False, "error": f"VLM describe error: {e}"}
+
+        elif action == "crossapp_execute":
+            # Execute a cross-app workflow plan (Excel→PowerPoint→Email etc)
+            workflow_type = payload.get("workflow_type", "")
+            dry_run = payload.get("dry_run", False)
+            try:
+                from sidecar.cua.cross_app_orchestrator import (
+                    CrossAppOrchestrator, WorkflowBuilder
+                )
+                orch = CrossAppOrchestrator()
+
+                # Build the plan based on workflow_type
+                if workflow_type == "excel_to_powerpoint_email":
+                    plan = WorkflowBuilder.excel_to_powerpoint_email(
+                        chart_name=payload.get("chart_name", "Q3 Revenue Chart"),
+                        slide_title=payload.get("slide_title", "Q3 Financial Results"),
+                        recipient_email=payload.get("recipient_email", ""),
+                        email_subject=payload.get("email_subject", "Q3 Report"),
+                    )
+                elif workflow_type == "word_to_pdf_email":
+                    plan = WorkflowBuilder.word_to_pdf_email(
+                        recipient_email=payload.get("recipient_email", ""),
+                        subject=payload.get("subject", "Document"),
+                    )
+                else:
+                    return {"id": req_id, "ok": False, "error": f"Unknown workflow_type: {workflow_type}"}
+
+                result = await orch.execute_plan(plan, dry_run=dry_run)
+                return {
+                    "id": req_id,
+                    "ok": result.success,
+                    "data": {
+                        "success": result.success,
+                        "steps_completed": result.steps_completed,
+                        "steps_failed": result.steps_failed,
+                        "total_steps": plan.total_steps,
+                        "total_latency_ms": result.total_latency_ms,
+                        "error_summary": result.error_summary,
+                    }
+                }
+            except Exception as e:
+                return {"id": req_id, "ok": False, "error": f"CrossApp error: {e}"}
+
+        # ─── Domain 10: Writing Intelligence v2.0 Actions ────────────────────
+
+        elif action == "audit_memorization":
+            # Check generated text for copyright memorization
+            generated_text = payload.get("text", "")
+            if not generated_text:
+                return {"id": req_id, "ok": True, "data": {"safe_to_output": True, "risk": "safe"}}
+            try:
+                from sidecar.writers.memorization_auditor import audit_generated_text
+                result = audit_generated_text(generated_text)
+                return {
+                    "id": req_id,
+                    "ok": True,
+                    "data": result.to_dict()
+                }
+            except Exception as e:
+                log.warning(f"Memorization audit failed (non-fatal): {e}")
+                # Never let the auditor block output on error
+                return {"id": req_id, "ok": True, "data": {"safe_to_output": True, "risk": "safe", "error": str(e)}}
+
+        elif action == "extract_voice_fingerprint":
+            # Extract user writing style from provided document texts
+            documents = payload.get("documents", [])  # List of plain text strings
+            user_id = payload.get("user_id", "default")
+            if not documents:
+                return {"id": req_id, "ok": False, "error": "No documents provided"}
+            try:
+                from sidecar.writers.voice_adapter import VoiceAdapter, VoiceStore
+                adapter = VoiceAdapter()
+                store = VoiceStore()
+                fp = adapter.extract_fingerprint(documents, user_name=user_id)
+                store.save(fp, user_id)
+                return {
+                    "id": req_id,
+                    "ok": True,
+                    "data": {
+                        "user_id": user_id,
+                        "document_count": fp.document_count,
+                        "total_word_count": fp.total_word_count,
+                        "avg_sentence_length": fp.avg_sentence_length,
+                        "formality_score": fp.formality_score,
+                        "vocabulary_richness": fp.vocabulary_richness,
+                        "saved": True,
+                    }
+                }
+            except Exception as e:
+                return {"id": req_id, "ok": False, "error": f"Voice fingerprint extraction failed: {e}"}
+
+        elif action == "get_voice_prompt":
+            # Get voice-adapted system prompt for a user (for injection into document gen)
+            user_id = payload.get("user_id", "default")
+            try:
+                from sidecar.writers.voice_adapter import get_user_voice_prompt
+                voice_prompt = get_user_voice_prompt(user_id)
+                return {
+                    "id": req_id,
+                    "ok": True,
+                    "data": {
+                        "voice_prompt": voice_prompt,
+                        "has_fingerprint": voice_prompt is not None,
+                    }
+                }
+            except Exception as e:
+                return {"id": req_id, "ok": False, "error": f"Voice prompt error: {e}"}
+
+        elif action == "delete_voice_fingerprint":
+            # Delete a user's stored voice fingerprint
+            user_id = payload.get("user_id", "default")
+            try:
+                from sidecar.writers.voice_adapter import get_voice_store
+                store = get_voice_store()
+                deleted = store.delete(user_id)
+                return {"id": req_id, "ok": True, "data": {"deleted": deleted, "user_id": user_id}}
+            except Exception as e:
+                return {"id": req_id, "ok": False, "error": f"Voice delete error: {e}"}
+
         else:
             return {"id": req_id, "ok": False, "error": f"Unknown action: {action}"}
+
 
     except Exception as e:
         log.error(f"Handler error for [{req_id}]: {e}\n{traceback.format_exc()}")
         return {"id": req_id, "ok": False, "error": str(e), "traceback": traceback.format_exc()}
 
 
+async def _preload_models():
+    """
+    Sends a tiny probe request to warm up the local LLM models (kairo-fast, kairo-standard)
+    on startup to avoid cold start latency.
+    """
+    log.info("[Preloader] ⚡ Preloading and warming up LLM models...")
+    
+    # Give LiteLLM a moment to spin up first
+    await asyncio.sleep(2.0)
+    
+    try:
+        from sidecar.llm_caller import call_with_schema
+        from sidecar.schemas.docx_schema import DocxResponse
+        
+        # Simple dummy context/prompt
+        dummy_prompt = "Warming up model"
+        dummy_context = {
+            "paragraph_count": 1,
+            "headings": [],
+            "cursor_paragraph_index": 0,
+            "file_path": "dummy.docx"
+        }
+        
+        # Warm up kairo-fast and kairo-standard
+        for model in ["kairo-fast", "kairo-standard"]:
+            log.info(f"[Preloader] Sending warm-up probe to model: {model}")
+            try:
+                # Call with a timeout of 5s so it doesn't block startup
+                await asyncio.wait_for(
+                    asyncio.to_thread(
+                        call_with_schema,
+                        prompt=dummy_prompt,
+                        schema_class=DocxResponse,
+                        model_name=model,
+                        context=dummy_context
+                    ),
+                    timeout=5.0
+                )
+                log.info(f"[Preloader] ✅ Model {model} successfully preloaded!")
+            except asyncio.TimeoutError:
+                log.warning(f"[Preloader] ⚠️ Warm-up timeout for {model} (Ollama might still be loading or model is downloading)")
+            except Exception as e:
+                log.warning(f"[Preloader] ⚠️ Failed to warm up model {model}: {e}")
+                
+    except Exception as e:
+        log.warning(f"[Preloader] ⚠️ Error during model preloading: {e}")
+
+
 async def main():
     pipe_name = r"\\.\pipe\kairo_sidecar"
     log.info("Kairo Phantom Named Pipe Sidecar booting up...")
     
+    # ── Non-blocking auto-update check (background thread, 5s timeout) ────────
+    try:
+        from sidecar.updater import check_for_update_async
+        def _on_update(result):
+            version, url = result
+            log.info(f"[Updater] 🔔 New version {version} available: {url}")
+        check_for_update_async(_on_update)
+    except Exception as _ue:
+        log.debug(f"Auto-update check skipped: {_ue}")
+
     # Proactively start background LiteLLM proxy gateway
     try:
         from sidecar.start_litellm import main as start_litellm_main
         start_litellm_main()
     except Exception as e:
         log.warning(f"Could not start LiteLLM gateway automatically: {e}")
+
+    # Start passive model preloader (belt-and-suspenders thread-based warmup)
+    try:
+        from sidecar.passive_preloader import start_background_warmup
+        start_background_warmup()
+    except Exception as e:
+        log.debug(f"PassivePreloader not started (non-critical): {e}")
+
+    # Wire _preload_models() on startup in background
+    asyncio.create_task(_preload_models())
         
     try:
         server = await start_named_pipe_server(pipe_name, handle_request)

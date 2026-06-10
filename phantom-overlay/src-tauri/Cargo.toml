@@ -5,7 +5,14 @@ edition = "2021"
 
 [lib]
 name = "phantom_overlay_lib"
-crate-type = ["staticlib", "cdylib", "rlib"]
+crate-type = ["rlib"]
+test = false
+doctest = false
+
+[[bin]]
+name = "phantom-overlay"
+path = "src/main.rs"
+test = false
 
 [dependencies]
 tauri = { version = "2.0.0", features = ["tray-icon"] }

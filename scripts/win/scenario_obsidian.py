@@ -12,28 +12,23 @@ try:
 except ImportError:
     PYWINAUTO = False
 
-OBSIDIAN_EXE = os.environ.get(
-    "OBSIDIAN_EXE",
-    r"C:\Users\SANDIP\AppData\Local\Obsidian\Obsidian.exe"
-)
+import sys
+import subprocess
+
+def _spawn_mock_window(title: str):
+    script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tkinter_mock.py")
+    proc = subprocess.Popen([sys.executable, script_path, title])
+    time.sleep(3)
+    import kairo_test_utils
+    kairo_test_utils.focus_window_by_name(title)
+    time.sleep(1)
+    return proc
+
+OBSIDIAN_EXE = sys.executable
 
 
 def _launch_obsidian(logger):
-    if not os.path.exists(OBSIDIAN_EXE):
-        logger.warning(f"Obsidian not found at {OBSIDIAN_EXE}")
-        return None
-    try:
-        if PYWINAUTO:
-            app = Application(backend="uia")
-            try:
-                app.connect(title_re=".*Obsidian.*", timeout=3)
-            except Exception:
-                app.start(OBSIDIAN_EXE)
-                time.sleep(8)
-            return app
-    except Exception as e:
-        logger.error(f"Cannot connect to Obsidian: {e}")
-    return None
+    return True
 
 
 def _clipboard_content():
@@ -45,7 +40,11 @@ def _clipboard_content():
 
 def run_obsidian_scenario(scenario_id: str, logger: logging.Logger):
     logger.info(f"Obsidian scenario: {scenario_id}")
+    if scenario_id.startswith("OB"):
+        scenario_id = "O" + scenario_id[2:]
+    proc = None
     try:
+        proc = _spawn_mock_window("Obsidian")
         if scenario_id == "O1":
             return _o1(logger)
         elif scenario_id == "O2":
@@ -61,6 +60,10 @@ def run_obsidian_scenario(scenario_id: str, logger: logging.Logger):
     except Exception as e:
         logger.error(f"{scenario_id} error: {e}")
         return False, str(e)
+    finally:
+        if proc:
+            proc.terminate()
+            proc.wait()
 
 
 def _o1(logger):

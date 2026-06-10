@@ -94,7 +94,7 @@ mod win_balloon {
             };
             RegisterClassW(&wc);
 
-            let hwnd = CreateWindowExW(
+            CreateWindowExW(
                 WINDOW_EX_STYLE::default(),
                 PCWSTR(class_name.as_ptr()),
                 PCWSTR::null(),
@@ -107,8 +107,7 @@ mod win_balloon {
                 None,
                 HINSTANCE::default(),
                 None,
-            ).unwrap_or(HWND::default());
-            hwnd
+            ).unwrap_or(HWND::default())
         }
     }
 
@@ -528,3 +527,96 @@ pub fn log_agent_selection(agent_id: &str, score: u8, doc_kind: &str, prompt_pre
 
     tracing::debug!("[AgentDebug] {}", entry);
 }
+
+// ─── Periodic Health Checks ──────────────────────────────────────────────────
+
+#[cfg(windows)]
+fn check_vlm_availability() -> bool {
+    if let Some(home) = dirs::home_dir() {
+        let cache_dir = home.join(".kairo-phantom").join("models");
+        let model_3b = cache_dir.join("qwen2.5-vl-3b-instruct-Q4_K_M.gguf");
+        let model_7b = cache_dir.join("qwen2.5-vl-7b-instruct-Q4_K_M.gguf");
+        
+        let is_3b_ok = model_3b.exists() && model_3b.metadata().map(|m| m.len() > 100_000_000).unwrap_or(false);
+        let is_7b_ok = model_7b.exists() && model_7b.metadata().map(|m| m.len() > 100_000_000).unwrap_or(false);
+        
+        is_3b_ok || is_7b_ok
+    } else {
+        false
+    }
+}
+
+#[cfg(windows)]
+fn check_driver_status() -> bool {
+    let candidates = [
+        dirs::data_local_dir().map(|d| d.join("Programs").join("Cua").join("cua-driver").join("bin").join("cua-driver.exe")),
+        dirs::home_dir().map(|h| h.join(".cua").join("bin").join("cua-driver.exe")),
+        Some(std::path::PathBuf::from("C:/Program Files/cua-driver/cua-driver.exe")),
+        Some(std::path::PathBuf::from("C:/ProgramData/cua-driver/cua-driver.exe")),
+    ];
+
+    for candidate in candidates.into_iter().flatten() {
+        if candidate.exists() {
+            return true;
+        }
+    }
+
+    if let Ok(output) = std::process::Command::new("where")
+        .arg("cua-driver")
+        .output()
+    {
+        if output.status.success() {
+            return true;
+        }
+    }
+
+    false
+}
+
+#[cfg(windows)]
+fn check_enigo_status() -> bool {
+    use enigo::{Enigo, Settings};
+    Enigo::new(&Settings::default()).is_ok()
+}
+
+pub fn start_periodic_health_checks() {
+    #[cfg(windows)]
+    {
+        std::thread::spawn(move || {
+            use std::time::Duration;
+            // Wait 5 seconds after startup to perform the first check
+            std::thread::sleep(Duration::from_secs(5));
+            loop {
+                let vlm_ok = check_vlm_availability();
+                let driver_ok = check_driver_status();
+                let enigo_ok = check_enigo_status();
+                
+                let title = "Kairo System Health 🟢";
+                let mut body = String::new();
+                let mut color = OverlayColor::Success;
+                
+                if !vlm_ok || !driver_ok || !enigo_ok {
+                    let mut err_title = "Kairo Health Alert ⚠️".to_string();
+                    color = OverlayColor::Error;
+                    
+                    if !vlm_ok {
+                        body.push_str("• VLM (Qwen2.5-VL) model is missing/downloading.\n");
+                    }
+                    if !driver_ok {
+                        body.push_str("• CUA Driver binary was not found.\n");
+                    }
+                    if !enigo_ok {
+                        body.push_str("• Keyboard/Mouse emulation is failing.\n");
+                    }
+                    show_overlay(&err_title, &body, color, 4000);
+                } else {
+                    body.push_str("• VLM (Qwen2.5-VL) Active\n• CUA Driver Active\n• Keyboard/Mouse Emulation Active");
+                    show_overlay(title, &body, color, 4000);
+                }
+                
+                std::thread::sleep(Duration::from_secs(60));
+            }
+        });
+    }
+}
+

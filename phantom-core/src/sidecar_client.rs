@@ -199,6 +199,23 @@ pub struct ExcelPivotOp {
     pub target_sheet: Option<String>,
 }
 
+/// Conditional formatting config for ExcelWriteOp.
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct ConditionalFormatConfig {
+    /// "cell_is" | "data_bar" | "color_scale"
+    #[serde(rename = "type", default)]
+    pub format_type: String,
+    /// "greaterThan" | "lessThan" | "equal" | "greaterThanOrEqual" | "lessThanOrEqual"
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub operator: Option<String>,
+    /// Threshold value for cell_is comparisons
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub threshold: Option<f64>,
+    /// 6-char hex color without # (e.g. "C6EFCE" for green)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fill_color: Option<String>,
+}
+
 /// Extended ExcelOperation with formatting support (Domain 2).
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ExcelWriteOp {
@@ -211,6 +228,8 @@ pub struct ExcelWriteOp {
     pub number_format: Option<String>,  // e.g. "0.00%", "#,##0.00"
     #[serde(default)]
     pub bold: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub conditional_formatting: Option<ConditionalFormatConfig>,
 }
 
 
@@ -249,10 +268,15 @@ async fn call_sidecar(req: SidecarRequest) -> Result<serde_json::Value> {
         .context("Invalid JSON from sidecar")?;
 
     if !resp.ok {
-        bail!(
-            "Sidecar error: {}",
-            resp.error.unwrap_or_else(|| "unknown error".to_string())
-        );
+        let err_msg = resp.error.clone()
+            .or_else(|| {
+                resp.data.as_ref()
+                    .and_then(|d| d.get("error"))
+                    .and_then(|e| e.as_str())
+                    .map(|s| s.to_string())
+            })
+            .unwrap_or_else(|| "unknown error".to_string());
+        bail!("Sidecar error: {}", err_msg);
     }
 
     Ok(resp.data.unwrap_or(serde_json::Value::Null))
@@ -914,10 +938,8 @@ pub fn resolve_document_path(window_title: &str, process_name: &str) -> Option<S
     // Search each dir for fname + each extension
     for dir in &search_dirs {
         for ext in extensions {
-            let candidate = if ext.is_empty() {
+            let candidate = if ext.is_empty() || fname.contains('.') {
                 dir.join(&fname)
-            } else if fname.contains('.') {
-                dir.join(&fname) // already has extension
             } else {
                 dir.join(format!("{}{}", fname, ext))
             };
@@ -965,7 +987,7 @@ fn find_in_recent_files(fname: &str) -> Option<String> {
                     if let Ok(bytes) = std::fs::read(entry.path()) {
                         if bytes.len() > 0x4C + 4 {
                             // LNK header check: magic bytes 4C 00 00 00
-                            if &bytes[..4] == &[0x4C, 0x00, 0x00, 0x00] {
+                            if bytes[..4] == [0x4C, 0x00, 0x00, 0x00] {
                                 // Shell link target embedded path (simplified extraction)
                                 // Look for a null-terminated ASCII path after offset 0x4C
                                 let path_start = 0x4C + 28; // skip header fields

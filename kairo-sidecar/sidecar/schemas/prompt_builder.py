@@ -1,7 +1,15 @@
 import json
 from typing import Dict
 
-def build_docx_prompt(user_instruction: str, document_context: dict, mem_context: str) -> str:
+def build_docx_prompt(
+    user_instruction: str,
+    document_context: dict,
+    mem_context: str,
+    file_path: str = "Unknown",
+    app_name: str = "Microsoft Word",
+    app_type: str = "Word Processor",
+    intent_classification: str = "Document Operation Generation"
+) -> str:
     """
     Builds a highly structured system + user prompt for document editing.
     Instructs the LLM to output a JSON object conforming exactly to the DocxResponse schema.
@@ -110,7 +118,37 @@ def build_docx_prompt(user_instruction: str, document_context: dict, mem_context
         "reasoning": "Replaced the document title with the requested title while keeping the Heading1 style."
     }
 
-    system_prompt = f"""You are a professional, specialized Document AI system operating on a local user workstation.
+    # 1. Fallbacks
+    styles_list = document_context.get('styles', {}).get('paragraph', []) if document_context else []
+    if not styles_list:
+        styles_str = "Normal, Heading 1, Heading 2, List Bullet, List Number"
+    else:
+        styles_str = json.dumps(styles_list[:15])
+
+    memory_str = mem_context or "No writing preferences learned yet. Use professional defaults."
+
+    # App Context
+    app_context_part = f"""=== APP CONTEXT ===
+Application Name: {app_name}
+Application Type: {app_type}
+File Path: {file_path}"""
+
+    # Document Context
+    doc_context_part = f"""=== DOCUMENT CONTEXT ===
+Available Paragraph Styles: {styles_str}
+DOCUMENT STRUCTURE:
+{json.dumps(document_context, indent=2)}"""
+
+    # Memory Context
+    memory_part = f"""=== MEMORY CONTEXT ===
+User Writing Preferences:
+{memory_str}"""
+
+    # Intent Classification Result
+    classification_part = f"""=== INTENT CLASSIFICATION ===
+Intent Classification: {intent_classification}"""
+
+    system_rules = f"""You are a professional, specialized Document AI system operating on a local user workstation.
 Your task is to take a user instruction, current document context, and optional user preference memory, and generate a sequence of structured document operations to perfectly fulfill the request.
 
 You MUST respond with a single valid JSON object matching the schema below.
@@ -134,18 +172,22 @@ Instruction: {few_shot_2_input['instruction']}
 Document Context: {json.dumps(few_shot_2_input['document_context'])}
 
 Example 2 Output:
-{json.dumps(few_shot_2_output, indent=2)}
-"""
+{json.dumps(few_shot_2_output, indent=2)}"""
 
-    user_prompt = f"""User Instruction: {user_instruction}
+    json_reminder = "REMINDER: Your entire response must be a single JSON object. First character must be {. Last character must be }."
 
-Document Context:
-{json.dumps(document_context, indent=2)}
+    prompt = f"""{system_rules}
 
-User Preference Memory (MemMachine context):
-{mem_context or "No specific style preferences stored."}
+{app_context_part}
 
+{doc_context_part}
+
+{memory_part}
+
+{classification_part}
+
+{json_reminder}
+User Instruction: {user_instruction}
 Generate the JSON response conforming to the DocxResponse schema. Remember: ONLY the raw JSON output is allowed. No markdown fences.
 """
-
-    return f"{system_prompt}\n\n{user_prompt}"
+    return prompt

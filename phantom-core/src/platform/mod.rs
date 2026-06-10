@@ -16,6 +16,9 @@ pub trait AccessibilityReader: Send + Sync {
 
     /// Read text from the system clipboard as a fallback.
     fn get_clipboard_text(&self) -> anyhow::Result<String>;
+
+    /// Set the text content of the currently focused UI element (direct field injection).
+    fn set_focused_text(&self, text: &str) -> anyhow::Result<()>;
 }
 
 /// Construct the platform-appropriate AccessibilityReader at runtime.

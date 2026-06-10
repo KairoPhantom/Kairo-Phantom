@@ -18,6 +18,11 @@ class ReplaceParagraphOp(BaseModel):
     style: str
     runs: List[ParagraphRun]
 
+class AppendToRunOp(BaseModel):
+    type: Literal["append_to_run"]
+    paragraph_index: int
+    runs: List[ParagraphRun]
+
 class InsertTableOp(BaseModel):
     type: Literal["insert_table"]
     after_paragraph_index: int
@@ -28,9 +33,11 @@ class DeleteParagraphOp(BaseModel):
     type: Literal["delete_paragraph"]
     paragraph_index: int
 
-DocxOperation = Union[InsertParagraphOp, ReplaceParagraphOp, InsertTableOp, DeleteParagraphOp]
+DocxOperation = Union[InsertParagraphOp, ReplaceParagraphOp, AppendToRunOp, InsertTableOp, DeleteParagraphOp]
 
 class DocxResponse(BaseModel):
     operations: List[DocxOperation]
     confidence: float = Field(ge=0.0, le=1.0)
     reasoning: str = Field(max_length=200)
+    style_validation_mode: Literal["strict", "fuzzy"] = "fuzzy"
+

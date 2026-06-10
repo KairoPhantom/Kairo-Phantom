@@ -33,7 +33,7 @@ $LFPath = python -c "import os, llamafactory; print(os.path.dirname(llamafactory
 $LFDataDir = "$LFPath\data"
 
 Write-Host "Copying training dataset to $LFDataDir..."
-Copy-Item "$TrainingDataDir\kairo_docops_2k.jsonl" "$LFDataDir\" -Force
+Copy-Item "$TrainingDataDir\kairo_docops_3500.jsonl" "$LFDataDir\" -Force
 
 Write-Host "Updating LlamaFactory dataset_info.json..."
 python -c @"
@@ -41,8 +41,8 @@ import json
 path = r'$LFDataDir\dataset_info.json'
 with open(path, 'r', encoding='utf-8') as f:
     data = json.load(f)
-data['kairo_docops_2k'] = {
-    'file_name': 'kairo_docops_2k.jsonl',
+data['kairo_docops_3500'] = {
+    'file_name': 'kairo_docops_3500.jsonl',
     'columns': {
         'prompt': 'instruction',
         'query': 'input',

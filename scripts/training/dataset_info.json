@@ -6,5 +6,13 @@
       "query": "input",
       "response": "output"
     }
+  },
+  "kairo_docops_3500": {
+    "file_name": "../../training_data/kairo_docops_3500.jsonl",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+    }
   }
 }

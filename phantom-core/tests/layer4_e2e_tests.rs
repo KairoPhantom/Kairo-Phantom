@@ -1,7 +1,7 @@
 // ============================================================
 // LAYER 4: Cross-Platform E2E Integration Tests
 //
-// Validates the complete Alt+M workflow end-to-end:
+// Validates the complete Alt+Ctrl+M workflow end-to-end:
 //   - Hotkey registration
 //   - Config load lifecycle
 //   - Session creation and cancellation
@@ -187,7 +187,7 @@ fn e2e_config_toml_roundtrip() {
 
 // ──────────────────────────────────────────────────────────────
 // E2E Test 7: Concurrent session stress — no deadlock
-//   Simulates multiple parallel Alt+M triggers
+//   Simulates multiple parallel Alt+Ctrl+M triggers
 // ──────────────────────────────────────────────────────────────
 #[tokio::test]
 async fn e2e_concurrent_sessions_no_deadlock() {

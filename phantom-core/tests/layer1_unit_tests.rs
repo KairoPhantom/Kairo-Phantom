@@ -112,4 +112,92 @@ fn unit_config_serialization_no_panic() {
     assert!(result.is_ok(), "Default config must serialize without error");
 }
 
+// ─── DocumentGraph ─────────────────────────────────────────────
+
+struct MockDocumentGraphBackend {
+    call_count: std::sync::atomic::AtomicUsize,
+}
+
+#[async_trait::async_trait]
+impl phantom_core::ai::AiBackend for MockDocumentGraphBackend {
+    async fn complete(&self, _system: &str, _user: &str) -> anyhow::Result<String> {
+        let count = self.call_count.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        if count == 0 {
+            Ok(r#"[
+                {"name": "Rust Language", "entity_type": "company", "relation": "subject"}
+            ]"#.to_string())
+        } else {
+            Ok(r#"[
+                {"name": "Cpp Language", "entity_type": "company", "relation": "subject"}
+            ]"#.to_string())
+        }
+    }
+
+    async fn stream_complete(&self, _system: &str, _user: &str, _tx: tokio::sync::mpsc::Sender<String>) -> anyhow::Result<()> {
+        Ok(())
+    }
+}
+
+#[tokio::test]
+async fn unit_document_graph_reindexing_on_modification() {
+    use phantom_core::memory::document_graph::DocumentGraph;
+    use std::sync::Arc;
+    use tempfile::tempdir;
+    use std::fs::File;
+    use std::io::Write;
+    use rusqlite::params;
+
+    let dir = tempdir().unwrap();
+    let db_path = dir.path().join("test_graph.db");
+    let docs_dir = dir.path().join("docs");
+    std::fs::create_dir_all(&docs_dir).unwrap();
+
+    let backend = Arc::new(MockDocumentGraphBackend {
+        call_count: std::sync::atomic::AtomicUsize::new(0),
+    });
+    let doc_graph = DocumentGraph::new(db_path.clone(), backend).unwrap();
+
+    // 1. Create a document file
+    let file_path = docs_dir.join("doc1.txt");
+    {
+        let mut file = File::create(&file_path).unwrap();
+        file.write_all(b"Initial content referencing Rust Language.").unwrap();
+    }
+
+    // 2. Index the directory
+    doc_graph.index_directory(&docs_dir).await.unwrap();
+
+    // 3. Query the entities to confirm they are indexed
+    let entities = doc_graph.list_entities().unwrap();
+    assert!(entities.contains("Rust Language"), "Should contain Rust Language entity initially: {}", entities);
+
+    // 4. Modify the document content
+    {
+        let mut file = File::create(&file_path).unwrap();
+        file.write_all(b"Modified content referencing C++ language.").unwrap();
+    }
+
+    // 5. Index the directory again
+    doc_graph.index_directory(&docs_dir).await.unwrap();
+
+    // 6. Verify that it was re-indexed (meaning the database stored content is updated).
+    let conn = rusqlite::Connection::open(&db_path).unwrap();
+    let content: String = conn.query_row(
+        "SELECT content FROM nodes WHERE node_type = 'document'",
+        [],
+        |row| row.get(0)
+    ).unwrap();
+    assert!(content.contains("C++ language"), "Document content should be updated to C++ language, but was: {}", content);
+
+    // Verify edges are deleted and replaced:
+    let mut stmt = conn.prepare("SELECT target FROM edges WHERE source = ?1").unwrap();
+    let edge_targets: Vec<String> = stmt.query_map(params![file_path.to_string_lossy().to_string()], |row| row.get(0))
+        .unwrap()
+        .collect::<Result<Vec<String>, _>>()
+        .unwrap();
+
+    assert_eq!(edge_targets.len(), 1);
+    assert_eq!(edge_targets[0], "entity:cpp-language");
+}
+
 

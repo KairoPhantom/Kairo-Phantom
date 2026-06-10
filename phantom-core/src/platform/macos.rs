@@ -240,6 +240,10 @@ impl AccessibilityReader for MacOsAccessibilityReader {
             Err(anyhow!("pbpaste failed"))
         }
     }
+
+    fn set_focused_text(&self, _text: &str) -> Result<()> {
+        Err(anyhow!("macOS set_focused_text via AXUIElement not yet implemented"))
+    }
 }
 
 #[cfg(not(target_os = "macos"))]
@@ -249,5 +253,8 @@ impl AccessibilityReader for MacOsAccessibilityReader {
     }
     fn get_clipboard_text(&self) -> Result<String> {
         Err(anyhow!("macOS clipboard is not supported on this platform"))
+    }
+    fn set_focused_text(&self, _text: &str) -> Result<()> {
+        Err(anyhow!("macOS accessibility is not supported on this platform"))
     }
 }

@@ -322,7 +322,7 @@ impl SwarmOrchestrator {
             })
             .collect();
         // Sort descending by score
-        scored.sort_by(|a, b| b.0.cmp(&a.0));
+        scored.sort_by_key(|a| std::cmp::Reverse(a.0));
         scored.truncate(max_agents.max(1));
 
         if scored.is_empty() {
@@ -401,7 +401,7 @@ impl SwarmOrchestrator {
     /// 1. Are non-empty
     /// 2. Are not error messages (don't start with `[`)
     /// 3. Have more content than the minimum length threshold
-    pub fn select_best_response<'a>(results: &'a [(String, String)], min_len: usize) -> Option<&'a str> {
+    pub fn select_best_response(results: &[(String, String)], min_len: usize) -> Option<&str> {
         results.iter()
             .filter(|(_, r)| !r.is_empty() && !r.starts_with('[') && r.len() >= min_len)
             .map(|(_, r)| r.as_str())

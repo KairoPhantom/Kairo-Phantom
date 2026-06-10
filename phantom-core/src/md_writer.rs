@@ -64,8 +64,8 @@ pub fn insert_after_heading_str(
         Some(h_idx) => {
             // Find end of section: next heading of same or higher level
             let mut end_idx = lines.len();
-            for j in (h_idx + 1)..lines.len() {
-                let next = lines[j].trim();
+            for (j, line) in lines.iter().enumerate().skip(h_idx + 1) {
+                let next = line.trim();
                 if next.starts_with('#') {
                     // Count # prefix
                     let next_level = next.chars().take_while(|c| *c == '#').count();
@@ -144,8 +144,8 @@ pub fn replace_section(md_path: &str, heading_text: &str, new_content: &str) -> 
 
     // Find end of section
     let mut section_end = lines.len();
-    for j in (h_idx + 1)..lines.len() {
-        let trimmed = lines[j].trim();
+    for (j, line) in lines.iter().enumerate().skip(h_idx + 1) {
+        let trimmed = line.trim();
         if trimmed.starts_with('#') {
             let next_level = trimmed.chars().take_while(|c| *c == '#').count();
             if next_level <= h_level {

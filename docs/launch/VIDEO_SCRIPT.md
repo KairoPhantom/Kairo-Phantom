@@ -35,9 +35,9 @@
 **[SCREEN: Kairo Phantom tray icon in the taskbar]**
 
 **VOICEOVER:**  
-*"Kairo Phantom lives in your tray. It reads your document, learns your style, and types the AI response directly into your app. No switching. No pasting. Just Alt+M."*
+*"Kairo Phantom lives in your tray. It reads your document, learns your style, and types the AI response directly into your app. No switching. No pasting. Just Alt+Ctrl+M."*
 
-**[TEXT OVERLAY: "Alt+M = AI writes directly into any app"]**
+**[TEXT OVERLAY: "Alt+Ctrl+M = AI writes directly into any app"]**
 
 ---
 
@@ -50,10 +50,10 @@
 
 **[Pause 1 second]**
 
-**[Alt+M pressed. Toast appears: "Kairo: Generating..."]**
+**[Alt+Ctrl+M pressed. Toast appears: "Kairo: Generating..."]**
 
 **VOICEOVER:**  
-*"I typed my instruction in the document itself — using Kairo's two-slash protocol. Pressed Alt+M. Watch."*
+*"I typed my instruction in the document itself — using Kairo's two-slash protocol. Pressed Alt+Ctrl+M. Watch."*
 
 **[AI response types directly into the document — humanized keystrokes, character by character]**
 
@@ -76,7 +76,7 @@
 // write a LinkedIn post about our Q2 results
 ```
 
-**[Alt+M → response appears]**
+**[Alt+Ctrl+M → response appears]**
 
 **[SCREEN: Side-by-side showing the LinkedIn post matches the user's established tone — same vocabulary, same sentence length]**
 
@@ -106,7 +106,7 @@
 **[TEXT OVERLAY:]**
 ```
 cargo install kairo-phantom
-Press Alt+M. Write // and go.
+Press Alt+Ctrl+M. Write // and go.
 github.com/Kartik24Hulmukh/Kairo-Phantom
 ```
 

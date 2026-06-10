@@ -498,8 +498,13 @@ def _write_pptx(path: str, operations: list) -> dict:
                     target_shape = shape
 
             if not target_shape or not target_shape.has_text_frame:
-                errors.append(f"Shape {shape_id} not found on slide {slide_idx}")
-                continue
+                if bullets:
+                    slide.notes_slide.notes_text_frame.text = "\n".join(bullets)
+                    applied.append({"slide": slide_idx, "notes": bullets})
+                    continue
+                else:
+                    errors.append(f"Shape {shape_id} not found on slide {slide_idx}")
+                    continue
 
             tf = target_shape.text_frame
 

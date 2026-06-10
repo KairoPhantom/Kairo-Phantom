@@ -132,55 +132,180 @@ impl AiBackend for SafeAiBackend {
     }
 }
 
-pub fn build_backend(config: &ModelConfig) -> Result<Arc<dyn AiBackend>> {
+// ─── Fallback Chain Backend ──────────────────────────────────────────────────
+
+pub struct FallbackChainBackend {
+    backends: Vec<Arc<dyn AiBackend>>,
+}
+
+impl FallbackChainBackend {
+    pub fn new(backends: Vec<Arc<dyn AiBackend>>) -> Self {
+        Self { backends }
+    }
+}
+
+#[async_trait::async_trait]
+impl AiBackend for FallbackChainBackend {
+    async fn complete(&self, system: &str, user: &str) -> Result<String> {
+        let mut last_err = anyhow::anyhow!("No backends in fallback chain");
+        for (i, backend) in self.backends.iter().enumerate() {
+            tracing::info!("🔄 Trying backend {}/{} in fallback chain...", i + 1, self.backends.len());
+            match backend.complete(system, user).await {
+                Ok(res) => {
+                    tracing::info!("✅ Backend {} succeeded", i + 1);
+                    return Ok(res);
+                }
+                Err(e) => {
+                    tracing::warn!("⚠️ Backend {} failed: {}", i + 1, e);
+                    last_err = e;
+                }
+            }
+        }
+        Err(last_err)
+    }
+
+    async fn stream_complete(
+        &self,
+        system: &str,
+        user: &str,
+        tx: tokio::sync::mpsc::Sender<String>,
+    ) -> Result<()> {
+        let mut last_err = anyhow::anyhow!("No backends in fallback chain");
+        for (i, backend) in self.backends.iter().enumerate() {
+            tracing::info!("🔄 Trying streaming backend {}/{} in fallback chain...", i + 1, self.backends.len());
+            
+            let (attempt_tx, mut attempt_rx) = tokio::sync::mpsc::channel(200);
+            let tx_clone = tx.clone();
+            
+            let handle = tokio::spawn(async move {
+                while let Some(token) = attempt_rx.recv().await {
+                    let _ = tx_clone.send(token).await;
+                }
+            });
+
+            match backend.stream_complete(system, user, attempt_tx).await {
+                Ok(()) => {
+                    let _ = handle.await;
+                    tracing::info!("✅ Streaming backend {} succeeded", i + 1);
+                    return Ok(());
+                }
+                Err(e) => {
+                    tracing::warn!("⚠️ Streaming backend {} failed: {}", i + 1, e);
+                    last_err = e;
+                }
+            }
+        }
+        Err(last_err)
+    }
+}
+
+pub fn build_single_backend(config: &ModelConfig) -> Result<Arc<dyn AiBackend>> {
     let inner: Arc<dyn AiBackend> = match config.provider.as_str() {
         "ollama" => {
             let base_url = config.base_url.clone().unwrap_or_else(|| "http://localhost:11434".into());
-            if base_url == "http://localhost:11434" || base_url == "http://127.0.0.1:11434" {
-                let model_name = config.model_name.clone().unwrap_or_else(|| "qwen2.5:7b".into());
-                let mapped_model = if model_name.starts_with("ollama/") {
-                    model_name
-                } else {
-                    format!("ollama/{}", model_name)
-                };
-                tracing::info!("🔄 AI: Routing default Ollama through Central LiteLLM Gateway: {}", mapped_model);
-                Arc::new(OpenAiBackend::new(
-                    "not-needed".to_string(),
-                    mapped_model,
-                    "http://localhost:4000/v1".to_string(),
-                ))
-            } else {
-                Arc::new(OllamaBackend::new(
-                    base_url,
-                    config.model_name.clone().unwrap_or_else(|| "llama3".into()),
-                ))
-            }
+            let model_name = config.model_name.clone().unwrap_or_else(|| "qwen2.5-coder:14b".into());
+            Arc::new(OllamaBackend::new(base_url, model_name))
         }
-        "openai" => Arc::new(OpenAiBackend::new(
-            config.api_key.clone().unwrap_or_default(),
-            config.model_name.clone().unwrap_or_else(|| "gpt-4o".into()),
-            config.base_url.clone().unwrap_or_else(|| "https://api.openai.com/v1/chat/completions".into()),
-        )),
-        "nim" => Arc::new(OpenAiBackend::new(
-            config.api_key.clone().unwrap_or_default(),
-            config.model_name.clone().unwrap_or_else(|| "meta/llama-3.1-70b-instruct".into()),
-            config.base_url.clone().unwrap_or_else(|| "https://integrate.api.nvidia.com/v1/chat/completions".into()),
-        )),
-        "anthropic" => Arc::new(AnthropicBackend::new(
-            config.api_key.clone().unwrap_or_default(),
-            config.model_name.clone().unwrap_or_else(|| "claude-3-5-sonnet-20241022".into()),
-        )),
-        "gemini" => Arc::new(GeminiBackend::new(
-            config.api_key.clone().unwrap_or_default(),
-            config.model_name.clone().unwrap_or_else(|| "gemini-1.5-pro".into()),
-        )),
+        "openai" => {
+            let api_key = config.api_key.clone()
+                .filter(|k| !k.is_empty())
+                .unwrap_or_else(|| std::env::var("OPENAI_API_KEY").unwrap_or_default());
+            Arc::new(OpenAiBackend::new(
+                api_key,
+                config.model_name.clone().unwrap_or_else(|| "gpt-4o".into()),
+                config.base_url.clone().unwrap_or_else(|| "https://api.openai.com/v1/chat/completions".into()),
+            ))
+        }
+        "nim" => {
+            let api_key = config.api_key.clone()
+                .filter(|k| !k.is_empty())
+                .unwrap_or_else(|| std::env::var("NVIDIA_API_KEY").unwrap_or_else(|_| {
+                    "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".to_string()
+                }));
+            Arc::new(OpenAiBackend::new(
+                api_key,
+                config.model_name.clone().unwrap_or_else(|| "meta/llama-3.1-70b-instruct".into()),
+                config.base_url.clone().unwrap_or_else(|| "https://integrate.api.nvidia.com/v1/chat/completions".into()),
+            ))
+        }
+        "anthropic" => {
+            let api_key = config.api_key.clone()
+                .filter(|k| !k.is_empty())
+                .unwrap_or_else(|| std::env::var("ANTHROPIC_API_KEY").unwrap_or_default());
+            Arc::new(AnthropicBackend::new(
+                api_key,
+                config.model_name.clone().unwrap_or_else(|| "claude-3-5-sonnet-20241022".into()),
+            ))
+        }
+        "gemini" => {
+            let api_key = config.api_key.clone()
+                .filter(|k| !k.is_empty())
+                .unwrap_or_else(|| std::env::var("GEMINI_API_KEY").or_else(|_| std::env::var("GOOGLE_API_KEY")).unwrap_or_default());
+            Arc::new(GeminiBackend::new(
+                api_key,
+                config.model_name.clone().unwrap_or_else(|| "gemini-1.5-pro".into()),
+            ))
+        }
         unknown => anyhow::bail!(
             "Unknown AI provider: '{}'. Supported: ollama, openai, nim, anthropic, gemini",
             unknown
         ),
     };
+    Ok(inner)
+}
 
-    Ok(Arc::new(SafeAiBackend::new(inner)))
+pub fn build_backend(config: &ModelConfig) -> Result<Arc<dyn AiBackend>> {
+    let mut backends = Vec::new();
+
+    // 1. Configured backend
+    if let Ok(primary) = build_single_backend(config) {
+        backends.push(primary);
+    }
+
+    // 2. Local Ollama (direct) fallback
+    if config.provider != "ollama" {
+        backends.push(Arc::new(OllamaBackend::new(
+            "http://localhost:11434".to_string(),
+            "qwen2.5-coder:14b".to_string(),
+        )));
+    }
+
+    // 3. Working cloud NVIDIA NIM fallback
+    if config.provider != "nim" || config.api_key.as_ref().map(|k| k.is_empty()).unwrap_or(true) {
+        backends.push(Arc::new(OpenAiBackend::new(
+            "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".to_string(),
+            "meta/llama-3.1-70b-instruct".to_string(),
+            "https://integrate.api.nvidia.com/v1/chat/completions".to_string(),
+        )));
+    }
+
+    // 4. Google Gemini fallback
+    if config.provider != "gemini" {
+        let gemini_key = std::env::var("GEMINI_API_KEY").or_else(|_| std::env::var("GOOGLE_API_KEY")).unwrap_or_default();
+        if !gemini_key.is_empty() {
+            backends.push(Arc::new(GeminiBackend::new(
+                gemini_key,
+                "gemini-1.5-pro".to_string(),
+            )));
+        }
+    }
+
+    if backends.is_empty() {
+        anyhow::bail!("Could not initialize any AI backends");
+    }
+
+    let chain = Arc::new(FallbackChainBackend::new(backends));
+    Ok(Arc::new(SafeAiBackend::new(chain)))
+}
+
+
+
+fn is_structured(system: &str) -> bool {
+    system.contains("JSON") || 
+    system.contains("structured") || 
+    system.contains("ExcelOperation") || 
+    system.contains("SlideOperation") || 
+    system.contains("DocxOperation")
 }
 
 // ─── OpenAI / NIM ────────────────────────────────────────────────────────────
@@ -232,6 +357,7 @@ impl AiBackend for OpenAiBackend {
     async fn complete(&self, system: &str, user: &str) -> Result<String> {
         info!("🤖 OpenAI request (model: {})", self.model);
 
+        let temp = if is_structured(system) { 0.0 } else { 0.7 };
         let req = serde_json::json!({
             "model": self.model,
             "messages": [
@@ -239,7 +365,7 @@ impl AiBackend for OpenAiBackend {
                 {"role": "user", "content": user}
             ],
             "max_tokens": 4096,
-            "temperature": 0.7
+            "temperature": temp
         });
 
         let resp = self.client
@@ -273,6 +399,7 @@ impl AiBackend for OpenAiBackend {
     ) -> Result<()> {
         use futures_util::StreamExt;
 
+        let temp = if is_structured(system) { 0.0 } else { 0.7 };
         let req = serde_json::json!({
             "model": self.model,
             "messages": [
@@ -281,7 +408,7 @@ impl AiBackend for OpenAiBackend {
             ],
             "stream": true,
             "max_tokens": 4096,
-            "temperature": 0.7
+            "temperature": temp
         });
 
         let mut stream = self.client
@@ -331,6 +458,7 @@ impl OllamaBackend {
 impl AiBackend for OllamaBackend {
     async fn complete(&self, system: &str, user: &str) -> Result<String> {
         let url = format!("{}/api/chat", self.base_url);
+        let temp = if is_structured(system) { 0.0 } else { 0.4 };
         let req = serde_json::json!({
             "model": self.model,
             "messages": [
@@ -340,7 +468,7 @@ impl AiBackend for OllamaBackend {
             "stream": false,
             "options": {
                 "num_predict": 4096,
-                "temperature": 0.4,
+                "temperature": temp,
                 "repeat_penalty": 1.15
             }
         });
@@ -358,6 +486,7 @@ impl AiBackend for OllamaBackend {
     ) -> Result<()> {
         use futures_util::StreamExt;
         let url = format!("{}/api/chat", self.base_url);
+        let temp = if is_structured(system) { 0.0 } else { 0.4 };
         let req = serde_json::json!({
             "model": self.model,
             "messages": [
@@ -367,7 +496,7 @@ impl AiBackend for OllamaBackend {
             "stream": true,
             "options": {
                 "num_predict": 4096,
-                "temperature": 0.4,
+                "temperature": temp,
                 "repeat_penalty": 1.15
             }
         });
@@ -429,10 +558,12 @@ impl AnthropicBackend {
 #[async_trait::async_trait]
 impl AiBackend for AnthropicBackend {
     async fn complete(&self, system: &str, user: &str) -> Result<String> {
+        let temp = if is_structured(system) { 0.0 } else { 0.7 };
         let req = serde_json::json!({
             "model": self.model,
             "max_tokens": 4096,
             "system": system,
+            "temperature": temp,
             "messages": [{"role": "user", "content": user}]
         });
 
@@ -462,11 +593,13 @@ impl AiBackend for AnthropicBackend {
     ) -> Result<()> {
         use futures_util::StreamExt;
 
+        let temp = if is_structured(system) { 0.0 } else { 0.7 };
         let req = serde_json::json!({
             "model": self.model,
             "max_tokens": 4096,
             "system": system,
             "stream": true,
+            "temperature": temp,
             "messages": [{"role": "user", "content": user}]
         });
 
@@ -522,10 +655,15 @@ impl AiBackend for GeminiBackend {
             self.model, self.api_key
         );
 
-        let req = serde_json::json!({
+        let mut req = serde_json::json!({
             "system_instruction": {"parts": [{"text": system}]},
             "contents": [{"parts": [{"text": user}]}]
         });
+        if is_structured(system) {
+            req["generationConfig"] = serde_json::json!({
+                "temperature": 0.0
+            });
+        }
 
         let resp = self.client.post(&url).json(&req).send().await?
             .json::<serde_json::Value>().await?;
@@ -550,10 +688,15 @@ impl AiBackend for GeminiBackend {
             self.model, self.api_key
         );
 
-        let req = serde_json::json!({
+        let mut req = serde_json::json!({
             "system_instruction": {"parts": [{"text": system}]},
             "contents": [{"parts": [{"text": user}]}]
         });
+        if is_structured(system) {
+            req["generationConfig"] = serde_json::json!({
+                "temperature": 0.0
+            });
+        }
 
         let mut stream = self.client.post(&url).json(&req).send().await?.bytes_stream();
         let mut parser = crate::perf_engine::ZeroAllocSseParser::new();

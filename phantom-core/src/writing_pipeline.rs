@@ -1,7 +1,8 @@
-use crate::quality_gate::{SentinelHashDetector, IntegrityGateChecklist};
+use crate::quality_gate::{SentinelHashDetector, IntegrityGateChecklist, MultiReviewerPipeline};
 use tracing::{info, warn};
 
 use futures::Future;
+use tokio::sync::mpsc;
 
 pub struct WritingPipeline;
 
@@ -75,7 +76,7 @@ impl WritingPipeline {
                 continue;
             }
             
-            // Stage 3: Sentinel leak check only (removed overly aggressive style checks)
+            // Stage 3: Sentinel leak check
             info!("Pipeline Stage 3: Review - Checking for leakage");
             if let Err(e) = sentinel.scan_output(&clean_output) {
                 warn!("Sentinel leak detected: {}. Retrying...", e);
@@ -90,10 +91,59 @@ impl WritingPipeline {
                 continue;
             }
 
+            // Stage 3b: Style quality review (advisory — warns but does not block production output)
+            // This catches AI-phrase phrasing like "It is important to note", "delve into", etc.
+            if let Err(reason) = MultiReviewerPipeline::review(&clean_output) {
+                warn!("[WritingPipeline] Style reviewer advisory: {}", reason);
+                // Non-blocking: we log the style issue but still return the output.
+                // The LLM domain masters' JSON enforcement means this rarely fires
+                // for structured JSON responses; it's most relevant for free-text fallback.
+            }
+
             info!("Pipeline Stage 4: Finalize - {} chars ready for injection", clean_output.len());
             return Ok(clean_output);
         }
         
         Err("Pipeline failed after 3 retries.".to_string())
+    }
+
+    /// Streaming variant: executes the pipeline then sends tokens word-by-word via channel.
+    /// This enables progressive UI rendering: the GRP can show text appearing in real time
+    /// rather than waiting for the full batch response.
+    ///
+    /// The channel is closed automatically when all tokens have been sent.
+    /// Caller should read from `rx` and inject tokens into the document progressively.
+    pub async fn execute_streaming<F, Fut>(
+        system_prompt: &str,
+        context: &str,
+        user_prompt: &str,
+        generate_fn: F,
+        token_tx: mpsc::Sender<String>,
+    ) -> Result<String, String>
+    where
+        F: Fn(String) -> Fut,
+        Fut: Future<Output = String>,
+    {
+        // Run full pipeline to get the complete validated response
+        let full_response = Self::execute(system_prompt, context, user_prompt, generate_fn).await?;
+
+        // Stream tokens word-by-word through the channel
+        // Splitting on whitespace gives natural word boundaries for progressive injection.
+        let words: Vec<&str> = full_response.split_whitespace().collect();
+        let total = words.len();
+        for (i, word) in words.iter().enumerate() {
+            let token = if i < total - 1 {
+                format!("{} ", word)  // add trailing space between words
+            } else {
+                word.to_string()  // last word: no trailing space
+            };
+            // If receiver is dropped (e.g. user pressed Esc), stop streaming silently
+            if token_tx.send(token).await.is_err() {
+                info!("[WritingPipeline] Streaming cancelled: receiver dropped");
+                break;
+            }
+        }
+        // Channel closes automatically when token_tx is dropped at end of function
+        Ok(full_response)
     }
 }

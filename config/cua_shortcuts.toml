@@ -1,0 +1,72 @@
+# config/cua_shortcuts.toml - Kairo Phantom Community Shortcuts Registry
+
+[apps.winword.shortcuts]
+"save as pdf" = [
+    { type = "keyboard_shortcut", shortcut = "save_as_pdf" }
+]
+"export pdf" = [
+    { type = "keyboard_shortcut", shortcut = "save_as_pdf" }
+]
+
+[apps.excel.shortcuts]
+"save as pdf" = [
+    { type = "keyboard_combo", keys = ["Alt", "F"] },
+    { type = "delay_ms", ms = 200 },
+    { type = "keyboard_type", text = "A" },
+    { type = "delay_ms", ms = 200 },
+    { type = "keyboard_type", text = "O" }
+]
+"new sheet" = [
+    { type = "keyboard_combo", keys = ["Shift", "F11"] }
+]
+
+[apps.powerpnt.shortcuts]
+"save as pdf" = [
+    { type = "keyboard_combo", keys = ["Alt", "F"] },
+    { type = "delay_ms", ms = 200 },
+    { type = "keyboard_type", text = "E" },
+    { type = "delay_ms", ms = 200 },
+    { type = "keyboard_type", text = "A" }
+]
+"new slide" = [
+    { type = "keyboard_combo", keys = ["Ctrl", "M"] }
+]
+
+[apps.chrome.shortcuts]
+"new tab" = [
+    { type = "keyboard_combo", keys = ["Ctrl", "T"] }
+]
+"bookmark" = [
+    { type = "keyboard_combo", keys = ["Ctrl", "D"] }
+]
+
+[apps.firefox.shortcuts]
+"new tab" = [
+    { type = "keyboard_combo", keys = ["Ctrl", "T"] }
+]
+
+[apps.generic.shortcuts]
+"save as pdf" = [
+    { type = "keyboard_shortcut", shortcut = "save_as" }
+]
+"export pdf" = [
+    { type = "keyboard_shortcut", shortcut = "save_as_pdf" }
+]
+"select all" = [
+    { type = "keyboard_shortcut", shortcut = "select_all" }
+]
+"undo" = [
+    { type = "keyboard_shortcut", shortcut = "undo" }
+]
+"redo" = [
+    { type = "keyboard_shortcut", shortcut = "redo" }
+]
+"save file" = [
+    { type = "keyboard_combo", keys = ["Ctrl", "S"] }
+]
+"close dialog" = [
+    { type = "keyboard_shortcut", shortcut = "close_dialog" }
+]
+"confirm dialog" = [
+    { type = "keyboard_shortcut", shortcut = "confirm_dialog" }
+]

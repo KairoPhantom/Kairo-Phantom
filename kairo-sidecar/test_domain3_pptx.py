@@ -587,6 +587,32 @@ class TestPptxWriter:
             assert p.font.size == Pt(18)
             assert p.font.bold is not True
 
+    def test_write_pptx_update_shape_geometry(self, temp_pptx):
+        ops = [{
+            "type": "update_shape_text",
+            "slide_index": 1,
+            "paragraphs": [{"text": "Point one", "bullet": True}],
+            "left": 2.5,
+            "top": 3.0,
+            "width": 5.0,
+            "height": 4.0
+        }]
+        res = write_pptx(str(temp_pptx), ops)
+        assert res["applied_count"] == 1
+        
+        from pptx import Presentation
+        prs = Presentation(str(temp_pptx))
+        slide = prs.slides[1]
+        
+        shapes = [s for s in slide.shapes if s.has_text_frame and s != slide.shapes.title]
+        assert len(shapes) > 0
+        target_shape = shapes[0]
+        from pptx.util import Inches
+        assert target_shape.left == Inches(2.5)
+        assert target_shape.top == Inches(3.0)
+        assert target_shape.width == Inches(5.0)
+        assert target_shape.height == Inches(4.0)
+
     def test_write_pptx_backup_recovery_atomic(self, temp_pptx):
         # Provide an operation that crashes write_pptx to verify fallback recovery
         ops = [
@@ -596,9 +622,9 @@ class TestPptxWriter:
         res = write_pptx(str(temp_pptx), ops)
         assert len(res["errors"]) > 0
         
-        # Even with one error, since write_pptx applies inline, backup file check is clean
+        # Under new requirements, if there are operation errors, the backup file is retained
         backup_file = temp_pptx.with_suffix(temp_pptx.suffix + ".kairo_backup")
-        assert not backup_file.exists()
+        assert backup_file.exists()
 
 
 # ──────────────────────────────────────────────────────────────────────────────

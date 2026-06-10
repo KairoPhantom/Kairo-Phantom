@@ -1,0 +1,9 @@
+id = "feynman-verifier"
+name = "Feynman Verifier"
+version = "0.1.0"
+description = "Self-critique agent that explains outputs simply and flags logical gaps."
+author = "Kairo Core"
+category = "general"
+skill_md_url = "local"
+requires_kairo = "0.3.0"
+tags = ["verification", "core"]

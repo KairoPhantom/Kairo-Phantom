@@ -21,7 +21,7 @@ keeps all of it 100% on your machine.
 User types in Word
        │
        ▼
-  HotkeyPressed (Alt+M)
+  HotkeyPressed (Alt+Ctrl+M)
        │
        ▼
   ContextEngine::extract_last_paragraph()
@@ -106,7 +106,7 @@ pub async fn embed_text(&self, text: &str) -> Option<Vec<f32>> {
 
 ## Cross-Session Recall: How Style Is Retrieved
 
-When the user presses `Alt+M`, the memory query works like this:
+When the user presses `Alt+Ctrl+M`, the memory query works like this:
 
 1. **FTS5 keyword search** — fast lexical match against previous prompts and responses
 2. **Cosine similarity** — if embeddings are enabled, re-rank results by vector distance

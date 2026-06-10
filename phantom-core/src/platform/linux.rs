@@ -370,6 +370,11 @@ impl crate::platform::AccessibilityReader for LinuxAtspiReader {
         read_clipboard()
             .ok_or_else(|| anyhow::anyhow!("No clipboard tool available (install xclip or wl-clipboard)"))
     }
+
+    /// Direct field injection setter.
+    fn set_focused_text(&self, _text: &str) -> anyhow::Result<()> {
+        anyhow::bail!("set_focused_text is not yet implemented on Linux")
+    }
 }
 
 // ── LinuxInjector ─────────────────────────────────────────────────────────────

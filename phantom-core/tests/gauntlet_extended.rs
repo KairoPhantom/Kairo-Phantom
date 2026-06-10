@@ -386,7 +386,7 @@ fn w10_command_with_leading_whitespace_trimmed() {
 
 #[test]
 fn e1_excel_doctype_routes_to_data_analyst() {
-    // E1: Alt+M in an Excel spreadsheet routes to DataAnalyst agent
+    // E1: Alt+Ctrl+M in an Excel spreadsheet routes to DataAnalyst agent
     let swarm = SwarmOrchestrator::new(SwarmConfig::default(), Arc::new(phantom_core::swarm::TestFallbackBackend));
     let ctx = DocumentContext::from_raw_text("budget.xlsx", "A1: Revenue, B1: 50000", DocKind::ExcelSpreadsheet);
     // Just verify context builds correctly with Excel kind

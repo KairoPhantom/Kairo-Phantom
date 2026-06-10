@@ -6,6 +6,12 @@ pub struct WasmSandbox {
     engine: Engine,
 }
 
+impl Default for WasmSandbox {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl WasmSandbox {
     pub fn new() -> Self {
         let engine = Engine::default();

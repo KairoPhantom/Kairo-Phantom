@@ -11,10 +11,10 @@ lora_alpha: 32
 lora_dropout: 0.1
 
 ### dataset
-dataset: kairo_docops_2k
+dataset: kairo_docops_3500
 template: qwen
 cutoff_len: 2048
-max_samples: 2000
+max_samples: 3500
 overwrite_cache: true
 preprocessing_num_workers: 4
 

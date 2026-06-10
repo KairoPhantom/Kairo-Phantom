@@ -39,16 +39,17 @@ impl CollaborativeSession {
         }
 
         // Notion
-        if window_title.contains("Notion") {
-            // Notion uses its own sync; Kairo can join via browser DOM
+        if window_title.contains("Notion") || browser_url.is_some_and(|u| u.contains("notion.so")) {
+            let doc_id = extract_notion_page_id(window_title, browser_url);
             return Some(CollaborativeSession {
                 app_name: "Notion".into(),
-                doc_id: extract_notion_page_id(window_title, browser_url),
+                doc_id,
                 sync_endpoint: None,
                 provider_type: SyncProviderType::WebSocket,
                 detected: true,
             });
         }
+
 
         // Tiptap / Hocuspocus editors
         if let Some(url) = browser_url {

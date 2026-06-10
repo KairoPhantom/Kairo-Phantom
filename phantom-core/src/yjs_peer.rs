@@ -214,7 +214,6 @@ impl Default for YjsPeerConfig {
 // ─── Yjs App Detection Patterns ───────────────────────────────────────────────
 
 const YJS_URL_PATTERNS: &[(&str, &[&str])] = &[
-    ("notion", &["notion.so", "notion.site"]),
     ("google_docs", &["docs.google.com/document"]),
     ("google_slides", &["docs.google.com/presentation"]),
     ("tiptap", &["tiptap.dev", "collab.tiptap.dev"]),
@@ -225,7 +224,6 @@ const YJS_URL_PATTERNS: &[(&str, &[&str])] = &[
 ];
 
 const YJS_TITLE_PATTERNS: &[(&str, &[&str])] = &[
-    ("notion", &["notion"]),
     ("google_docs", &["google docs"]),
     ("google_slides", &["google slides"]),
     ("tiptap", &["tiptap"]),

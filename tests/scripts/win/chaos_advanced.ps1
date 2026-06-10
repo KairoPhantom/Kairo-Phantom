@@ -1,3 +1,6 @@
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
+
 Write-Host "Starting Advanced Chaos Monkey for Windows..."
 
 while ($true) {

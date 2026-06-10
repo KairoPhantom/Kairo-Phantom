@@ -1,8 +1,8 @@
-use std::path::PathBuf;
+use std::path::Path;
 use std::fs;
 use reqwest;
 
-pub async fn install_agent(github_url: &str, agents_dir: &PathBuf) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn install_agent(github_url: &str, agents_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
     println!("Fetching agent from {}...", github_url);
 
     // Naive URL transform to raw github usercontent for demo

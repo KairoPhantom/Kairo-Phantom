@@ -1,6 +1,6 @@
-/// Kairo MCP Server — Phase 4 Distribution
-/// Exposes Kairo's capabilities as an MCP server for Claude Code, Cursor, Goose, Windsurf.
-/// Tools: kairo_read_context, kairo_ghost_write, kairo_generate_image, kairo_detect_app, kairo_ask
+//! Kairo MCP Server — Phase 4 Distribution
+//! Exposes Kairo's capabilities as an MCP server for Claude Code, Cursor, Goose, Windsurf.
+//! Tools: kairo_read_context, kairo_ghost_write, kairo_generate_image, kairo_detect_app, kairo_ask
 
 use std::io::{self, BufRead, Write};
 use serde::{Deserialize, Serialize};

@@ -41,6 +41,7 @@ mod pdf_context;              // Domain 4: PDF SmartContextCapture structs
 mod context_optimizer;
 mod background_worker;
 mod skills;
+mod skill_factory;
 mod memory_vault;
 mod tolaria_bridge;
 mod integration;
@@ -73,6 +74,8 @@ mod screen_context;
 mod tts_engine;
 mod wake_word;
 
+mod cua;
+
 use identity::IdentityManager;
 
 use ghost_session::ConfidenceBand;
@@ -84,7 +87,7 @@ use tokio_util::sync::CancellationToken;
 use anyhow::Result;
 use std::sync::Arc;
 use tokio::sync::mpsc;
-use tracing::{info, warn};
+use tracing::{info, warn, error};
 
 use api::ApiState;
 use config::PhantomConfig;
@@ -114,6 +117,14 @@ pub enum PhantomEvent {
     ScreenContextPressed,
     /// User pressed Ctrl+Shift+Z — undo last injection
     UndoPressed,
+    /// Skill save approved by the user (pressing Tab)
+    SkillSaveApproved,
+    /// Skill save cancelled by the user (other keys/typing)
+    SkillSaveCancelled,
+    /// CUA execution approved by the user (pressing Tab)
+    CuaApproved,
+    /// CUA execution cancelled by the user (other keys/Escape)
+    CuaCancelled,
     /// Shutdown signal
     Shutdown,
 }
@@ -128,6 +139,168 @@ async fn check_ollama_health(base_url: &str) -> bool {
         .send().await
         .map(|r| r.status().is_success())
         .unwrap_or(false)
+}
+
+/// Convert structured JSON operation arrays (Docx, PowerPoint, Excel, TrackChanges) into clean plain text for clipboard fallback.
+fn json_to_plain_text(json_str: &str) -> Option<String> {
+    let parsed: serde_json::Value = serde_json::from_str(json_str).ok()?;
+    if let Some(arr) = parsed.as_array() {
+        let mut result = Vec::new();
+        for item in arr {
+            if let (Some(_action), Some(content)) = (item.get("action").and_then(|v| v.as_str()), item.get("content")) {
+                if let Some(heading) = item.get("heading_text").and_then(|v| v.as_str()) {
+                    result.push(heading.to_string());
+                }
+                if let Some(s) = content.as_str() {
+                    result.push(s.to_string());
+                } else if let Some(sub_arr) = content.as_array() {
+                    for val in sub_arr {
+                        if let Some(s) = val.as_str() {
+                            result.push(s.to_string());
+                        }
+                    }
+                }
+                if let Some(rows) = item.get("rows").and_then(|v| v.as_array()) {
+                    for row in rows {
+                        if let Some(cells) = row.as_array() {
+                            let cell_strs: Vec<String> = cells.iter()
+                                .filter_map(|c| c.as_str().map(|s| s.to_string()))
+                                .collect();
+                            result.push(cell_strs.join("\t"));
+                        }
+                    }
+                }
+            } else if item.get("bullets").is_some() || item.get("title").is_some() {
+                if let Some(title) = item.get("title").and_then(|v| v.as_str()) {
+                    result.push(title.to_string());
+                }
+                if let Some(bullets) = item.get("bullets").and_then(|v| v.as_array()) {
+                    for bullet in bullets {
+                        if let Some(b) = bullet.as_str() {
+                            result.push(format!("• {}", b));
+                        }
+                    }
+                }
+            } else if item.get("cell").is_some() && (item.get("value").is_some() || item.get("formula").is_some()) {
+                if let Some(val) = item.get("value").and_then(|v| v.as_str()) {
+                    if !val.is_empty() {
+                        result.push(val.to_string());
+                    }
+                } else if let Some(formula) = item.get("formula").and_then(|v| v.as_str()) {
+                    if !formula.is_empty() {
+                        result.push(formula.to_string());
+                    }
+                }
+            } else if let Some(rep) = item.get("replacement_text").and_then(|v| v.as_str()) {
+                result.push(rep.to_string());
+            } else if let Some(obj) = item.as_object() {
+                for (k, v) in obj {
+                    if k != "action" && k != "style" && k != "slide_index" && k != "layout_index" {
+                        if let Some(s) = v.as_str() {
+                            result.push(s.to_string());
+                        }
+                    }
+                }
+            } else if let Some(s) = item.as_str() {
+                result.push(s.to_string());
+            }
+        }
+        if !result.is_empty() {
+            return Some(result.join("\n"));
+        }
+    } else if let Some(obj) = parsed.as_object() {
+        let mut result = Vec::new();
+        if let Some(rep) = obj.get("replacement_text").and_then(|v| v.as_str()) {
+            return Some(rep.to_string());
+        }
+        for (k, v) in obj {
+            if k != "action" && k != "style" && k != "slide_index" && k != "layout_index" {
+                if let Some(s) = v.as_str() {
+                    result.push(s.to_string());
+                }
+            }
+        }
+        if !result.is_empty() {
+            return Some(result.join("\n"));
+        }
+    }
+    None
+}
+
+fn get_dynamic_skill_directive(prompt_text: &str) -> Option<(String, String)> {
+    let p = prompt_text.trim_start_matches("//").trim();
+    let first_word = p.split_once(':').map(|(w, _)| w.trim())
+        .unwrap_or_else(|| p.split_whitespace().next().unwrap_or(""));
+    if first_word.is_empty() { return None; }
+    
+    let safe_name = first_word.to_lowercase().replace(' ', "-");
+    
+    let home_dir = dirs::home_dir()?;
+    let auto_path = home_dir.join(".kairo-phantom").join("skills").join("auto").join(&safe_name).join("SKILL.md");
+    let comm_path = home_dir.join(".kairo-phantom").join("skills").join(&safe_name).join("SKILL.md");
+    
+    let skill_md_path = if auto_path.exists() {
+        Some(auto_path)
+    } else if comm_path.exists() {
+        Some(comm_path)
+    } else {
+        None
+    };
+    
+    if let Some(path) = skill_md_path {
+        if let Ok(content) = std::fs::read_to_string(path) {
+            let remainder = if let Some(stripped) = p.strip_prefix(first_word) {
+                let mut rem = stripped.trim();
+                if let Some(stripped_colon) = rem.strip_prefix(':') {
+                    rem = stripped_colon.trim();
+                }
+                rem.to_string()
+            } else {
+                p.to_string()
+            };
+            return Some((content, remainder));
+        }
+    }
+    None
+}
+
+fn sync_repository_skills_to_home() {
+    let home_dir = match dirs::home_dir() {
+        Some(h) => h,
+        None => return,
+    };
+    let dest_skills_dir = home_dir.join(".kairo-phantom").join("skills");
+    
+    let repo_skills_dir = std::path::Path::new("skills");
+    if !repo_skills_dir.exists() {
+        return;
+    }
+    
+    if let Ok(entries) = std::fs::read_dir(repo_skills_dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                let dir_name = path.file_name().unwrap_or_default().to_string_lossy().to_string();
+                if dir_name == "auto" {
+                    continue;
+                }
+                let dest_dir = dest_skills_dir.join(&dir_name);
+                std::fs::create_dir_all(&dest_dir).ok();
+                
+                let src_manifest = path.join("manifest.toml");
+                let dst_manifest = dest_dir.join("manifest.toml");
+                if src_manifest.exists() {
+                    std::fs::copy(&src_manifest, &dst_manifest).ok();
+                }
+                
+                let src_skill = path.join("SKILL.md");
+                let dst_skill = dest_dir.join("SKILL.md");
+                if src_skill.exists() {
+                    std::fs::copy(&src_skill, &dst_skill).ok();
+                }
+            }
+        }
+    }
 }
 
 fn main() -> Result<()> {
@@ -178,6 +351,9 @@ async fn async_main() -> Result<()> {
     // P0-A2: Ollama bootstrap — detect + background model pull
     ollama_bootstrap::OllamaBootstrap::bootstrap("qwen2.5:7b").await;
     _startup_timer.checkpoint("ollama check");
+
+    // Startup and periodic CUA health checks
+    crate::toast_notification::start_periodic_health_checks();
 
 
     let args: Vec<String> = std::env::args().collect();
@@ -289,6 +465,37 @@ async fn async_main() -> Result<()> {
         return waza_registry::run_skill_command(sub, &skill_args).await;
     }
 
+    // kairo shortcuts update — downloads latest community_shortcuts.toml
+    if args.len() >= 3 && args[1] == "shortcuts" && args[2] == "update" {
+        println!("Downloading latest community shortcuts registry...");
+        let url = "https://raw.githubusercontent.com/kairo-phantom/community-shortcuts/main/cua_shortcuts.toml";
+        
+        let client = reqwest::Client::new();
+        match client.get(url).timeout(std::time::Duration::from_secs(10)).send().await {
+            Ok(resp) => {
+                let status = resp.status();
+                if status.is_success() {
+                    if let Ok(content) = resp.text().await {
+                        if let Some(home) = dirs::home_dir() {
+                            let path = home.join(".kairo-phantom").join("cua_shortcuts.toml");
+                            let _ = std::fs::create_dir_all(path.parent().unwrap());
+                            if std::fs::write(&path, &content).is_ok() {
+                                println!("✅ Successfully updated community shortcuts at: {}", path.display());
+                                return Ok(());
+                            }
+                        }
+                    }
+                }
+                println!("❌ Failed to update: Server returned error {}", status);
+            }
+            Err(e) => {
+                println!("❌ Network error while downloading shortcuts: {}", e);
+                println!("(Offline fallback: using local shortcuts registry)");
+            }
+        }
+        return Ok(());
+    }
+
     // kairo help — show all available commands
     if args.len() >= 2 && (args[1] == "help" || args[1] == "--help" || args[1] == "-h") {
         print_help();
@@ -305,7 +512,7 @@ async fn async_main() -> Result<()> {
         );
         println!("  ║     The AI ghost-writer that haunts every desktop app   ║");
         println!("  ╠══════════════════════════════════════════════════════════╣");
-        println!("  ║  ⚡ Alt+M  — Activate Kairo in any app                  ║");
+        println!("  ║  ⚡ Alt+Ctrl+M — Activate Kairo in any app               ║");
         println!("  ║  🧠 MemMachine — Learns your style automatically        ║");
         println!("  ║  🔒 100% offline — Zero data leaves your machine        ║");
         println!("  ╚══════════════════════════════════════════════════════════╝");
@@ -365,6 +572,10 @@ async fn async_main() -> Result<()> {
     // Initialize Core Components
     let fallback_backend = build_backend(&config.model)?;
     
+    let skill_factory = std::sync::Arc::new(
+        crate::skill_factory::SkillFactory::new(fallback_backend.clone())
+    );
+    
     // Build optional cloud fallback
     let cloud_fallback = if let Some(ref fb_conf) = config.fallback {
         build_backend(fb_conf).ok()
@@ -411,7 +622,31 @@ async fn async_main() -> Result<()> {
     let kairo_memory = mem_store.load();
     let context7 = Arc::new(context7::Context7::new());
     let pii_guard = pii_guard::PiiGuard::new();
-    info!("🧠 MemMachine ready | 📚 Context7 ready | 🛡️ PII Guard active");
+    
+    // Sync repository skills to home directory
+    sync_repository_skills_to_home();
+
+    // Initialize Document Graph Memory
+    let document_graph_db = kairo_config_dir.join("document_graph.db");
+    let document_graph = Arc::new(crate::memory::document_graph::DocumentGraph::new(
+        document_graph_db,
+        fallback_backend.clone(),
+    )?);
+
+    // Spawn background scan for DocumentGraph
+    let doc_graph_clone = Arc::clone(&document_graph);
+    let folders_to_index = config.document_graph_folders.clone();
+    tokio::spawn(async move {
+        for folder_str in folders_to_index {
+            let path = std::path::Path::new(&folder_str);
+            if let Err(e) = doc_graph_clone.index_directory(path).await {
+                tracing::error!("❌ [DocumentGraph] Failed to index directory {}: {:?}", folder_str, e);
+            }
+        }
+        info!("🕸️  [DocumentGraph] Startup indexing complete!");
+    });
+
+    info!("🧠 MemMachine ready | 📚 Context7 ready | 🛡️ PII Guard active | 🕸️  DocumentGraph active");
     
     // Share memory store for session recording
     let mem_store = Arc::new(std::sync::Mutex::new((mem_store, kairo_memory)));
@@ -545,6 +780,45 @@ async fn async_main() -> Result<()> {
         crate::background_worker::start_document_scanner(mem_store_for_worker).await;
     });
 
+    // Kairo Eye AppWatcher preloader (Phase 3 Deliverable 1)
+    tokio::spawn(async move {
+        info!("👀 Kairo Eye: AppWatcher started. Monitoring active window every 500ms.");
+        let context_engine_local = ContextEngine::new();
+        let mut last_path: Option<std::path::PathBuf> = None;
+        loop {
+            tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+            
+            // Get active window title and process name
+            let (proc_name, win_title) = context_engine_local.get_active_app_info();
+            
+            // Try to resolve the active file path
+            if let Some(path) = ContextEngine::resolve_file_path(&win_title, &proc_name) {
+                if Some(path.clone()) != last_path {
+                    info!("👀 Kairo Eye: Active window path changed to {:?}", path);
+                    last_path = Some(path.clone());
+                    
+                    // Background preload
+                    let path_str = path.to_string_lossy().to_string();
+                    let proc_name_lower = proc_name.to_lowercase();
+                    
+                    if proc_name_lower.contains("winword") {
+                        info!("👀 Kairo Eye: Preloading active Word document: {:?}", path.file_name());
+                        let _ = crate::sidecar_client::read_docx(&path_str).await;
+                    } else if proc_name_lower.contains("excel") {
+                        info!("👀 Kairo Eye: Preloading active Excel spreadsheet: {:?}", path.file_name());
+                        let _ = crate::sidecar_client::read_xlsx(&path_str, None).await;
+                    } else if proc_name_lower.contains("powerpnt") {
+                        info!("👀 Kairo Eye: Preloading active PowerPoint presentation: {:?}", path.file_name());
+                        let _ = crate::sidecar_client::read_pptx(&path_str).await;
+                    } else if path_str.to_lowercase().ends_with(".pdf") {
+                        info!("👀 Kairo Eye: Preloading active PDF document: {:?}", path.file_name());
+                        let _ = crate::sidecar_client::pdf_extract(&path_str).await;
+                    }
+                }
+            }
+        }
+    });
+
     // Phase 3: Shared active session cancellation token
     // When the user presses Esc, we cancel the current token and create a new one next session.
     let active_cancel_token: Arc<std::sync::Mutex<Option<CancellationToken>>> =
@@ -559,12 +833,16 @@ async fn async_main() -> Result<()> {
     let mut last_prompt_time: std::time::Instant = std::time::Instant::now();
     let pending_plan: Arc<std::sync::Mutex<Option<crate::planning_engine::PendingPlan>>> =
         Arc::new(std::sync::Mutex::new(None));
+    #[cfg(feature = "cua")]
+    let pending_cua_plan: Arc<std::sync::Mutex<Option<(crate::cua::CuaPlan, crate::cua::CuaContext)>>> =
+        Arc::new(std::sync::Mutex::new(None));
 
     // Main Orchestration Loop (High-Concurrency with Ghost Session)
     while let Some(event) = rx.recv().await {
         match event {
             PhantomEvent::HotkeyPressed => {
                 info!("============= GHOST SESSION TRIGGERED =============");
+                let document_graph = Arc::clone(&document_graph);
 
                 // NOTE: The hotkey hook now consumes the Alt key-up event directly,
                 // preventing Windows from activating the ribbon/menu bar.
@@ -837,8 +1115,13 @@ async fn async_main() -> Result<()> {
                 let mut active_plan = None;
                 {
                     let mut lock = pending_plan.lock().unwrap();
-                    if lock.is_some() {
-                        active_plan = lock.take();
+                    if let Some(ref pending) = *lock {
+                        if prompt_text_raw.starts_with("//") && prompt_text_raw != pending.original_prompt {
+                            info!("🗑️  Discarding stale pending plan because a new command was received");
+                            *lock = None;
+                        } else {
+                            active_plan = lock.take();
+                        }
                     }
                 }
 
@@ -885,8 +1168,7 @@ async fn async_main() -> Result<()> {
                             let safe_start = raw_text
                                 .char_indices()
                                 .map(|(i, _)| i)
-                                .filter(|&i| i >= before_start)
-                                .next()
+                                .find(|&i| i >= before_start)
                                 .unwrap_or(before_start);
                             let trimmed = &raw_text[safe_start..];
                             // Take up to 3000 chars from that point
@@ -940,7 +1222,7 @@ async fn async_main() -> Result<()> {
                 let resolved_file_path = {
                     let ctx_path = crate::context::ContextEngine::resolve_file_path(&captured_title, &captured_process);
                     let sidecar_path = crate::sidecar_client::resolve_document_path(&captured_title, &captured_process)
-                        .map(|s| std::path::PathBuf::from(s));
+                        .map(std::path::PathBuf::from);
                     ctx_path.or(sidecar_path)
                 };
 
@@ -999,53 +1281,55 @@ async fn async_main() -> Result<()> {
                         } else {
                             "✅ API key configured"
                         };
-                        let lock = mem_store.lock().unwrap();
-                        let (_, ref memory) = *lock;
-                        let learned_prefs: Vec<String> = memory.preferences.iter()
-                            .filter(|p| p.weight > 0.5)
-                            .map(|p| format!("  · {} → {} (weight: {:.1})", p.key, p.value, p.weight))
-                            .collect();
-                        let word_model: Vec<String> = memory.user_model.word_preferences.iter()
-                            .map(|(k, v)| format!("  · {}: {}", k, v))
-                            .collect();
-                        let ppt_model: Vec<String> = memory.user_model.ppt_preferences.iter()
-                            .map(|(k, v)| format!("  · {}: {}", k, v))
-                            .collect();
-                        let mcp_status = if std::path::Path::new("mcp-servers").exists() { "✅ MCP directory found" } else { "⚠️  MCP directory missing" };
-                        let kairo_ver = env!("CARGO_PKG_VERSION");
-                        let skill_summary_lines = skill_manager.skill_summary();
-                        let skill_report = skill_summary_lines.join("\n");
-                        let report = format!(
-                            "🏥 Kairo Phantom v{} — System Health Report\n\n\
-                             🤖 AI Engine\n  · Provider: {}\n  · Model: {}\n  · Ollama: {}\n  · API Key: {}\n\n\
-                             🧠 Memory (SQLite: ~/.kairo-phantom/memory.db)\n  · Preferences: {} learned\n  · Interactions: {} recorded\n  · Skill patterns: {} stored\n  · Knowledge graph: {} nodes, {} edges\n\n\
-                             📊 User Model (Word): {}\n{}\n\n\
-                             📊 User Model (PPT): {}\n{}\n\n\
-                             📚 Learned Preferences (weight > 0.5):\n{}\n\n\
-                             🎯 Waza Skills ({}/8 loaded):\n{}\n\n\
-                             🔌 MCP Bridge: {}\n  · Context7: {} (offline: {})\n  · PII Guard: ✅ Active\n  · Sentinel: ✅ Active\n  · PromptGuard: ✅ 27 patterns loaded\n\n\
-                             📁 Export (Kami):\n  · Use: // kami <markdown|pdf|revealjs>",
-                            kairo_ver,
-                            config.model.provider,
-                            config.model.model_name.as_deref().unwrap_or("default"),
-                            if ollama_ok { "✅ Running" } else { "❌ Not detected" },
-                            api_key_status,
-                            memory.preferences.len(),
-                            memory.interactions.len(),
-                            memory.skill.reusable_patterns.len(),
-                            memory.graph.nodes.len(),
-                            memory.graph.edges.len(),
-                            if word_model.is_empty() { 0 } else { word_model.len() },
-                            if word_model.is_empty() { "  · (none yet — use Kairo in Word to learn)".to_string() } else { word_model.join("\n") },
-                            if ppt_model.is_empty() { 0 } else { ppt_model.len() },
-                            if ppt_model.is_empty() { "  · (none yet — use Kairo in PowerPoint to learn)".to_string() } else { ppt_model.join("\n") },
-                            if learned_prefs.is_empty() { "  · (none yet)".to_string() } else { learned_prefs.join("\n") },
-                            skill_manager.count(),
-                            skill_report,
-                            mcp_status,
-                            if std::env::var("KAIRO_OFFLINE").is_ok() { "⚪ Offline mode" } else { "✅ Online mode" },
-                            std::env::var("KAIRO_OFFLINE").is_ok(),
-                        );
+                        let report = {
+                            let lock = mem_store.lock().unwrap();
+                            let (_, ref memory) = *lock;
+                            let learned_prefs: Vec<String> = memory.preferences.iter()
+                                .filter(|p| p.weight > 0.5)
+                                .map(|p| format!("  · {} → {} (weight: {:.1})", p.key, p.value, p.weight))
+                                .collect();
+                            let word_model: Vec<String> = memory.user_model.word_preferences.iter()
+                                .map(|(k, v)| format!("  · {}: {}", k, v))
+                                .collect();
+                            let ppt_model: Vec<String> = memory.user_model.ppt_preferences.iter()
+                                .map(|(k, v)| format!("  · {}: {}", k, v))
+                                .collect();
+                            let mcp_status = if std::path::Path::new("mcp-servers").exists() { "✅ MCP directory found" } else { "⚠️  MCP directory missing" };
+                            let kairo_ver = env!("CARGO_PKG_VERSION");
+                            let skill_summary_lines = skill_manager.skill_summary();
+                            let skill_report = skill_summary_lines.join("\n");
+                            format!(
+                                "🏥 Kairo Phantom v{} — System Health Report\n\n\
+                                 🤖 AI Engine\n  · Provider: {}\n  · Model: {}\n  · Ollama: {}\n  · API Key: {}\n\n\
+                                 🧠 Memory (SQLite: ~/.kairo-phantom/memory.db)\n  · Preferences: {} learned\n  · Interactions: {} recorded\n  · Skill patterns: {} stored\n  · Knowledge graph: {} nodes, {} edges\n\n\
+                                 📊 User Model (Word): {}\n{}\n\n\
+                                 📊 User Model (PPT): {}\n{}\n\n\
+                                 📚 Learned Preferences (weight > 0.5):\n{}\n\n\
+                                 🎯 Waza Skills ({}/8 loaded):\n{}\n\n\
+                                 🔌 MCP Bridge: {}\n  · Context7: {} (offline: {})\n  · PII Guard: ✅ Active\n  · Sentinel: ✅ Active\n  · PromptGuard: ✅ 27 patterns loaded\n\n\
+                                 📁 Export (Kami):\n  · Use: // kami <markdown|pdf|revealjs>",
+                                kairo_ver,
+                                config.model.provider,
+                                config.model.model_name.as_deref().unwrap_or("default"),
+                                if ollama_ok { "✅ Running" } else { "❌ Not detected" },
+                                api_key_status,
+                                memory.preferences.len(),
+                                memory.interactions.len(),
+                                memory.skill.reusable_patterns.len(),
+                                memory.graph.nodes.len(),
+                                memory.graph.edges.len(),
+                                if word_model.is_empty() { 0 } else { word_model.len() },
+                                if word_model.is_empty() { "  · (none yet — use Kairo in Word to learn)".to_string() } else { word_model.join("\n") },
+                                if ppt_model.is_empty() { 0 } else { ppt_model.len() },
+                                if ppt_model.is_empty() { "  · (none yet — use Kairo in PowerPoint to learn)".to_string() } else { ppt_model.join("\n") },
+                                if learned_prefs.is_empty() { "  · (none yet)".to_string() } else { learned_prefs.join("\n") },
+                                skill_manager.count(),
+                                skill_report,
+                                mcp_status,
+                                if std::env::var("KAIRO_OFFLINE").is_ok() { "⚪ Offline mode" } else { "✅ Online mode" },
+                                std::env::var("KAIRO_OFFLINE").is_ok(),
+                            )
+                        };
                         // Use production injection: clipboard → focus → select line → paste
                         let hwnd_val = crate::hotkey::CAPTURED_HWND.load(std::sync::atomic::Ordering::SeqCst);
                         let _ = crate::injector::HumanizedInjector::set_clipboard(&report);
@@ -1054,6 +1338,45 @@ async fn async_main() -> Result<()> {
                             use windows::Win32::Foundation::HWND;
                             let h = HWND(hwnd_val as *mut std::ffi::c_void);
                             unsafe { if windows::Win32::UI::WindowsAndMessaging::IsIconic(h).as_bool() { let _ = windows::Win32::UI::WindowsAndMessaging::ShowWindow(h, windows::Win32::UI::WindowsAndMessaging::SW_RESTORE); } let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
+                            tokio::time::sleep(std::time::Duration::from_millis(400)).await;
+                        }
+                        injector.inject_replace_line();
+                        continue;
+                    },
+                    crate::command_protocol::CommandMode::Query => {
+                        info!("🔍 Query mode command received: '{}'", clean_prompt);
+                        let query_result = if clean_prompt == "list entities" {
+                            match document_graph.list_entities() {
+                                Ok(res) => res,
+                                Err(e) => format!("Failed to list entities: {}", e),
+                            }
+                        } else if clean_prompt.starts_with("query ") {
+                            let entity_name = clean_prompt.strip_prefix("query ").unwrap_or("").trim();
+                            match document_graph.query_entity(entity_name) {
+                                Ok(res) => res,
+                                Err(e) => format!("Failed to query entity: {}", e),
+                            }
+                        } else {
+                            match document_graph.query_entity(&clean_prompt) {
+                                Ok(res) => res,
+                                Err(e) => format!("Failed to query graph: {}", e),
+                            }
+                        };
+
+                        // Use production injection: clipboard → focus → select line → paste
+                        let hwnd_val = crate::hotkey::CAPTURED_HWND.load(std::sync::atomic::Ordering::SeqCst);
+                        let _ = crate::injector::HumanizedInjector::set_clipboard(&query_result);
+                        if hwnd_val != 0 {
+                            use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop};
+                            use windows::Win32::Foundation::HWND;
+                            let h = HWND(hwnd_val as *mut std::ffi::c_void);
+                            unsafe {
+                                if windows::Win32::UI::WindowsAndMessaging::IsIconic(h).as_bool() {
+                                    let _ = windows::Win32::UI::WindowsAndMessaging::ShowWindow(h, windows::Win32::UI::WindowsAndMessaging::SW_RESTORE);
+                                }
+                                let _ = BringWindowToTop(h);
+                                let _ = SetForegroundWindow(h);
+                            }
                             tokio::time::sleep(std::time::Duration::from_millis(400)).await;
                         }
                         injector.inject_replace_line();
@@ -1161,14 +1484,14 @@ async fn async_main() -> Result<()> {
                     },
                     crate::command_protocol::CommandMode::Think => {
                         // PHASE 1 of Think: Generate a structured plan and show it.
-                        // User reviews it; pressing Alt+M again with the plan in context executes it.
+                        // User reviews it; pressing Alt+Ctrl+M again with the plan in context executes it.
                         // Per kairo-intel.md §3.3: "Kairo outputs a plan (not the slides yet)"
                         let (target_backend, agent_profile) = swarm_engine.route(&doc_ctx, &command_mode).await;
                         let sentinel = crate::sentinel::SentinelSanitizer::new();
                         let think_system = sentinel.wrap_system_prompt(&format!(
                             "{}\n\nMODE: THINK — PLAN ONLY. Do NOT execute yet. Output a structured JSON-style plan with:\n\
                              1. Problem restatement\n2. Proposed approach (bullet points)\n3. Sections/slides/steps to generate\n4. Tone and formatting decisions\n5. Key constraints\n\
-                             Start with '## KAIRO PLAN — review and press Alt+M to execute'\n\
+                             Start with '## KAIRO PLAN — review and press Alt+Ctrl+M to execute'\n\
                              DO NOT generate the final content yet. Only the plan.",
                             agent_profile.system_directive
                         ));
@@ -1190,7 +1513,7 @@ async fn async_main() -> Result<()> {
                         while let Some(token) = plan_rx.recv().await {
                             plan_output.push_str(&token);
                         }
-                        // Inject plan for user review - they press Alt+M again to execute
+                        // Inject plan for user review - they press Alt+Ctrl+M again to execute
                         let hwnd_val = crate::hotkey::CAPTURED_HWND.load(std::sync::atomic::Ordering::SeqCst);
                         let _ = crate::injector::HumanizedInjector::set_clipboard(&plan_output);
                         if hwnd_val != 0 {
@@ -1201,14 +1524,21 @@ async fn async_main() -> Result<()> {
                             tokio::time::sleep(std::time::Duration::from_millis(400)).await;
                         }
                         injector.inject_replace_line();
-                        info!("💭 Think: Plan generated ({} chars) — user reviews, Alt+M executes", plan_output.len());
+                        info!("💭 Think: Plan generated ({} chars) — user reviews, Alt+Ctrl+M executes", plan_output.len());
                         continue;
                     },
                     _ => {}
                 }
 
                 // ── P2.4: Section Summarizer — intercept "summarize" prompts ────────
-                if section_summarizer::SectionSummarizer::is_summary_request(&doc_ctx.prompt_text) {
+                let is_office_doc = doc_ctx.file_path.as_ref()
+                    .map(|p| {
+                        let ext = p.extension().and_then(|e| e.to_str()).unwrap_or_default().to_lowercase();
+                        ext == "docx" || ext == "xlsx" || ext == "xlsm" || ext == "pptx"
+                    })
+                    .unwrap_or(false);
+
+                if !is_office_doc && section_summarizer::SectionSummarizer::is_summary_request(&doc_ctx.prompt_text) {
                     info!("📋 Section Summarizer: building structure-aware prompt");
                     let summary_prompt = section_summarizer::SectionSummarizer::build_summary_prompt(
                         &doc_ctx, &doc_ctx.prompt_text
@@ -1310,7 +1640,7 @@ async fn async_main() -> Result<()> {
                 // ── P2.5: Excel Formula Engine ───────────────────────────────────────
                 if excel_formula::ExcelFormulaEngine::should_handle(
                     &doc_ctx.prompt_text, doc_ctx.doc_kind.human_name()
-                ) {
+                ) && excel_formula::ExcelFormulaEngine::extract_formula(&doc_ctx.prompt_text).is_some() {
                     let engine = excel_formula::ExcelFormulaEngine::new();
                     // If an existing formula is in the prompt → explain it
                     if let Some(formula) = excel_formula::ExcelFormulaEngine::extract_formula(&doc_ctx.prompt_text) {
@@ -1370,10 +1700,17 @@ async fn async_main() -> Result<()> {
                     continue;
                 }
                 let mut system_prompt = agent_profile.system_directive;
+                let mut actual_prompt = clean_prompt.clone();
                 if let Some(skill_directive) = skill_manager.get_skill_directive(&command_mode) {
                     system_prompt = format!("{}\n\n---\n\nWAZA SKILL DIRECTIVE:\n{}", system_prompt, skill_directive);
+                } else if command_mode == crate::command_protocol::CommandMode::GhostWrite {
+                    if let Some((skill_directive, remainder)) = get_dynamic_skill_directive(&doc_ctx.prompt_text) {
+                        info!("🎯 [Waza] Found dynamic custom skill directive! Remainder: '{}'", remainder);
+                        system_prompt = format!("{}\n\n---\n\nWAZA SKILL DIRECTIVE:\n{}", system_prompt, skill_directive);
+                        actual_prompt = remainder;
+                    }
                 }
-                let prompt_text = clean_prompt.clone();
+                let prompt_text = actual_prompt.clone();
                 let prompt_char_count = doc_ctx.prompt_char_count;
                 let _original_prompt = prompt_text.clone();
 
@@ -1407,7 +1744,7 @@ async fn async_main() -> Result<()> {
 
                 if active_plan.is_none() {
                     // ── LAYER 1: Intent Gate (< 50ms, no LLM) ──────────────────────
-                    let intent_analysis = crate::intent_gate::IntentGate::analyze(&clean_prompt_for_llm, &app_ctx, &doc_ctx, &command_mode);
+                    let intent_analysis = crate::intent_gate::IntentGate::analyze(&clean_prompt_for_llm, &app_ctx, &doc_ctx, &command_mode, Some(&*document_graph));
                     info!("🎯 [L1] Intent: {} | Confidence: {:.0}% | Risk: {:?}",
                         intent_analysis.intent_type.label(),
                         intent_analysis.confidence * 100.0,
@@ -1429,27 +1766,121 @@ async fn async_main() -> Result<()> {
                     // Clarity check: if unclear, inject clarification and stop
                     if !intent_analysis.is_clear {
                         if let Some(question) = &intent_analysis.clarification_question {
-                            info!("❓ [L1] Low confidence — injecting clarification question");
-                            crate::toast_notification::show_progress_toast("Kairo: Please clarify your instruction");
-                            let _ = crate::injector::HumanizedInjector::set_clipboard(question.as_str());
-                            let hwnd_val = crate::hotkey::CAPTURED_HWND.load(std::sync::atomic::Ordering::SeqCst);
-                            if hwnd_val != 0 {
-                                use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE};
-                                use windows::Win32::Foundation::HWND;
-                                let h = HWND(hwnd_val as *mut std::ffi::c_void);
-                                unsafe { 
-                                    if windows::Win32::UI::WindowsAndMessaging::IsIconic(h).as_bool() { 
-                                        let _ = windows::Win32::UI::WindowsAndMessaging::ShowWindow(h, windows::Win32::UI::WindowsAndMessaging::SW_RESTORE); 
-                                    } 
-                                    let _ = BringWindowToTop(h); 
-                                    let _ = SetForegroundWindow(h); 
-                                }
-                                tokio::time::sleep(std::time::Duration::from_millis(400)).await;
-                            }
-                            injector.inject_replace_line();
+                            info!("❓ [L1] Low confidence — showing clarification toast");
+                            crate::toast_notification::show_clarification_toast(question.as_str());
                             last_processed_prompt = String::new(); // allow re-prompt
                             continue;
                         }
+                    }
+
+                    // CUA Escalation check
+                    #[cfg(feature = "cua")]
+                    let cua_escalate = {
+                        let cua_config = crate::cua::config::CuaConfig::load();
+                        let is_canva = matches!(app_ctx.environment, crate::context::AppEnvironment::Canva)
+                            || app_ctx.window_title.to_lowercase().contains("canva");
+                        let is_cua_goal = doc_ctx.prompt_text.to_lowercase().contains("save as pdf")
+                            || doc_ctx.prompt_text.to_lowercase().contains("select all")
+                            || doc_ctx.prompt_text.to_lowercase().contains("undo")
+                            || doc_ctx.prompt_text.to_lowercase().contains("redo")
+                            || doc_ctx.prompt_text.to_lowercase().contains("save file");
+                        
+                        let available_tiers = if is_canva || is_cua_goal {
+                            vec![]
+                        } else {
+                            vec![crate::intent_gate::ExecutionTier::FileApi]
+                        };
+                        let task_type = if is_canva {
+                            Some(crate::intent_gate::CuaTaskType::TextReplace)
+                        } else if is_cua_goal {
+                            Some(crate::intent_gate::CuaTaskType::Navigate)
+                        } else {
+                            None
+                        };
+                        crate::intent_gate::should_escalate_to_cua(cua_config.enabled, &available_tiers, task_type.as_ref())
+                    };
+                    #[cfg(not(feature = "cua"))]
+                    let cua_escalate = false;
+
+                    #[cfg(feature = "cua")]
+                    if cua_escalate {
+                        info!("🚀 CUA Escalation triggered! Formulating CUA Context...");
+                        
+                        let mut rect = windows::Win32::Foundation::RECT::default();
+                        let hwnd = windows::Win32::Foundation::HWND(target_hwnd_val as *mut std::ffi::c_void);
+                        let _ = unsafe { windows::Win32::UI::WindowsAndMessaging::GetWindowRect(hwnd, &mut rect) };
+                        let hdc = unsafe { windows::Win32::Graphics::Gdi::GetDC(hwnd) };
+                        let dpi = if hdc.is_invalid() {
+                            96
+                        } else {
+                            let val = unsafe { windows::Win32::Graphics::Gdi::GetDeviceCaps(hdc, windows::Win32::Graphics::Gdi::LOGPIXELSX) };
+                            unsafe { let _ = windows::Win32::Graphics::Gdi::ReleaseDC(hwnd, hdc); }
+                            val
+                        };
+                        let dpi_scale = if dpi == 0 { 1.0 } else { dpi as f32 / 96.0 };
+                        
+                        let mut cua_ctx = crate::cua::CuaContext {
+                            hwnd: target_hwnd_val,
+                            window_title: captured_title.clone(),
+                            window_rect: crate::cua::WindowRect {
+                                left: rect.left,
+                                top: rect.top,
+                                right: rect.right,
+                                bottom: rect.bottom,
+                            },
+                            dpi_scale,
+                            app_name: captured_process.clone(),
+                            before_screenshot_path: None,
+                        };
+                        
+                        let cua_planner = crate::cua::cua_planner::CuaPlanner::new();
+                        match cua_planner.plan(&doc_ctx.prompt_text, &cua_ctx).await {
+                            Ok(plan) => {
+                                info!("📋 CUA Plan generated: {} steps", plan.step_descriptions.len());
+                                
+                                // Save to pending CUA plan
+                                {
+                                    let mut lock = pending_cua_plan.lock().unwrap();
+                                    *lock = Some((plan.clone(), cua_ctx));
+                                }
+                                
+                                // Set CUA pending state for hotkey intercept
+                                crate::hotkey::CUA_PENDING.store(true, std::sync::atomic::Ordering::SeqCst);
+
+                                // TIMEOUT GUARD: If the user ignores the overlay and the 10s
+                                // display window expires, CUA_PENDING would otherwise stay `true`
+                                // forever, causing the very next keypress (even hours later) to
+                                // spuriously fire CuaApproved/CuaCancelled.
+                                // This task auto-clears the flag after the overlay duration elapses.
+                                tokio::spawn(async {
+                                    tokio::time::sleep(std::time::Duration::from_millis(10500)).await;
+                                    if crate::hotkey::CUA_PENDING.load(std::sync::atomic::Ordering::SeqCst) {
+                                        tracing::warn!("[CUA] Overlay timed out — clearing CUA_PENDING (no user response in 10s)");
+                                        crate::hotkey::CUA_PENDING.store(false, std::sync::atomic::Ordering::SeqCst);
+                                    }
+                                });
+                                
+                                // Display the plan in the overlay
+                                let plan_text = crate::cua::grp_cua_plan::GrpCuaPlanDisplay::format_plan(&plan);
+                                crate::toast_notification::show_overlay(
+                                    "Kairo CUA Plan 🖱",
+                                    &plan_text,
+                                    crate::toast_notification::OverlayColor::Info,
+                                    10000,
+                                );
+                            }
+                            Err(e) => {
+                                error!("❌ CUA Planner failed: {}", e);
+                                let blocked_msg = crate::cua::grp_cua_plan::GrpCuaPlanDisplay::format_blocked(&e.to_string());
+                                crate::toast_notification::show_overlay(
+                                    "CUA Blocked ❌",
+                                    &blocked_msg,
+                                    crate::toast_notification::OverlayColor::Error,
+                                    5000,
+                                );
+                            }
+                        }
+                        continue;
                     }
 
                     // ── LAYER 2: Planning Engine ────────────────────────────────────
@@ -1463,7 +1894,7 @@ async fn async_main() -> Result<()> {
 
                     if !skip_planning && intent_analysis.intent_type != crate::intent_gate::IntentType::Unknown {
                         let confidence = intent_analysis.confidence;
-                        if confidence >= 0.50 && confidence <= 0.85 {
+                        if (0.50..=0.85).contains(&confidence) {
                             // Medium confidence: generate plan synchronously and run inline
                             info!("📋 [L2] Generating inline plan for medium confidence ({:.0}%)", confidence * 100.0);
                             crate::toast_notification::show_progress_toast("Kairo: Reasoning... 📋");
@@ -1509,7 +1940,7 @@ async fn async_main() -> Result<()> {
                             let plan_doc_str = plan.to_document_string();
                             info!("📋 [L2] Plan generated ({} steps)", plan.steps.len());
                             
-                            // Store pending plan for next Alt+M
+                            // Store pending plan for next Alt+Ctrl+M
                             {
                                 let mut lock = pending_plan.lock().unwrap();
                                 *lock = Some(crate::planning_engine::PendingPlan {
@@ -1536,7 +1967,7 @@ async fn async_main() -> Result<()> {
                                 tokio::time::sleep(std::time::Duration::from_millis(400)).await;
                             }
                             injector.inject_replace_line();
-                            crate::toast_notification::show_progress_toast("Plan ready — press Alt+M to execute, Esc to cancel");
+                            crate::toast_notification::show_progress_toast("Plan ready — press Alt+Ctrl+M to execute, Esc to cancel");
                             last_processed_prompt = String::new(); // allow execution
                             continue;
                         }
@@ -1588,12 +2019,16 @@ async fn async_main() -> Result<()> {
                     String::new()
                 };
 
-                let personalized_system = if !distilled_memories.is_empty() {
+                let mut personalized_system = if !distilled_memories.is_empty() {
                     info!("🧠 MemMachine: injecting {} chars of distilled context", distilled_memories.len());
                     format!("{}\n\n<memory_context>\n{}\n</memory_context>", enriched_system, distilled_memories)
                 } else {
                     enriched_system.clone()
                 };
+
+                if let Ok(Some(graph_ctx)) = document_graph.enrich_context(&clean_prompt_for_llm) {
+                    personalized_system = format!("{}\n\n{}", personalized_system, graph_ctx);
+                }
                 
                 // ── PHASE 2: Sidecar-Aware Structured LLM Prompt ─────────────────────
                 // When a file path is resolved and sidecar is up, REPLACE the generic
@@ -1661,10 +2096,11 @@ async fn async_main() -> Result<()> {
                                     // ── Domain 1: Route to Track Changes or standard prompt ──────
                                     let dp = if matches!(command_mode, crate::command_protocol::CommandMode::TrackChanges) {
                                         info!("🔴 Track Changes mode — using DOCX_TRACK_CHANGES prompt");
-                                        crate::doc_prompt_builder::DocumentPrompt::for_docx_track_changes(&ctx, &clean_prompt_for_llm)
+                                        crate::doc_prompt_builder::DocumentPrompt::for_docx_track_changes(&ctx, &clean_prompt_for_llm, doc_path, &distilled_memories)
                                     } else {
-                                        crate::doc_prompt_builder::DocumentPrompt::for_docx(&ctx, &clean_prompt_for_llm)
+                                        crate::doc_prompt_builder::DocumentPrompt::for_docx(&ctx, &clean_prompt_for_llm, doc_path, &distilled_memories)
                                     };
+                                    sidecar_user_context = Some(dp.user.clone());
                                     Some(dp.system)
                                 }
                                 Err(e) => {
@@ -1680,7 +2116,8 @@ async fn async_main() -> Result<()> {
                                 Ok(ctx) => {
                                     info!("🔬 Sidecar XLSX read: active={} sheet={}",
                                         ctx.active_cell, ctx.sheet_name);
-                                    let dp = crate::doc_prompt_builder::DocumentPrompt::for_xlsx(&ctx, &clean_prompt_for_llm);
+                                    let dp = crate::doc_prompt_builder::DocumentPrompt::for_xlsx(&ctx, &clean_prompt_for_llm, doc_path, &distilled_memories);
+                                    sidecar_user_context = Some(dp.user.clone());
                                     Some(dp.system)
                                 }
                                 Err(e) => {
@@ -1697,7 +2134,7 @@ async fn async_main() -> Result<()> {
                                         .unwrap_or(0) as usize;
                                     pptx_pre_write_count = Some(slide_count_before);
                                     info!("🔬 Sidecar PPTX read complete: {} existing slides", slide_count_before);
-                                    let dp = crate::doc_prompt_builder::DocumentPrompt::for_pptx(&data, &clean_prompt_for_llm);
+                                    let dp = crate::doc_prompt_builder::DocumentPrompt::for_pptx(&data, &clean_prompt_for_llm, doc_path, &distilled_memories);
                                     // Capture dp.user (slide inventory + command) for LLM enrichment
                                     sidecar_user_context = Some(dp.user.clone());
                                     Some(dp.system)
@@ -1786,10 +2223,11 @@ async fn async_main() -> Result<()> {
                 // Without this, the LLM operates blind (no slide titles, no shape IDs).
                 let enriched_user_msg = if let Some(ref user_ctx) = sidecar_user_context {
                     info!("📋 [PPTX] Injecting {} chars of slide inventory into LLM user message", user_ctx.len());
-                    format!("{user_ctx}")
+                    user_ctx.clone()
                 } else {
                     prompt_clone.clone()
                 };
+                let enriched_user_msg_for_spawn = enriched_user_msg.clone();
                 tokio::spawn(async move {
                     tokio::select! {
                         result = async {
@@ -1798,7 +2236,7 @@ async fn async_main() -> Result<()> {
                             // which hangs on rate-limited APIs (NVIDIA free tier, etc).
                             // Direct streaming sends ONE request and streams tokens back immediately.
                             info!("🚀 Direct streaming to AI backend...");
-                            target_backend_for_spawn.stream_complete(&system_prompt_for_spawn, &enriched_user_msg, token_tx.clone()).await
+                            target_backend_for_spawn.stream_complete(&system_prompt_for_spawn, &enriched_user_msg_for_spawn, token_tx.clone()).await
                         } => {
                             match result {
                                 Ok(()) => info!("✅ AI stream completed successfully"),
@@ -1808,7 +2246,7 @@ async fn async_main() -> Result<()> {
                                     let _ = token_tx.send(format!("[AI Error: {}]", e)).await;
                                     if let Some(fallback) = cloud_fallback_clone {
                                         warn!("🔄 Trying cloud fallback...");
-                                        if let Err(e2) = fallback.stream_complete(&system_prompt_for_spawn, &enriched_user_msg, token_tx).await {
+                                        if let Err(e2) = fallback.stream_complete(&system_prompt_for_spawn, &enriched_user_msg_for_spawn, token_tx).await {
                                             warn!("🔄 Cloud fallback also failed: {}", e2);
                                         }
                                     }
@@ -1905,8 +2343,8 @@ async fn async_main() -> Result<()> {
                 //   - Not cancelled
                 //   - Not a Yjs CRDT stream (those bypass injection)
                 //   - quality_review can be disabled if needed
-                let enable_quality_review = true; // TODO: config.quality_review
-                if enable_quality_review && !was_cancelled && full_response.len() > 200 && !using_yjs {
+                let enable_quality_review = std::env::var("KAIRO_DISABLE_QUALITY_REVIEW").is_err();
+                if enable_quality_review && !was_cancelled && full_response.len() > 200 && !using_yjs && !using_sidecar_pipeline {
                     info!("🔍 Quality review: checking {} chars before injection...", full_response.len());
                     crate::toast_notification::show_progress_toast("Kairo: Reviewing quality...");
 
@@ -2030,7 +2468,7 @@ async fn async_main() -> Result<()> {
                                 );
                                 let (retry_tx, mut retry_rx) = tokio::sync::mpsc::channel::<String>(200);
                                 let retry_backend = target_backend.clone();
-                                let retry_prompt = prompt_text.clone();
+                                let retry_prompt = sidecar_user_context.clone().unwrap_or_else(|| prompt_text.clone());
                                 tokio::spawn(async move {
                                     let _ = retry_backend.stream_complete(&hardened_system, &retry_prompt, retry_tx).await;
                                 });
@@ -2058,6 +2496,98 @@ async fn async_main() -> Result<()> {
                         }
                     }
 
+                    // Feynman Verification Agent
+                    if !clean_response.is_empty() {
+                        let feynman_sys = {
+                            let path_home = dirs::home_dir().map(|h| h.join(".kairo-phantom/skills/feynman-verifier/SKILL.md"));
+                            let path_repo = std::path::Path::new("skills/feynman-verifier/SKILL.md");
+                            let mut feynman_prompt = String::new();
+                            if let Some(ref ph) = path_home {
+                                if let Ok(c) = std::fs::read_to_string(ph) {
+                                    feynman_prompt = c;
+                                }
+                            }
+                            if feynman_prompt.is_empty() {
+                                if let Ok(c) = std::fs::read_to_string(path_repo) {
+                                    feynman_prompt = c;
+                                }
+                            }
+                            
+                            let extracted = if !feynman_prompt.is_empty() {
+                                if let Some(start_idx) = feynman_prompt.find("## System Prompt") {
+                                    let remainder = &feynman_prompt[start_idx..];
+                                    if let Some(code_start) = remainder.find("```") {
+                                        let code_block = &remainder[code_start + 3..];
+                                        if let Some(code_end) = code_block.find("```") {
+                                            code_block[..code_end].trim().to_string()
+                                        } else {
+                                            code_block.trim().to_string()
+                                        }
+                                    } else {
+                                        feynman_prompt.trim().to_string()
+                                    }
+                                } else {
+                                    feynman_prompt.trim().to_string()
+                                }
+                            } else {
+                                String::new()
+                            };
+
+                            if extracted.is_empty() {
+                                r#"You are the Feynman Verification Agent. Your role is to critique the proposed AI generation before it is injected.
+Attempt to explain each paragraph of the proposed output in simple terms.
+Check for:
+- Logical gaps or contradictions.
+- Unexplained technical jargon or concepts.
+- Missing context.
+- Stray system prompt instructions or sentinel blocks.
+
+If you detect any issues, output exactly:
+[GAP: <reason for failure, detailing the gap>]
+If the output is completely verified and clear, output the word: VERIFIED
+Do NOT include any markdown formatting. Output ONLY the GAP instruction or VERIFIED.
+"#.to_string()
+                            } else {
+                                extracted
+                            }
+                        };
+
+                        info!("🔍 Feynman Verification: reviewing proposed generation...");
+                        match target_backend.complete(&feynman_sys, &clean_response).await {
+                            Ok(critique) => {
+                                info!("🔍 Feynman Verification result: {}", critique.trim());
+                                if critique.contains("[GAP:") {
+                                    let start_idx = critique.find("[GAP:").unwrap();
+                                    let end_idx = critique[start_idx..].find(']').unwrap_or(critique[start_idx..].len());
+                                    let gap_reason = critique[start_idx + 5 .. start_idx + end_idx].trim().to_string();
+                                    
+                                    crate::toast_notification::show_progress_toast(&format!("Critique: {}", gap_reason));
+                                    info!("🔄 Feynman Critique gap found: '{}'. Re-generating...", gap_reason);
+                                    
+                                    let critique_system = format!("{}\n\nCRITIQUE / GAP TO RESOLVE:\n{}", system_prompt, gap_reason);
+                                    match target_backend.complete(&critique_system, &enriched_user_msg).await {
+                                        Ok(regen_raw) => {
+                                            let regen_sanitized = sentinel.sanitize(&regen_raw);
+                                            if !regen_sanitized.contains("[BLOCKED") {
+                                                clean_response = regen_sanitized.replace("[REPLACE]", "").trim().to_string();
+                                                info!("✅ Feynman Re-generation complete.");
+                                            } else {
+                                                warn!("⚠️ Feynman Re-generated response was BLOCKED by sentinel, using original response.");
+                                            }
+                                        }
+                                        Err(e) => {
+                                            warn!("⚠️ Feynman Re-generation failed: {:?}, using original response.", e);
+                                        }
+                                    }
+                                } else {
+                                    info!("✅ Feynman Verification: VERIFIED");
+                                }
+                            }
+                            Err(e) => {
+                                warn!("⚠️ Feynman Verification failed to run: {:?}", e);
+                            }
+                        }
+                    }
 
                     full_response = clean_response.clone();
 
@@ -2110,7 +2640,7 @@ async fn async_main() -> Result<()> {
                                                         if err_msg.as_deref() == Some("unavailable") || err_msg.as_deref() == Some("adeu not installed") {
                                                             // Gate 2: Fall to safe-docx
                                                             info!("⬇️  Adeu unavailable — falling to safe-docx batch edit");
-                                                            let docx_edits: Vec<crate::sidecar_client::DocxEdit> = edits.iter().map(|e| e.clone()).collect();
+                                                            let docx_edits: Vec<crate::sidecar_client::DocxEdit> = edits.to_vec();
                                                             match crate::sidecar_client::safedocx_edit(
                                                                 doc_path, docx_edits, None, None
                                                             ).await {
@@ -2175,7 +2705,7 @@ async fn async_main() -> Result<()> {
                                                     );
                                                     let (rtx, mut rrx) = tokio::sync::mpsc::channel::<String>(200);
                                                     let rbe = target_backend.clone();
-                                                    let rpt = prompt_text.clone();
+                                                    let rpt = sidecar_user_context.clone().unwrap_or_else(|| prompt_text.clone());
                                                     tokio::spawn(async move {
                                                         let _ = rbe.stream_complete(&schema_hint, &rpt, rtx).await;
                                                     });
@@ -2268,9 +2798,9 @@ async fn async_main() -> Result<()> {
                                                     // PivotTable creation path
                                                     let pivot_op = crate::sidecar_client::ExcelPivotOp {
                                                         source_range: first["source_range"].as_str().unwrap_or("").to_string(),
-                                                        rows: first["rows"].as_array().map(|a| a.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect()).unwrap_or_default(),
-                                                        columns: first["columns"].as_array().map(|a| a.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect()).unwrap_or_default(),
-                                                        values: first["values"].as_array().map(|a| a.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect()).unwrap_or_default(),
+                                                        rows: crate::doc_prompt_builder::parse_robust_json_array(&first["rows"]),
+                                                        columns: crate::doc_prompt_builder::parse_robust_json_array(&first["columns"]),
+                                                        values: crate::doc_prompt_builder::parse_robust_json_array(&first["values"]),
                                                         target_sheet: first["target_sheet"].as_str().map(|s| s.to_string()),
                                                     };
                                                     match crate::sidecar_client::create_excel_pivot(doc_path, pivot_op).await {
@@ -2304,6 +2834,7 @@ async fn async_main() -> Result<()> {
                                                         value: op.value,
                                                         number_format: None,
                                                         bold: false,
+                                                        conditional_formatting: None,
                                                     })
                                                     .collect::<Vec<_>>()
                                             } else {
@@ -2315,15 +2846,27 @@ async fn async_main() -> Result<()> {
                                                 warn!("⚠️  [SCHEMA] XLSX ops empty — initiating schema retry (max 2 attempts)...");
                                                 'xlsx_schema_retry: for attempt in 1..=2usize {
                                                     warn!("🔄 [SCHEMA] XLSX schema retry {}/2", attempt);
+                                                    let custom_hint = if prompt_text.to_lowercase().contains("chart") || prompt_text.to_lowercase().contains("plot") {
+                                                        "parsed as an ExcelChartOp JSON array. You MUST output ONLY a \
+                                                        valid JSON array with no preamble, no prose, and no markdown. \
+                                                        Example: [{\"source_range\":\"A1:D100\",\"chart_type\":\"line\",\"title\":\"Monthly Revenue Trend Q1 2026\"}]"
+                                                    } else if prompt_text.to_lowercase().contains("pivot") {
+                                                        "parsed as an ExcelPivotOp JSON array. You MUST output ONLY a \
+                                                        valid JSON array with no preamble, no prose, and no markdown. \
+                                                        Example: [{\"source_range\":\"A1:D100\",\"rows\":[\"Product\"],\"columns\":[\"Region\"],\"values\":[\"Revenue\"]}]"
+                                                    } else {
+                                                        "parsed as an ExcelOperation JSON array. You MUST output ONLY a \
+                                                        valid JSON array with no preamble, no prose, and no markdown. \
+                                                        Example: [{\"cell\":\"G5\",\"formula\":\"=C5*0.05\",\"value\":\"\"}]"
+                                                    };
                                                     let schema_hint = format!(
                                                         "{}\n\nCRITICAL (retry {}/2): Your previous response could not be \
-                                                        parsed as an ExcelOperation JSON array. You MUST output ONLY a \
-                                                        valid JSON array. Example: [{{\"cell\":\"G5\",\"formula\":\"=C5*0.05\",\"value\":\"\"}}]",
-                                                        system_prompt, attempt
+                                                        {}",
+                                                        system_prompt, attempt, custom_hint
                                                     );
                                                     let (rtx, mut rrx) = tokio::sync::mpsc::channel::<String>(200);
                                                     let rbe = target_backend.clone();
-                                                    let rpt = prompt_text.clone();
+                                                    let rpt = sidecar_user_context.clone().unwrap_or_else(|| prompt_text.clone());
                                                     tokio::spawn(async move {
                                                         let _ = rbe.stream_complete(&schema_hint, &rpt, rtx).await;
                                                     });
@@ -2334,6 +2877,64 @@ async fn async_main() -> Result<()> {
                                                         warn!("⚠️  [SCHEMA] XLSX retry {} sentinel-blocked", attempt);
                                                         continue;
                                                     }
+
+                                                    // First check if the retry response contains a chart or pivot request
+                                                    let mut retry_handled = false;
+                                                    if let Some(chart_json) = crate::doc_prompt_builder::extract_json_array(&rclean) {
+                                                        if let Some(first) = chart_json.as_array().and_then(|a| a.first()) {
+                                                            if first.get("chart_type").is_some() {
+                                                                // Chart creation path
+                                                                let chart_op = crate::sidecar_client::ExcelChartOp {
+                                                                    source_range: first["source_range"].as_str().unwrap_or("").to_string(),
+                                                                    chart_type: first["chart_type"].as_str().unwrap_or("column").to_string(),
+                                                                    title: first["title"].as_str().unwrap_or("Chart").to_string(),
+                                                                    target_sheet: first["target_sheet"].as_str().map(|s| s.to_string()),
+                                                                };
+                                                                match crate::sidecar_client::create_excel_chart(doc_path, chart_op).await {
+                                                                    Ok(result) => {
+                                                                        info!("✅ Excel chart created in schema retry: {:?}", result);
+                                                                        sidecar_write_success = true;
+                                                                        retry_handled = true;
+                                                                        let resp_len = rclean.len();
+                                                                        tokio::spawn(async move {
+                                                                            crate::toast_notification::show_completion_toast(
+                                                                                resp_len, "Kairo — Excel chart created 📊"
+                                                                            );
+                                                                        });
+                                                                    }
+                                                                    Err(e) => warn!("⚠️  Chart creation failed in schema retry: {} — falling to standard write", e),
+                                                                }
+                                                            } else if first.get("rows").is_some() && first.get("source_range").is_some() {
+                                                                // PivotTable creation path
+                                                                let pivot_op = crate::sidecar_client::ExcelPivotOp {
+                                                                    source_range: first["source_range"].as_str().unwrap_or("").to_string(),
+                                                                    rows: crate::doc_prompt_builder::parse_robust_json_array(&first["rows"]),
+                                                                    columns: crate::doc_prompt_builder::parse_robust_json_array(&first["columns"]),
+                                                                    values: crate::doc_prompt_builder::parse_robust_json_array(&first["values"]),
+                                                                    target_sheet: first["target_sheet"].as_str().map(|s| s.to_string()),
+                                                                };
+                                                                match crate::sidecar_client::create_excel_pivot(doc_path, pivot_op).await {
+                                                                    Ok(result) => {
+                                                                        info!("✅ Excel pivot created in schema retry: {:?}", result);
+                                                                        sidecar_write_success = true;
+                                                                        retry_handled = true;
+                                                                        let resp_len = rclean.len();
+                                                                        tokio::spawn(async move {
+                                                                            crate::toast_notification::show_completion_toast(
+                                                                                resp_len, "Kairo — PivotTable created 📊"
+                                                                            );
+                                                                        });
+                                                                    }
+                                                                    Err(e) => warn!("⚠️  Pivot creation failed in schema retry: {} — falling to standard write", e),
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+
+                                                    if retry_handled {
+                                                        break 'xlsx_schema_retry;
+                                                    }
+
                                                     let rops_formatted = crate::doc_prompt_builder::parse_excel_write_ops(&rclean);
                                                     ops = if rops_formatted.is_empty() {
                                                         crate::doc_prompt_builder::parse_excel_operations(&rclean)
@@ -2344,6 +2945,7 @@ async fn async_main() -> Result<()> {
                                                                 value: op.value,
                                                                 number_format: None,
                                                                 bold: false,
+                                                                conditional_formatting: None,
                                                             })
                                                             .collect::<Vec<_>>()
                                                     } else {
@@ -2355,8 +2957,8 @@ async fn async_main() -> Result<()> {
                                                     }
                                                     warn!("⚠️  [SCHEMA] XLSX schema retry {} still empty", attempt);
                                                 }
-                                                if ops.is_empty() {
-                                                    warn!("🚨 [SCHEMA] XLSX all retries exhausted — falling to clipboard");
+                                                if ops.is_empty() && !sidecar_write_success {
+                                                    warn!("🚨 [SCHEMA] XLSX all retries exhausted — falling to clipboard. Full response was:\n{}", clean_response);
                                                     crate::toast_notification::show_progress_toast(
                                                         "Kairo: Excel schema retry exhausted — clipboard fallback"
                                                     );
@@ -2458,7 +3060,7 @@ async fn async_main() -> Result<()> {
                                                 );
                                                 let (rtx, mut rrx) = tokio::sync::mpsc::channel::<String>(200);
                                                 let rbe = target_backend.clone();
-                                                let rpt = prompt_text.clone();
+                                                let rpt = sidecar_user_context.clone().unwrap_or_else(|| prompt_text.clone());
                                                 tokio::spawn(async move {
                                                     let _ = rbe.stream_complete(&schema_hint, &rpt, rtx).await;
                                                 });
@@ -2562,7 +3164,7 @@ async fn async_main() -> Result<()> {
                                                         } else {
                                                             crate::toast_notification::show_progress_toast(
                                                                 "Kairo ⚠️: PPTX write completed but slide count mismatch — \
-                                                                 check your presentation and press Alt+M to retry if needed"
+                                                                 check your presentation and press Alt+Ctrl+M to retry if needed"
                                                             );
                                                         }
                                                     }
@@ -2603,7 +3205,7 @@ async fn async_main() -> Result<()> {
                             if let Some(ref file_path) = doc_ctx.file_path {
                                 let path_str = file_path.to_string_lossy().to_string();
                                 let indentation = doc_ctx.code_context.as_ref().map(|c| c.indentation.as_str()).unwrap_or("");
-                                let line_ending = doc_ctx.code_context.as_ref().map(|c| c.line_ending.clone()).unwrap_or(crate::code_context::LineEnding::LF);
+                                let line_ending = doc_ctx.code_context.as_ref().map(|c| c.line_ending).unwrap_or(crate::code_context::LineEnding::LF);
                                 let cursor_line = doc_ctx.code_context.as_ref().map(|c| c.cursor_line).unwrap_or(1);
                                 
                                 info!("🖊️  Atomic code write: injecting into {}", path_str);
@@ -2634,17 +3236,27 @@ async fn async_main() -> Result<()> {
                         // DO NOT paste raw text into the doc — it will create formatting chaos.
                         // Show a toast and let the user retry.
                         if using_sidecar_pipeline {
-                            let reason = if clean_response.is_empty() {
-                                "AI returned empty output"
+                            let is_json = clean_response.trim_start().starts_with('[') || clean_response.trim_start().starts_with('{');
+                            if is_json {
+                                if let Some(plain_text) = json_to_plain_text(&clean_response) {
+                                    info!("ℹ️  Sidecar pipeline write failed, but parsed JSON to plain text ({} chars) for clipboard fallback", plain_text.len());
+                                    clean_response = plain_text;
+                                } else {
+                                    let reason = if clean_response.is_empty() {
+                                        "AI returned empty output"
+                                    } else {
+                                        "Could not write to document — close it in Office first, then press Alt+Ctrl+M"
+                                    };
+                                    warn!("⚠️  Sidecar pipeline active but write failed — blocking clipboard injection of JSON payload. Reason: {}", reason);
+                                    crate::toast_notification::show_progress_toast(
+                                        &format!("Kairo: {}", reason)
+                                    );
+                                    last_processed_prompt = String::new(); // allow immediate retry
+                                    continue;
+                                }
                             } else {
-                                "Could not write to document — close it in Office first, then press Alt+M"
-                            };
-                            warn!("⚠️  Sidecar pipeline active but write failed — blocking clipboard injection. Reason: {}", reason);
-                            crate::toast_notification::show_progress_toast(
-                                &format!("Kairo: {}", reason)
-                            );
-                            last_processed_prompt = String::new(); // allow immediate retry
-                            continue;
+                                info!("ℹ️  Sidecar write failed/skipped but response is plain text — falling back to clipboard injection");
+                            }
                         }
 
                         // DEFECT 3 FIX: Output sanitization — block internal config leakage.
@@ -2735,32 +3347,35 @@ async fn async_main() -> Result<()> {
                                 info!("✅ Window focused: HWND={}", hwnd_val);
                             }
 
-                            // 4. Inject response using End → Enter → Ctrl+V
-                            //    (No Shift key used — prevents Alt+Shift = language switcher)
-                            //    This appends the AI response on a new line below the // prompt.
+                            // 4. Inject response: replace the current prompt line with response text
+                            //    using Home → Shift+End → Ctrl+V.
+                            //    This removes the // prompt and overwrites it.
                             #[cfg(windows)]
                             {
                                 use windows::Win32::UI::Input::KeyboardAndMouse::{
                                     SendInput, INPUT, INPUT_KEYBOARD, KEYBDINPUT,
-                                    KEYEVENTF_KEYUP, VK_CONTROL, VK_END, VK_RETURN,
+                                    KEYEVENTF_KEYUP, VK_CONTROL, VK_END, VK_HOME, VK_SHIFT,
                                     VIRTUAL_KEY, KEYBD_EVENT_FLAGS,
                                 };
 
                                 // Record injection for undo before sending input
-                                let injected_text_for_undo = format!("\n{}", clean_response);
                                 crate::injector::HumanizedInjector::record_injection(
                                     "",
-                                    &injected_text_for_undo,
-                                    hwnd_val as isize
+                                    &clean_response,
+                                    hwnd_val
                                 );
 
                                 let inputs = [
-                                    // End — move to end of prompt line
+                                    // Home — move to beginning of prompt line
+                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_HOME, wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } },
+                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_HOME, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
+                                    // Shift down
+                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_SHIFT, wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } },
+                                    // End — select to end of line
                                     INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_END, wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } },
                                     INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_END, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
-                                    // Enter — new line (no Shift = no language switcher risk)
-                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_RETURN, wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } },
-                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_RETURN, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
+                                    // Shift up
+                                    INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_SHIFT, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
                                     // Ctrl+V — paste AI response
                                     INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_CONTROL, wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } },
                                     INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VIRTUAL_KEY(0x56), wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } },
@@ -2775,7 +3390,7 @@ async fn async_main() -> Result<()> {
                             // ─── POST-INJECTION VERIFICATION ──────────────────────────────
                             // Wait 600ms for the OS to process Ctrl+V, then read back via UIA.
                             // If the injected text doesn't appear → one silent retry, then toast.
-                            // This eliminates the "Alt+M did nothing" silent failure class.
+                            // This eliminates the "Alt+Ctrl+M did nothing" silent failure class.
                             let verify_response = clean_response.clone();
                             let verify_uia = Arc::clone(&uia_reader);
                             let verify_hwnd = hwnd_val;
@@ -2988,6 +3603,23 @@ async fn async_main() -> Result<()> {
                             config.model.model_name.as_deref().unwrap_or("default"),
                             full_response.len(),
                         );
+
+                        if let Some(ref pending) = active_plan {
+                            skill_factory.record_success(
+                                &pending.original_prompt,
+                                pending.plan.clone(),
+                                &full_response,
+                                &app_label,
+                                doc_ctx.doc_kind.human_name(),
+                            );
+                            crate::toast_notification::show_overlay(
+                                "Kairo Assistant 🧠",
+                                "Save this workflow as a skill? [Tab] Yes",
+                                crate::toast_notification::OverlayColor::Success,
+                                5000,
+                            );
+                            crate::hotkey::SKILL_SAVE_PENDING.store(true, std::sync::atomic::Ordering::SeqCst);
+                        }
                     }
                 } else {
                     // Rejection path: user pressed Esc — record as rejected in memory for learning
@@ -3040,6 +3672,187 @@ async fn async_main() -> Result<()> {
                 }
                 let mut plan_lock = pending_plan.lock().unwrap();
                 *plan_lock = None;
+                
+                // Cancel save pending if user starts typing
+                if crate::hotkey::SKILL_SAVE_PENDING.load(std::sync::atomic::Ordering::SeqCst) {
+                    crate::hotkey::SKILL_SAVE_PENDING.store(false, std::sync::atomic::Ordering::SeqCst);
+                    skill_factory.clear();
+                    info!("❌ Skill save cancelled because user continued typing.");
+                }
+                if crate::hotkey::CUA_PENDING.load(std::sync::atomic::Ordering::SeqCst) {
+                    crate::hotkey::CUA_PENDING.store(false, std::sync::atomic::Ordering::SeqCst);
+                    #[cfg(feature = "cua")]
+                    {
+                        let mut lock = pending_cua_plan.lock().unwrap();
+                        *lock = None;
+                    }
+                    info!("❌ CUA cancelled because user continued typing.");
+                }
+            }
+            PhantomEvent::CuaApproved => {
+                #[cfg(feature = "cua")]
+                {
+                    info!("🎯 CuaApproved event received! Starting CUA execution...");
+                    let pending_plan_opt = {
+                        let mut lock = pending_cua_plan.lock().unwrap();
+                        lock.take()
+                    };
+                    if let Some((plan, ctx)) = pending_plan_opt {
+                        crate::toast_notification::show_progress_toast("Executing CUA plan...");
+                        
+                        let cancellation = tokio_util::sync::CancellationToken::new();
+                        let backend = crate::cua::CuaBackend::Enigo; // default backend
+                        
+                        tokio::spawn(async move {
+                            // Execute actions in the plan one by one
+                            let mut success = true;
+                            let mut error_msg = String::new();
+                            let mut rollback_stack = Vec::new();
+                            
+                            // Snapshot files before executing any actions in the plan
+                            if let Ok(cwd) = std::env::current_dir() {
+                                let extensions = ["txt", "docx", "xlsx", "pptx", "csv", "json", "toml"];
+                                if let Ok(entries) = std::fs::read_dir(cwd) {
+                                    for entry in entries.flatten() {
+                                        if let Ok(ft) = entry.file_type() {
+                                            if ft.is_file() {
+                                                let path = entry.path();
+                                                if let Some(ext) = path.extension().and_then(|s| s.to_str()) {
+                                                    if extensions.contains(&ext) {
+                                                        if let Ok(content) = std::fs::read(&path) {
+                                                            rollback_stack.push(crate::cua::RollbackEntry::RestoreFile {
+                                                                path: path.clone(),
+                                                                content,
+                                                            });
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            for action in &plan.actions {
+                                // Snapshot keyboard actions (requires sending Ctrl+Z to undo)
+                                match action {
+                                    crate::cua::CuaAction::KeyboardType { .. } |
+                                    crate::cua::CuaAction::KeyboardCombo { .. } |
+                                    crate::cua::CuaAction::KeyboardShortcut { .. } => {
+                                        rollback_stack.push(crate::cua::RollbackEntry::UndoKeystroke);
+                                    }
+                                    _ => {}
+                                }
+
+                                let result = crate::cua::cua_executor::execute(
+                                    action,
+                                    &ctx,
+                                    &backend,
+                                    &cancellation,
+                                ).await;
+                                
+                                match result {
+                                    crate::cua::CuaResult::Success(_) => {}
+                                    crate::cua::CuaResult::Cancelled => {
+                                        info!("❌ CUA execution cancelled mid-sequence");
+                                        success = false;
+                                        break;
+                                    }
+                                    crate::cua::CuaResult::Failed(e) => {
+                                        error!("❌ CUA action failed: {}", e);
+                                        success = false;
+                                        error_msg = e;
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            if !success {
+                                info!("⚠️ CUA failed, initiating rollback...");
+                                for entry in rollback_stack.into_iter().rev() {
+                                    match entry {
+                                        crate::cua::RollbackEntry::UndoKeystroke => {
+                                            // Press Ctrl+Z
+                                            if let Ok(mut enigo_inst) = enigo::Enigo::new(&enigo::Settings::default()) {
+                                                use enigo::{Direction, Key, Keyboard};
+                                                let _ = enigo_inst.key(Key::Control, Direction::Press);
+                                                let _ = enigo_inst.key(Key::Unicode('z'), Direction::Click);
+                                                let _ = enigo_inst.key(Key::Control, Direction::Release);
+                                            }
+                                        }
+                                        crate::cua::RollbackEntry::RestoreFile { path, content } => {
+                                            let _ = std::fs::write(&path, &content);
+                                        }
+                                    }
+                                }
+                            }
+
+                            if success {
+                                crate::toast_notification::show_completion_toast(
+                                    0,
+                                    "Kairo CUA"
+                                );
+                            } else {
+                                if ctx.app_name.to_lowercase().contains("canva") {
+                                    info!("📋 CUA failed in Canva, falling back to clipboard copy");
+                                    crate::toast_notification::show_error_toast("CUA execution failed — copied to clipboard");
+                                } else {
+                                    crate::toast_notification::show_error_toast(&format!("CUA execution failed: {}", error_msg));
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+            PhantomEvent::CuaCancelled => {
+                #[cfg(feature = "cua")]
+                {
+                    info!("❌ CuaCancelled event received.");
+                    let mut lock = pending_cua_plan.lock().unwrap();
+                    *lock = None;
+                    crate::toast_notification::show_overlay(
+                        "CUA Cancelled ❌",
+                        "CUA action execution cancelled.",
+                        crate::toast_notification::OverlayColor::Info,
+                        3000,
+                    );
+                }
+            }
+            PhantomEvent::SkillSaveApproved => {
+                info!("🎯 SkillSaveApproved event received! Distilling and saving custom skill...");
+                let skill_factory = Arc::clone(&skill_factory);
+                tokio::spawn(async move {
+                    match skill_factory.distill_and_save_skill().await {
+                        Ok(skill_id) => {
+                            info!("✅ Autonomous skill '{}' distilled and saved successfully!", skill_id);
+                            crate::toast_notification::show_overlay(
+                                "Skill Saved 🌟",
+                                &format!("Distilled and saved custom skill: {}", skill_id),
+                                crate::toast_notification::OverlayColor::Success,
+                                5000,
+                            );
+                        }
+                        Err(e) => {
+                            error!("❌ Failed to distill and save skill: {}", e);
+                            crate::toast_notification::show_overlay(
+                                "Save Skill Failed ❌",
+                                &format!("Failed to save custom skill: {}", e),
+                                crate::toast_notification::OverlayColor::Error,
+                                5000,
+                            );
+                        }
+                    }
+                });
+            }
+            PhantomEvent::SkillSaveCancelled => {
+                info!("❌ SkillSaveCancelled event received. Clearing skill history.");
+                skill_factory.clear();
+                crate::toast_notification::show_overlay(
+                    "Skill Cancelled ❌",
+                    "Skill save request cancelled. History cleared.",
+                    crate::toast_notification::OverlayColor::Info,
+                    3000,
+                );
             }
 
             // ── Domain 8: Voice Dictation Handler ─────────────────────────────
@@ -3197,7 +4010,7 @@ fn print_help() {
     println!("👻 Kairo Phantom v{} — AI ghost-writer that haunts every app\n", env!("CARGO_PKG_VERSION"));
     println!("USAGE: kairo-phantom [COMMAND] [OPTIONS]\n");
     println!("COMMANDS:");
-    println!("  (no args)              Start the daemon — press Alt+M to activate");
+    println!("  (no args)              Start the daemon — press Alt+Ctrl+M to activate");
     println!("  seed <folder>          Seed MemMachine from existing documents");
     println!("  import <file.kpx>      Import a .kpx memory export");
     println!("  export-memory          Export memory as .kpx file");
@@ -3211,7 +4024,7 @@ fn print_help() {
     println!("  --version              Show version");
     println!("  --init-config          Generate default config file");
     println!("  help                   Show this help\n");
-    println!("IN-DOCUMENT COMMANDS (type in any app, then press Alt+M):");
+    println!("IN-DOCUMENT COMMANDS (type in any app, then press Alt+Ctrl+M):");
     println!("  // health              Full document health audit");
     println!("  // kami <format>       Export document (markdown|pdf|revealjs)");
     println!("  // think <task>        Generate execution plan before writing");

@@ -1,4 +1,6 @@
 # Chaos Advanced: Fault Injection for Kairo Phantom Stress Testing
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
 Write-Host "🔥 Chaos Monkey Active" -ForegroundColor Red
 
 $chaos_types = @("network", "clipboard", "cpu", "memory")

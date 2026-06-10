@@ -573,8 +573,8 @@
   ],
   "execution_protocol": {
     "loop_strategy": "For each scenario: EXECUTE → CHECK → if FAIL → FIX code → REBUILD → RE-EXECUTE → repeat until PASS",
-    "rebuild_command": "cd C:\\Users\\SANDIP\\Desktop\\Memory\\KairoPhantom\\phantom-core && cargo build --release --bin kairo-phantom",
-    "daemon_launch": "cd C:\\Users\\SANDIP\\Desktop\\Memory\\KairoPhantom && .\\target\\release\\kairo-phantom.exe",
+    "rebuild_command": "cd c:\\Users\\praja\\OneDrive\\Desktop\\test-env\\repositories\\kairo-phantom\\phantom-core && cargo build --release --bin kairo-phantom",
+    "daemon_launch": "cd c:\\Users\\praja\\OneDrive\\Desktop\\test-env\\repositories\\kairo-phantom && .\\target\\release\\kairo-phantom.exe",
     "env_vars": {
       "RUST_LOG": "info",
       "KAIRO_AUDIT_LOG": "1"

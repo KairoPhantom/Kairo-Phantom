@@ -22,6 +22,10 @@ class UpdateShapeTextOp(BaseModel):
     slide_index: int
     shape_id: str
     paragraphs: List[SlideParagraph]
+    left: Optional[float] = None
+    top: Optional[float] = None
+    width: Optional[float] = None
+    height: Optional[float] = None
 
     @field_validator("paragraphs")
     @classmethod
@@ -48,11 +52,20 @@ class AddSlideOp(BaseModel):
     type: Literal["add_slide"] = "add_slide"
     after_index: int
     layout_name: str = "Title and Content"
+    title: Optional[str] = None
+    bullets: Optional[List[str]] = None
 
-SlideOperation = Union[UpdateShapeTextOp, UpdateTitleOp, AddSlideOp]
+class UpdateNotesOp(BaseModel):
+    type: Literal["update_notes"] = "update_notes"
+    slide_index: int
+    text: str
+
+SlideOperation = Union[UpdateShapeTextOp, UpdateTitleOp, AddSlideOp, UpdateNotesOp]
 
 class SlideResponse(BaseModel):
     operations: List[SlideOperation]
-    confidence: float = Field(ge=0.0, le=1.0)
-    reasoning: str = Field(max_length=200)
+    confidence: float = Field(default=1.0, ge=0.0, le=1.0)
+    reasoning: Optional[str] = Field(default="", max_length=200)
+    needs_clarification: bool = False
+    clarification_question: Optional[str] = None
 

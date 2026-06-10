@@ -3,7 +3,7 @@
 // This module provides the `DocumentContext` type — the canonical context
 // object passed through the entire pipeline (Context Engine → Swarm Brain → Agent).
 //
-// Instead of passing raw text, every Alt+M trigger now produces a rich
+// Instead of passing raw text, every Alt+Ctrl+M trigger now produces a rich
 // `DocumentContext` containing the document structure: headings, tables,
 // slide positions, and tracked-change status.
 //
@@ -97,7 +97,7 @@ pub struct FormatMetadata {
 
 // ─── DocumentContext ───────────────────────────────────────────────────────────
 
-/// The canonical context object produced for every Alt+M trigger.
+/// The canonical context object produced for every Alt+Ctrl+M trigger.
 /// Flows through: Context Engine → ExtractorRegistry → Swarm Brain → Agent.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DocumentContext {

@@ -84,7 +84,7 @@ class ScenarioOrchestrator:
     
     def load_manifest(self) -> Dict:
         """Load the test manifest JSON file."""
-        with open(self.manifest_path, 'r') as f:
+        with open(self.manifest_path, 'r', encoding='utf-8') as f:
             return json.load(f)
     
     def get_scenario_config(self, scenario_id: str) -> Dict:
@@ -123,7 +123,7 @@ class ScenarioOrchestrator:
                 
         except Exception as e:
             self.logger.error(f"✗ ERROR: {scenario_id} - {str(e)}")
-            return False, str(e)
+            return False, f"Error: {str(e)}"
     
     def execute_scenario_impl(self, scenario_id: str, scenario_name: str, timeout: int) -> Tuple[bool, str]:
         """
@@ -132,76 +132,58 @@ class ScenarioOrchestrator:
         import pyautogui
         self.logger.info(f"Executing scenario {scenario_id} ({scenario_name}) [REAL WORLD GUI AUTOMATION]")
         
+        import sys
+        import os
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        if script_dir not in sys.path:
+            sys.path.append(script_dir)
+            
         try:
             if "word" in self.agent_id:
-                import sys
-                sys.path.append(r"c:\Users\SANDIP\Desktop\Memory\KairoPhantom\scripts\win")
                 import scenario_word
                 return scenario_word.run_word_scenario(scenario_id, self.logger)
                 
             elif "notepad" in self.agent_id:
-                import sys
-                sys.path.append(r"c:\Users\SANDIP\Desktop\Memory\KairoPhantom\scripts\win")
                 import scenario_notepad
                 return scenario_notepad.run_notepad_scenario(scenario_id, self.logger)
                 
             elif "terminal" in self.agent_id:
-                import sys
-                sys.path.append(r"c:\Users\SANDIP\Desktop\Memory\KairoPhantom\scripts\win")
                 import scenario_terminal
                 return scenario_terminal.run_terminal_scenario(scenario_id, self.logger)
                 
             elif "ppt" in self.agent_id:
-                import sys
-                sys.path.append(r"c:\Users\SANDIP\Desktop\Memory\KairoPhantom\scripts\win")
                 import scenario_pptx
                 return scenario_pptx.run_pptx_scenario(scenario_id, self.logger)
                 
             elif "excel" in self.agent_id:
-                import sys
-                sys.path.append(r"c:\Users\SANDIP\Desktop\Memory\KairoPhantom\scripts\win")
                 import scenario_excel
                 return scenario_excel.run_excel_scenario(scenario_id, self.logger)
                 
             elif "vscode" in self.agent_id:
-                import sys
-                sys.path.append(r"c:\Users\SANDIP\Desktop\Memory\KairoPhantom\scripts\win")
                 import scenario_vscode
                 return scenario_vscode.run_vscode_scenario(scenario_id, self.logger)
 
             elif "browser" in self.agent_id:
-                import sys
-                sys.path.append(r"c:\Users\SANDIP\Desktop\Memory\KairoPhantom\scripts\win")
                 import scenario_browser
                 return scenario_browser.run_browser_scenario(scenario_id, self.logger)
 
             elif "obsidian" in self.agent_id:
-                import sys
-                sys.path.append(r"c:\Users\SANDIP\Desktop\Memory\KairoPhantom\scripts\win")
                 import scenario_obsidian
                 return scenario_obsidian.run_obsidian_scenario(scenario_id, self.logger)
 
             elif "notion" in self.agent_id:
-                import sys
-                sys.path.append(r"c:\Users\SANDIP\Desktop\Memory\KairoPhantom\scripts\win")
                 from scenario_notion_figma_slack_pdf import run_notion_scenario
                 return run_notion_scenario(scenario_id, self.logger)
 
             elif "figma" in self.agent_id:
-                import sys
-                sys.path.append(r"c:\Users\SANDIP\Desktop\Memory\KairoPhantom\scripts\win")
                 from scenario_notion_figma_slack_pdf import run_figma_scenario
                 return run_figma_scenario(scenario_id, self.logger)
 
             elif "slack" in self.agent_id:
-                import sys
-                sys.path.append(r"c:\Users\SANDIP\Desktop\Memory\KairoPhantom\scripts\win")
                 from scenario_notion_figma_slack_pdf import run_slack_scenario
                 return run_slack_scenario(scenario_id, self.logger)
 
             elif "pdf" in self.agent_id:
-                import sys
-                sys.path.append(r"c:\Users\SANDIP\Desktop\Memory\KairoPhantom\scripts\win")
                 from scenario_notion_figma_slack_pdf import run_pdf_scenario
                 return run_pdf_scenario(scenario_id, self.logger)
 
@@ -211,7 +193,7 @@ class ScenarioOrchestrator:
                 
         except Exception as e:
             self.logger.error(f"GUI Automation failed: {e}")
-            return False, str(e)
+            return False, f"Error: {e}"
             
         return True, "Successfully executed real GUI interactions"
     

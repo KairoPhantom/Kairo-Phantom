@@ -27,6 +27,12 @@ pub struct KairoCollaborativePeer {
     pub ws_sender: Option<tokio::sync::mpsc::Sender<Vec<u8>>>,
 }
 
+impl Default for KairoCollaborativePeer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl KairoCollaborativePeer {
     /// Create a new Kairo AI peer with a unique clientID.
     pub fn new() -> Self {

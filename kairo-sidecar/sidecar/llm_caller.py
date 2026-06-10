@@ -46,20 +46,50 @@ def call_with_schema(prompt: str, schema: Type[BaseModel], model: str = "ollama/
             
             content = resp_data["choices"][0]["message"]["content"].strip()
             
-            # Clean markdown formatting fences if the LLM outputted them anyway
-            if content.startswith("```json"):
-                content = content[7:]
-            elif content.startswith("```"):
-                content = content[3:]
-            if content.endswith("```"):
-                content = content[:-3]
-            content = content.strip()
+            # Robustly clean markdown code fences and extract JSON body
+            first_brace = content.find('{')
+            first_bracket = content.find('[')
+            start_idx = -1
+            if first_brace != -1 and first_bracket != -1:
+                start_idx = min(first_brace, first_bracket)
+            elif first_brace != -1:
+                start_idx = first_brace
+            elif first_bracket != -1:
+                start_idx = first_bracket
+
+            last_brace = content.rfind('}')
+            last_bracket = content.rfind(']')
+            end_idx = -1
+            if last_brace != -1 and last_bracket != -1:
+                end_idx = max(last_brace, last_bracket)
+            elif last_brace != -1:
+                end_idx = last_brace
+            elif last_bracket != -1:
+                end_idx = last_bracket
+
+            if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
+                content = content[start_idx:end_idx+1]
+            else:
+                content = content.strip()
             
             try:
                 parsed_json = json.loads(content)
                 validated = schema.model_validate(parsed_json)
                 log.info(f"Validation succeeded on attempt {attempt}")
                 return validated
+            except json.JSONDecodeError as decode_err:
+                log.warning(f"Attempt {attempt} JSON decode error: {decode_err}")
+                if attempt == 1:
+                    current_prompt = (
+                        f"{prompt}\n\n"
+                        f"Your previous response was not valid JSON. Output ONLY the JSON object, nothing else."
+                    )
+                    continue
+                else:
+                    raise StructuredOutputError(
+                        f"JSON decoding failed after 2 attempts: {decode_err}",
+                        content
+                    )
             except Exception as val_err:
                 log.warning(f"Attempt {attempt} validation error: {val_err}")
                 if attempt == 1:

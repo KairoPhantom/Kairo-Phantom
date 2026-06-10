@@ -1,5 +1,5 @@
 //! Document Health Check — P2-A1
-//! Triggered when user presses Alt+M with no text selection.
+//! Triggered when user presses Alt+Ctrl+M with no text selection.
 //! Analyzes entire document for: passive voice, brand deviation, consistency issues.
 
 use crate::document_context::DocumentContext;

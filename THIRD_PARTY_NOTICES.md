@@ -53,6 +53,7 @@ All licenses listed are compatible with the MIT license under which Kairo Phanto
 | **rusqlite** | 0.31 | MIT | https://github.com/rusqlite/rusqlite |
 | **dirs** | 5.x | MIT / Apache-2.0 | https://github.com/dirs-dev/dirs-rs |
 | **tempfile** | 3.x | MIT / Apache-2.0 | https://github.com/Stebalien/tempfile |
+| **petgraph** | 0.6.5 | MIT / Apache-2.0 | https://github.com/petgraph/petgraph |
 
 ## CRDT & Collaboration
 
@@ -154,6 +155,10 @@ The following projects influenced Kairo Phantom's architecture. Their source cod
 | **PRIME** (Preference Reasoning) | Meta-operation semantics (merge/split/generalize) | Research-inspired design |
 | **Waza** | Skill-based agent architecture | Internal design, open-spec |
 | **gl-transitions** | WGSL transition shader patterns | https://gl-transitions.com |
+| **GraphRAG** | Cognitive entity graph memory design | https://github.com/microsoft/graphrag |
+| **Hermes Agent** | Autonomous planning trace reflecting and skill creation pattern | https://github.com/airbytehq/hermes |
+| **Feynman** | Output verification via self-critique and explanation | Conceptual pattern |
+| **DSPy** | Offline prompt optimization and evaluation | https://github.com/stanfordnlp/dspy |
 
 ## Domain 8: Voice & Multimodal Input
 
@@ -222,6 +227,16 @@ The following external tools are *not* bundled with Kairo Phantom but are requir
 |:---|:---|
 | **NSAccessibilityUsageDescription** | Required in `Info.plist` for `.app` bundles. Included in `installer/macos/Info.plist`. |
 | **Accessibility permission** | Users must grant in System Settings → Privacy & Security → Accessibility. The installer (`install.sh`) detects and guides users through this step. |
+
+---
+
+## cua-driver
+
+- **Source**: https://github.com/trycua/cua/tree/main/libs/cua-driver
+- **License**: MIT
+- **Version**: Latest (installed via install.ps1)
+- **Usage**: Fallback CUA backend for screenshot capture and mouse/keyboard input when enigo fails. Used only in Tier 3 (CUA) execution path — not compiled into default builds.
+- **Note**: We use ONLY the cua-driver component, NOT the trycua VM sandbox infrastructure.
 
 ---
 

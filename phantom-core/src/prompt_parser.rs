@@ -26,7 +26,7 @@ pub struct ParsedPrompt {
 /// Strict // protocol parser.
 ///
 /// This is the single place in the codebase that decides whether
-/// Alt+M should activate the AI pipeline or silently abort.
+/// Alt+Ctrl+M should activate the AI pipeline or silently abort.
 pub struct PromptParser;
 
 impl PromptParser {
@@ -56,7 +56,7 @@ impl PromptParser {
         // A bare `//` or `// ` with only whitespace is not a valid command.
         let (mode, instruction) = CommandMode::from_prompt(trimmed);
 
-        let meaningful = instruction.trim().len() > 0;
+        let meaningful = !instruction.trim().is_empty();
         if !meaningful && mode == CommandMode::GhostWrite {
             // `//` with no instruction text — not a valid command
             return None;
@@ -98,7 +98,7 @@ mod tests {
             "Single word",
             "Fix this bug: the loop is broken",
             "TODO: improve performance",
-            "  A long paragraph that has been selected by accident when the\n  user pressed Alt+M without typing //",
+            "  A long paragraph that has been selected by accident when the\n  user pressed Alt+Ctrl+M without typing //",
         ];
 
         for text in &cases {

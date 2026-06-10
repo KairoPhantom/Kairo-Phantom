@@ -189,56 +189,63 @@ def _parse_pdf_docling(file_path: str) -> dict:
     }
 
 def _parse_pdf_mineru(file_path: str) -> dict:
-    from magic_pdf.data.data_reader_writer import FileBasedReaderWriter
-    from magic_pdf.pipe.UNIPipe import UNIPipe
-    
-    with open(file_path, "rb") as f:
-        pdf_bytes = f.read()
+    try:
+        from sidecar.parsers.mineru_parser import parse_with_mineru
+        return parse_with_mineru(file_path)
+    except Exception as e:
+        log.warning(f"parse_with_mineru failed, trying magic-pdf import fallback: {e}")
+        # Keep old import fallback logic
+        from magic_pdf.data.data_reader_writer import FileBasedReaderWriter
+        from magic_pdf.pipe.UNIPipe import UNIPipe
         
-    pipe = UNIPipe(pdf_bytes, "pdf", {})
-    pipe.pipe_classify()
-    pipe.pipe_analyze()
-    model_json = pipe.pipe_to_json()
-    
-    paragraphs = []
-    tables = []
-    p_idx = 0
-    
-    for block in model_json:
-        block_type = block.get("type", "")
-        if block_type in ("text", "title", "heading"):
-            text = block.get("text", "").strip()
-            style = "Normal"
-            level = 0
-            if block_type == "title":
-                style = "Heading1"
-                level = 1
-            elif block_type == "heading":
-                level = block.get("level", 1)
-                style = f"Heading{level}"
-                
-            paragraphs.append({
-                "index": p_idx,
-                "text": text,
-                "style": style,
-                "level": level,
-                "page": block.get("page_idx", 0) + 1,
-                "runs": [{"text": text, "bold": style.startswith("Heading"), "italic": False}]
-            })
-            p_idx += 1
-        elif block_type == "table":
-            rows = block.get("table_cells", [])
-            tables.append({
-                "after_paragraph_index": p_idx - 1,
-                "rows": rows,
-                "page": block.get("page_idx", 0) + 1
-            })
+        with open(file_path, "rb") as f:
+            pdf_bytes = f.read()
             
-    return {
-        "paragraphs": paragraphs,
-        "tables": tables,
-        "metadata": {
-            "total_paragraphs": len(paragraphs),
-            "table_count": len(tables)
+        pipe = UNIPipe(pdf_bytes, "pdf", {})
+        pipe.pipe_classify()
+        pipe.pipe_analyze()
+        model_json = pipe.pipe_to_json()
+        
+        paragraphs = []
+        tables = []
+        p_idx = 0
+        
+        for block in model_json:
+            block_type = block.get("type", "")
+            if block_type in ("text", "title", "heading"):
+                text = block.get("text", "").strip()
+                style = "Normal"
+                level = 0
+                if block_type == "title":
+                    style = "Heading1"
+                    level = 1
+                elif block_type == "heading":
+                    level = block.get("level", 1)
+                    style = f"Heading{level}"
+                    
+                paragraphs.append({
+                    "index": p_idx,
+                    "text": text,
+                    "style": style,
+                    "level": level,
+                    "page": block.get("page_idx", 0) + 1,
+                    "runs": [{"text": text, "bold": style.startswith("Heading"), "italic": False}]
+                })
+                p_idx += 1
+            elif block_type == "table":
+                rows = block.get("table_cells", [])
+                tables.append({
+                    "after_paragraph_index": p_idx - 1,
+                    "rows": rows,
+                    "page": block.get("page_idx", 0) + 1
+                })
+                
+        return {
+            "paragraphs": paragraphs,
+            "tables": tables,
+            "metadata": {
+                "total_paragraphs": len(paragraphs),
+                "table_count": len(tables)
+            }
         }
-    }
+

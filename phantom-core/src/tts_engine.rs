@@ -190,7 +190,7 @@ impl TtsEngine {
         Ok(())
     }
 
-    async fn play_wav(&self, wav_path: &PathBuf) -> Result<()> {
+    async fn play_wav(&self, wav_path: &Path) -> Result<()> {
         #[cfg(windows)]
         {
             let path_str = wav_path.to_str().unwrap_or("").replace('\\', "/");

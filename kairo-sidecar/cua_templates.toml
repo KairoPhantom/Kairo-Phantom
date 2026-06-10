@@ -1,0 +1,50 @@
+# CUA Action Templates — keyboard-first sequences for common document workflows
+# These use shortcuts, not pixel coordinates — 100% reliable
+# Stored in kairo-sidecar/cua_templates.toml and also copied to ~/.kairo-phantom/
+
+[templates.word_save_as_pdf]
+app = "Microsoft Word"
+trigger_phrases = ["save as pdf", "export pdf", "save pdf"]
+steps = [
+  { action = "KeyboardShortcut", shortcut = "SaveAs" },
+  { action = "Wait", ms = 500 },
+  { action = "KeyboardType", text_source = "filename_from_context" },
+  { action = "Wait", ms = 200 },
+]
+description = "Save current Word document as PDF via Save As dialog"
+
+[templates.excel_save_as_csv]
+app = "Microsoft Excel"
+trigger_phrases = ["save as csv", "export csv"]
+steps = [
+  { action = "KeyboardShortcut", shortcut = "SaveAs" },
+  { action = "Wait", ms = 500 },
+]
+description = "Save current Excel spreadsheet as CSV"
+
+[templates.powerpoint_export_png]
+app = "Microsoft PowerPoint"
+trigger_phrases = ["export slides", "save slides as png", "export png"]
+steps = [
+  { action = "KeyboardCombo", keys = ["alt", "f"] },
+  { action = "Wait", ms = 300 },
+  { action = "KeyboardType", text = "export" },
+  { action = "Wait", ms = 300 },
+]
+description = "Export PowerPoint slides as PNG images"
+
+[templates.select_all]
+app = "*"
+trigger_phrases = ["select all", "select everything"]
+steps = [
+  { action = "KeyboardShortcut", shortcut = "SelectAll" },
+]
+description = "Select all content in current element"
+
+[templates.undo]
+app = "*"
+trigger_phrases = ["undo", "undo that", "revert"]
+steps = [
+  { action = "KeyboardShortcut", shortcut = "Undo" },
+]
+description = "Undo last action"

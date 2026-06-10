@@ -15,7 +15,7 @@ except ImportError:
     PLAYWRIGHT_AVAILABLE = False
 
 
-def _get_page(playwright, url: str) -> Page:
+def _get_page(playwright, url: str) -> "Page":
     browser = playwright.chromium.launch(headless=False, args=["--start-maximized"])
     ctx = browser.new_context(viewport={"width": 1920, "height": 1080})
     page = ctx.new_page()
@@ -39,17 +39,17 @@ def run_browser_scenario(scenario_id: str, logger: logging.Logger):
         return _fallback_browser(scenario_id, logger)
 
     with sync_playwright() as pw:
-        if scenario_id == "G1":
+        if scenario_id in ("G1", "B1"):
             return _g1_yjs_peer(pw, logger)
-        elif scenario_id == "G2":
+        elif scenario_id in ("G2", "B2"):
             return _g2_awareness(pw, logger)
-        elif scenario_id == "G3":
+        elif scenario_id in ("G3", "B3"):
             return _g3_undo(pw, logger)
-        elif scenario_id == "G4":
+        elif scenario_id in ("G4", "B4"):
             return _g4_concurrent(pw, logger)
-        elif scenario_id == "G5":
+        elif scenario_id in ("G5", "B5"):
             return _g5_memory_style(pw, logger)
-        elif scenario_id == "G6":
+        elif scenario_id in ("G6", "B6"):
             return _g6_offline(pw, logger)
         else:
             return True, f"{scenario_id} — not yet implemented"
@@ -239,7 +239,7 @@ def _g5_memory_style(pw, logger):
 
     memory_vault_path = os.environ.get(
         "KAIRO_MEMORY_VAULT",
-        r"C:\Users\SANDIP\AppData\Roaming\kairo-phantom\memory_vault.json"
+        os.path.join(os.path.expanduser("~"), "AppData", "Roaming", "kairo-phantom", "memory_vault.json")
     )
 
     try:

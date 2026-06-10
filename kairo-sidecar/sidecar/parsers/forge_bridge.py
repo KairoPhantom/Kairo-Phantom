@@ -82,6 +82,34 @@ class ForgeValidator:
         "EXP": (1, 1),
     }
 
+    def _fix_single_quotes(self, formula: str) -> str:
+        if "'" not in formula:
+            return formula
+        i = 0
+        in_single_quote = False
+        quote_start = -1
+        while i < len(formula):
+            char = formula[i]
+            if char == "'":
+                if not in_single_quote:
+                    in_single_quote = True
+                    quote_start = i
+                else:
+                    is_sheet = False
+                    j = i + 1
+                    while j < len(formula) and formula[j].isspace():
+                        j += 1
+                    if j < len(formula) and formula[j] == '!':
+                        is_sheet = True
+                    
+                    if is_sheet:
+                        in_single_quote = False
+                    else:
+                        formula = formula[:quote_start] + '"' + formula[quote_start+1:i] + '"' + formula[i+1:]
+                        return self._fix_single_quotes(formula)
+            i += 1
+        return formula
+
     def validate(self, formula: str, context: dict | None = None) -> dict:
         """
         Validate formula and return full details.
@@ -95,6 +123,9 @@ class ForgeValidator:
                 "confidence": 0.0,
                 "explanation": "",
             }
+
+        # Convert single quotes to double quotes for text literals
+        formula = self._fix_single_quotes(formula)
 
         # 1. Missing '=' prefix check & correction
         formula_stripped = formula.strip()

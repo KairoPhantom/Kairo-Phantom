@@ -40,7 +40,7 @@ kairo start
 You should see:
 ```
 ✓ Kairo Phantom v0.3.0 running
-✓ Hotkey: Alt+M registered
+✓ Hotkey: Alt+Ctrl+M registered
 ✓ Backend: Ollama (offline)
 ✓ Memory: ~/.kairo-phantom/memory.db
 ```
@@ -54,7 +54,7 @@ You should see:
    ```
    // rewrite this in formal business English
    ```
-3. Press **Alt+M**
+3. Press **Alt+Ctrl+M**
 4. Watch the ghost-text appear
 5. Press **Tab** to accept, **Esc** to reject
 
@@ -94,7 +94,7 @@ backend = "ollama"          # or "openai", "anthropic", "nvidia-nim"
 model   = "qwen2.5-coder:14b"
 
 [hotkey]
-trigger = "alt+m"           # customize if alt+m conflicts
+trigger = "alt+ctrl+m"      # customize if alt+ctrl+m conflicts
 
 [memory]
 enabled = true              # set false to disable learning
@@ -116,7 +116,7 @@ kairo --help          # full command reference
 
 ## Troubleshooting
 
-**"Alt+M not responding"**
+**"Alt+Ctrl+M not responding"**
 - Run `kairo status` — is the daemon running?
 - On macOS: grant Accessibility permission in System Preferences → Privacy & Security → Accessibility
 - On Linux: ensure `AT-SPI2` is enabled (`gsettings set org.gnome.desktop.interface toolkit-accessibility true`)

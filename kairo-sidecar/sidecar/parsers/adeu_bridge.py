@@ -33,9 +33,33 @@ log = logging.getLogger("kairo-sidecar.adeu_bridge")
 # Capability detection (safe — never raises)
 # ---------------------------------------------------------------------------
 
+def _get_adeu_cmd() -> str:
+    """Resolve the absolute path to adeu.exe, falling back to python scripts folder on Windows."""
+    which_res = shutil.which("adeu")
+    if which_res is not None:
+        return which_res
+    import sys
+    if sys.platform == "win32":
+        import os
+        user_profile = os.environ.get("USERPROFILE", "")
+        # Standard Python User Scripts path
+        fallback_path = os.path.join(user_profile, "AppData", "Roaming", "Python", f"Python{sys.version_info.major}{sys.version_info.minor}", "Scripts", "adeu.exe")
+        if os.path.exists(fallback_path):
+            return fallback_path
+        # Alternative path
+        app_data = os.environ.get("APPDATA", "")
+        fallback_path_2 = os.path.join(app_data, "Python", "Scripts", "adeu.exe")
+        if os.path.exists(fallback_path_2):
+            return fallback_path_2
+    return "adeu"
+
+
 def _adeu_installed() -> bool:
-    """True if the `adeu` CLI is available in PATH."""
-    return shutil.which("adeu") is not None
+    """True if the `adeu` CLI is available in PATH or resolved locally."""
+    cmd = _get_adeu_cmd()
+    if cmd == "adeu":
+        return shutil.which("adeu") is not None
+    return Path(cmd).exists()
 
 
 def _adeu_sdk_available() -> bool:
@@ -56,11 +80,31 @@ def _word_is_open_with_file(file_path: str) -> bool:
         import sys
         if sys.platform != "win32":
             return False
-        import win32com.client  # type: ignore
-        word = win32com.client.GetActiveObject("Word.Application")
-        for doc in word.Documents:
-            if Path(doc.FullName).resolve() == Path(file_path).resolve():
-                return True
+        
+        import subprocess
+        word_running = False
+        try:
+            out = subprocess.run(["tasklist", "/FI", "IMAGENAME eq winword.exe"], capture_output=True, text=True)
+            word_running = "winword.exe" in out.stdout.lower()
+        except Exception:
+            pass
+
+        if not word_running:
+            return False
+
+        import win32com.client
+        target = Path(file_path).resolve()
+        try:
+            doc = win32com.client.GetObject(str(target))
+            return True
+        except Exception:
+            try:
+                word = win32com.client.GetActiveObject("Word.Application")
+                for doc in word.Documents:
+                    if Path(doc.FullName).resolve() == target:
+                        return True
+            except Exception:
+                pass
         return False
     except Exception:
         return False
@@ -79,7 +123,9 @@ def adeu_read_document(file_path: str) -> dict:
             "ok": True,
             "data": {
                 "full_text": str,          # CriticMarkup markdown
-                "paragraphs": [...],       # indexed paragraph list
+                "paragraphs": [...],       # indexed paragraph list with style
+                "headings": [...],         # indexed headings list
+                "paragraph_count": int,
                 "format": "criticmarkup",
             }
         }
@@ -95,7 +141,7 @@ def adeu_read_document(file_path: str) -> dict:
     os.close(tmp_fd)
     try:
         result = subprocess.run(
-            ["adeu", "extract", file_path, "-o", tmp_path],
+            [_get_adeu_cmd(), "extract", file_path, "-o", tmp_path],
             check=True,
             capture_output=True,
             text=True,
@@ -105,15 +151,32 @@ def adeu_read_document(file_path: str) -> dict:
             markdown = f.read()
 
         paragraphs = _parse_markdown_to_paragraphs(markdown)
+        for p in paragraphs:
+            if p["is_heading"]:
+                p["style"] = f"Heading {p['level']}"
+            else:
+                p["style"] = "Normal"
+
+        headings = [
+            {
+                "index": p["index"],
+                "level": p["level"],
+                "text": p["text"],
+            }
+            for p in paragraphs if p["is_heading"]
+        ]
+
         log.info(
-            "adeu_read_document OK: %d chars, %d paragraphs from %s",
-            len(markdown), len(paragraphs), file_path,
+            "adeu_read_document OK: %d chars, %d paragraphs, %d headings from %s",
+            len(markdown), len(paragraphs), len(headings), file_path,
         )
         return {
             "ok": True,
             "data": {
                 "full_text": markdown,
                 "paragraphs": paragraphs,
+                "headings": headings,
+                "paragraph_count": len(paragraphs),
                 "format": "criticmarkup",
                 "file_path": file_path,
             },
@@ -177,25 +240,48 @@ def adeu_apply_edits(
 def adeu_read_live_document() -> dict:
     """
     Read the currently active Word document via Adeu's COM bridge.
-    Windows only; requires `adeu read-active` CLI command.
+    Windows only; requires `adeu extract --live` CLI command.
     """
     if not _adeu_installed():
         return _unavailable("adeu CLI not installed")
     try:
         result = subprocess.run(
-            ["adeu", "read-active"],
+            [_get_adeu_cmd(), "extract", "--live"],
             capture_output=True,
             text=True,
-            timeout=15,
+            timeout=20,
         )
         if result.returncode != 0:
-            return _error(f"adeu read-active failed: {result.stderr[:400]}")
-        data = json.loads(result.stdout)
-        return {"ok": True, "data": data}
+            return _error(f"adeu extract --live failed: {result.stderr[:400]}")
+        markdown = result.stdout
+        paragraphs = _parse_markdown_to_paragraphs(markdown)
+        for p in paragraphs:
+            if p["is_heading"]:
+                p["style"] = f"Heading {p['level']}"
+            else:
+                p["style"] = "Normal"
+
+        headings = [
+            {
+                "index": p["index"],
+                "level": p["level"],
+                "text": p["text"],
+            }
+            for p in paragraphs if p["is_heading"]
+        ]
+
+        return {
+            "ok": True,
+            "data": {
+                "full_text": markdown,
+                "paragraphs": paragraphs,
+                "headings": headings,
+                "paragraph_count": len(paragraphs),
+                "format": "criticmarkup",
+            },
+        }
     except subprocess.TimeoutExpired:
-        return _error("adeu read-active timed out")
-    except json.JSONDecodeError:
-        return _error("adeu read-active returned invalid JSON")
+        return _error("adeu extract --live timed out")
     except Exception:
         return _error(traceback.format_exc())
 
@@ -217,7 +303,7 @@ def adeu_sanitize(file_path: str, output_path: str | None = None) -> dict:
 
     try:
         subprocess.run(
-            ["adeu", "sanitize", file_path, "-o", output_path],
+            [_get_adeu_cmd(), "sanitize", file_path, "-o", output_path],
             check=True,
             capture_output=True,
             text=True,
@@ -326,7 +412,7 @@ def _adeu_cli_apply(
 
         subprocess.run(
             [
-                "adeu", "apply", file_path,
+                _get_adeu_cmd(), "apply", file_path,
                 "--edits", tmp_json,
                 "--author", author,
                 "-o", output_path,
@@ -364,7 +450,7 @@ def _adeu_live_apply(
     author: str,
 ) -> dict:
     """
-    Live COM-macro injection via `adeu process-active`.
+    Live COM-macro injection via `adeu apply --live`.
     Only called when Word has the file open.
     """
     tmp_fd, tmp_json = tempfile.mkstemp(suffix=".json")
@@ -375,8 +461,9 @@ def _adeu_live_apply(
 
         result = subprocess.run(
             [
-                "adeu", "process-active",
-                "--edits", tmp_json,
+                _get_adeu_cmd(), "apply",
+                tmp_json,
+                "--live",
                 "--author", author,
             ],
             capture_output=True,
@@ -384,7 +471,7 @@ def _adeu_live_apply(
             timeout=20,
         )
         if result.returncode != 0:
-            return _error(f"adeu process-active failed: {result.stderr[:400]}")
+            return _error(f"adeu apply --live failed: {result.stderr[:400]}")
 
         log.info("adeu_live_apply OK: %d edits injected via COM", len(edits))
         return {

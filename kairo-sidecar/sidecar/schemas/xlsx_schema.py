@@ -74,7 +74,26 @@ class GenerateFormulaOp(BaseModel):
     description: str
     target_cell: str
 
-ExcelOperation = Union[WriteCellOp, WriteRangeOp, ExplainFormulaOp, GenerateFormulaOp]
+class CreateChartOp(BaseModel):
+    type: Literal["create_chart"] = "create_chart"
+    sheet: str = "Sheet1"
+    source_range: str
+    chart_type: str = "column"
+    title: str = "Chart"
+    target_sheet: Optional[str] = None
+    cell: Optional[str] = None
+
+class CreatePivotOp(BaseModel):
+    type: Literal["create_pivot"] = "create_pivot"
+    sheet: str = "Sheet1"
+    source_range: str
+    rows: List[str] = []
+    columns: List[str] = []
+    values: List[str] = []
+    target_sheet: str
+    cell: Optional[str] = None
+
+ExcelOperation = Union[WriteCellOp, WriteRangeOp, ExplainFormulaOp, GenerateFormulaOp, CreateChartOp, CreatePivotOp]
 
 class ExcelResponse(BaseModel):
     operations: List[ExcelOperation]

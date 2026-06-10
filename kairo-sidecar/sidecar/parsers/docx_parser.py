@@ -18,14 +18,25 @@ def parse_docx(file_path: str) -> dict:
       "metadata": {"total_paragraphs": int, "heading_count": int, "table_count": int, "file_path": str, "parse_timestamp": str}
     }
     
-    Uses 3-tier parsing chain:
+    Uses 4-tier parsing chain:
+    Tier 0: win32com (reads live Word document — bypasses file lock)
     Tier 1: MinerU (optional, highly accurate layout parser)
     Tier 2: Mammoth (HTML extraction + BeautifulSoup)
     Tier 3: python-docx (direct XML extraction)
     """
     file_path_abs = str(Path(file_path).resolve())
-    
-    # 1. Check Cache
+
+    # Tier 0: Try COM first (Word is almost always open during testing)
+    try:
+        result = _parse_docx_com(file_path_abs)
+        if result:
+            log.info(f"Tier 0 parser (COM/Word) succeeded for {file_path_abs}")
+            # Don't cache COM result — it changes per keystroke
+            return result
+    except Exception as e:
+        log.debug(f"Tier 0 COM parser failed (normal if Word not open): {e}")
+
+    # 1. Check Cache (only for file-based parsers)
     cached_data = DocumentCache.get(file_path_abs)
     if cached_data:
         log.info(f"Using cached parse output for: {file_path_abs}")
@@ -68,6 +79,109 @@ def parse_docx(file_path: str) -> dict:
     # Save to Cache on success
     DocumentCache.set(file_path_abs, result)
     return result
+
+
+def _parse_docx_com(file_path: str) -> dict:
+    """
+    Reads the live open Word document via COM automation.
+    This bypasses the file lock that Word holds when a doc is open.
+    Returns None if Word is not running or the file is not open.
+    """
+    import win32com.client
+    import pythoncom
+    import subprocess
+    pythoncom.CoInitialize()
+    
+    word = None
+    target_doc = None
+    path = Path(file_path).resolve()
+    
+    word_running = False
+    try:
+        out = subprocess.run(["tasklist", "/FI", "IMAGENAME eq winword.exe"], capture_output=True, text=True)
+        word_running = "winword.exe" in out.stdout.lower()
+    except Exception:
+        pass
+        
+    if word_running:
+        try:
+            target_doc = win32com.client.GetObject(str(path))
+            word = target_doc.Application
+        except Exception:
+            try:
+                word = win32com.client.GetActiveObject("Word.Application")
+                for doc in word.Documents:
+                    try:
+                        if Path(doc.FullName).resolve() == path:
+                            target_doc = doc
+                            break
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+    
+    if not target_doc:
+        return None  # File not open in Word
+    
+    paragraphs = []
+    tables = []
+    p_idx = 0
+    
+    for i in range(1, target_doc.Paragraphs.Count + 1):
+        p = target_doc.Paragraphs(i)
+        text = p.Range.Text.rstrip("\r\n\x0d\x07")  # Strip Word paragraph marks
+        style_name = "Normal"
+        level = 0
+        try:
+            style_name = p.Style.NameLocal
+        except Exception:
+            pass
+        
+        if "Heading" in style_name:
+            try:
+                level = int(style_name.split()[-1])
+            except Exception:
+                level = 1
+        
+        runs = [{"text": text, "bold": bool(p.Range.Bold), "italic": bool(p.Range.Italic)}]
+        paragraphs.append({
+            "index": p_idx,
+            "text": text,
+            "style": style_name,
+            "level": level,
+            "runs": runs
+        })
+        p_idx += 1
+    
+    # Extract tables
+    for t_idx in range(1, target_doc.Tables.Count + 1):
+        table = target_doc.Tables(t_idx)
+        rows = []
+        for r in range(1, table.Rows.Count + 1):
+            row = []
+            for c in range(1, table.Columns.Count + 1):
+                try:
+                    row.append(table.Cell(r, c).Range.Text.rstrip("\r\n\x0d\x07"))
+                except Exception:
+                    row.append("")
+            rows.append(row)
+        tables.append({"after_paragraph_index": p_idx - 1, "rows": rows})
+    
+    headings_count = sum(1 for p in paragraphs if p["level"] > 0)
+    
+    return {
+        "paragraphs": paragraphs,
+        "tables": tables,
+        "metadata": {
+            "total_paragraphs": len(paragraphs),
+            "heading_count": headings_count,
+            "table_count": len(tables),
+            "file_path": file_path,
+            "parse_timestamp": datetime.datetime.now().isoformat(),
+            "source": "com"
+        }
+    }
+
 
 
 def _parse_docx_mineru(file_path: str) -> dict:

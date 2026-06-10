@@ -1,7 +1,7 @@
 """
 Excel SmartContextCapture — Pi-inspired auto-context injection for Kairo Phantom.
 ==================================================================================
-Captures rich workbook context before every Alt+M press in Excel.
+Captures rich workbook context before every Alt+Ctrl+M press in Excel.
 The user never needs to describe what they're looking at.
 
 Pattern adopted from tmustier/pi-for-excel:
@@ -48,12 +48,54 @@ class ExcelContextCapture:
             log.warning("ExcelContextCapture: file not found: %s", file_path)
             return _empty_context(active_cell)
 
+        active_sheet = None
+        try:
+            import win32com.client
+            import pythoncom
+            import subprocess
+            pythoncom.CoInitialize()
+            
+            excel_running = False
+            try:
+                out = subprocess.run(["tasklist", "/FI", "IMAGENAME eq excel.exe"], capture_output=True, text=True)
+                excel_running = "excel.exe" in out.stdout.lower()
+            except Exception:
+                pass
+                
+            if excel_running:
+                target_path = str(Path(file_path).resolve())
+                wb_com = None
+                xl = None
+                try:
+                    wb_com = win32com.client.GetObject(target_path)
+                    xl = wb_com.Application
+                    active_sheet = wb_com.ActiveSheet.Name
+                    active_cell = xl.ActiveCell.Address.replace("$", "")
+                    log.info(f"Excel COM detected active sheet via moniker: {active_sheet}, cell: {active_cell}")
+                except Exception:
+                    try:
+                        xl = win32com.client.GetActiveObject("Excel.Application")
+                        for wb in xl.Workbooks:
+                            if str(Path(wb.FullName).resolve()) == target_path:
+                                wb_com = wb
+                                active_sheet = wb_com.ActiveSheet.Name
+                                active_cell = xl.ActiveCell.Address.replace("$", "")
+                                log.info(f"Excel COM detected active sheet via fallback: {active_sheet}, cell: {active_cell}")
+                                break
+                    except Exception:
+                        pass
+        except Exception as e:
+            log.debug(f"Could not get Excel active info via COM: {e}")
+
         try:
             import openpyxl
             from openpyxl.utils import column_index_from_string, get_column_letter
 
             wb = openpyxl.load_workbook(str(path), data_only=False)
-            ws = wb.active
+            if active_sheet and active_sheet in wb.sheetnames:
+                ws = wb[active_sheet]
+            else:
+                ws = wb.active
 
             # Parse active cell
             if active_cell:

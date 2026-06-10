@@ -86,7 +86,7 @@ impl Plan {
         for step in &self.steps {
             s.push_str(&format!("//   [ ] Step {}: {}\n", step.index, step.description));
         }
-        s.push_str("// [Press Alt+M to execute this plan, Esc to cancel]");
+        s.push_str("// [Press Alt+Ctrl+M to execute this plan, Esc to cancel]");
         s
     }
 }

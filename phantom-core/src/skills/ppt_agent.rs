@@ -47,7 +47,7 @@ impl PptAgent {
         Ok(result)
     }
 
-    /// Asynchronously captures presentation context before Alt+M operations.
+    /// Asynchronously captures presentation context before Alt+Ctrl+M operations.
     pub async fn capture_presentation_context(
         presentation_id: &str,
         slide_index: Option<usize>,

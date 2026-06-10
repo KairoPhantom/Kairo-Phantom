@@ -69,7 +69,7 @@ pub fn run_setup_wizard() -> Result<PhantomConfig> {
     // ── Step 3: Hotkey ───────────────────────────────────────────────────────
     println!("  Step 3/3 — Choose your activation hotkey:");
     println!();
-    println!("    [1] Alt+M      (recommended — no conflicts)");
+    println!("    [1] Alt+Ctrl+M (recommended — no conflicts)");
     println!("    [2] Ctrl+K     (common in VS Code, may conflict)");
     println!("    [3] Ctrl+Space (may conflict with IME/accessibility)");
     println!("    [4] Custom     (type your own)");
@@ -86,7 +86,7 @@ pub fn run_setup_wizard() -> Result<PhantomConfig> {
             io::stdout().flush()?;
             read_line()?.trim().to_string()
         }
-        _ => "alt+m".to_string(),
+        _ => "alt+ctrl+m".to_string(),
     };
 
     println!();

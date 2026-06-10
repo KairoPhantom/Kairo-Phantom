@@ -5,20 +5,15 @@ use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 
 /// Extraction tier used by the Python sidecar engine.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum ExtractionTier {
     PyMuPdf,
     OpenDataLoader,
     OlmOcr,
     Surya,
+    #[default]
     Unknown,
-}
-
-impl Default for ExtractionTier {
-    fn default() -> Self {
-        Self::Unknown
-    }
 }
 
 impl std::fmt::Display for ExtractionTier {
