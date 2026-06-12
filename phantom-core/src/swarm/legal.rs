@@ -131,6 +131,9 @@ impl CuadScanner {
 impl SwarmAgent for LegalPlusAgent {
     fn id(&self) -> &str { "legal" }
     fn name(&self) -> &str { "Legal Document Specialist" }
+    fn capability(&self) -> crate::plugin::DomainCapability {
+        crate::plugin::DomainCapability::Real
+    }
     fn build_system_prompt(&self, doc_ctx: &DocumentContext) -> String {
         let base = crate::ai::KAIRO_SYSTEM_PROMPT;
         let doc_fragment = doc_ctx.to_system_prompt_fragment();

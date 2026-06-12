@@ -258,6 +258,10 @@ impl SwarmOrchestrator {
 
         (backend, profile)
     }
+
+    pub fn get_domain_capability(&self, domain_id: &str) -> Option<crate::plugin::DomainCapability> {
+        self.registry.get_agent(domain_id).map(|a| a.capability())
+    }
 }
 
 pub struct TestFallbackBackend;

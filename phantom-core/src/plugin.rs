@@ -13,6 +13,12 @@ pub trait AppFingerprinter: Send + Sync {
     fn fingerprint(&self, process_name: &str, window_title: &str) -> Option<AppEnvironment>;
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub enum DomainCapability {
+    Real,
+    PromptOnly,
+}
+
 /// Trait for a specialized AI agent in the swarm.
 pub trait SwarmAgent: Send + Sync {
     /// The unique identifier for this agent.
@@ -27,6 +33,11 @@ pub trait SwarmAgent: Send + Sync {
     /// Returns whether this agent is a good fit for the current context.
     /// Higher score = better fit.
     fn match_score(&self, doc_ctx: &DocumentContext) -> u8;
+
+    /// Returns the capability level of the domain (Real vs PromptOnly).
+    fn capability(&self) -> DomainCapability {
+        DomainCapability::PromptOnly
+    }
 }
 
 /// Registry for fingerprinters.
