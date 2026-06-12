@@ -9,12 +9,32 @@ from sidecar.parsers.pptx_mcp_bridge import PptxMcpBridge
 
 log = logging.getLogger("kairo-sidecar.deeppresenter_bridge")
 
+from pydantic import BaseModel, Field
+from typing import List
+
+class FallbackSlide(BaseModel):
+    title: str = Field(description="Title of the slide")
+    content: str = Field(default="", description="Subtitle or quick description for the slide")
+    bullets: List[str] = Field(default_factory=list, description="3-5 bullet points detailing key information for the slide")
+
+class FallbackPresentationOutline(BaseModel):
+    slides: List[FallbackSlide] = Field(description="List of slides in the presentation")
+
 class DeepPresenterBridge:
     """Provides DeepPresenter-9B slide generation capabilities."""
 
     def __init__(self, offline_mode: bool = True):
         self.offline_mode = offline_mode
         self.bridge = PptxMcpBridge()
+
+    def check_health(self) -> bool:
+        """Perform a HTTP GET health check on localhost:8765/health to confirm status."""
+        import urllib.request
+        try:
+            with urllib.request.urlopen("http://localhost:8765/health", timeout=2) as response:
+                return response.status == 200
+        except Exception:
+            return False
 
     def generate_presentation(self,
                               topic: str,
@@ -29,9 +49,12 @@ class DeepPresenterBridge:
         if output_dir is None:
             output_dir = tempfile.mkdtemp(prefix="kairo_ppt_")
             
-        if not self.is_available():
-            log.info("DeepPresenter CLI not available, using programmatic fallback template engine")
-            return self._generate_fallback(topic, slide_count, style, output_dir)
+        if not self.is_available() or not self.check_health():
+            log.info("DeepPresenter CLI or server not available, using programmatic fallback template engine")
+            res = self._generate_fallback(topic, slide_count, style, output_dir)
+            res["status"] = "fallback"
+            res["message"] = "PPT intelligence offline — DeepPresenter-9B not available at localhost:8765. Using basic python-pptx template."
+            return res
 
         pptx_path = os.path.join(output_dir, "presentation.pptx")
         cmd = [
@@ -83,8 +106,8 @@ class DeepPresenterBridge:
 
         pptx_path = os.path.join(output_dir, "presentation.pptx")
 
-        if not self.is_available():
-            log.info("DeepPresenter CLI not available, using programmatic fallback from outline")
+        if not self.is_available() or not self.check_health():
+            log.info("DeepPresenter CLI or server not available, using programmatic fallback from outline")
             pres_id = self.bridge.create_presentation(outline[0].get("title", "Presentation"))
             
             for i, slide in enumerate(outline):
@@ -152,31 +175,48 @@ class DeepPresenterBridge:
         """Generates a high-quality presentation structure programmatically."""
         pres_id = self.bridge.create_presentation(topic)
         
-        # Build standard slides based on the topic
-        slides = [
-            {"title": topic, "content": "An Executive Briefing", "bullets": []},
-            {"title": "Executive Summary", "bullets": [
-                f"Addressing core challenges in {topic}",
-                "Leveraging cutting-edge architectural patterns",
-                "Delivering 10x performance improvements",
-                "Ready for immediate enterprise deployment"
-            ]},
-            {"title": "The Core Challenge", "bullets": [
-                "Legacy systems suffer from high latency",
-                "Integration overhead delays feature delivery",
-                "Data leakage risk in public cloud APIs"
-            ]},
-            {"title": "Our Innovation", "bullets": [
-                "Fully local offline execution mode",
-                "Smart structural analysis engines",
-                "Automated style & brand alignment"
-            ]},
-            {"title": "Strategic Roadmap", "bullets": [
-                "Phase 1: Foundation development",
-                "Phase 2: Live sidecar bridge routing",
-                "Phase 3: Production scale validation"
-            ]}
-        ]
+        slides = []
+        try:
+            from sidecar.llm_caller import call_with_schema
+            prompt = (
+                f"Generate a slide presentation outline on the topic: '{topic}'.\n"
+                f"Create exactly {slide_count} slides.\n"
+                f"The style of the presentation should be '{style}'.\n"
+                f"Output a JSON object with a 'slides' array containing objects with 'title', 'content', and 'bullets' fields."
+            )
+            outline_data = call_with_schema(prompt, FallbackPresentationOutline, timeout=30.0)
+            for s in outline_data.slides:
+                slides.append({
+                    "title": s.title,
+                    "content": s.content,
+                    "bullets": s.bullets
+                })
+        except Exception as e:
+            log.error(f"Failed to generate LLM slide outline: {e}. Using basic template.")
+            # Build topic-specific slides based on the topic
+            slides = [
+                {"title": topic, "content": f"A Presentation on {topic}", "bullets": []},
+                {"title": f"Introduction to {topic}", "bullets": [
+                    f"Overview and core concepts of {topic}",
+                    f"Key objectives and focus areas of {topic}",
+                    f"Target audience and scope of {topic}"
+                ]},
+                {"title": f"Core Aspects of {topic}", "bullets": [
+                    f"Primary components and features of {topic}",
+                    f"Methodologies and best practices in {topic}",
+                    f"Common challenges and solutions for {topic}"
+                ]},
+                {"title": f"Strategic Value of {topic}", "bullets": [
+                    f"Business and technical impact of {topic}",
+                    f"Efficiency gains and optimization via {topic}",
+                    f"Future trends and developments in {topic}"
+                ]},
+                {"title": f"Conclusion & Next Steps", "bullets": [
+                    f"Summary of key findings about {topic}",
+                    f"Implementation roadmap and actions for {topic}",
+                    "Open discussion and Q&A session"
+                ]}
+            ]
 
         # Make sure slide_count matches what was requested
         final_slides = []
@@ -185,11 +225,11 @@ class DeepPresenterBridge:
                 final_slides.append(slides[i])
             else:
                 final_slides.append({
-                    "title": f"Key Milestone {i - len(slides) + 1}",
+                    "title": f"Additional Details on {topic} (Part {i - len(slides) + 1})",
                     "bullets": [
-                        f"Detailed analysis on component {i}",
-                        "Verification steps successfully passed",
-                        "Continuous performance monitoring"
+                        f"In-depth analysis of specific {topic} subtopics",
+                        f"Supporting data and evidence for {topic}",
+                        f"Case studies and examples related to {topic}"
                     ]
                 })
 
@@ -197,7 +237,7 @@ class DeepPresenterBridge:
             if i == 0:
                 continue
             self.bridge.add_slide(pres_id, title=s["title"])
-            if s["bullets"]:
+            if s.get("bullets"):
                 self.bridge.add_bullet_points(pres_id, i, s["bullets"])
 
         self.bridge.apply_theme_colors(pres_id, "Modern Blue")
