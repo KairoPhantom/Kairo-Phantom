@@ -1,4 +1,4 @@
-/// Real Windows keyboard injector — uses SendInput + clipboard for actual text injection.
+/// Real cross-platform keyboard injector — uses PlatformInjector for actual text injection.
 /// v2.0 PRODUCTION REWRITE:
 /// - Removed backspace-based erase_prompt (unreliable: backspaces miss document body focus)
 /// - New strategy: Home + Shift+End + Ctrl+V (select current line → replace with paste)
@@ -7,20 +7,6 @@
 
 use std::thread;
 use std::time::Duration;
-
-#[cfg(windows)]
-use windows::Win32::UI::Input::KeyboardAndMouse::{
-    SendInput, INPUT, INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_KEYUP, KEYEVENTF_UNICODE,
-    VK_BACK, VK_ESCAPE, VK_RETURN, VK_CONTROL, VK_END, VK_HOME, VK_SHIFT, VK_DELETE, VK_LEFT,
-    VIRTUAL_KEY, KEYBD_EVENT_FLAGS,
-};
-#[cfg(windows)]
-use windows::Win32::Foundation::LPARAM;
-#[cfg(windows)]
-use windows::Win32::UI::WindowsAndMessaging::{
-    PostMessageW, SetForegroundWindow, GetForegroundWindow,
-    BringWindowToTop, ShowWindow, SW_SHOW,
-};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum SpeedProfile {
@@ -33,6 +19,7 @@ pub enum SpeedProfile {
 pub struct HumanizedInjector {
     pub profile: SpeedProfile,
     delay_ms: u64,
+    platform_injector: Box<dyn crate::platform::PlatformInjector>,
 }
 
 impl HumanizedInjector {
@@ -46,81 +33,24 @@ impl HumanizedInjector {
         } else {
             SpeedProfile::Readable
         };
-        Self { profile, delay_ms }
+        Self {
+            profile,
+            delay_ms,
+            platform_injector: crate::platform::new_injector(),
+        }
     }
 
-    // ─── Core: Send a single Unicode character via SendInput ─────────────────
+    // ─── Core: Send a single Unicode character via PlatformInjector ──────────
 
-    #[cfg(windows)]
-    fn send_char(c: char) {
-        let code = c as u16;
-        let inputs = [
-            INPUT {
-                r#type: INPUT_KEYBOARD,
-                Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
-                    ki: KEYBDINPUT {
-                        wVk: VIRTUAL_KEY(0),
-                        wScan: code,
-                        dwFlags: KEYEVENTF_UNICODE,
-                        time: 0,
-                        dwExtraInfo: 0,
-                    },
-                },
-            },
-            INPUT {
-                r#type: INPUT_KEYBOARD,
-                Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
-                    ki: KEYBDINPUT {
-                        wVk: VIRTUAL_KEY(0),
-                        wScan: code,
-                        dwFlags: KEYEVENTF_UNICODE | KEYEVENTF_KEYUP,
-                        time: 0,
-                        dwExtraInfo: 0,
-                    },
-                },
-            },
-        ];
-        unsafe { SendInput(&inputs, std::mem::size_of::<INPUT>() as i32); }
+    fn send_char(&self, c: char) {
+        self.platform_injector.send_char(c);
     }
-
-    #[cfg(not(windows))]
-    fn send_char(_c: char) {}
 
     // ─── Core: Send a virtual key down+up ────────────────────────────────────
 
-    #[cfg(windows)]
-    fn send_vk(vk: VIRTUAL_KEY) {
-        let inputs = [
-            INPUT {
-                r#type: INPUT_KEYBOARD,
-                Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
-                    ki: KEYBDINPUT {
-                        wVk: vk,
-                        wScan: 0,
-                        dwFlags: KEYBD_EVENT_FLAGS(0),
-                        time: 0,
-                        dwExtraInfo: 0,
-                    },
-                },
-            },
-            INPUT {
-                r#type: INPUT_KEYBOARD,
-                Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
-                    ki: KEYBDINPUT {
-                        wVk: vk,
-                        wScan: 0,
-                        dwFlags: KEYEVENTF_KEYUP,
-                        time: 0,
-                        dwExtraInfo: 0,
-                    },
-                },
-            },
-        ];
-        unsafe { SendInput(&inputs, std::mem::size_of::<INPUT>() as i32); }
+    fn send_vk(&self, vk: u16) {
+        self.platform_injector.send_vk(vk);
     }
-
-    #[cfg(not(windows))]
-    fn send_vk(_vk: u16) {}
 
     // ─── Production Injection Strategy ───────────────────────────────────────
     //
@@ -140,17 +70,12 @@ impl HumanizedInjector {
     /// PRIMARY injection method: set clipboard FIRST (before focus switch),
     /// then caller does BringWindowToTop + 300ms sleep, then calls inject_replace_line().
     pub fn prepare_clipboard(&self, text: &str) -> bool {
-        #[cfg(windows)]
-        {
-            if !Self::set_clipboard(text) {
-                tracing::warn!("Clipboard set failed");
-                return false;
-            }
-            tracing::info!("Clipboard ready: {} chars", text.len());
-            true
+        if !self.platform_injector.set_clipboard(text) {
+            tracing::warn!("Clipboard set failed");
+            return false;
         }
-        #[cfg(not(windows))]
-        { true }
+        tracing::info!("Clipboard ready: {} chars", text.len());
+        true
     }
 
     /// SECONDARY injection: select the current line and replace it with clipboard content.
@@ -158,92 +83,11 @@ impl HumanizedInjector {
     ///
     /// Sequence: Home → Shift+End → (optional: Delete) → Ctrl+V
     pub fn inject_replace_line(&self) {
-        #[cfg(windows)]
-        {
-            tracing::info!("Sending Home + Shift+End + Ctrl+V (select line → paste)");
-
-            // Home: go to beginning of current line
-            Self::send_vk(VK_HOME);
-            thread::sleep(Duration::from_millis(50));
-            
-            // Shift+End: select to end of line
-            let shift_end = [
-                INPUT {
-                    r#type: INPUT_KEYBOARD,
-                    Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
-                        ki: KEYBDINPUT {
-                            wVk: VK_SHIFT,
-                            wScan: 0,
-                            dwFlags: KEYBD_EVENT_FLAGS(0),
-                            time: 0,
-                            dwExtraInfo: 0,
-                        },
-                    },
-                },
-                INPUT {
-                    r#type: INPUT_KEYBOARD,
-                    Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
-                        ki: KEYBDINPUT {
-                            wVk: VK_END,
-                            wScan: 0,
-                            dwFlags: KEYBD_EVENT_FLAGS(0),
-                            time: 0,
-                            dwExtraInfo: 0,
-                        },
-                    },
-                },
-                INPUT {
-                    r#type: INPUT_KEYBOARD,
-                    Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
-                        ki: KEYBDINPUT {
-                            wVk: VK_END,
-                            wScan: 0,
-                            dwFlags: KEYEVENTF_KEYUP,
-                            time: 0,
-                            dwExtraInfo: 0,
-                        },
-                    },
-                },
-                INPUT {
-                    r#type: INPUT_KEYBOARD,
-                    Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
-                        ki: KEYBDINPUT {
-                            wVk: VK_SHIFT,
-                            wScan: 0,
-                            dwFlags: KEYEVENTF_KEYUP,
-                            time: 0,
-                            dwExtraInfo: 0,
-                        },
-                    },
-                },
-            ];
-            unsafe { SendInput(&shift_end, std::mem::size_of::<INPUT>() as i32); }
-            thread::sleep(Duration::from_millis(50));
-            
-            // Ctrl+V: paste (replaces selection)
-            Self::send_ctrl_v();
-            thread::sleep(Duration::from_millis(50));
-            
-            tracing::info!("inject_replace_line complete");
-        }
+        self.platform_injector.inject_replace_line();
     }
 
     pub fn inject_via_value_pattern(&self, text: &str) -> bool {
-        #[cfg(windows)]
-        {
-            use uiautomation::core::UIAutomation;
-            if let Ok(automation) = UIAutomation::new() {
-                if let Ok(focused) = automation.get_focused_element() {
-                    if let Ok(pat) = focused.get_pattern::<uiautomation::patterns::UIValuePattern>() {
-                        if pat.set_value(text).is_ok() {
-                            tracing::info!("Successfully injected text using UIAutomation ValuePattern");
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        false
+        self.platform_injector.inject_via_value_pattern(text)
     }
 
     /// All-in-one: set clipboard + select line + paste.
@@ -252,66 +96,48 @@ impl HumanizedInjector {
     pub fn inject_via_clipboard(&self, text: &str) -> bool {
         if text.is_empty() { return true; }
 
+        let _guard = CLIPBOARD_MUTEX.lock().unwrap();
+
         // Try direct UIAutomation ValuePattern set first (e.g. browser input fields)
         if self.inject_via_value_pattern(text) {
             return true;
         }
 
-        #[cfg(windows)]
-        {
-            // Save original clipboard
-            let original_clipboard = Self::get_clipboard();
+        // Save original clipboard
+        let original_clipboard = Self::get_clipboard();
 
-            // Step 1: Set clipboard FIRST
-            if !Self::set_clipboard(text) {
-                tracing::warn!("Clipboard set failed, trying SendInput char-by-char");
-                self.type_text_sendinput(text);
-                return true;
-            }
-            thread::sleep(Duration::from_millis(30));
-
-            // Step 2: Select current line (Home + Shift+End) then paste (Ctrl+V)
-            self.inject_replace_line();
-
-            // Step 3: Wait and restore original clipboard
-            thread::sleep(Duration::from_millis(150));
-            if let Some(orig) = original_clipboard {
-                if !Self::set_clipboard(&orig) {
-                    tracing::warn!("Failed to restore original clipboard content");
-                } else {
-                    tracing::info!("Clipboard restored to original content");
-                }
-            }
-
-            for word in text.split_whitespace().take(5) {
-                tracing::debug!("Injected: {}", word);
-            }
-            tracing::info!("inject_via_clipboard complete ({} chars)", text.len());
+        // Step 1: Set clipboard FIRST
+        if !self.platform_injector.set_clipboard(text) {
+            tracing::warn!("Clipboard set failed, trying SendInput char-by-char");
+            self.type_text_sendinput(text);
+            return true;
         }
+        thread::sleep(Duration::from_millis(30));
+
+        // Step 2: Select current line (Home + Shift+End) then paste (Ctrl+V)
+        self.inject_replace_line();
+
+        // Step 3: Wait and restore original clipboard
+        thread::sleep(Duration::from_millis(150));
+        if let Some(orig) = original_clipboard {
+            if !self.platform_injector.set_clipboard(&orig) {
+                tracing::warn!("Failed to restore original clipboard content");
+            } else {
+                tracing::info!("Clipboard restored to original content");
+            }
+        }
+
+        for word in text.split_whitespace().take(5) {
+            tracing::debug!("Injected: {}", word);
+        }
+        tracing::info!("inject_via_clipboard complete ({} chars)", text.len());
         true
     }
 
     /// Legacy: erase N chars via backspace. Kept for compatibility but
     /// this is NO LONGER CALLED in the main ghost session flow.
-    /// inject_via_clipboard() now uses Home+Shift+End+Ctrl+V instead.
     pub fn erase_prompt(&self, count: usize) {
-        if count == 0 { return; }
-        tracing::info!("erase_prompt({}) called — using Home+Shift+End+Delete instead of backspaces", count);
-        #[cfg(windows)]
-        {
-            // Select the line and delete it (without pasting anything)
-            Self::send_vk(VK_HOME);
-            thread::sleep(Duration::from_millis(20));
-            let shift_end = [
-                INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_SHIFT, wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } },
-                INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_END, wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } },
-                INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_END, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
-                INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_SHIFT, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
-            ];
-            unsafe { SendInput(&shift_end, std::mem::size_of::<INPUT>() as i32); }
-            thread::sleep(Duration::from_millis(20));
-            Self::send_vk(VK_DELETE);
-        }
+        self.platform_injector.erase_prompt(count);
     }
 
     /// Type text — always via clipboard for reliability.
@@ -330,106 +156,34 @@ impl HumanizedInjector {
             _ => 25,
         };
         for c in text.chars() {
-            Self::send_char(c);
+            self.send_char(c);
             if delay > 0 {
                 thread::sleep(Duration::from_millis(delay));
             }
         }
     }
 
-    /// Get Windows clipboard content (Unicode text).
-    #[cfg(windows)]
+    /// Get clipboard content.
     pub fn get_clipboard() -> Option<String> {
-        use windows::Win32::System::DataExchange::{GetClipboardData, OpenClipboard, CloseClipboard};
-        use windows::Win32::System::Memory::{GlobalLock, GlobalUnlock};
-        use windows::Win32::Foundation::HGLOBAL;
-
-        unsafe {
-            // Retry up to 5 times — clipboard may be locked by Word momentarily
-            for attempt in 0..5 {
-                if OpenClipboard(None).is_ok() {
-                    let handle = GetClipboardData(13); // CF_UNICODETEXT
-                    if let Ok(handle) = handle {
-                        let hglobal = HGLOBAL(handle.0 as _);
-                        let ptr = GlobalLock(hglobal) as *const u16;
-                        if !ptr.is_null() {
-                            let mut len = 0;
-                            while *ptr.add(len) != 0 {
-                                len += 1;
-                            }
-                            let slice = std::slice::from_raw_parts(ptr, len);
-                            let text = String::from_utf16_lossy(slice);
-                            let _ = GlobalUnlock(hglobal);
-                            let _ = CloseClipboard();
-                            return Some(text);
-                        }
-                    }
-                    let _ = CloseClipboard();
-                }
-                thread::sleep(Duration::from_millis(20));
-            }
-            None
-        }
+        let injector = crate::platform::new_injector();
+        injector.get_clipboard()
     }
 
-    /// Set Windows clipboard content (Unicode text).
-    #[cfg(windows)]
+    /// Set clipboard content.
     pub fn set_clipboard(text: &str) -> bool {
-        use windows::Win32::System::DataExchange::{OpenClipboard, EmptyClipboard, SetClipboardData, CloseClipboard};
-        use windows::Win32::System::Memory::{GlobalAlloc, GlobalLock, GlobalUnlock, GMEM_MOVEABLE};
-        use windows::Win32::Foundation::HANDLE;
-
-        let wide: Vec<u16> = text.encode_utf16().chain(std::iter::once(0)).collect();
-        let byte_count = wide.len() * 2;
-
-        unsafe {
-            // Retry up to 5 times — clipboard may be locked by Word momentarily
-            for attempt in 0..5 {
-                if OpenClipboard(None).is_ok() {
-                    let _ = EmptyClipboard();
-                    let h_mem = GlobalAlloc(GMEM_MOVEABLE, byte_count);
-                    if let Ok(h_mem) = h_mem {
-                        let ptr = GlobalLock(h_mem) as *mut u16;
-                        if !ptr.is_null() {
-                            std::ptr::copy_nonoverlapping(wide.as_ptr(), ptr, wide.len());
-                            let _ = GlobalUnlock(h_mem);
-                            // CF_UNICODETEXT = 13
-                            let result = SetClipboardData(13, HANDLE(h_mem.0));
-                            let _ = CloseClipboard();
-                            if result.is_ok() {
-                                tracing::debug!("Clipboard set OK on attempt {}", attempt + 1);
-                                return true;
-                            }
-                        } else {
-                            let _ = CloseClipboard();
-                        }
-                    } else {
-                        let _ = CloseClipboard();
-                    }
-                }
-                thread::sleep(Duration::from_millis(20));
-            }
-            tracing::error!("Clipboard set failed after 5 attempts");
-            false
-        }
+        let injector = crate::platform::new_injector();
+        injector.set_clipboard(text)
     }
 
     /// Send Ctrl+V keystroke.
-    #[cfg(windows)]
     fn send_ctrl_v() {
-        let inputs = [
-            INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_CONTROL, wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } },
-            INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VIRTUAL_KEY(0x56), wScan: 0, dwFlags: KEYBD_EVENT_FLAGS(0), time: 0, dwExtraInfo: 0 } } },
-            INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VIRTUAL_KEY(0x56), wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
-            INPUT { r#type: INPUT_KEYBOARD, Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 { ki: KEYBDINPUT { wVk: VK_CONTROL, wScan: 0, dwFlags: KEYEVENTF_KEYUP, time: 0, dwExtraInfo: 0 } } },
-        ];
-        unsafe { SendInput(&inputs, std::mem::size_of::<INPUT>() as i32); }
+        let injector = crate::platform::new_injector();
+        injector.send_ctrl_v();
     }
 
-    /// Escape any ribbon/menu mode. NOT called in main flow (removed — it sent ESC into apps).
+    /// Escape any ribbon/menu mode.
     pub fn escape_ribbon_mode(&self) {
         // Intentionally a no-op. Double-ESC was destroying Word document state.
-        // The hook consumes Alt+Ctrl+M at the low-level (LRESULT(1)) so no cleanup needed.
     }
 
     /// Undo ghost char — no-op (hook consumes the key).
@@ -438,7 +192,7 @@ impl HumanizedInjector {
     // Legacy async API (kept for compatibility)
     pub async fn inject_char(&mut self, c: char, cancel: &tokio_util::sync::CancellationToken) -> bool {
         if cancel.is_cancelled() { return false; }
-        Self::send_char(c);
+        self.send_char(c);
         true
     }
 
@@ -449,79 +203,8 @@ impl HumanizedInjector {
     }
 
     pub fn select_backward(count: usize) {
-        #[cfg(windows)]
-        {
-            use windows::Win32::UI::Input::KeyboardAndMouse::{
-                SendInput, INPUT, INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_KEYUP, VK_SHIFT, VK_LEFT,
-                KEYBD_EVENT_FLAGS,
-            };
-            
-            if count == 0 { return; }
-            tracing::info!("Selecting backward by {} characters", count);
-            
-            let mut inputs = Vec::with_capacity(2 + count * 2);
-            
-            // Shift Down
-            inputs.push(INPUT {
-                r#type: INPUT_KEYBOARD,
-                Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
-                    ki: KEYBDINPUT {
-                        wVk: VK_SHIFT,
-                        wScan: 0,
-                        dwFlags: KEYBD_EVENT_FLAGS(0),
-                        time: 0,
-                        dwExtraInfo: 0,
-                    },
-                },
-            });
-            
-            for _ in 0..count {
-                // Left Down
-                inputs.push(INPUT {
-                    r#type: INPUT_KEYBOARD,
-                    Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
-                        ki: KEYBDINPUT {
-                            wVk: VK_LEFT,
-                            wScan: 0,
-                            dwFlags: KEYBD_EVENT_FLAGS(0),
-                            time: 0,
-                            dwExtraInfo: 0,
-                        },
-                    },
-                });
-                // Left Up
-                inputs.push(INPUT {
-                    r#type: INPUT_KEYBOARD,
-                    Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
-                        ki: KEYBDINPUT {
-                            wVk: VK_LEFT,
-                            wScan: 0,
-                            dwFlags: KEYEVENTF_KEYUP,
-                            time: 0,
-                            dwExtraInfo: 0,
-                        },
-                    },
-                });
-            }
-            
-            // Shift Up
-            inputs.push(INPUT {
-                r#type: INPUT_KEYBOARD,
-                Anonymous: windows::Win32::UI::Input::KeyboardAndMouse::INPUT_0 {
-                    ki: KEYBDINPUT {
-                        wVk: VK_SHIFT,
-                        wScan: 0,
-                        dwFlags: KEYEVENTF_KEYUP,
-                        time: 0,
-                        dwExtraInfo: 0,
-                    },
-                },
-            });
-            
-            unsafe {
-                SendInput(&inputs, std::mem::size_of::<INPUT>() as i32);
-            }
-        }
+        let injector = crate::platform::new_injector();
+        injector.select_backward(count);
     }
 
     pub fn record_injection(original_text: &str, injected_text: &str, hwnd: isize) {
@@ -550,50 +233,37 @@ impl HumanizedInjector {
         
         if let Some(record) = record {
             tracing::info!("Performing undo for hwnd: {}", record.hwnd);
-            #[cfg(windows)]
-            {
-                use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, GetForegroundWindow};
-                use windows::Win32::Foundation::HWND;
-                
-                // Focus the window
-                let h = HWND(record.hwnd as *mut std::ffi::c_void);
-                unsafe {
-                    let fg = GetForegroundWindow();
-                    if fg.0 != h.0 {
-                        let _ = BringWindowToTop(h);
-                        let _ = SetForegroundWindow(h);
-                        thread::sleep(Duration::from_millis(200));
-                    }
-                }
-                
-                // Save current clipboard
-                let original_clipboard = Self::get_clipboard();
-                
-                // Set clipboard to original text
-                let _ = Self::set_clipboard(&record.original_text);
-                thread::sleep(Duration::from_millis(30));
-                
-                // Select back injected_text character count
-                let char_count = record.injected_text.chars().count();
-                Self::select_backward(char_count);
-                thread::sleep(Duration::from_millis(50));
-                
-                // Paste (replaces selection with original_text)
-                Self::send_ctrl_v();
-                thread::sleep(Duration::from_millis(150));
-                
-                // Restore clipboard
-                if let Some(orig) = original_clipboard {
-                    let _ = Self::set_clipboard(&orig);
-                }
-                
-                tracing::info!("Undo execution complete");
-                true
+            
+            let injector = crate::platform::new_injector();
+            
+            // Focus the window
+            if injector.focus_window(record.hwnd) {
+                thread::sleep(Duration::from_millis(200));
             }
-            #[cfg(not(windows))]
-            {
-                true
+            
+            // Save current clipboard
+            let original_clipboard = injector.get_clipboard();
+            
+            // Set clipboard to original text
+            let _ = injector.set_clipboard(&record.original_text);
+            thread::sleep(Duration::from_millis(30));
+            
+            // Select back injected_text character count
+            let char_count = record.injected_text.chars().count();
+            injector.select_backward(char_count);
+            thread::sleep(Duration::from_millis(50));
+            
+            // Paste (replaces selection with original_text)
+            injector.send_ctrl_v();
+            thread::sleep(Duration::from_millis(150));
+            
+            // Restore clipboard
+            if let Some(orig) = original_clipboard {
+                let _ = injector.set_clipboard(&orig);
             }
+            
+            tracing::info!("Undo execution complete");
+            true
         } else {
             tracing::warn!("No undo records available");
             false
@@ -614,3 +284,5 @@ use std::sync::Mutex;
 
 pub static UNDO_BUFFER: Lazy<Mutex<Vec<UndoRecord>>> = Lazy::new(|| Mutex::new(Vec::new()));
 const UNDO_BUFFER_LIMIT: usize = 10;
+
+pub static CLIPBOARD_MUTEX: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
