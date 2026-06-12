@@ -82,6 +82,181 @@ class ForgeValidator:
         "EXP": (1, 1),
     }
 
+    COMMON_FIXES = [
+        (r"=SUM\(([^)]+)\s*$", r"=SUM(\1)"),  # missing closing paren
+        (r"VLOOKUP\(([^,]+),([^,]+),(\d+)\s*\)", r"VLOOKUP(\1,\2,\3,FALSE)"),  # missing FALSE
+    ]
+
+    def _replace_locale_delimiter(self, formula: str, from_delim: str, to_delim: str) -> str:
+        parts = formula.split('"')
+        for i in range(len(parts)):
+            if i % 2 == 0:  # outside quotes
+                parts[i] = parts[i].replace(from_delim, to_delim)
+        return '"'.join(parts)
+
+    def validate_and_fix(self, formula: str, locale: str = "en") -> dict:
+        # 1. Basic syntax check
+        if not formula.strip().startswith("="):
+            # Try prepending =
+            formula = "=" + formula.strip()
+        
+        if not self._balanced_parens(formula):
+            fixed = self._auto_fix_parens(formula)
+            return {"valid": False, "error": "Unbalanced parentheses", "corrected": fixed}
+        
+        # 2. Locale fix
+        if locale == "eu" and "," in formula:
+            formula = self._replace_locale_delimiter(formula, ",", ";")
+        elif locale == "en" and ";" in formula:
+            formula = self._replace_locale_delimiter(formula, ";", ",")
+        
+        # 3. Common pattern fixes
+        for pattern, replacement in self.COMMON_FIXES:
+            formula = re.sub(pattern, replacement, formula)
+            
+        # Specific VLOOKUP 2-arg correction
+        vlookup_2arg_pattern = r"\bVLOOKUP\(([^,;)]+)\s*[,;]\s*([^,;)]+)\s*\)"
+        if locale == "eu":
+            formula = re.sub(vlookup_2arg_pattern, r"VLOOKUP(\1;\2;2;FALSE)", formula, flags=re.IGNORECASE)
+        else:
+            formula = re.sub(vlookup_2arg_pattern, r"VLOOKUP(\1,\2,2,FALSE)", formula, flags=re.IGNORECASE)
+        
+        # 4. Check empty or malformed arguments (like "=IF(,)")
+        clean_for_args = re.sub(r'"[^"]*"', '', formula)
+        if ",," in clean_for_args or "(," in clean_for_args or ",)" in clean_for_args or ";;" in clean_for_args or "(;" in clean_for_args or ";)" in clean_for_args:
+            return {"valid": False, "error": "Empty or malformed arguments"}
+
+        # Check argument counts for common functions
+        # For validation, replace EU semicolons with commas to simplify argument counting
+        norm_formula = self._replace_locale_delimiter(clean_for_args, ";", ",") if locale == "eu" else clean_for_args
+        for fn in ["VLOOKUP", "XLOOKUP", "SUMIF", "COUNTIF", "AVERAGEIF", "IFERROR", "MID", "INDEX", "ROUND", "IF", "LEFT"]:
+            pattern = rf"\b{fn}\(([^)]+)\)"
+            for match in re.finditer(pattern, norm_formula, re.IGNORECASE):
+                args_content = match.group(1)
+                args = []
+                current_arg = []
+                paren_depth = 0
+                for char in args_content:
+                    if char == '(':
+                        paren_depth += 1
+                    elif char == ')':
+                        paren_depth -= 1
+                    if char == ',' and paren_depth == 0:
+                        args.append("".join(current_arg).strip())
+                        current_arg = []
+                    else:
+                        current_arg.append(char)
+                args.append("".join(current_arg).strip())
+                
+                num_args = len(args)
+                if fn == "VLOOKUP" and num_args < 3:
+                    return {"valid": False, "error": "VLOOKUP requires at least 3 arguments"}
+                if fn == "XLOOKUP" and num_args < 3:
+                    return {"valid": False, "error": "XLOOKUP requires at least 3 arguments"}
+                if fn in ("SUMIF", "COUNTIF", "AVERAGEIF") and num_args < 2:
+                    return {"valid": False, "error": f"{fn} requires at least 2 arguments"}
+                if fn == "IFERROR" and num_args != 2:
+                    return {"valid": False, "error": "IFERROR requires exactly 2 arguments"}
+                if fn == "MID" and num_args != 3:
+                    return {"valid": False, "error": "MID requires exactly 3 arguments"}
+                if fn == "ROUND" and num_args != 2:
+                    return {"valid": False, "error": "ROUND requires exactly 2 arguments"}
+                if fn == "IF" and num_args < 2:
+                    return {"valid": False, "error": "IF requires at least 2 arguments"}
+                if fn == "INDEX" and num_args < 2:
+                    return {"valid": False, "error": "INDEX requires at least 2 arguments"}
+                if fn == "LEFT" and num_args == 2:
+                    try:
+                        if int(args[1]) < 0:
+                            return {"valid": False, "error": "LEFT length cannot be negative"}
+                    except ValueError:
+                        pass
+                if fn == "VLOOKUP" and num_args >= 3:
+                    try:
+                        if int(args[2]) <= 0:
+                            return {"valid": False, "error": "VLOOKUP column index must be greater than 0"}
+                    except ValueError:
+                        pass
+
+        # 5. Function name validation
+        unknown_funcs = self._find_unknown_functions(formula)
+        if unknown_funcs:
+            return {"valid": False, "error": f"Unknown Excel functions: {unknown_funcs}"}
+        
+        # 6. Reference validation (basic)
+        invalid_refs = self._find_invalid_references(formula)
+        if invalid_refs:
+            return {"valid": False, "error": f"Invalid cell references: {invalid_refs}"}
+        
+        return {"valid": True, "formula": formula, "corrected": formula}
+
+    def _balanced_parens(self, formula: str) -> bool:
+        depth = 0
+        in_quotes = False
+        for char in formula:
+            if char == '"':
+                in_quotes = not in_quotes
+            elif char == '(' and not in_quotes:
+                depth += 1
+            elif char == ')' and not in_quotes:
+                depth -= 1
+                if depth < 0:
+                    return False
+        return depth == 0
+
+    def _auto_fix_parens(self, formula: str) -> str:
+        open_count = 0
+        close_count = 0
+        in_quotes = False
+        for char in formula:
+            if char == '"':
+                in_quotes = not in_quotes
+            elif char == '(' and not in_quotes:
+                open_count += 1
+            elif char == ')' and not in_quotes:
+                close_count += 1
+                
+        if open_count > close_count:
+            return formula + ")" * (open_count - close_count)
+        elif close_count > open_count:
+            if formula.startswith("="):
+                return "=" + "(" * (close_count - open_count) + formula[1:]
+            return "(" * (close_count - open_count) + formula
+        return formula
+
+    def _find_unknown_functions(self, formula: str) -> list[str]:
+        clean_formula = re.sub(r'"[^"]*"', '', formula)
+        pattern = r'\b([A-Z0-9_\.]+)\s*\('
+        found = re.findall(pattern, clean_formula.upper())
+        unknown = []
+        for fn in found:
+            if fn not in self.KNOWN_FUNCTIONS:
+                unknown.append(fn)
+        return unknown
+
+    def _find_invalid_references(self, formula: str) -> list[str]:
+        clean_formula = re.sub(r'"[^"]*"', '', formula)
+        
+        # Check asymmetric ranges like A1:Z
+        range_pattern = r"\b[A-Za-z]+\d*:[A-Za-z]+\d*\b"
+        for match in re.finditer(range_pattern, clean_formula):
+            ref_range = match.group(0)
+            parts = ref_range.split(":")
+            if len(parts) == 2:
+                p1_has_digit = any(c.isdigit() for c in parts[0])
+                p2_has_digit = any(c.isdigit() for c in parts[1])
+                if p1_has_digit != p2_has_digit:
+                    return [ref_range]
+
+        ref_pattern = r"\b\$?[A-Za-z]+\$?(\d+)\b"
+        invalid = []
+        for match in re.finditer(ref_pattern, clean_formula):
+            ref = match.group(0)
+            row_num = int(match.group(1))
+            if row_num <= 0:
+                invalid.append(ref)
+        return invalid
+
     def _fix_single_quotes(self, formula: str) -> str:
         if "'" not in formula:
             return formula
@@ -254,6 +429,54 @@ class ForgeValidator:
             if active in working_formula.upper():
                 valid = False
                 error_msg = f"Circular reference detected: target cell {active} referenced inside formula"
+
+        # Semantic evaluation using formulas package
+        if valid:
+            try:
+                import formulas
+                eval_formula = working_formula if working_formula.startswith("=") else f"={working_formula}"
+                ast = formulas.Parser().ast(eval_formula)
+                if not ast or len(ast) < 2:
+                    raise ValueError("AST parsing returned empty or invalid structure")
+                func = ast[1].compile()
+                def col_to_index(col_str: str) -> int:
+                    idx = 0
+                    for char in col_str.upper():
+                        if 'A' <= char <= 'Z':
+                            idx = idx * 26 + (ord(char) - ord('A') + 1)
+                    return idx
+
+                def get_mock_input(inp_name: str):
+                    if ":" in str(inp_name):
+                        match = re.match(r"^([A-Z]+)(\d*):([A-Z]+)(\d*)$", str(inp_name), re.IGNORECASE)
+                        if match:
+                            col1_str, row1_str, col2_str, row2_str = match.groups()
+                            c1 = col_to_index(col1_str)
+                            c2 = col_to_index(col2_str)
+                            num_cols = abs(c2 - c1) + 1
+                            if row1_str and row2_str:
+                                r1 = int(row1_str)
+                                r2 = int(row2_str)
+                                num_rows = abs(r2 - r1) + 1
+                            else:
+                                num_rows = 10
+                            import numpy as np
+                            return np.ones((num_rows, num_cols))
+                        import numpy as np
+                        return np.ones((10, 10))
+                    return 1.0
+
+                mock_inputs = {}
+                for inp_name in func.inputs.keys():
+                    mock_inputs[inp_name] = get_mock_input(inp_name)
+                res_val = func(**mock_inputs)
+                res_str = str(res_val)
+                excel_errors = ["#DIV/0!", "#VALUE!", "#REF!", "#NAME?", "#N/A", "#NUM!", "#NULL!"]
+                if any(err in res_str for err in excel_errors):
+                    raise ValueError(f"Formula evaluated to error: {res_str}")
+            except Exception as e:
+                valid = False
+                error_msg = f"Semantic evaluation failed: {e}"
 
         corrected_formula = working_formula if not valid or fix_desc else formula_stripped
 
