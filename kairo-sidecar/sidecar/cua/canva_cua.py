@@ -608,16 +608,18 @@ class CanvaCUAAgent:
 
     def _type_text(self, text: str) -> None:
         """Type text using Windows SendInput API."""
-        try:
-            import ctypes
-            import ctypes.wintypes
+        from sidecar.clipboard_mutex import CLIPBOARD_LOCK
+        with CLIPBOARD_LOCK:
+            try:
+                import ctypes
+                import ctypes.wintypes
 
-            # Use clipboard paste for reliability with Unicode text
-            self._copy_to_clipboard(text)
-            time.sleep(0.05)
-            self._send_key_combo("ctrl", "v")
-        except Exception as e:
-            log.error(f"[CanvaCUA] Type text failed: {e}")
+                # Use clipboard paste for reliability with Unicode text
+                self._copy_to_clipboard(text)
+                time.sleep(0.05)
+                self._send_key_combo("ctrl", "v")
+            except Exception as e:
+                log.error(f"[CanvaCUA] Type text failed: {e}")
 
     def _copy_to_clipboard(self, text: str) -> None:
         """Copy text to Windows clipboard."""

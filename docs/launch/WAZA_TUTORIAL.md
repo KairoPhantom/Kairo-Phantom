@@ -143,7 +143,7 @@ Once your agent works well:
 
 1. Create a GitHub repo: `kairo-waza-MY-AGENT`
 2. Add the `manifest.toml` and `SKILL.md`
-3. Submit a PR to [Kairo Phantom](https://github.com/Kartik24Hulmukh/Kairo-Phantom)
+3. Submit a PR to [Kairo Phantom](https://github.com/KairoPhantom/Kairo-Phantom)
    listing your agent in the Community Waza Registry
 
 Other users can then install it with:
@@ -202,4 +202,4 @@ kairo skill info <name>          # show agent metadata
 
 ---
 
-*Built a great agent? Submit it to the [Community Registry](https://github.com/Kartik24Hulmukh/Kairo-Phantom/discussions) — we feature the best ones in the README.*
+*Built a great agent? Submit it to the [Community Registry](https://github.com/KairoPhantom/Kairo-Phantom/discussions) — we feature the best ones in the README.*

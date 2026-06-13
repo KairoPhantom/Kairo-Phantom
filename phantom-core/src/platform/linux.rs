@@ -1,20 +1,10 @@
 // phantom-core/src/platform/linux.rs
 //
 // Linux Platform Implementation — Cross-Platform Hardening (Domain 11)
-//
-// Provides:
-//   1. LinuxAtspiReader — AccessibilityReader impl via subprocess (xdotool + xclip)
-//   2. LinuxInjector   — Text injection via clipboard + xdotool/ydotool/wl-tools
-//
-// Why subprocess-based: The `atspi` crate requires AT-SPI2 daemon, D-Bus, and
-// tokio-async context which conflicts with our sync platform trait. Subprocess
-// calls to xdotool/xclip are the standard approach used by 90% of Linux automation
-// tools and work on both X11 and Wayland environments.
-//
-// Requirements: xdotool + xclip (X11) or ydotool + wl-clipboard (Wayland)
-// Install: sudo apt install xdotool xclip  (or ydotool wl-clipboard for Wayland)
 
 use tracing::{info, warn};
+use super::{AccessibilityReader, PlatformInjector, PlatformCuaDriver, CuaAction, CuaContext};
+use anyhow::Result;
 
 // ── Shared subprocess helpers (always compiled, cfg-gated internally) ─────────
 
@@ -31,10 +21,7 @@ mod linux_impl {
     }
 
     /// Get the focused window title on X11/Wayland.
-    /// Primary: xdotool getactivewindow getwindowname
-    /// Fallback: wmctrl -l (headless environments)
     pub fn get_active_window_title() -> Option<String> {
-        // X11 via xdotool
         if let Ok(output) = Command::new("xdotool")
             .args(["getactivewindow", "getwindowname"])
             .output()
@@ -43,10 +30,8 @@ mod linux_impl {
             if !s.is_empty() { return Some(s); }
         }
 
-        // Wayland: try wmctrl (works on most compositors)
         if let Ok(output) = Command::new("wmctrl").args(["-l"]).output() {
             let lines = String::from_utf8_lossy(&output.stdout);
-            // wmctrl -l format: "0x01200001  0 hostname  Window Title"
             if let Some(first_active) = lines.lines().last() {
                 let parts: Vec<&str> = first_active.splitn(5, char::is_whitespace).collect();
                 if parts.len() >= 5 {
@@ -59,9 +44,7 @@ mod linux_impl {
     }
 
     /// Get the focused application process name on Linux.
-    /// Uses: xdotool getactivewindow getwindowpid → /proc/<pid>/comm
     pub fn get_active_process_name() -> Option<String> {
-        // xdotool getactivewindow → window ID, then getwindowpid
         let wid_out = Command::new("xdotool")
             .args(["getactivewindow"])
             .output()
@@ -76,25 +59,18 @@ mod linux_impl {
         let pid = String::from_utf8_lossy(&pid_out.stdout).trim().to_string();
         if pid.is_empty() { return None; }
 
-        // Read /proc/<pid>/comm — the short process name
         let comm = std::fs::read_to_string(format!("/proc/{}/comm", pid)).ok()?;
         Some(comm.trim().to_string())
     }
 
-    /// Get the focused element's text content via AT-SPI2 CLI (if available)
-    /// or fall back to clipboard-based selection.
+    /// Get the focused element's text content.
     pub fn get_focused_text() -> anyhow::Result<String> {
-        // Strategy 1: Try AT-SPI2 via at-spi-bus-launcher + gdbus
-        // This works when the accessibility bus is active
         if let Some(text) = try_atspi_focused_text() {
             return Ok(text);
         }
 
-        // Strategy 2: Select-all + clipboard read (universal fallback)
-        // Saves current clipboard, does Ctrl+A + Ctrl+C, reads, restores
         let original_clip = read_clipboard().unwrap_or_default();
 
-        // Select all text in focused app and copy
         let server = detect_display_server();
         if server == "wayland" {
             let _ = Command::new("ydotool").args(["key", "ctrl+a"]).status();
@@ -109,12 +85,10 @@ mod linux_impl {
 
         let selected = read_clipboard().unwrap_or_default();
 
-        // Restore original clipboard content
         if !original_clip.is_empty() {
             write_clipboard(&original_clip);
         }
 
-        // Deselect
         if server == "wayland" {
             let _ = Command::new("ydotool").args(["key", "End"]).status();
         } else {
@@ -124,13 +98,9 @@ mod linux_impl {
         Ok(selected)
     }
 
-    /// Try to get focused element text via AT-SPI2 bus (D-Bus query).
-    /// Returns None if AT-SPI2 is not available or fails.
     fn try_atspi_focused_text() -> Option<String> {
-        // Check if AT-SPI bus is running
         let bus_addr = std::env::var("AT_SPI_BUS_ADDRESS").ok()
             .or_else(|| {
-                // Try to detect via D-Bus
                 Command::new("dbus-send")
                     .args([
                         "--print-reply",
@@ -143,7 +113,6 @@ mod linux_impl {
                     .filter(|o| o.status.success())
                     .and_then(|o| {
                         let out = String::from_utf8_lossy(&o.stdout).to_string();
-                        // Parse the D-Bus address from the reply
                         out.split_whitespace()
                             .find(|s| s.starts_with("\"unix:") || s.starts_with("\"tcp:"))
                             .map(|s| s.trim_matches('"').to_string())
@@ -151,11 +120,9 @@ mod linux_impl {
             });
 
         if bus_addr.is_none() {
-            return None; // AT-SPI not available
+            return None;
         }
 
-        // AT-SPI is available — query focused element text via python-atspi if installed
-        // (python3 -c "import pyatspi; ...") - common on GNOME systems
         let result = Command::new("python3")
             .args([
                 "-c",
@@ -183,7 +150,6 @@ except Exception as e:
         None
     }
 
-    /// Read from clipboard (X11 via xclip, Wayland via wl-paste)
     pub fn read_clipboard() -> Option<String> {
         let server = detect_display_server();
         if server == "wayland" {
@@ -194,7 +160,6 @@ except Exception as e:
                 .filter(|o| o.status.success())
                 .map(|o| String::from_utf8_lossy(&o.stdout).to_string())
         } else {
-            // Try xclip first, then xsel as fallback
             Command::new("xclip")
                 .args(["-selection", "clipboard", "-o"])
                 .output()
@@ -212,7 +177,6 @@ except Exception as e:
         }
     }
 
-    /// Write text to clipboard (X11 via xclip, Wayland via wl-copy).
     pub fn write_clipboard(text: &str) -> bool {
         let server = detect_display_server();
         let mut child = if server == "wayland" {
@@ -228,7 +192,6 @@ except Exception as e:
             {
                 Ok(c) => c,
                 Err(_) => {
-                    // Try xsel as fallback
                     match Command::new("xsel")
                         .args(["--clipboard", "--input"])
                         .stdin(std::process::Stdio::piped())
@@ -249,7 +212,6 @@ except Exception as e:
         true
     }
 
-    /// Inject text via clipboard + Ctrl+V (X11: xdotool, Wayland: ydotool).
     pub fn inject_text(text: &str) -> bool {
         if !write_clipboard(text) { return false; }
         std::thread::sleep(std::time::Duration::from_millis(50));
@@ -273,18 +235,15 @@ except Exception as e:
         }
     }
 
-    /// Erase N characters via BackSpace keys.
     pub fn erase_chars(count: usize) -> bool {
         if count == 0 { return true; }
         let server = detect_display_server();
         if server == "wayland" {
-            // ydotool key BackSpace (repeated)
             for _ in 0..count {
                 let _ = Command::new("ydotool").args(["key", "BackSpace"]).status();
             }
             true
         } else {
-            // xdotool key --clearmodifiers BackSpace (repeated via loop for reliability)
             for _ in 0..count {
                 let _ = Command::new("xdotool").args(["key", "--clearmodifiers", "BackSpace"]).status();
             }
@@ -292,7 +251,6 @@ except Exception as e:
         }
     }
 
-    /// Get the focused window PID on X11/Wayland.
     pub fn get_focused_pid() -> Option<i32> {
         let output = Command::new("xdotool")
             .args(["getactivewindow", "getwindowpid"])
@@ -301,7 +259,6 @@ except Exception as e:
         String::from_utf8_lossy(&output.stdout).trim().parse::<i32>().ok()
     }
 
-    /// Check if required injection tools are available. Returns list of missing tools.
     pub fn check_tools() -> Vec<String> {
         let mut missing = Vec::new();
         let server = detect_display_server();
@@ -343,10 +300,6 @@ mod linux_impl {
 pub use linux_impl::*;
 
 // ── LinuxAtspiReader — implements AccessibilityReader ─────────────────────────
-//
-// This struct was MISSING from the original codebase, causing a compile error
-// on Linux because platform/mod.rs references `linux::LinuxAtspiReader::new()`.
-// Fixed in Domain 11: Cross-Platform Hardening.
 
 pub struct LinuxAtspiReader;
 
@@ -359,19 +312,15 @@ impl Default for LinuxAtspiReader {
 }
 
 impl crate::platform::AccessibilityReader for LinuxAtspiReader {
-    /// Get the focused element's text content.
-    /// Uses AT-SPI2 via pyatspi if available, falls back to clipboard-based selection.
     fn get_focused_text(&self) -> anyhow::Result<String> {
         get_focused_text()
     }
 
-    /// Get clipboard content.
     fn get_clipboard_text(&self) -> anyhow::Result<String> {
         read_clipboard()
             .ok_or_else(|| anyhow::anyhow!("No clipboard tool available (install xclip or wl-clipboard)"))
     }
 
-    /// Direct field injection setter.
     fn set_focused_text(&self, _text: &str) -> anyhow::Result<()> {
         anyhow::bail!("set_focused_text is not yet implemented on Linux")
     }
@@ -383,7 +332,6 @@ pub struct LinuxInjector;
 
 impl LinuxInjector {
     pub fn new() -> Self { Self }
-
     pub fn inject(&self, text: &str) -> bool { inject_text(text) }
     pub fn erase(&self, n: usize) -> bool { erase_chars(n) }
     pub fn focused_pid(&self) -> Option<i32> { get_focused_pid() }
@@ -395,4 +343,43 @@ impl LinuxInjector {
 
 impl Default for LinuxInjector {
     fn default() -> Self { Self::new() }
+}
+
+// ─── Linux Platform Injector & CUA Driver (B-13 Stub) ─────────────────────────
+
+pub struct LinuxPlatformInjector;
+
+impl LinuxPlatformInjector {
+    pub fn new() -> Self { LinuxPlatformInjector }
+}
+
+impl Default for LinuxPlatformInjector {
+    fn default() -> Self { Self::new() }
+}
+
+impl PlatformInjector for LinuxPlatformInjector {
+    fn set_clipboard(&self, _text: &str) -> bool { false }
+    fn get_clipboard(&self) -> Option<String> { None }
+    fn send_char(&self, _c: char) {}
+    fn send_vk(&self, _vk: u16) {}
+    fn send_ctrl_v(&self) {}
+    fn inject_via_value_pattern(&self, _text: &str) -> bool { false }
+    fn select_backward(&self, _count: usize) {}
+    fn focus_window(&self, _hwnd: isize) -> bool { false }
+}
+
+pub struct LinuxPlatformCuaDriver;
+
+impl LinuxPlatformCuaDriver {
+    pub fn new() -> Self { LinuxPlatformCuaDriver }
+}
+
+impl Default for LinuxPlatformCuaDriver {
+    fn default() -> Self { Self::new() }
+}
+
+impl PlatformCuaDriver for LinuxPlatformCuaDriver {
+    fn execute_driver(&self, _action: &CuaAction, _ctx: &CuaContext) -> Result<(), anyhow::Error> {
+        Err(anyhow::anyhow!("Linux CUA driver: Unsupported/Experimental"))
+    }
 }

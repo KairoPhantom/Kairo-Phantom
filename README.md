@@ -1,12 +1,12 @@
 # 👻 Kairo Phantom
 
-### The AI copilot that works in any Windows app. 100% offline. Remembers how you write.
+### The AI copilot that works in any Windows app. Local-first, opt-in cloud extensions. Remembers how you write.
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue?logo=python&logoColor=white)](kairo-sidecar/)
 [![Rust 1.78+](https://img.shields.io/badge/rust-1.78%2B-orange?logo=rust&logoColor=white)](phantom-core/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
-[![Tests passing](https://img.shields.io/badge/tests-787%20passing-brightgreen)](phantom-core/tests/)
-[![100% Offline](https://img.shields.io/badge/offline-100%25%20local-blueviolet)](phantom-core/src/ai.rs)
+[![Tests passing](https://img.shields.io/badge/tests-735%20passing-brightgreen)](phantom-core/tests/)
+[![Local-first](https://img.shields.io/badge/architecture-local--first-blueviolet)](phantom-core/src/ai.rs)
 
 ---
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-tests/chaos_hotkey.py — Alt+M press debounce stress test
+tests/chaos_hotkey.py — Ctrl+Alt+M press debounce stress test
 =========================================================
 """
 
@@ -33,7 +33,7 @@ def main():
     parser.add_argument("--interval", type=float, default=0.01)  # rapid spam
     args = parser.parse_args()
 
-    print(f"Simulating {args.count} Alt+M events spaced by {args.interval}s...")
+    print(f"Simulating {args.count} Ctrl+Alt+M events spaced by {args.interval}s...")
 
     guard = DebounceGuard(interval_seconds=0.2) # 200ms debounce
     requests_sent = 0

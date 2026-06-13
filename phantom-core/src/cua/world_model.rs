@@ -45,9 +45,20 @@ pub static GLOBAL_WORLD_MODEL: Lazy<Mutex<HashMap<isize, AppWorldModel>>> = Lazy
 
 /// Computes a hash of the text value.
 pub fn compute_hash(s: &str) -> u64 {
-    let mut hasher = std::collections::hash_map::DefaultHasher::new();
-    s.hash(&mut hasher);
-    hasher.finish()
+    fxhash::hash64(s)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_compute_hash_deterministic() {
+        let input = "Kairo Hashing";
+        let h1 = compute_hash(input);
+        let h2 = compute_hash(input);
+        assert_eq!(h1, h2);
+    }
 }
 
 /// Recursively traverses a UIA element and builds a UiNode tree.

@@ -670,22 +670,24 @@ class CrossAppOrchestrator:
 
     async def _send_text(self, text: str) -> None:
         """Type text via SendInput or clipboard paste."""
-        try:
-            import win32clipboard  # type: ignore
-            import win32con  # type: ignore
-            import win32api  # type: ignore
-            # Use clipboard for reliable Unicode support
-            win32clipboard.OpenClipboard()
-            win32clipboard.EmptyClipboard()
-            win32clipboard.SetClipboardText(text, win32con.CF_UNICODETEXT)
-            win32clipboard.CloseClipboard()
-            # Paste
-            win32api.keybd_event(win32con.VK_CONTROL, 0, 0, 0)
-            win32api.keybd_event(ord("V"), 0, 0, 0)
-            win32api.keybd_event(ord("V"), 0, win32con.KEYEVENTF_KEYUP, 0)
-            win32api.keybd_event(win32con.VK_CONTROL, 0, win32con.KEYEVENTF_KEYUP, 0)
-        except ImportError:
-            logger.warning(f"win32clipboard not available — text type skipped")
+        from sidecar.clipboard_mutex import CLIPBOARD_LOCK
+        with CLIPBOARD_LOCK:
+            try:
+                import win32clipboard  # type: ignore
+                import win32con  # type: ignore
+                import win32api  # type: ignore
+                # Use clipboard for reliable Unicode support
+                win32clipboard.OpenClipboard()
+                win32clipboard.EmptyClipboard()
+                win32clipboard.SetClipboardText(text, win32con.CF_UNICODETEXT)
+                win32clipboard.CloseClipboard()
+                # Paste
+                win32api.keybd_event(win32con.VK_CONTROL, 0, 0, 0)
+                win32api.keybd_event(ord("V"), 0, 0, 0)
+                win32api.keybd_event(ord("V"), 0, win32con.KEYEVENTF_KEYUP, 0)
+                win32api.keybd_event(win32con.VK_CONTROL, 0, win32con.KEYEVENTF_KEYUP, 0)
+            except ImportError:
+                logger.warning(f"win32clipboard not available — text type skipped")
 
     async def _send_click_ctypes(self, x: int, y: int) -> None:
         """Send mouse click via ctypes (no dependency required)."""

@@ -212,7 +212,7 @@ impl WakeWordDaemon {
         tx: Sender<PhantomEvent>,
     ) {
         tokio::spawn(async move {
-            let client = reqwest::Client::new();
+            let client = crate::config::get_client_builder().build().unwrap_or_default();
             let mut interval = tokio::time::interval(std::time::Duration::from_millis(500));
 
             while active.load(Ordering::SeqCst) {

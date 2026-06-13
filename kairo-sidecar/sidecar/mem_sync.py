@@ -7,7 +7,8 @@ for style profile centroids. Logs privacy budgets to a SHA-256 audit chain.
 
 from __future__ import annotations
 import math
-import random
+import struct
+import secrets
 import hashlib
 import json
 import sqlite3
@@ -27,9 +28,18 @@ def clip_vector(vector: List[float], max_norm: float) -> List[float]:
     return [x * scale for x in vector]
 
 
+def _csprng_gauss(std_dev: float) -> float:
+    """Box-Muller transform using OS entropy (CSPRNG-backed DP noise)."""
+    while True:
+        u1 = (struct.unpack('Q', secrets.token_bytes(8))[0] + 1) / (2**64 + 1)
+        u2 = struct.unpack('Q', secrets.token_bytes(8))[0] / 2**64
+        z = math.sqrt(-2 * math.log(u1)) * math.cos(2 * math.pi * u2)
+        return z * std_dev
+
+
 def add_gaussian_noise(vector: List[float], std_dev: float) -> List[float]:
-    """Adds zero-mean Gaussian noise with std_dev to each coordinate of the vector."""
-    return [x + random.gauss(0.0, std_dev) for x in vector]
+    """Adds zero-mean Gaussian noise with std_dev (CSPRNG-backed) to each coordinate."""
+    return [x + _csprng_gauss(std_dev) for x in vector]
 
 
 def compute_dp_delta(

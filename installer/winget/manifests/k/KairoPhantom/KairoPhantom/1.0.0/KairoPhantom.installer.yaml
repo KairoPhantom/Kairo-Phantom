@@ -4,7 +4,7 @@ MinimumOSVersion: '10.0.19041.0'
 Installers:
   - Architecture: x64
     InstallerType: exe
-    InstallerUrl: https://github.com/Kartik24Hulmukh/Kairo-Phantom/releases/download/v1.0.0/KairoSetup.exe
+    InstallerUrl: https://github.com/KairoPhantom/Kairo-Phantom/releases/download/v1.0.0/KairoSetup.exe
     InstallerSha256: 0000000000000000000000000000000000000000000000000000000000000000
     InstallerSwitches:
       Silent: /S

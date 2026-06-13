@@ -8,7 +8,7 @@ Get from zero to your first AI ghost-write in under 60 seconds.
 
 ### Windows (Recommended — One-Click)
 ```
-Download: https://github.com/Kartik24Hulmukh/Kairo-Phantom/releases/latest/KairoSetup.exe
+Download: https://github.com/KairoPhantom/Kairo-Phantom/releases/latest/KairoSetup.exe
 ```
 Run `KairoSetup.exe` — it installs Ollama, pulls the default model, and starts the daemon automatically.
 
@@ -140,4 +140,4 @@ kairo --help          # full command reference
 
 ---
 
-**Need help?** Open an issue on [GitHub](https://github.com/Kartik24Hulmukh/Kairo-Phantom/issues) — we respond within 24 hours.
+**Need help?** Open an issue on [GitHub](https://github.com/KairoPhantom/Kairo-Phantom/issues) — we respond within 24 hours.

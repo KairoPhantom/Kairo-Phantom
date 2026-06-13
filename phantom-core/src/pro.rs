@@ -1,6 +1,5 @@
 use sha2::{Sha256, Digest};
 use hmac::{Hmac, Mac};
-use sysinfo::{System, SystemExt};
 use std::path::PathBuf;
 use std::fs;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -24,11 +23,9 @@ impl KairoPro {
     }
 
     fn get_machine_id() -> String {
-        let mut sys = System::new_all();
-        sys.refresh_all();
-        // Fallback to hostname if no CPU ID is accessible cross-platform easily.
-        // In real environments, wmi on windows, ioreg on macos would be explicitly queried.
-        let id = sys.host_name().unwrap_or_else(|| "unknown-machine".to_string());
+        let id = std::env::var("COMPUTERNAME")
+            .or_else(|_| std::env::var("HOSTNAME"))
+            .unwrap_or_else(|_| "unknown-machine".to_string());
         format!("MACHINE_{}", id)
     }
 
@@ -128,23 +125,16 @@ impl TolariaBridge {
 // 2. TEAM MEMORY VAULT
 pub struct TeamMemoryVault;
 impl TeamMemoryVault {
-    pub async fn sync_to_s3(pro_state: &KairoPro) -> Result<(), String> {
-        if !pro_state.is_pro() { return Err("Team Memory Vault requires Kairo Pro.".to_string()); }
-        println!("Syncing SQLite preferences to shared S3 bucket...");
-        // S3 logic here
-        Ok(())
+    pub async fn sync_to_s3(_pro_state: &KairoPro) -> anyhow::Result<()> {
+        Err(anyhow::anyhow!("Pro sync not yet available"))
     }
 }
 
 // 3. AUDIT EXPORT
 pub struct AuditExport;
 impl AuditExport {
-    pub fn export_csv(pro_state: &KairoPro, user: &str, app: &str, agent: &str, hash: &str, outcome: &str, chars: usize) -> Result<(), String> {
-        if !pro_state.is_pro() { return Err("Audit export requires Kairo Pro.".to_string()); }
-        let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
-        let log = format!("{},{},{},{},{},{},{}", timestamp, user, app, agent, hash, outcome, chars);
-        println!("Writing to audit.csv: {}", log);
-        Ok(())
+    pub fn export_csv(_pro_state: &KairoPro, _user: &str, _app: &str, _agent: &str, _hash: &str, _outcome: &str, _chars: usize) -> anyhow::Result<()> {
+        Err(anyhow::anyhow!("Audit export not yet available"))
     }
 }
 

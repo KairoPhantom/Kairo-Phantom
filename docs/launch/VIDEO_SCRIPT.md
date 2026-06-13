@@ -107,7 +107,7 @@
 ```
 cargo install kairo-phantom
 Press Alt+Ctrl+M. Write // and go.
-github.com/Kartik24Hulmukh/Kairo-Phantom
+github.com/KairoPhantom/Kairo-Phantom
 ```
 
 **VOICEOVER:**  

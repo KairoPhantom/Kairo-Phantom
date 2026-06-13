@@ -192,31 +192,8 @@ class DeepPresenterBridge:
                     "bullets": s.bullets
                 })
         except Exception as e:
-            log.error(f"Failed to generate LLM slide outline: {e}. Using basic template.")
-            # Build topic-specific slides based on the topic
-            slides = [
-                {"title": topic, "content": f"A Presentation on {topic}", "bullets": []},
-                {"title": f"Introduction to {topic}", "bullets": [
-                    f"Overview and core concepts of {topic}",
-                    f"Key objectives and focus areas of {topic}",
-                    f"Target audience and scope of {topic}"
-                ]},
-                {"title": f"Core Aspects of {topic}", "bullets": [
-                    f"Primary components and features of {topic}",
-                    f"Methodologies and best practices in {topic}",
-                    f"Common challenges and solutions for {topic}"
-                ]},
-                {"title": f"Strategic Value of {topic}", "bullets": [
-                    f"Business and technical impact of {topic}",
-                    f"Efficiency gains and optimization via {topic}",
-                    f"Future trends and developments in {topic}"
-                ]},
-                {"title": f"Conclusion & Next Steps", "bullets": [
-                    f"Summary of key findings about {topic}",
-                    f"Implementation roadmap and actions for {topic}",
-                    "Open discussion and Q&A session"
-                ]}
-            ]
+            log.error(f"Failed to generate LLM slide outline: {e}.")
+            raise RuntimeError(f"DeepPresenter fallback failed: LLM outline generation failed: {e}") from e
 
         # Make sure slide_count matches what was requested
         final_slides = []

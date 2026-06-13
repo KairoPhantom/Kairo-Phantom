@@ -52,6 +52,7 @@ pub mod retry_policy;
 pub mod memory_store;
 pub mod quality_gate;
 pub mod writing_pipeline;
+pub mod pipeline;
 pub mod verify;
 pub mod kami_export;
 pub mod pdf_context;             // Domain 4: PDF SmartContextCapture structs
@@ -62,6 +63,8 @@ pub mod skill_factory;
 pub mod memory_vault;
 pub mod tolaria_bridge;
 pub mod collaborative;
+pub mod pro;
+pub mod sample_math;
 
 
 

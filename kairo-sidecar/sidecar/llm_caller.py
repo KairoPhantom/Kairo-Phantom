@@ -12,24 +12,37 @@ class StructuredOutputError(Exception):
         super().__init__(message)
         self.raw_response = raw_response
 
-def call_with_schema(prompt: str, schema: Type[BaseModel], model: str = "ollama/qwen2.5:7b") -> BaseModel:
+def call_with_schema(prompt: str, schema: Type[BaseModel], model: str = "ollama/qwen2.5:7b", timeout: float = None) -> BaseModel:
     """
     Calls local LiteLLM proxy on port 4000 to get a structured JSON response matching the schema.
     Strips markdown code fences, validates using Pydantic v2, and retries once on validation failure.
-    Timeout is set to 8.0 seconds.
     """
+    import os
     endpoint = "http://localhost:4000/v1/chat/completions"
     
+    if timeout is not None:
+        timeout_val = timeout
+    elif "KAIRO_LLM_TIMEOUT" in os.environ:
+        timeout_val = float(os.environ["KAIRO_LLM_TIMEOUT"])
+    else:
+        if len(prompt) > 4000:
+            timeout_val = 120.0
+        elif len(prompt) < 500:
+            timeout_val = 15.0
+        else:
+            timeout_val = 60.0
+
     current_prompt = prompt
     for attempt in range(1, 3):
-        log.info(f"LLM Structured Call Attempt {attempt}/2")
+        log.info(f"LLM Structured Call Attempt {attempt}/2 with timeout={timeout_val}s")
         payload = {
             "model": model,
             "messages": [
                 {"role": "user", "content": current_prompt}
             ],
             "response_format": {"type": "json_object"},
-            "temperature": 0.0
+            "temperature": 0.0,
+            "timeout": timeout_val
         }
         
         req = urllib.request.Request(
@@ -40,8 +53,7 @@ def call_with_schema(prompt: str, schema: Type[BaseModel], model: str = "ollama/
         )
         
         try:
-            # Enforce strict 8.0s timeout
-            with urllib.request.urlopen(req, timeout=8.0) as response:
+            with urllib.request.urlopen(req, timeout=timeout_val) as response:
                 resp_data = json.loads(response.read().decode("utf-8"))
             
             content = resp_data["choices"][0]["message"]["content"].strip()

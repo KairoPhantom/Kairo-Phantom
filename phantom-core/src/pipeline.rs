@@ -1,11 +1,12 @@
 // phantom-core/src/pipeline.rs
 
-use enigo::{Enigo, KeyboardControllable};
+use enigo::{Enigo, Keyboard, Settings};
 use reqwest::Client;
 use std::time::Duration;
 use tokio::time::sleep;
 use tokio_util::sync::CancellationToken;
 use futures_util::StreamExt;
+use crate::document_context::DocumentContext;
 
 /// Manages pre-warmed connections for sub-100ms LLM latency.
 pub struct HotkeyPipeline {
@@ -39,8 +40,8 @@ impl HotkeyPipeline {
     ) -> Result<(), String> {
         // Run UIA capture and LLM request concurrently
         let (capture_result, request_result) = tokio::join!(
-            Self::capture_context_lazy(),
-            self.initiate_stream(prompt, cancel_token.clone())
+            Self::capture_context_lazy(&prompt),
+            self.initiate_stream(prompt.clone(), cancel_token.clone())
         );
 
         let mut stream = request_result?;
@@ -53,8 +54,8 @@ impl HotkeyPipeline {
             if cancel_token.is_cancelled() {
                 break;
             }
-            if let Ok(bytes) = chunk {
-                let text = String::from_utf8_lossy(&bytes).to_string();
+            if let Ok(chunk_bytes) = chunk {
+                let text = String::from_utf8_lossy(&chunk_bytes).to_string();
                 injector.inject_chunk(&text).await;
             }
         }
@@ -63,10 +64,60 @@ impl HotkeyPipeline {
         Ok(())
     }
 
-    async fn capture_context_lazy() -> Result<String, String> {
-        // Mock UIA capture latency
-        sleep(Duration::from_millis(15)).await;
-        Ok("Active window context".to_string())
+    pub async fn capture_context_lazy(prompt: &str) -> Result<DocumentContext, String> {
+        let (app_name, window_title) = crate::context::ContextEngine::new().get_active_app_info();
+        let reader = crate::platform::new_reader();
+
+        // 1. UIA fallback
+        if let Ok(uia_text) = reader.get_focused_text() {
+            let uia_trimmed = uia_text.trim();
+            // Check if VS Code returned its inaccessibility warning
+            let is_inaccessible = ["VS Code", "accessibility", "Screen Reader", "VSCode"]
+                .iter()
+                .any(|s| uia_trimmed.contains(s));
+            if !uia_trimmed.is_empty() && !is_inaccessible {
+                tracing::info!("📖 UIA read: {} chars", uia_trimmed.len());
+                let mut ctx = DocumentContext::from_plain_text(&app_name, &uia_text, prompt);
+                ctx.app_name = Some(app_name.clone());
+                return Ok(ctx);
+            }
+        }
+
+        // 2. Clipboard fallback
+        if let Ok(clip_text) = reader.get_clipboard_text() {
+            let clip_trimmed = clip_text.trim();
+            if !clip_trimmed.is_empty() {
+                tracing::info!("📋 Clipboard read: {} chars", clip_trimmed.len());
+                let mut ctx = DocumentContext::from_plain_text(&app_name, &clip_text, prompt);
+                ctx.app_name = Some(app_name.clone());
+                return Ok(ctx);
+            }
+        }
+
+        // 3. Screenshot OCR fallback
+        let ocr_config = crate::config::ScreenContextConfig::default();
+        let ocr_engine = crate::screen_context::ScreenContextEngine::new(ocr_config);
+        if let Ok(screen_ctx) = ocr_engine.capture_and_extract(&app_name, &window_title).await {
+            let ocr_trimmed = screen_ctx.vasp_output.trim();
+            if !ocr_trimmed.is_empty() {
+                tracing::info!("📸 Screenshot OCR read: {} chars", ocr_trimmed.len());
+                let mut ctx = DocumentContext::from_plain_text(&app_name, &screen_ctx.vasp_output, prompt);
+                ctx.app_name = Some(app_name.clone());
+                return Ok(ctx);
+            }
+        }
+
+        // 4. Prompt-only fallback
+        if !prompt.trim().is_empty() {
+            tracing::info!("📝 Prompt-only fallback used");
+            let mut ctx = DocumentContext::from_plain_text(&app_name, prompt, prompt);
+            ctx.app_name = Some(app_name.clone());
+            return Ok(ctx);
+        }
+
+        // Total failure
+        crate::toast_notification::show_error_toast("Kairo context capture failed. Please make sure target app is active.");
+        Err("Total context capture failure".to_string())
     }
 
     async fn initiate_stream(
@@ -95,7 +146,7 @@ pub struct StreamInjector {
 impl StreamInjector {
     pub fn new() -> Self {
         Self {
-            enigo: Enigo::new(),
+            enigo: Enigo::new(&Settings::default()).expect("Failed to initialize Enigo"),
             buffer: String::new(),
         }
     }
@@ -105,14 +156,14 @@ impl StreamInjector {
         
         while self.buffer.len() >= 5 {
             let chunk: String = self.buffer.drain(..5).collect();
-            self.enigo.key_sequence(&chunk);
+            let _ = self.enigo.text(&chunk);
             sleep(Duration::from_millis(16)).await;
         }
     }
 
     pub async fn flush(&mut self) {
         if !self.buffer.is_empty() {
-            self.enigo.key_sequence(&self.buffer);
+            let _ = self.enigo.text(&self.buffer);
             self.buffer.clear();
         }
     }

@@ -336,7 +336,7 @@ struct OpenAiMessageContent {
 
 impl OpenAiBackend {
     pub fn new(api_key: String, model: String, base_url: String) -> Self {
-        let client = Client::builder()
+        let client = crate::config::get_client_builder()
             .timeout(std::time::Duration::from_secs(120))
             .build()
             .unwrap_or_default();
@@ -446,7 +446,7 @@ pub struct OllamaBackend {
 
 impl OllamaBackend {
     pub fn new(base_url: String, model: String) -> Self {
-        let client = Client::builder()
+        let client = crate::config::get_client_builder()
             .timeout(std::time::Duration::from_secs(300))
             .build()
             .unwrap_or_default();
@@ -545,7 +545,7 @@ pub struct AnthropicBackend {
 impl AnthropicBackend {
     pub fn new(api_key: String, model: String) -> Self {
         AnthropicBackend {
-            client: Client::builder()
+            client: crate::config::get_client_builder()
                 .timeout(std::time::Duration::from_secs(120))
                 .build()
                 .unwrap_or_default(),
@@ -637,7 +637,7 @@ pub struct GeminiBackend {
 impl GeminiBackend {
     pub fn new(api_key: String, model: String) -> Self {
         GeminiBackend {
-            client: Client::builder()
+            client: crate::config::get_client_builder()
                 .timeout(std::time::Duration::from_secs(120))
                 .build()
                 .unwrap_or_default(),

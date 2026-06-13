@@ -276,6 +276,9 @@ async fn call_sidecar(req: SidecarRequest) -> Result<serde_json::Value> {
                     .map(|s| s.to_string())
             })
             .unwrap_or_else(|| "unknown error".to_string());
+        if err_msg.starts_with("Domain ") {
+            crate::toast_notification::show_error_toast(&err_msg);
+        }
         bail!("Sidecar error: {}", err_msg);
     }
 
@@ -300,6 +303,17 @@ pub async fn ping() -> bool {
 /// Returns true if the sidecar was reachable at last ping.
 pub fn is_available() -> bool {
     SIDECAR_AVAILABLE.load(Ordering::Relaxed)
+}
+
+/// Query the sidecar's health status and domain availability.
+pub async fn self_check() -> Result<serde_json::Value> {
+    let req = SidecarRequest {
+        id: Uuid::new_v4().to_string(),
+        action: "self_check".to_string(),
+        path: None,
+        payload: None,
+    };
+    call_sidecar(req).await
 }
 
 /// Extract full structured context from a document file.

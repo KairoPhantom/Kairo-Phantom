@@ -14,7 +14,7 @@
 
 Please report security issues privately:
 
-1. Go to the [GitHub Security Advisories](https://github.com/Kartik24Hulmukh/Kairo-Phantom/security/advisories/new) page for this repository.
+1. Go to the [GitHub Security Advisories](https://github.com/KairoPhantom/Kairo-Phantom/security/advisories/new) page for this repository.
 2. Click **"Report a vulnerability"**.
 3. Fill in the details: affected version, reproduction steps, and potential impact.
 

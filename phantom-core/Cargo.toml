@@ -4,9 +4,9 @@ version = "0.3.0"
 edition = "2021"
 description = "Kairo Phantom — AI ghost-writer that haunts any app and learns how you write"
 license = "MIT"
-repository = "https://github.com/Kartik24Hulmukh/Kairo-Phantom"
-homepage = "https://github.com/Kartik24Hulmukh/Kairo-Phantom"
-documentation = "https://github.com/Kartik24Hulmukh/Kairo-Phantom/blob/main/CONTRIBUTING.md"
+repository = "https://github.com/KairoPhantom/Kairo-Phantom"
+homepage = "https://github.com/KairoPhantom/Kairo-Phantom"
+documentation = "https://github.com/KairoPhantom/Kairo-Phantom/blob/main/CONTRIBUTING.md"
 authors = ["Kairo Phantom Contributors"]
 keywords = ["ai", "ghost-writer", "llm", "ollama", "document-intelligence"]
 categories = ["command-line-utilities", "text-processing"]
@@ -41,6 +41,7 @@ ollama-rs = { version = "0.2", features = ["stream"] }
 
 # HTTP client for OpenAI/Anthropic/Gemini adapters
 reqwest = { version = "0.12", features = ["json", "stream"] }
+bytes = "1"
 
 # Global hotkey listener
 rdev = "0.5"
@@ -118,6 +119,7 @@ rusqlite = { version = "0.32.0", features = ["bundled"] }
 chrono = { version = "0.4.44", features = ["serde"] }
 tempfile = "3"
 petgraph = "0.6.5"
+fxhash = "0.2.1"
 
 # Domain 9: Enterprise Governance & Compliance
 hmac = "0.12"                # MIT/Apache-2.0 — HMAC-SHA256 for audit chain sealing
@@ -129,10 +131,12 @@ hex = "0.4"                  # MIT/Apache-2.0 — SHA-256 fingerprint encoding (
 fastembed = { version = "3", optional = true }
 aes-gcm = "0.10.3"
 pbkdf2 = "0.12.2"
+tauri = { version = "2.0.0", optional = true }
 
 [features]
 default = []
 local-embeddings = ["dep:fastembed"]
+tauri = ["dep:tauri"]
 # Gates: Figma integration, collaborative docs, export engine, and voice (Domains 5-8)
 # These stay behind this flag until Phase 5 of the Foundation-First Hardening Plan is complete.
 advanced = []
@@ -230,3 +234,15 @@ path = "tests/pipeline/test_three_layer_pipeline.rs"
 [[test]]
 name = "cua"
 path = "tests/cua/mod.rs"
+
+[[test]]
+name = "test_cross_platform"
+path = "tests/platform/test_cross_platform.rs"
+
+[[test]]
+name = "test_domain11_e2e"
+path = "tests/security/test_domain11_e2e.rs"
+
+[[test]]
+name = "test_injector"
+path = "tests/test_injector.rs"

@@ -28,7 +28,7 @@ Thank you for your interest in contributing! Kairo Phantom is a Rust-native AI g
 ### Clone and build
 
 ```bash
-git clone https://github.com/Kartik24Hulmukh/Kairo-Phantom.git
+git clone https://github.com/KairoPhantom/Kairo-Phantom.git
 cd Kairo-Phantom/phantom-core
 cargo build
 ```
@@ -156,4 +156,4 @@ Both must pass cleanly before a PR is merged.
 
 ## Questions?
 
-Open a [GitHub Discussion](https://github.com/Kartik24Hulmukh/Kairo-Phantom/discussions) or file an issue. We're a friendly community.
+Open a [GitHub Discussion](https://github.com/KairoPhantom/Kairo-Phantom/discussions) or file an issue. We're a friendly community.

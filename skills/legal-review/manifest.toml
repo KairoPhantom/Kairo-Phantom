@@ -4,6 +4,6 @@ version = "1.0.0"
 description = "Reviews documents for legal risks: contract gaps, GDPR exposure, liability clauses, and compliance issues. Outputs a structured risk report with priority rankings."
 author = "Kairo Phantom Team"
 category = "legal"
-skill_md_url = "https://github.com/Kartik24Hulmukh/Kairo-Phantom/raw/main/skills/legal-review/SKILL.md"
+skill_md_url = "https://github.com/KairoPhantom/Kairo-Phantom/raw/main/skills/legal-review/SKILL.md"
 requires_kairo = "0.3.0"
 tags = ["legal", "contract", "compliance", "gdpr", "risk"]

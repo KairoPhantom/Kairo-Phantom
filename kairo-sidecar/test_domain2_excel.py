@@ -150,6 +150,16 @@ class TestForgeValidator:
         res = validate_formula("=SUM(A1:A10)")
         assert res["confidence"] >= 0.8
 
+    def test_semantic_error_division_by_zero(self):
+        res = validate_formula("=1/0")
+        assert res["valid"] is False
+        assert "DIV/0" in res["error"] or "division by zero" in res["error"].lower()
+
+    def test_semantic_error_invalid_types(self):
+        res = validate_formula('=SUM("hello", 5)')
+        assert res["valid"] is False
+        assert "VALUE" in res["error"] or "evaluation failed" in res["error"].lower()
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # 2. TestExcelContextCapture (12 tests)

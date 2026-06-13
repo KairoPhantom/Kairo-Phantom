@@ -465,6 +465,21 @@ class DomainMasterRouter:
         elif domain == "pptx":
             domain = "powerpoint"
 
+        # Check domain registry mode
+        from sidecar.domain_registry import get_domain_mode
+        if get_domain_mode(domain) == "PromptOnly":
+            canonical_name = domain.capitalize()
+            if domain == "powerpoint":
+                canonical_name = "PowerPoint"
+            elif domain == "pdf":
+                canonical_name = "PDF"
+            log.warning(f"Domain {canonical_name} is registered as PromptOnly. Blocked execution.")
+            return KairoResponse(
+                type="error",
+                domain=domain,
+                error=f"Domain {canonical_name} is unavailable. Operating in PromptOnly mode."
+            )
+
         # ── STEP 0: IntentGate — lightweight pre-classification (FIRST STEP) ──
         # Runs before MemMachine query and before any heavy LLM calls.
         # Result is attached to the request for downstream use.
@@ -580,9 +595,35 @@ class DomainMasterRouter:
                 request.user_prompt, doc_context, mem_ctx, classification
             )
 
-            # 5. Call LLM (using selected model tier)
+            # 5. Call LLM (using selected model tier and adaptive compute)
             schema_class = master.get_schema_class()
-            raw_response = call_with_schema(prompt, schema_class, model=selected_model)
+            
+            from sidecar.adaptive_compute import estimate_difficulty, get_compute_budget
+            from sidecar.best_of_n import run_best_of_n
+            
+            doc_len = len(doc_context.full_text) if hasattr(doc_context, "full_text") else 0
+            waza_agent_str = getattr(classification, "waza_agent", "general")
+            difficulty = estimate_difficulty(
+                request.user_prompt,
+                domain,
+                waza_agent=waza_agent_str,
+                document_length=doc_len
+            )
+            budget = get_compute_budget(difficulty)
+            
+            if budget.get("use_best_of_n", False) and request.file_path:
+                raw_response = run_best_of_n(
+                    prompt=prompt,
+                    schema_class=schema_class,
+                    model=selected_model,
+                    domain=domain,
+                    file_path=request.file_path,
+                    master=master,
+                    doc_context=doc_context,
+                    N=budget.get("N", 3)
+                )
+            else:
+                raw_response = call_with_schema(prompt, schema_class, model=selected_model)
 
             # Streaming is opt-in via request.stream = True
             if getattr(request, "stream", False) is True:

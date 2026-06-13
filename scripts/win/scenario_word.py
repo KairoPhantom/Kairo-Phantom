@@ -128,7 +128,7 @@ def _kairo_inject(prompt: str, wait: int = 65):
     except Exception:
         initial_text = None
 
-    _pag.hotkey('alt', 'm')
+    _pag.hotkey('ctrl', 'alt', 'm')
     
     # Wait dynamically for up to 90 seconds
     changed = False

@@ -78,7 +78,7 @@ mod tests {
         sleep(Duration::from_millis(500)).await;
         handle.abort();
         
-        let mut inbox = dirs::home_dir().unwrap();
+        let mut inbox = dirs::home_dir().expect("home_dir must exist in test environment");
         inbox.push(".kairo-phantom/inbox");
         assert!(inbox.exists());
     }

@@ -32,6 +32,9 @@ def record_operation(domain: str, latency_ms: float, success: bool = True) -> No
     Only fires if user has opted in.
     NON-BLOCKING: writes to local JSONL file only (no network).
     """
+    import os
+    if os.environ.get("KAIRO_OFFLINE") == "1":
+        return
     if not is_opted_in():
         return
     entry = {

@@ -42,4 +42,4 @@ installable, and trustworthy for every user on every platform.
 
 ## Need Help?
 
-Tag `@Kartik24Hulmukh` in your PR or drop a comment here. We respond within 24 hours.
+Tag `@KairoPhantom` in your PR or drop a comment here. We respond within 24 hours.

@@ -72,7 +72,7 @@ def _no1(logger):
     """NO1: Create structured project kickoff page with 5 toggle sections."""
     pyautogui.hotkey("ctrl","n"); time.sleep(2)
     pyautogui.typewrite("// Create a project kickoff page with sections for: Objectives, Timeline, Team, Risks, and Success Metrics. Use Notion toggle blocks for each section.", interval=0.02)
-    pyautogui.hotkey("alt","m"); time.sleep(15)
+    pyautogui.hotkey("ctrl","alt","m"); time.sleep(15)
     pyautogui.hotkey("tab"); time.sleep(2)
     pyautogui.hotkey("ctrl","a"); pyautogui.hotkey("ctrl","c"); time.sleep(0.5)
     c = _clipboard()
@@ -86,7 +86,7 @@ def _no1(logger):
 def _no2(logger):
     """NO2: Populate database row with specified values."""
     pyautogui.typewrite("// Create a new database entry: 'Review Q3 vendor contracts', assigned to Legal Team, due next Friday, High priority, Not started.", interval=0.02)
-    pyautogui.hotkey("alt","m"); time.sleep(10)
+    pyautogui.hotkey("ctrl","alt","m"); time.sleep(10)
     pyautogui.hotkey("tab"); time.sleep(2)
     pyautogui.hotkey("ctrl","a"); pyautogui.hotkey("ctrl","c"); time.sleep(0.5)
     c = _clipboard()
@@ -100,7 +100,7 @@ def _no2(logger):
 def _no3(logger):
     """NO3: Add API v3 deprecation notice, replace v2 references."""
     pyautogui.typewrite("// Update this documentation page to reflect that the API v2 endpoint has been deprecated and replaced with v3. Add a deprecation notice at the top.", interval=0.02)
-    pyautogui.hotkey("alt","m"); time.sleep(12)
+    pyautogui.hotkey("ctrl","alt","m"); time.sleep(12)
     pyautogui.hotkey("tab"); time.sleep(2)
     pyautogui.hotkey("ctrl","a"); pyautogui.hotkey("ctrl","c"); time.sleep(0.5)
     c = _clipboard()
@@ -118,7 +118,7 @@ def _no4(logger):
     pyautogui.typewrite(raw, interval=0.02)
     pyautogui.hotkey("ctrl","a")
     pyautogui.typewrite("// Structure these raw notes into a Notion page with: Meeting Details, Discussion Points, Decisions Made, Action Items with @mentions.", interval=0.02)
-    pyautogui.hotkey("alt","m"); time.sleep(15)
+    pyautogui.hotkey("ctrl","alt","m"); time.sleep(15)
     pyautogui.hotkey("tab"); time.sleep(2)
     pyautogui.hotkey("ctrl","a"); pyautogui.hotkey("ctrl","c"); time.sleep(0.5)
     c = _clipboard()
@@ -166,9 +166,9 @@ def run_figma_scenario(scenario_id: str, logger: logging.Logger):
 
 def _f1(logger):
     """F1: Ghost-write compelling hero title into selected Figma text layer."""
-    pyautogui.hotkey("alt","m"); time.sleep(0.5)
+    pyautogui.hotkey("ctrl","alt","m"); time.sleep(0.5)
     pyautogui.typewrite("// Rewrite this hero title to be more compelling: 'AI Document Copilot'. Benefit-focused, under 60 characters.", interval=0.02)
-    pyautogui.hotkey("alt","m"); time.sleep(10)
+    pyautogui.hotkey("ctrl","alt","m"); time.sleep(10)
     pyautogui.hotkey("tab"); time.sleep(1)
     pyautogui.hotkey("ctrl","a"); pyautogui.hotkey("ctrl","c"); time.sleep(0.5)
     c = _clipboard()
@@ -180,7 +180,7 @@ def _f1(logger):
 def _f2(logger):
     """F2: Generate SaaS hero section in blank frame."""
     pyautogui.typewrite("// Create a SaaS hero section with headline, subheadline, and CTA button. Modern clean design with proper spacing.", interval=0.02)
-    pyautogui.hotkey("alt","m"); time.sleep(20)
+    pyautogui.hotkey("ctrl","alt","m"); time.sleep(20)
     pyautogui.hotkey("tab"); time.sleep(2)
     return True, "F2: Hero section generation attempted (verify visually in Figma)"
 
@@ -188,7 +188,7 @@ def _f2(logger):
 def _f3(logger):
     """F3: Apply consistent typography to selected text layers."""
     pyautogui.typewrite("// Apply consistent typography: headings to Inter Bold 32px #1A1A1A, body text to Inter Regular 16px #333333. Preserve content.", interval=0.02)
-    pyautogui.hotkey("alt","m"); time.sleep(12)
+    pyautogui.hotkey("ctrl","alt","m"); time.sleep(12)
     pyautogui.hotkey("tab"); time.sleep(2)
     return True, "F3: Typography applied (verify via Figma inspector)"
 
@@ -196,7 +196,7 @@ def _f3(logger):
 def _f4(logger):
     """F4: Create 3 button component variants (Hover, Disabled, Loading)."""
     pyautogui.typewrite("// Create 3 additional variants for this button component: Hover (darker), Disabled (grayed), Loading (spinner).", interval=0.02)
-    pyautogui.hotkey("alt","m"); time.sleep(18)
+    pyautogui.hotkey("ctrl","alt","m"); time.sleep(18)
     pyautogui.hotkey("tab"); time.sleep(2)
     return True, "F4: Variant creation attempted (verify count in Figma layers panel)"
 
@@ -204,7 +204,7 @@ def _f4(logger):
 def _f5(logger):
     """F5: Apply Auto Layout to frame (vertical, 24px gap, 40px padding)."""
     pyautogui.typewrite("// Apply Auto Layout to this frame: vertical direction, 24px gap, 40px padding on all sides, center alignment. Preserve order.", interval=0.02)
-    pyautogui.hotkey("alt","m"); time.sleep(12)
+    pyautogui.hotkey("ctrl","alt","m"); time.sleep(12)
     pyautogui.hotkey("tab"); time.sleep(2)
     return True, "F5: Auto Layout application attempted (verify in Figma design panel)"
 
@@ -249,7 +249,7 @@ def _s1(logger):
     """S1: Draft team announcement with emojis."""
     _launch_slack(logger)
     pyautogui.typewrite("// Draft team announcement: shipped new feature, deployment Friday 8 PM PST, rollback plan in place, thanks engineering team. Appreciative, concise, emojis.", interval=0.02)
-    pyautogui.hotkey("alt","m"); time.sleep(10)
+    pyautogui.hotkey("ctrl","alt","m"); time.sleep(10)
     pyautogui.hotkey("tab"); time.sleep(1)
     pyautogui.hotkey("ctrl","a"); pyautogui.hotkey("ctrl","c"); time.sleep(0.5)
     c = _clipboard()
@@ -264,7 +264,7 @@ def _s1(logger):
 def _s2(logger):
     """S2: Professional client email about project delay."""
     pyautogui.typewrite("// Draft professional email to client about project delay. Acknowledge delay, supply chain reason, 2-week extension, 15% discount compensation. Professional tone.", interval=0.02)
-    pyautogui.hotkey("alt","m"); time.sleep(15)
+    pyautogui.hotkey("ctrl","alt","m"); time.sleep(15)
     pyautogui.hotkey("tab"); time.sleep(1)
     pyautogui.hotkey("ctrl","a"); pyautogui.hotkey("ctrl","c"); time.sleep(0.5)
     c = _clipboard()
@@ -286,7 +286,7 @@ def _s3(logger):
               "Carol: Need to clarify budget. Bob: Owner is still TBD. Alice: Decided on Postgres, Q3 migration. "
               "Carol: Open: budget and ownership.")
     pyautogui.typewrite(thread + " // Summarize this thread in 3 key decisions and 2 open questions. Bullet points.", interval=0.02)
-    pyautogui.hotkey("alt","m"); time.sleep(12)
+    pyautogui.hotkey("ctrl","alt","m"); time.sleep(12)
     pyautogui.hotkey("tab"); time.sleep(1)
     pyautogui.hotkey("ctrl","a"); pyautogui.hotkey("ctrl","c"); time.sleep(0.5)
     c = _clipboard()
@@ -300,7 +300,7 @@ def _s3(logger):
 def _s4(logger):
     """S4: Translate Spanish message and reply in Spanish."""
     pyautogui.typewrite("Hola, podemos reunirnos mañana a las 3 PM para discutir el proyecto? // Translate this to English and draft a polite reply in Spanish confirming I'll attend at 3 PM.", interval=0.02)
-    pyautogui.hotkey("alt","m"); time.sleep(12)
+    pyautogui.hotkey("ctrl","alt","m"); time.sleep(12)
     pyautogui.hotkey("tab"); time.sleep(1)
     pyautogui.hotkey("ctrl","a"); pyautogui.hotkey("ctrl","c"); time.sleep(0.5)
     c = _clipboard()
@@ -315,7 +315,7 @@ def _s4(logger):
 def _s5(logger):
     """S5: Calm incident notification (degraded, not down)."""
     pyautogui.typewrite("// Draft incident notification for #incidents: Service X is degraded (increased latency, not down), engineering investigating, ETA 30 min for update. Calm tone.", interval=0.02)
-    pyautogui.hotkey("alt","m"); time.sleep(10)
+    pyautogui.hotkey("ctrl","alt","m"); time.sleep(10)
     pyautogui.hotkey("tab"); time.sleep(1)
     pyautogui.hotkey("ctrl","a"); pyautogui.hotkey("ctrl","c"); time.sleep(0.5)
     c = _clipboard()
@@ -372,7 +372,7 @@ def _pdf1(logger):
     if os.path.exists(pdf):
         _open_pdf_in_browser(pdf)
     pyautogui.typewrite("// Read the visible content of this PDF and summarize it in one paragraph. Include title and author if visible.", interval=0.02)
-    pyautogui.hotkey("alt","m"); time.sleep(12)
+    pyautogui.hotkey("ctrl","alt","m"); time.sleep(12)
     pyautogui.hotkey("tab"); time.sleep(1)
     pyautogui.hotkey("ctrl","a"); pyautogui.hotkey("ctrl","c"); time.sleep(0.5)
     c = _clipboard()
@@ -385,7 +385,7 @@ def _pdf1(logger):
 def _pdf2(logger):
     """PDF2: Form field suggestions from user context."""
     pyautogui.typewrite("// Read the form fields in this PDF and suggest what to fill based on context: John Smith, Software Engineer, 5 years experience.", interval=0.02)
-    pyautogui.hotkey("alt","m"); time.sleep(12)
+    pyautogui.hotkey("ctrl","alt","m"); time.sleep(12)
     pyautogui.hotkey("tab"); time.sleep(1)
     pyautogui.hotkey("ctrl","a"); pyautogui.hotkey("ctrl","c"); time.sleep(0.5)
     c = _clipboard()
@@ -398,7 +398,7 @@ def _pdf2(logger):
 def _pdf3(logger):
     """PDF3: Flag at least 3 risky contract clauses."""
     pyautogui.typewrite("// Review the visible contract text and flag any clauses risky for a small business. Identify at least 3 concerns.", interval=0.02)
-    pyautogui.hotkey("alt","m"); time.sleep(15)
+    pyautogui.hotkey("ctrl","alt","m"); time.sleep(15)
     pyautogui.hotkey("tab"); time.sleep(1)
     pyautogui.hotkey("ctrl","a"); pyautogui.hotkey("ctrl","c"); time.sleep(0.5)
     c = _clipboard()
@@ -411,7 +411,7 @@ def _pdf3(logger):
 def _pdf4(logger):
     """PDF4: Extract table as CSV-ready text."""
     pyautogui.typewrite("// Extract the table data visible in this PDF and format as CSV with headers. Preserve numeric values exactly.", interval=0.02)
-    pyautogui.hotkey("alt","m"); time.sleep(15)
+    pyautogui.hotkey("ctrl","alt","m"); time.sleep(15)
     pyautogui.hotkey("tab"); time.sleep(1)
     pyautogui.hotkey("ctrl","a"); pyautogui.hotkey("ctrl","c"); time.sleep(0.5)
     c = _clipboard()
@@ -424,7 +424,7 @@ def _pdf4(logger):
 def _pdf5(logger):
     """PDF5: Annotation suggestions in Q:/Connection:/Key: format."""
     pyautogui.typewrite("// Read the visible section and suggest 3 annotations: one question, one connection, one key takeaway. Format: Q: [...], Connection: [...], Key: [...]", interval=0.02)
-    pyautogui.hotkey("alt","m"); time.sleep(12)
+    pyautogui.hotkey("ctrl","alt","m"); time.sleep(12)
     pyautogui.hotkey("tab"); time.sleep(1)
     pyautogui.hotkey("ctrl","a"); pyautogui.hotkey("ctrl","c"); time.sleep(0.5)
     c = _clipboard()

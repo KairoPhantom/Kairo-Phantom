@@ -9,6 +9,8 @@ from typing import List, Dict, Any, Union
 from docx import Document
 from docx.enum.style import WD_STYLE_TYPE
 
+from sidecar.constants import KAIRO_BACKUP_SUFFIX
+
 log = logging.getLogger("kairo-sidecar.word_master")
 
 # ---------------------------------------------------------------------------
@@ -467,7 +469,7 @@ class WordWriter:
             log.debug(f"Live COM check failed: {e}. Falling back to python-docx write.")
 
         # Fallback to python-docx file write
-        backup_path = file_path + ".kairo_bak"
+        backup_path = file_path + KAIRO_BACKUP_SUFFIX
         tmp_path = file_path + ".kairo_tmp"
 
         # Ensure no stale temp/backup files exist before we start
@@ -483,6 +485,98 @@ class WordWriter:
             shutil.copy2(file_path, backup_path)
 
             doc = Document(file_path)
+
+            # Check track revisions setting to avoid silent degradation
+            from docx.oxml.ns import qn
+            settings = doc.settings
+            track_active = False
+            if settings is not None and settings.element is not None:
+                track_active = settings.element.find(qn('w:trackRevisions')) is not None
+
+            if track_active:
+                log.info("Track changes active in Word document, routing via adeu_apply_edits...")
+                original_paragraphs = list(doc.paragraphs)
+                edits = []
+                for op in operations:
+                    op_type = op.get("type", op.get("action", ""))
+                    if op_type == "replace_paragraph":
+                        idx = op.get("paragraph_index", -1)
+                        if 0 <= idx < len(original_paragraphs):
+                            orig_text = original_paragraphs[idx].text
+                            new_text = "".join(run_data.get("text", "") for run_data in op.get("runs", []))
+                            edits.append({
+                                "target_text": orig_text,
+                                "new_text": new_text,
+                                "comment": op.get("comment", "")
+                            })
+                    elif op_type == "delete_paragraph":
+                        idx = op.get("paragraph_index", -1)
+                        if 0 <= idx < len(original_paragraphs):
+                            orig_text = original_paragraphs[idx].text
+                            edits.append({
+                                "target_text": orig_text,
+                                "new_text": "",
+                                "comment": op.get("comment", "")
+                            })
+                    elif op_type == "append_to_run":
+                        idx = op.get("paragraph_index", -1)
+                        if 0 <= idx < len(original_paragraphs):
+                            orig_text = original_paragraphs[idx].text
+                            runs_text = "".join(run_data.get("text", "") for run_data in op.get("runs", []))
+                            new_text = orig_text + runs_text
+                            edits.append({
+                                "target_text": orig_text,
+                                "new_text": new_text,
+                                "comment": op.get("comment", "")
+                            })
+                    elif op_type == "insert_paragraph":
+                        idx = op.get("after_paragraph_index", -1)
+                        new_para_text = "".join(run_data.get("text", "") for run_data in op.get("runs", []))
+                        if idx == -1:
+                            if original_paragraphs:
+                                orig_text = original_paragraphs[-1].text
+                                edits.append({
+                                    "target_text": orig_text,
+                                    "new_text": orig_text + "\n" + new_para_text,
+                                    "comment": op.get("comment", "")
+                                })
+                        elif 0 <= idx < len(original_paragraphs):
+                            orig_text = original_paragraphs[idx].text
+                            edits.append({
+                                "target_text": orig_text,
+                                "new_text": orig_text + "\n" + new_para_text,
+                                "comment": op.get("comment", "")
+                            })
+
+                if edits:
+                    from sidecar.parsers.adeu_bridge import adeu_apply_edits
+                    tmp_out = file_path + ".kairo_track_tmp"
+                    if os.path.exists(tmp_out):
+                        try:
+                            os.remove(tmp_out)
+                        except Exception:
+                            pass
+                    res = adeu_apply_edits(file_path, edits, output_path=tmp_out)
+                    if res.get("ok"):
+                        if os.path.exists(tmp_out):
+                            os.replace(tmp_out, file_path)
+                        if os.path.exists(backup_path):
+                            try:
+                                os.remove(backup_path)
+                            except Exception:
+                                pass
+                        return {
+                            "applied_count": res.get("applied_count", len(edits)),
+                            "errors": [],
+                            "path": file_path
+                        }
+                    else:
+                        if os.path.exists(tmp_out):
+                            try:
+                                os.remove(tmp_out)
+                            except Exception:
+                                pass
+                        raise RuntimeError(f"Tracked changes routing failed: {res.get('error')}")
 
             # Pre-cache original paragraphs
             original_paragraphs = list(doc.paragraphs)

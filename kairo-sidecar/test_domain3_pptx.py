@@ -365,9 +365,22 @@ class TestDeepPresenterBridge:
         assert isinstance(bridge.is_available(), bool)
 
     def test_deeppresenter_generate_presentation_fallback(self):
+        from unittest.mock import patch
+        from sidecar.parsers.deeppresenter_bridge import FallbackPresentationOutline, FallbackSlide
         bridge = DeepPresenterBridge()
-        # Force fallback execution
-        res = bridge.generate_presentation("Transformer Neural Networks", slide_count=6)
+        
+        mock_outline = FallbackPresentationOutline(slides=[
+            FallbackSlide(title="Transformer Neural Networks", content="Intro", bullets=["A", "B", "C"]),
+            FallbackSlide(title="Architecture", content="Body", bullets=["D", "E"]),
+            FallbackSlide(title="Self Attention", content="Body", bullets=["F"]),
+            FallbackSlide(title="Multi-Head", content="Body", bullets=["G"]),
+            FallbackSlide(title="Positional Encoding", content="Body", bullets=["H"]),
+            FallbackSlide(title="Conclusion", content="End", bullets=["I"])
+        ])
+        
+        with patch("sidecar.llm_caller.call_with_schema", return_value=mock_outline):
+            res = bridge.generate_presentation("Transformer Neural Networks", slide_count=6)
+            
         assert "pptx_path" in res
         assert res["slide_count"] == 6
         assert os.path.exists(res["pptx_path"])
@@ -376,6 +389,35 @@ class TestDeepPresenterBridge:
         from pptx import Presentation
         prs = Presentation(res["pptx_path"])
         assert len(prs.slides) == 6
+        assert prs.slides[0].shapes.title.text == "Transformer Neural Networks"
+        os.remove(res["pptx_path"])
+
+    def test_deeppresenter_health_check_fallback_status(self):
+        from unittest.mock import patch
+        from sidecar.parsers.deeppresenter_bridge import DeepPresenterBridge
+        from sidecar.parsers.deeppresenter_bridge import FallbackPresentationOutline, FallbackSlide
+        
+        bridge = DeepPresenterBridge()
+        
+        mock_outline = FallbackPresentationOutline(slides=[
+            FallbackSlide(title="LLM Topic 1", content="Detail 1", bullets=["Point A", "Point B"]),
+            FallbackSlide(title="LLM Topic 2", content="Detail 2", bullets=["Point C"])
+        ])
+        
+        with patch.object(bridge, "is_available", return_value=True), \
+             patch.object(bridge, "check_health", return_value=False), \
+             patch("sidecar.llm_caller.call_with_schema", return_value=mock_outline):
+             
+            res = bridge.generate_presentation("Transformer Neural Networks", slide_count=2)
+            
+        assert res["status"] == "fallback"
+        assert "PPT intelligence offline" in res["message"]
+        assert "pptx_path" in res
+        assert res["slide_count"] == 2
+        
+        from pptx import Presentation
+        prs = Presentation(res["pptx_path"])
+        assert len(prs.slides) == 2
         assert prs.slides[0].shapes.title.text == "Transformer Neural Networks"
         os.remove(res["pptx_path"])
 
@@ -723,8 +765,26 @@ class TestGateConditions:
         - Matches/exceeds Gamma quality
         - Completes under 5 minutes
         """
+        from unittest.mock import patch
+        from sidecar.parsers.deeppresenter_bridge import FallbackPresentationOutline, FallbackSlide
         bridge = DeepPresenterBridge()
-        res = bridge.generate_presentation("Transformer Architecture", slide_count=10)
+        
+        mock_outline = FallbackPresentationOutline(slides=[
+            FallbackSlide(title="Transformer Architecture", content="Intro", bullets=["A", "B"]),
+            FallbackSlide(title="Slide 2", content="B", bullets=["C"]),
+            FallbackSlide(title="Slide 3", content="B", bullets=["C"]),
+            FallbackSlide(title="Slide 4", content="B", bullets=["C"]),
+            FallbackSlide(title="Strategic Roadmap", content="B", bullets=["C"]),
+            FallbackSlide(title="Slide 6", content="B", bullets=["C"]),
+            FallbackSlide(title="Slide 7", content="B", bullets=["C"]),
+            FallbackSlide(title="Slide 8", content="B", bullets=["C"]),
+            FallbackSlide(title="Slide 9", content="B", bullets=["C"]),
+            FallbackSlide(title="Slide 10", content="B", bullets=["C"]),
+        ])
+        
+        with patch("sidecar.llm_caller.call_with_schema", return_value=mock_outline):
+            res = bridge.generate_presentation("Transformer Architecture", slide_count=10)
+            
         assert "pptx_path" in res
         assert res["slide_count"] == 10
         assert os.path.exists(res["pptx_path"])
@@ -868,3 +928,36 @@ class TestGateConditions:
         assert "preferred_format': 'prose'" in frag
         assert "preferred_theme': 'Corporate Gray'" in frag
         assert "Segoe UI" in frag
+
+    def test_deeppresenter_health_action(self):
+        import asyncio
+        from sidecar.main import handle_request
+        from unittest.mock import patch
+        
+        req = {
+            "id": "req_123",
+            "action": "deeppresenter_health",
+            "payload": {}
+        }
+        
+        with patch("sidecar.parsers.deeppresenter_bridge.DeepPresenterBridge.is_available", return_value=True), \
+             patch("sidecar.parsers.deeppresenter_bridge.DeepPresenterBridge.check_health", return_value=True):
+            res = asyncio.run(handle_request(req))
+            
+        assert res["id"] == "req_123"
+        assert res["ok"] is True
+        assert res["data"]["available"] is True
+        assert res["data"]["healthy"] is True
+        assert res["data"]["status"] == "online"
+
+    def test_deeppresenter_fallback_honest_exception(self):
+        import pytest
+        from unittest.mock import patch
+        from sidecar.parsers.deeppresenter_bridge import DeepPresenterBridge
+        bridge = DeepPresenterBridge()
+        
+        with patch("sidecar.llm_caller.call_with_schema", side_effect=ValueError("LLM timeout")):
+            with pytest.raises(RuntimeError) as exc_info:
+                bridge.generate_presentation("Any Topic", slide_count=3)
+            assert "DeepPresenter fallback failed" in str(exc_info.value)
+

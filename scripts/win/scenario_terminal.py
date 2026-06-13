@@ -32,7 +32,7 @@ def run_terminal_scenario(scenario_id, logger):
                 "// Write a PowerShell command to find all .json files in "
                 "C:\\tests modified in the last 24 hours and list their sizes."
             )
-            pyautogui.hotkey('alt', 'm')
+            pyautogui.hotkey('ctrl', 'alt', 'm')
             time.sleep(10)
             pyautogui.hotkey('tab')
             time.sleep(1)
@@ -46,7 +46,7 @@ def run_terminal_scenario(scenario_id, logger):
                 "// Write a Python script that monitors CPU usage every 5 seconds "
                 "and sends an alert (print warning) if usage exceeds 90% for 3 consecutive readings."
             )
-            pyautogui.hotkey('alt', 'm')
+            pyautogui.hotkey('ctrl', 'alt', 'm')
             time.sleep(12)
             pyautogui.hotkey('tab')
             time.sleep(1)
@@ -62,7 +62,7 @@ def run_terminal_scenario(scenario_id, logger):
                 "// Explain this npm error and provide 3 ways to fix it, "
                 "starting with --legacy-peer-deps."
             )
-            pyautogui.hotkey('alt', 'm')
+            pyautogui.hotkey('ctrl', 'alt', 'm')
             time.sleep(12)
             pyautogui.hotkey('tab')
             time.sleep(1)
@@ -77,7 +77,7 @@ def run_terminal_scenario(scenario_id, logger):
                 "added dynamic Office path resolution to scenario_word.py, "
                 "scenario_pptx.py, and scenario_excel.py to fix hardcoded Office16 paths."
             )
-            pyautogui.hotkey('alt', 'm')
+            pyautogui.hotkey('ctrl', 'alt', 'm')
             time.sleep(10)
             pyautogui.hotkey('tab')
             time.sleep(1)
@@ -95,7 +95,7 @@ def run_terminal_scenario(scenario_id, logger):
                 "// Debug this Python traceback: identify root cause, suggest a fix "
                 "with proper zero-guard, and suggest a unit test to prevent regression."
             )
-            pyautogui.hotkey('alt', 'm')
+            pyautogui.hotkey('ctrl', 'alt', 'm')
             time.sleep(15)
             pyautogui.hotkey('tab')
             time.sleep(1)

@@ -91,7 +91,7 @@ def _kairo_inject(prompt, wait_time):
     time.sleep(0.5)
     pyautogui.press('up')
     time.sleep(0.5)
-    pyautogui.hotkey('alt', 'm')
+    pyautogui.hotkey('ctrl', 'alt', 'm')
     time.sleep(wait_time)
     pyautogui.press('tab')
     time.sleep(1)

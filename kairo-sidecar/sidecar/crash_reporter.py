@@ -27,15 +27,33 @@ def _crash_handler(exc_type, exc_value, exc_tb) -> None:
     crash_path = _write_crash_report(exc_type, exc_value, exc_tb)
     print(f"\n[Kairo Phantom] An unexpected error occurred.", file=sys.stderr)
     print(f"Crash report saved to: {crash_path}", file=sys.stderr)
-    print("Please report this at: https://github.com/Kartik24Hulmukh/Kairo-Phantom/issues", file=sys.stderr)
+    print("Please report this at: https://github.com/KairoPhantom/Kairo-Phantom/issues", file=sys.stderr)
     sys.__excepthook__(exc_type, exc_value, exc_tb)
 
 
+import re
+
+def scrub_pii(text: str) -> str:
+    """Scrub common PII patterns (email, phone, SSN) from a string."""
+    # Scrub email addresses
+    text = re.sub(r'[\w\.-]+@[\w\.-]+\.\w+', '[EMAIL]', text)
+    # Scrub phone numbers (simple pattern)
+    text = re.sub(r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b', '[PHONE]', text)
+    # Scrub typical SSN
+    text = re.sub(r'\b\d{3}-\d{2}-\d{4}\b', '[SSN]', text)
+    return text
+
+
 def _write_crash_report(exc_type, exc_value, exc_tb) -> Path:
-    """Write structured JSON crash report."""
+    """Write structured JSON crash report with PII scrubbed."""
     CRASH_DIR.mkdir(parents=True, exist_ok=True)
     timestamp = int(time.time())
     crash_file = CRASH_DIR / f"crash_{timestamp}.json"
+    
+    msg = scrub_pii(str(exc_value))
+    tb_list = traceback.format_exception(exc_type, exc_value, exc_tb)
+    tb_scrubbed = [scrub_pii(line) for line in tb_list]
+    
     report = {
         "timestamp": timestamp,
         "version": "3.9.0",
@@ -47,8 +65,8 @@ def _write_crash_report(exc_type, exc_value, exc_tb) -> Path:
         },
         "exception": {
             "type": exc_type.__name__ if exc_type else "Unknown",
-            "message": str(exc_value),
-            "traceback": traceback.format_exception(exc_type, exc_value, exc_tb),
+            "message": msg,
+            "traceback": tb_scrubbed,
         },
     }
     try:

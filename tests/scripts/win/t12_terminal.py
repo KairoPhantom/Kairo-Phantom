@@ -89,7 +89,7 @@ def run_scenario(scenario_id, setup_command, user_action_text, verify_func, targ
         time.sleep(1)
         
         # Trigger Kairo Phantom
-        pyautogui.hotkey('alt', 'm')
+        pyautogui.hotkey('alt', 'ctrl', 'm')
         time.sleep(target_time)
         
         # Accept

@@ -346,6 +346,6 @@ if (-not $OllamaRunning) {
     Write-Host ""
 }
 
-Write-Host "  Docs:  https://github.com/Kartik24Hulmukh/Kairo-Phantom" -ForegroundColor DarkGray
+Write-Host "  Docs:  https://github.com/KairoPhantom/Kairo-Phantom" -ForegroundColor DarkGray
 Write-Host "  Chat:  https://discord.gg/kairo-phantom" -ForegroundColor DarkGray
 Write-Host ""

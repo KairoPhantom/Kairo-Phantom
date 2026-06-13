@@ -53,7 +53,7 @@ def _kairo_inject(prompt: str, wait: int = 20):
     pyperclip.copy(prompt)
     _pag.hotkey('ctrl', 'v')
     time.sleep(0.3)
-    _pag.hotkey('alt', 'm')
+    _pag.hotkey('ctrl', 'alt', 'm')
     time.sleep(wait)
     _pag.hotkey('tab')
     time.sleep(2)

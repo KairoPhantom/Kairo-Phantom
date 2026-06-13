@@ -4,7 +4,7 @@ kairo_test_utils.py — Shared utilities for all Kairo Phantom scenario scripts
 Provides:
   - daemon_running(): check if Kairo HTTP API is up
   - call_kairo(prompt, context): call sidecar API or mock Ollama
-  - simulate_altm(prompt, wait_sec): press Alt+M and verify output OR fall back
+  - simulate_altm(prompt, wait_sec): press Ctrl+Alt+M and verify output OR fall back
   - scenario_pass(scenario_id, method, msg): uniform pass return
   - scenario_infra_gap(scenario_id, msg): PASS with infrastructure-gap note
 """
@@ -112,7 +112,7 @@ def call_kairo(prompt: str, context: str = "", timeout: int = 15) -> str:
 
 def simulate_altm(prompt: str, wait_sec: int = 15) -> str:
     """
-    Type the prompt, press Alt+M, wait, press Tab.
+    Type the prompt, press Ctrl+Alt+M, wait, press Tab.
     Uses clipboard paste (not typewrite) so '/' and special chars survive.
     Returns whatever text was injected (best effort read via clipboard).
     """
@@ -123,7 +123,7 @@ def simulate_altm(prompt: str, wait_sec: int = 15) -> str:
         pyperclip.copy(prompt)
         pg.hotkey('ctrl', 'v')
         time.sleep(0.3)
-        pg.hotkey('alt', 'm')
+        pg.hotkey('ctrl', 'alt', 'm')
         time.sleep(wait_sec)
         pg.hotkey('tab')
         time.sleep(1)
@@ -150,7 +150,7 @@ def infra_gap_pass(scenario_id: str, detail: str = "") -> tuple:
     msg = (
         f"{scenario_id} PASS [INFRASTRUCTURE GAP]: "
         f"GUI automation flow is correct. "
-        f"Alt+M injection requires live Kairo daemon. "
+        f"Alt+Ctrl+M injection requires live Kairo daemon. "
         f"{detail}"
     )
     return True, msg

@@ -141,7 +141,7 @@ def run_scenario(scenario_id, setup_text, prompt_text, verify_func, target_time)
         time.sleep(0.5)
         
         # Trigger Kairo Phantom
-        pyautogui.hotkey('alt', 'm')
+        pyautogui.hotkey('alt', 'ctrl', 'm')
         time.sleep(target_time)
         
         # Accept the ghost-write

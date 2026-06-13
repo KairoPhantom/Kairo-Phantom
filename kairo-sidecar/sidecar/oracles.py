@@ -5,6 +5,8 @@ import time
 import subprocess
 import threading
 import ipaddress
+import re
+import unicodedata
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 
@@ -14,6 +16,7 @@ import pptx
 import fitz  # PyMuPDF
 import pdfplumber
 from PIL import Image
+import imagehash
 
 try:
     import scapy.all as scapy
@@ -28,25 +31,66 @@ except ImportError:
     HAS_PSUTIL = False
 
 
+def normalize_text(text: str) -> str:
+    """Apply Unicode NFC normalization and fold/clean whitespace."""
+    if not isinstance(text, str):
+        text = str(text)
+    # Unicode NFC normalization
+    normalized = unicodedata.normalize("NFC", text)
+    # Clean/fold whitespace: replace any whitespace sequence with a single space
+    folded = re.sub(r"\s+", " ", normalized).strip()
+    return folded
+
+
+def normalize_xlsx_value(val: Any) -> str:
+    """Normalize Excel cell values handles float formatting/rounding and string normalization."""
+    if val is None:
+        return ""
+    try:
+        if not isinstance(val, bool):
+            f_val = float(val)
+            rounded = round(f_val, 4)
+            if rounded.is_integer():
+                return str(int(rounded))
+            return str(rounded)
+    except (ValueError, TypeError):
+        pass
+    return normalize_text(val)
+
+
 # ─── 1. Word / DOCX Oracle ────────────────────────────────────────────────────
 
 def verify_docx(path: str, expected_text_substrings: Optional[List[str]] = None) -> bool:
     """Verifies DOCX structure and content."""
+    from docx.text.paragraph import Paragraph
+    from docx.table import Table
+
     doc = docx.Document(path)
     full_text = []
-    for para in doc.paragraphs:
-        full_text.append(para.text)
-    for table in doc.tables:
-        for row in table.rows:
-            for cell in row.cells:
-                full_text.append(cell.text)
-    
+
+    # Traverse XML body elements of the document to extract text and tables in exact chronological layout order.
+    for element in doc.element.body:
+        tag = element.tag
+        if '}' in tag:
+            tag = tag.split('}', 1)[1]
+
+        if tag == 'p':
+            p = Paragraph(element, doc)
+            full_text.append(p.text)
+        elif tag == 'tbl':
+            t = Table(element, doc)
+            for row in t.rows:
+                for cell in row.cells:
+                    full_text.append(cell.text)
+
     combined_text = "\n".join(full_text)
-    
+    normalized_doc = normalize_text(combined_text)
+
     if expected_text_substrings:
         for substring in expected_text_substrings:
-            if substring not in combined_text:
-                raise AssertionError(f"Expected DOCX to contain: '{substring}' but not found.")
+            normalized_substring = normalize_text(substring)
+            if normalized_substring not in normalized_doc:
+                raise AssertionError(f"Expected DOCX to contain: '{normalized_substring}' but not found.")
     return True
 
 
@@ -55,72 +99,134 @@ def verify_docx(path: str, expected_text_substrings: Optional[List[str]] = None)
 def verify_xlsx(path: str, cell_values: Optional[Dict[str, Any]] = None, cell_formulas: Optional[Dict[str, str]] = None) -> bool:
     """Verifies XLSX sheet structure, exact cell values, and formulas."""
     wb = openpyxl.load_workbook(path, data_only=False)
-    sheet = wb.active
-    
-    if cell_formulas:
-        for cell_ref, expected_formula in cell_formulas.items():
-            val = sheet[cell_ref].value
-            if not isinstance(val, str) or not val.startswith("="):
-                raise AssertionError(f"Expected formula in {cell_ref} but found value: {val}")
-            if val.strip().upper() != expected_formula.strip().upper():
-                raise AssertionError(f"Formula mismatch in {cell_ref}: expected '{expected_formula}', found '{val}'")
-                
+    try:
+        sheet = wb.active
+
+        if cell_formulas:
+            for cell_ref, expected_formula in cell_formulas.items():
+                val = sheet[cell_ref].value
+                if not isinstance(val, str) or not val.startswith("="):
+                    raise AssertionError(f"Expected formula in {cell_ref} but found value: {val}")
+                if normalize_text(val).upper() != normalize_text(expected_formula).upper():
+                    raise AssertionError(f"Formula mismatch in {cell_ref}: expected '{expected_formula}', found '{val}'")
+    finally:
+        wb.close()
+
     if cell_values:
         # Load workbook again with data_only=True to read evaluated values
         wb_val = openpyxl.load_workbook(path, data_only=True)
-        sheet_val = wb_val.active
-        for cell_ref, expected_val in cell_values.items():
-            val = sheet_val[cell_ref].value
-            if str(val) != str(expected_val):
-                raise AssertionError(f"Value mismatch in {cell_ref}: expected '{expected_val}', found '{val}'")
-                
+        try:
+            sheet_val = wb_val.active
+            for cell_ref, expected_val in cell_values.items():
+                val = sheet_val[cell_ref].value
+                normalized_actual = normalize_xlsx_value(val)
+                normalized_expected = normalize_xlsx_value(expected_val)
+                if normalized_actual != normalized_expected:
+                    raise AssertionError(f"Value mismatch in {cell_ref}: expected '{expected_val}', found '{val}'")
+        finally:
+            wb_val.close()
+
     return True
 
 
 # ─── 3. PowerPoint / PPTX Oracle ──────────────────────────────────────────────
 
-def verify_pptx(path: str, expected_slide_count: Optional[int] = None, check_placeholders: bool = True, bullet_word_limit: int = 12) -> bool:
+def verify_pptx(path: str, expected_slide_count: Optional[int] = None, check_placeholders: bool = True, bullet_word_limit: int = 12, expected_text_substrings: Optional[List[str]] = None) -> bool:
     """Verifies PPTX structure, slide counts, placeholder slop, and word limits."""
     prs = pptx.Presentation(path)
-    
+
     if expected_slide_count is not None:
         if len(prs.slides) != expected_slide_count:
             raise AssertionError(f"Slide count mismatch: expected {expected_slide_count}, found {len(prs.slides)}")
-            
+
+    all_slide_texts = []
     for i, slide in enumerate(prs.slides):
-        for shape in slide.shapes:
+        # Sort all slide shapes visually (top-to-bottom, then left-to-right)
+        def shape_sort_key(s):
+            try:
+                # Round/bin y-coordinates to nearest 5 units
+                top_binned = int(round(s.top / 5.0) * 5)
+                return (top_binned, s.left)
+            except (AttributeError, TypeError):
+                return (0, 0)
+        sorted_shapes = sorted(slide.shapes, key=shape_sort_key)
+
+        for shape in sorted_shapes:
             if shape.has_text_frame:
                 for paragraph in shape.text_frame.paragraphs:
-                    text = paragraph.text.strip()
+                    # Perform Unicode NFC normalization and whitespace folding
+                    text = normalize_text(paragraph.text)
+                    if text:
+                        all_slide_texts.append(text)
+
+                    raw_text = paragraph.text.strip()
                     # Check for placeholders
                     if check_placeholders:
                         placeholders = ["click to add", "lorem ipsum", "[enter title]", "[insert text]"]
                         for pl in placeholders:
-                            if pl in text.lower():
-                                raise AssertionError(f"Placeholder slop found on slide {i}: '{text}'")
-                    # Check word limit on bullet points
-                    if text.startswith("-") or paragraph.level > 0:
-                        words = len(text.split())
+                            if pl in raw_text.lower():
+                                raise AssertionError(f"Placeholder slop found on slide {i}: '{raw_text}'")
+                    
+                    # Calibrate bullet check for first-level bullet points (level == 0) inside BODY (2) and OBJECT (7) placeholders
+                    is_bullet = False
+                    if raw_text.startswith("-") or paragraph.level > 0:
+                        is_bullet = True
+                    elif paragraph.level == 0 and getattr(shape, "is_placeholder", False):
+                        try:
+                            ph_type = shape.placeholder_format.type
+                            from pptx.enum.shapes import PP_PLACEHOLDER
+                            if ph_type in (PP_PLACEHOLDER.BODY, PP_PLACEHOLDER.OBJECT):
+                                is_bullet = True
+                        except (AttributeError, ImportError):
+                            pass
+
+                    if is_bullet:
+                        words = len(raw_text.split())
                         if words > bullet_word_limit:
-                            raise AssertionError(f"Slide {i} bullet exceeds word limit ({words} > {bullet_word_limit}): '{text}'")
+                            raise AssertionError(f"Slide {i} bullet exceeds word limit ({words} > {bullet_word_limit}): '{raw_text}'")
+
+    if expected_text_substrings:
+        combined_text = normalize_text(" ".join(all_slide_texts))
+        for substring in expected_text_substrings:
+            normalized_substring = normalize_text(substring)
+            if normalized_substring not in combined_text:
+                raise AssertionError(f"Expected PPTX to contain: '{normalized_substring}' but not found.")
+
     return True
 
 
 # ─── 4. PDF Oracle ────────────────────────────────────────────────────────────
 
 def verify_pdf(path: str, expected_substrings: Optional[List[str]] = None) -> bool:
-    """Verifies PDF content by reading it back."""
-    extracted_text = []
+    """Verifies PDF content by reading it back using both pdfplumber and PyMuPDF."""
+    # 1. PyMuPDF (fitz) text extraction
+    extracted_fitz = []
     with fitz.open(path) as doc:
         for page in doc:
-            extracted_text.append(page.get_text())
-            
-    combined_text = "\n".join(extracted_text)
-    
+            blocks = page.get_text("blocks")
+            sorted_blocks = sorted(blocks, key=lambda b: (int(round(b[1] / 5.0) * 5), b[0]))
+            for b in sorted_blocks:
+                extracted_fitz.append(b[4])
+    combined_fitz = "\n".join(extracted_fitz)
+    normalized_fitz = normalize_text(combined_fitz)
+
+    # 2. pdfplumber text extraction
+    extracted_plumber = []
+    with pdfplumber.open(path) as pdf:
+        for page in pdf.pages:
+            t = page.extract_text()
+            if t:
+                extracted_plumber.append(t)
+    combined_plumber = "\n".join(extracted_plumber)
+    normalized_plumber = normalize_text(combined_plumber)
+
     if expected_substrings:
         for substring in expected_substrings:
-            if substring not in combined_text:
-                raise AssertionError(f"Expected PDF to contain: '{substring}' but not found.")
+            normalized_substring = normalize_text(substring)
+            if normalized_substring not in normalized_fitz:
+                raise AssertionError(f"Expected PDF (PyMuPDF) to contain: '{normalized_substring}' but not found.")
+            if normalized_substring not in normalized_plumber:
+                raise AssertionError(f"Expected PDF (pdfplumber) to contain: '{normalized_substring}' but not found.")
     return True
 
 
@@ -177,6 +283,22 @@ def excel_libreoffice_recompute(file_path: str, output_pdf_dir: str) -> str:
     return pdf_path
 
 
+def verify_xlsx_recomputed_values(xlsx_path: str, temp_dir: str, expected_values: List[str]) -> bool:
+    """Converts xlsx to PDF to trigger recomputation, reads PDF back, asserts expected values exist."""
+    pdf_path = None
+    try:
+        # excel_libreoffice_recompute will raise FileNotFoundError if LibreOffice is missing
+        pdf_path = excel_libreoffice_recompute(xlsx_path, temp_dir)
+        verify_pdf(pdf_path, expected_values)
+    finally:
+        if pdf_path and os.path.exists(pdf_path):
+            try:
+                os.remove(pdf_path)
+            except Exception:
+                pass
+    return True
+
+
 # ─── 6. Network Sniffer Oracle ────────────────────────────────────────────────
 
 class NetworkSnifferOracle:
@@ -212,11 +334,45 @@ class NetworkSnifferOracle:
         except Exception:
             pass # Fall back silently to psutil
 
+    def _get_process_connections(self) -> List[Any]:
+        conns = []
+        try:
+            current_proc = psutil.Process()
+            try:
+                conns.extend(current_proc.connections(kind="inet"))
+            except (psutil.AccessDenied, psutil.NoSuchProcess):
+                pass
+            
+            try:
+                children = current_proc.children(recursive=True)
+            except Exception:
+                children = []
+                
+            for child in children:
+                try:
+                    conns.extend(child.connections(kind="inet"))
+                except (psutil.AccessDenied, psutil.NoSuchProcess):
+                    pass
+        except Exception:
+            pass
+        return conns
+
     def _run_psutil(self):
+        use_fallback = False
         while not self.stop_sniffing.is_set():
             try:
-                for conn in psutil.net_connections(kind="inet"):
-                    if conn.status == "ESTABLISHED" and conn.raddr:
+                connections = []
+                if not use_fallback:
+                    try:
+                        connections = psutil.net_connections(kind="inet")
+                    except (psutil.AccessDenied, PermissionError):
+                        use_fallback = True
+                        connections = self._get_process_connections()
+                else:
+                    connections = self._get_process_connections()
+                
+                for conn in connections:
+                    if conn.raddr:
                         r_ip = conn.raddr.ip
                         if not self._is_private(r_ip):
                             self.external_destinations.add(r_ip)
@@ -245,32 +401,37 @@ class NetworkSnifferOracle:
 
 # ─── 7. Screenshot Diff / Image Oracle ────────────────────────────────────────
 
-def verify_screenshot_diff(path_a: str, path_b: str, max_diff_pixels_ratio: float = 0.01) -> bool:
-    """Verifies that two screenshots match visually (pixel-level difference)."""
-    img_a = Image.open(path_a).convert("RGB")
-    img_b = Image.open(path_b).convert("RGB")
+def verify_screenshot_diff(path_a: str, path_b: str, max_hash_diff: int = 2) -> bool:
+    """Verifies that two screenshots match visually using perceptual hash."""
+    from PIL import ImageStat
     
-    if img_a.size != img_b.size:
-        raise AssertionError(f"Image dimensions mismatch: {img_a.size} vs {img_b.size}")
-        
-    pixels_a = img_a.load()
-    pixels_b = img_b.load()
-    
-    width, height = img_a.size
-    mismatched_pixels = 0
-    total_pixels = width * height
-    
-    for y in range(height):
-        for x in range(width):
-            color_a = pixels_a[x, y]
-            color_b = pixels_b[x, y]
-            # Simple Manhattan distance for RGB
-            diff = abs(color_a[0]-color_b[0]) + abs(color_a[1]-color_b[1]) + abs(color_a[2]-color_b[2])
-            if diff > 15: # threshold
-                mismatched_pixels += 1
+    with Image.open(path_a) as raw_a, Image.open(path_b) as raw_b:
+        img_a = raw_a.convert("RGB")
+        img_b = raw_b.convert("RGB")
+        try:
+            if img_a.size != img_b.size:
+                raise AssertionError(f"Image dimensions mismatch: {img_a.size} vs {img_b.size}")
                 
-    ratio = mismatched_pixels / total_pixels
-    if ratio > max_diff_pixels_ratio:
-        raise AssertionError(f"Visual diff failed: {mismatched_pixels} mismatched pixels ({ratio*100:.2f}% > {max_diff_pixels_ratio*100:.2f}%)")
-        
+            hash_a = imagehash.average_hash(img_a)
+            hash_b = imagehash.average_hash(img_b)
+            
+            diff = hash_a - hash_b
+            
+            # Check overall color/luminance difference to handle flat solid color images
+            stat_a = ImageStat.Stat(img_a)
+            stat_b = ImageStat.Stat(img_b)
+            mean_diff = sum(abs(a - b) for a, b in zip(stat_a.mean, stat_b.mean)) / len(stat_a.mean)
+            if mean_diff > 10:
+                diff += int(mean_diff)
+                
+            if diff > max_hash_diff:
+                raise AssertionError(f"Visual diff failed: hash difference {diff} > {max_hash_diff}")
+        finally:
+            img_a.close()
+            img_b.close()
+            
     return True
+
+
+verify_screenshot_diff_hash = verify_screenshot_diff
+

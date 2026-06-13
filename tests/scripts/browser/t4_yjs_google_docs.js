@@ -26,10 +26,12 @@ const { chromium } = require('playwright');
   await page.keyboard.press('End');
   await page.keyboard.type('\nSuggest improvements to this paragraph');
   
-  console.log("Triggering Alt+M...");
+  console.log("Triggering Ctrl+Alt+M...");
+  await page.keyboard.down('Control');
   await page.keyboard.down('Alt');
   await page.keyboard.press('m');
   await page.keyboard.up('Alt');
+  await page.keyboard.up('Control');
   
   console.log("Waiting 8s for Kairo Phantom Background Injection...");
   await page.waitForTimeout(8000);

@@ -37,7 +37,7 @@ Usage
             {
                 "layout": "blank",
                 "title": "Thank You",
-                "body": "github.com/Kartik24Hulmukh/Kairo-Phantom"
+                "body": "github.com/KairoPhantom/Kairo-Phantom"
             }
         ]
     })

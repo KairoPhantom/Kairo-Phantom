@@ -14,16 +14,19 @@ Evaluates on:
 import os
 import sys
 import json
-import random
 import time
 import urllib.request
 import urllib.error
+import socket
 from pathlib import Path
 from typing import Dict, Any, List
+
 
 SCRIPT_DIR = Path(__file__).parent.resolve()
 PROJECT_ROOT = SCRIPT_DIR.parent.parent
 OUTPUT_REPORT = SCRIPT_DIR / "eval_report.md"
+OUTPUT_JSON_REPORT = SCRIPT_DIR / "eval_results.json"
+
 
 # 50 Held-out Test cases (5 for each of the 10 DocOps categories)
 EVAL_CASES = [
@@ -99,29 +102,67 @@ EVAL_CASES = [
 ]
 
 def query_ollama(model_name: str, instruction: str, context_input: str) -> str:
-    """Queries the local Ollama API."""
-    url = "http://localhost:11434/api/generate"
-    prompt = f"System: Return JSON only. User: {instruction}\nContext: {context_input}"
-    data = {
+    """Queries local LiteLLM or Ollama API. Raises RuntimeError on failure."""
+    litellm_url = "http://localhost:4000/v1/chat/completions"
+    payload = {
         "model": model_name,
-        "prompt": prompt,
-        "stream": False,
-        "format": "json"
+        "messages": [
+            {"role": "system", "content": "Return JSON only."},
+            {"role": "user", "content": f"{instruction}\nContext: {context_input}"}
+        ],
+        "response_format": {"type": "json_object"},
+        "temperature": 0.0
     }
     
     req = urllib.request.Request(
-        url, 
-        data=json.dumps(data).encode("utf-8"),
-        headers={"Content-Type": "application/json"}
+        litellm_url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST"
     )
     
     try:
-        with urllib.request.urlopen(req, timeout=8) as response:
+        with urllib.request.urlopen(req, timeout=12) as response:
             res_data = json.loads(response.read().decode("utf-8"))
-            return res_data.get("response", "").strip()
-    except Exception as e:
-        # If Ollama is not running, return mock data simulated on schema expectations
-        return ""
+            return res_data["choices"][0]["message"]["content"].strip()
+    except Exception as e_litellm:
+        ollama_url = "http://localhost:11434/v1/chat/completions"
+        req_ollama = urllib.request.Request(
+            ollama_url,
+            data=json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
+        try:
+            with urllib.request.urlopen(req_ollama, timeout=12) as response:
+                res_data = json.loads(response.read().decode("utf-8"))
+                return res_data["choices"][0]["message"]["content"].strip()
+        except Exception as e_ollama_chat:
+            ollama_gen_url = "http://localhost:11434/api/generate"
+            prompt = f"System: Return JSON only. User: {instruction}\nContext: {context_input}"
+            gen_payload = {
+                "model": model_name,
+                "prompt": prompt,
+                "stream": False,
+                "format": "json"
+            }
+            req_gen = urllib.request.Request(
+                ollama_gen_url,
+                data=json.dumps(gen_payload).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST"
+            )
+            try:
+                with urllib.request.urlopen(req_gen, timeout=12) as response:
+                    res_data = json.loads(response.read().decode("utf-8"))
+                    return res_data.get("response", "").strip()
+            except Exception as e_ollama_gen:
+                raise RuntimeError(
+                    f"Failed to query model '{model_name}' via LiteLLM or Ollama.\n"
+                    f"  LiteLLM error: {e_litellm}\n"
+                    f"  Ollama chat error: {e_ollama_chat}\n"
+                    f"  Ollama generate error: {e_ollama_gen}"
+                )
 
 def validate_response(category: str, raw_response: str, expected_op: str, expected_style: str) -> Dict[str, Any]:
     """Validates the output string matching the specific category schemas."""
@@ -217,7 +258,6 @@ def run_evaluation():
     print(" Kairo DocWriter Fine-Tuned Model Evaluation Benchmark ")
     print("======================================================================")
     
-    # Check if Ollama is active
     ollama_running = False
     try:
         with urllib.request.urlopen("http://localhost:11434/", timeout=2) as r:
@@ -226,10 +266,19 @@ def run_evaluation():
     except Exception:
         pass
         
-    if not ollama_running:
-        print("⚠️ Warning: Local Ollama instance not running or unreachable at http://localhost:11434.")
-        print("💡 Simulating evaluation based on standard metrics derived from offline trials...")
-        time.sleep(1)
+    litellm_running = False
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(2)
+        s.connect(("127.0.0.1", 4000))
+        s.close()
+        litellm_running = True
+    except Exception:
+        pass
+        
+    if not (ollama_running or litellm_running):
+        print("❌ Error: Both LiteLLM (port 4000) and Ollama (port 11434) are unreachable. Real evaluation required.")
+        sys.exit(1)
         
     results_base = []
     results_finetuned = []
@@ -243,50 +292,27 @@ def run_evaluation():
         expected_op = case["expected_op"]
         expected_style = case["expected_style"]
         
-        if ollama_running:
-            # Query the models
+        try:
             resp_base = query_ollama("qwen2.5:3b", instr, inp)
-            resp_ft = query_ollama("kairo-docwriter-3b", instr, inp)
-            
             val_base = validate_response(cat, resp_base, expected_op, expected_style)
+            val_base["raw_response"] = resp_base
+        except Exception as e:
+            print(f"❌ Error querying base model 'qwen2.5:3b' for scenario {idx+1}: {e}")
+            sys.exit(1)
+            
+        try:
+            resp_ft = query_ollama("kairo-docwriter-3b", instr, inp)
             val_ft = validate_response(cat, resp_ft, expected_op, expected_style)
-        else:
-            # High-fidelity offline simulation showing empirical test results
-            # The base 3B model struggles with schema format compliance & style name casing (often outputs freeform markdown or "List Bullet" vs "ListBullet")
-            # The fine-tuned model has a massive advantage because it was trained directly on these tasks
-            base_passed = random.random() < 0.70  # ~70% parse success on base model
-            ft_passed = random.random() < 0.98   # ~98% parse success on fine-tuned model
-            
-            # Category-specific performance factors
-            if cat == "Multi-op Sequence":
-                base_passed = random.random() < 0.50 # Base model fails frequently on multi-ops
-            elif cat == "PPTX Concision":
-                base_passed = random.random() < 0.60 # Base model struggles to obey strict word limits
-                
-            val_base = {
-                "is_valid_json": base_passed,
-                "schema_compliant": base_passed,
-                "matches_expected_op": base_passed,
-                "matches_expected_style": base_passed,
-                "bullet_concision_pass": base_passed,
-                "error_message": "" if base_passed else "Invalid JSON schema alignment / markdown code blocks present"
-            }
-            
-            val_ft = {
-                "is_valid_json": ft_passed,
-                "schema_compliant": ft_passed,
-                "matches_expected_op": ft_passed,
-                "matches_expected_style": ft_passed,
-                "bullet_concision_pass": ft_passed,
-                "error_message": "" if ft_passed else "Minor latency boundary"
-            }
+            val_ft["raw_response"] = resp_ft
+        except Exception as e:
+            print(f"❌ Error querying fine-tuned model 'kairo-docwriter-3b' for scenario {idx+1}: {e}")
+            sys.exit(1)
             
         results_base.append(val_base)
         results_finetuned.append(val_ft)
         
         print(f"[{idx+1:02d}/50] [{cat:<18}] | Base Model: {'✅ PASS' if val_base['schema_compliant'] and val_base['bullet_concision_pass'] else '❌ FAIL'} | Fine-Tuned: {'✅ PASS' if val_ft['schema_compliant'] and val_ft['bullet_concision_pass'] else '❌ FAIL'}")
 
-    # Aggregating metrics
     total = len(EVAL_CASES)
     
     base_json_pass = sum(1 for x in results_base if x["is_valid_json"])
@@ -331,6 +357,63 @@ This report documents the performance comparison between the **Base Qwen2.5-3B**
     with open(OUTPUT_REPORT, "w", encoding="utf-8") as f:
         f.write(report_content)
         
+    detailed_results = []
+    for idx, case in enumerate(EVAL_CASES):
+        detailed_results.append({
+            "scenario_index": idx + 1,
+            "category": case["category"],
+            "instruction": case["instruction"],
+            "input": case["input"],
+            "expected_op": case["expected_op"],
+            "expected_style": case["expected_style"],
+            "base_model": {
+                "raw_response": results_base[idx].get("raw_response", ""),
+                "validation": {
+                    "is_valid_json": results_base[idx]["is_valid_json"],
+                    "schema_compliant": results_base[idx]["schema_compliant"],
+                    "matches_expected_op": results_base[idx]["matches_expected_op"],
+                    "matches_expected_style": results_base[idx]["matches_expected_style"],
+                    "bullet_concision_pass": results_base[idx]["bullet_concision_pass"],
+                    "error_message": results_base[idx]["error_message"]
+                }
+            },
+            "fine_tuned_model": {
+                "raw_response": results_finetuned[idx].get("raw_response", ""),
+                "validation": {
+                    "is_valid_json": results_finetuned[idx]["is_valid_json"],
+                    "schema_compliant": results_finetuned[idx]["schema_compliant"],
+                    "matches_expected_op": results_finetuned[idx]["matches_expected_op"],
+                    "matches_expected_style": results_finetuned[idx]["matches_expected_style"],
+                    "bullet_concision_pass": results_finetuned[idx]["bullet_concision_pass"],
+                    "error_message": results_finetuned[idx]["error_message"]
+                }
+            }
+        })
+        
+    output_json_data = {
+        "timestamp": time.strftime('%Y-%m-%d %H:%M:%S'),
+        "overall_metrics": {
+            "base_model": {
+                "json_pass": base_json_pass,
+                "schema_pass": base_schema_pass,
+                "style_pass": base_style_pass,
+                "concision_pass": base_concision_pass,
+                "overall_success_pct": base_overall_pct
+            },
+            "fine_tuned_model": {
+                "json_pass": ft_json_pass,
+                "schema_pass": ft_schema_pass,
+                "style_pass": ft_style_pass,
+                "concision_pass": ft_concision_pass,
+                "overall_success_pct": ft_overall_pct
+            }
+        },
+        "scenarios": detailed_results
+    }
+    
+    with open(OUTPUT_JSON_REPORT, "w", encoding="utf-8") as f:
+        json.dump(output_json_data, f, indent=2)
+
     print("\n======================================================================")
     print(" EVALUATION RESULTS SUMMARY ")
     print("======================================================================")
@@ -339,7 +422,9 @@ This report documents the performance comparison between the **Base Qwen2.5-3B**
     print("----------------------------------------------------------------------")
     print(f"🎉 Delta improvement: +{ft_overall_pct - base_overall_pct:+.1f}%")
     print(f"Report compiled successfully at -> {OUTPUT_REPORT}")
+    print(f"JSON data compiled successfully at -> {OUTPUT_JSON_REPORT}")
     print("======================================================================\n")
+
 
 if __name__ == "__main__":
     run_evaluation()

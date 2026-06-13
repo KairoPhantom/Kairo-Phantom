@@ -39,7 +39,7 @@ impl MoonshineEngine {
 
     /// Check if Moonshine sidecar is reachable.
     pub async fn is_available(&self) -> bool {
-        let client = reqwest::Client::new();
+        let client = crate::config::get_client_builder().build().unwrap_or_default();
         client
             .get(format!("{}/health", self.service_url))
             .timeout(std::time::Duration::from_secs(2))
@@ -57,7 +57,7 @@ impl MoonshineEngine {
             "audio_path": wav_path.to_str().unwrap_or(""),
         });
 
-        let client = reqwest::Client::new();
+        let client = crate::config::get_client_builder().build().unwrap_or_default();
         let response = client
             .post(format!("{}/transcribe", self.service_url))
             .json(&payload)
@@ -273,13 +273,11 @@ if ($result) {{ $result.Text }} else {{ "" }}
 
             if ffmpeg_result.map(|s| s.success()).unwrap_or(false) {
                 info!("🎤 Audio captured via ffmpeg → {}", wav_path.display());
-                return Ok(wav_path);
+                Ok(wav_path)
+            } else {
+                // Fallback: No ffmpeg found, fail loudly
+                bail!("No audio capture backend found. Install ffmpeg and add to PATH.");
             }
-
-            // Fallback: Create a minimal valid WAV with silence
-            // The user would need to install a proper audio backend
-            warn!("⚠️ No audio capture backend (ffmpeg) found. Creating placeholder WAV.");
-            Self::write_silence_wav(&wav_path, duration_secs)?;
         }
 
         #[cfg(not(windows))]
@@ -297,12 +295,10 @@ if ($result) {{ $result.Text }} else {{ "" }}
                 .await;
 
             if !status.map(|s| s.success()).unwrap_or(false) {
-                warn!("⚠️ arecord not available. Creating placeholder WAV.");
-                Self::write_silence_wav(&wav_path, duration_secs)?;
+                bail!("No audio capture backend found. Install ffmpeg or arecord and add to PATH.");
             }
+            Ok(wav_path)
         }
-
-        Ok(wav_path)
     }
 
     /// Transcribe a WAV file using whisper.cpp CLI.
@@ -504,42 +500,6 @@ if ($result) {{ $result.Text }} else {{ "" }}
         Ok(())
     }
 
-    fn write_silence_wav(path: &Path, duration_secs: u64) -> Result<()> {
-        use std::io::Write;
-        let sample_rate: u32 = 16000;
-        let bits_per_sample: u16 = 16;
-        let channels: u16 = 1;
-        let byte_rate = sample_rate * (bits_per_sample as u32 / 8) * channels as u32;
-        let block_align = channels * (bits_per_sample / 8);
-        let data_size = byte_rate * duration_secs as u32;
-        let file_size = 36 + data_size;
-
-        let mut f = std::fs::File::create(path)?;
-        f.write_all(b"RIFF")?;
-        f.write_all(&file_size.to_le_bytes())?;
-        f.write_all(b"WAVE")?;
-        f.write_all(b"fmt ")?;
-        f.write_all(&16u32.to_le_bytes())?;
-        f.write_all(&1u16.to_le_bytes())?;
-        f.write_all(&channels.to_le_bytes())?;
-        f.write_all(&sample_rate.to_le_bytes())?;
-        f.write_all(&byte_rate.to_le_bytes())?;
-        f.write_all(&block_align.to_le_bytes())?;
-        f.write_all(&bits_per_sample.to_le_bytes())?;
-        f.write_all(b"data")?;
-        f.write_all(&data_size.to_le_bytes())?;
-
-        // Write silence (zeros)
-        let zero_buf = vec![0u8; 4096];
-        let mut remaining = data_size as usize;
-        while remaining > 0 {
-            let chunk = remaining.min(zero_buf.len());
-            f.write_all(&zero_buf[..chunk])?;
-            remaining -= chunk;
-        }
-
-        Ok(())
-    }
 }
 
 impl AudioRecorder {

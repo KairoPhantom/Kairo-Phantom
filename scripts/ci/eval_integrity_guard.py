@@ -277,6 +277,71 @@ def scan_file(path: Path, root: Path) -> (List[Finding], List[str]):
     return findings, allowances
 
 
+def check_ci_workflow_integrity(root: Path) -> List[Finding]:
+    findings: List[Finding] = []
+    workflow_files = [
+        root / ".github" / "workflows" / "ci.yml",
+        root / ".github" / "workflows" / "eval-integrity.yml",
+    ]
+    for wf in workflow_files:
+        if not wf.is_file():
+            continue
+        rel = str(wf.relative_to(root))
+        try:
+            content = wf.read_text(encoding="utf-8")
+            for line_idx, line in enumerate(content.splitlines(), 1):
+                stripped = line.strip()
+                if stripped.startswith("#"):
+                    continue
+                part_before_comment = line.split("#", 1)[0]
+                if "|| true" in part_before_comment:
+                    findings.append(Finding(rel, line_idx, "no-ci-bypass",
+                        "CI steps must not bypass failures using '|| true'"))
+                if "continue-on-error: true" in part_before_comment:
+                    findings.append(Finding(rel, line_idx, "no-ci-bypass",
+                        "CI steps must not bypass failures using 'continue-on-error: true'"))
+        except Exception as e:
+            findings.append(Finding(rel, 1, "ci-read-error", f"Failed to check workflow file: {e}"))
+    return findings
+
+
+def check_facts_file_integrity(root: Path) -> List[Finding]:
+    findings: List[Finding] = []
+    facts_file = root / "Kairo.facts"
+    if not facts_file.is_file():
+        return findings
+    rel = str(facts_file.relative_to(root))
+    try:
+        content = facts_file.read_text(encoding="utf-8")
+        current_fact_type = ""
+        for line_idx, line in enumerate(content.splitlines(), 1):
+            line_str = line.strip()
+            if line_str.startswith("@implemented:"):
+                current_fact_type = "implemented"
+            elif line_str.startswith("@spec:"):
+                current_fact_type = "spec"
+            elif line_str.startswith("@draft:"):
+                current_fact_type = "draft"
+            elif line_str.startswith("command:") and current_fact_type == "implemented":
+                cmd_str = line_str.split("command:", 1)[1].strip()
+                lower = cmd_str.lower()
+                is_vacuous = False
+                if "--version" in lower or "-V" in cmd_str:
+                    is_vacuous = True
+                else:
+                    for word in cmd_str.split():
+                        w = "".join(c for c in word if c.isalnum())
+                        if w == "true" or w == "echo":
+                            is_vacuous = True
+                            break
+                if is_vacuous or not cmd_str:
+                    findings.append(Finding(rel, line_idx, "no-vacuous-facts",
+                        f"Vacuous fact verification command not allowed: '{cmd_str}'"))
+    except Exception as e:
+        findings.append(Finding(rel, 1, "facts-read-error", f"Failed to check facts file: {e}"))
+    return findings
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Kairo eval integrity guard")
     ap.add_argument("--root", default=".", help="repo root (default: cwd)")
@@ -309,6 +374,9 @@ def main() -> int:
             return 2
         all_findings.extend(findings)
         all_allowances.extend(allowances)
+
+    all_findings.extend(check_ci_workflow_integrity(root))
+    all_findings.extend(check_facts_file_integrity(root))
 
     print(f"eval-integrity-guard: scanned {len(targets)} eval script(s).")
     for a in all_allowances:

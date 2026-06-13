@@ -2,7 +2,7 @@
   "mcpServers": {
     "kairo": {
       "command": "cargo",
-      "args": ["run", "--bin", "kairo-mcp", "--manifest-path", "C:/Users/SANDIP/Desktop/Memory/KairoPhantom/Cargo.toml"]
+      "args": ["run", "--bin", "kairo-mcp", "--manifest-path", "<YOUR_PATH>/Cargo.toml"]
     }
   }
 }

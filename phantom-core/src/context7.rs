@@ -142,7 +142,7 @@ impl Context7 {
     }
 
     async fn fetch_from_api(&self, library: &str) -> anyhow::Result<String> {
-        let client = reqwest::Client::builder()
+        let client = crate::config::get_client_builder()
             .timeout(std::time::Duration::from_secs(3))
             .build()?;
 

@@ -10,9 +10,9 @@
 
 | Week | Date | Evaluator | Status |
 |---|---|---|---|
-| Week 0 (Baseline) | Pre-launch | @Kartik24Hulmukh | Identified 10 risks |
-| Week 1 | _fill in_ | | |
-| Week 2 | _fill in_ | | |
+| Week 0 (Baseline) | Pre-launch | @KairoPhantom | Identified 10 risks |
+| Week 1 | 2026-06-03 | @Antigravity | Integrated CUA 1000x upgrades (World Model, Safety Gate, DP Federated Memory) |
+| Week 2 | 2026-06-10 | @Antigravity | Completed facts verifier database validation and launch checklist audit |
 | Week 3 | _fill in_ | | |
 | Week 4 | _fill in_ | | |
 
@@ -27,7 +27,8 @@
 - `KairoSetup.exe` one-click installer for Windows
 - `xa11y` cross-platform accessibility layer active
 - `.dmg` and `.AppImage` packaging in CI
-**Gate status:** ✅ CLOSED — cross-platform CI matrix passes
+- **VLM Local Grounding:** Integrated visual grounding in `vlm_grounding.py` for Canva CUA targeting coordinates
+**Gate status:** ✅ CLOSED — cross-platform CI matrix passes, VLM-grounding fallback validated
 **Watch for:** macOS Accessibility permission denial on fresh systems. Monitor `kairo status` error logs post-launch.
 
 ---
@@ -40,8 +41,9 @@
 - Adeu MCP bridge as primary injector (Track Changes preserved)
 - Fallback chain: Adeu → safe-docx → clipboard
 - **Phase 1.4 Schema Retry**: any DOCX/XLSX/PPTX parse failure retries LLM up to 2× with hardened schema hint before clipboard fallback (`main.rs` — `'docx_schema_retry` / `'xlsx_schema_retry` / `'pptx_schema_retry` labelled loops)
+- **Facts Verification CLI**: Integrated `Kairo.facts` database verifying 36 implemented capabilities with cross-platform validation
 - 787 tests passing, 0 failures
-**Gate status:** ✅ CLOSED
+**Gate status:** ✅ CLOSED — CLI facts verifier passes cleanly
 **Watch for:** New LLM models that leak differently. Run `cargo test` on every model upgrade.
 
 ---
@@ -163,10 +165,10 @@ Low      │  FM-9     FM-3
 
 | # | Action | Owner | Due |
 |---|---|---|---|
-| 1 | Execute launch sequence (FM-7) | @Kartik24Hulmukh | Day 35 |
+| 1 | Execute launch sequence (FM-7) | @KairoPhantom | Day 35 |
 | 2 | Set up opt-in telemetry for accept/reject rate (FM-10) | Engineering | v0.4 |
-| 3 | Record demo GIF (FM-1) | @Kartik24Hulmukh | Day 34 |
-| 4 | Plan SOC 2 Type II audit (FM-6) | @Kartik24Hulmukh | v1.0 planning |
+| 3 | Record demo GIF (FM-1) | @KairoPhantom | Day 34 |
+| 4 | Plan SOC 2 Type II audit (FM-6) | @KairoPhantom | v1.0 planning |
 
 ---
 
@@ -176,9 +178,9 @@ If any FM reverts to 🔴:
 
 1. Open a GitHub issue with title: `[BLOCKING] FM-N: <description>`
 2. Label it `premortem-blocker` and `p0`
-3. Tag `@Kartik24Hulmukh`
+3. Tag `@KairoPhantom`
 4. Do not merge PRs or ship new features until the blocking issue is resolved
 
 ---
 
-*This document is part of the Foundation-First Hardening Plan constraints. Last updated: 2026-05-27.*
+*This document is part of the Foundation-First Hardening Plan constraints. Last updated: 2026-06-12.

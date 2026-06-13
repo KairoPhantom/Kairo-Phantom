@@ -19,7 +19,7 @@ This enables AI developer agents like **Claude Code**, **Cursor**, and **Goose**
 
 In your terminal, configure Claude Code to use this local server:
 ```bash
-claude mcp add kairo -- cargo run --bin kairo-mcp --manifest-path "C:/Users/SANDIP/Desktop/Memory/KairoPhantom/Cargo.toml"
+claude mcp add kairo -- cargo run --bin kairo-mcp --manifest-path "<YOUR_PATH>/Cargo.toml"
 ```
 
 *Note: Ensure `kairo-phantom` (the core engine) is running in the background for the MCP server to successfully execute actions.*

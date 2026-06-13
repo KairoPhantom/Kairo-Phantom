@@ -48,7 +48,7 @@ def run_vscode_scenario(scenario_id, logger):
                 "fib(0) through fib(10)."
             )
             pyautogui.press('enter')
-            pyautogui.hotkey('alt', 'm')
+            pyautogui.hotkey('ctrl', 'alt', 'm')
             time.sleep(15)
             pyautogui.hotkey('tab')
             return True, "V1 Executed: Rust fibonacci generated"
@@ -61,7 +61,7 @@ def run_vscode_scenario(scenario_id, logger):
                 "// Refactor this function to: (1) use idiomatic Rust patterns, "
                 "(2) add doc comments with examples, (3) add error handling with Result<T, E>."
             )
-            pyautogui.hotkey('alt', 'm')
+            pyautogui.hotkey('ctrl', 'alt', 'm')
             time.sleep(15)
             pyautogui.hotkey('tab')
             return True, "V2 Executed: Refactoring applied"
@@ -92,7 +92,7 @@ def run_vscode_scenario(scenario_id, logger):
                 "// Find all bugs in this Python code, explain each bug, "
                 "and provide the corrected version with unit tests."
             )
-            pyautogui.hotkey('alt', 'm')
+            pyautogui.hotkey('ctrl', 'alt', 'm')
             time.sleep(15)
             pyautogui.hotkey('tab')
             return True, "V3 Executed: Bugs identified and fixed"
@@ -116,7 +116,7 @@ def run_vscode_scenario(scenario_id, logger):
                 "Cover: normal cases, boundary conditions (0%, 100%), invalid inputs, "
                 "and floating point precision. Use pytest.mark.parametrize."
             )
-            pyautogui.hotkey('alt', 'm')
+            pyautogui.hotkey('ctrl', 'alt', 'm')
             time.sleep(15)
             pyautogui.hotkey('tab')
             return True, "V4 Executed: Unit tests generated"
@@ -138,7 +138,7 @@ def run_vscode_scenario(scenario_id, logger):
                 "(1) identify unused imports, (2) suggest interface improvements, "
                 "(3) add JSDoc comments to all exported functions."
             )
-            pyautogui.hotkey('alt', 'm')
+            pyautogui.hotkey('ctrl', 'alt', 'm')
             time.sleep(20)
             pyautogui.hotkey('tab')
             return True, "V5 Executed: Multi-file refactor suggestions provided"
@@ -154,7 +154,7 @@ def run_vscode_scenario(scenario_id, logger):
                 "Include: description, features (10 bullet points), installation steps, "
                 "usage examples, API reference skeleton, and contributing guidelines."
             )
-            pyautogui.hotkey('alt', 'm')
+            pyautogui.hotkey('ctrl', 'alt', 'm')
             time.sleep(20)
             pyautogui.hotkey('tab')
             return True, "V6 Executed: README generated"

@@ -111,16 +111,9 @@ pub async fn execute(
                         }
                     }
                     Err(e) => {
-                        tracing::warn!("[CUA] verification unavailable: {} — assuming success", e);
-                        // verification not available — treat as success with unverified marker
-                        let v = CuaVerification {
-                            success: true,
-                            after_screenshot_path: String::new(),
-                            before_hash: String::new(),
-                            after_hash: String::new(),
-                        };
-                        audit_log_success(action, &mutable_ctx, &v).await;
-                        return CuaResult::Success(v);
+                        tracing::error!("[CUA] verification unavailable: {} — failing closed", e);
+                        audit_log_failure(action, &mutable_ctx, "Unverified").await;
+                        return CuaResult::Failed("Unverified".to_string());
                     }
                 }
             }
@@ -354,75 +347,15 @@ fn execute_well_known_shortcut(
 /// Execute action via cua-driver binary (fallback backend).
 /// cua-driver is the low-level cross-platform driver from trycua — NOT the VM sandbox.
 fn execute_cua_driver(action: &CuaAction, ctx: &CuaContext) -> Result<(), ExecutorError> {
-    use std::process::Command;
-
-    let driver_path = find_cua_driver().ok_or(ExecutorError::CuaDriverNotFound)?;
-
-    let result = match action {
-        CuaAction::MouseClick { x, y, .. } => {
-            let scaled_x = (*x as f32 * ctx.dpi_scale) as i32;
-            let scaled_y = (*y as f32 * ctx.dpi_scale) as i32;
-            Command::new(&driver_path)
-                .args(["click", &scaled_x.to_string(), &scaled_y.to_string()])
-                .output()
+    let driver = crate::platform::new_cua_driver();
+    driver.execute_driver(action, ctx).map_err(|e| {
+        let msg = e.to_string();
+        if msg.contains("not found") {
+            ExecutorError::CuaDriverNotFound
+        } else {
+            ExecutorError::CuaDriverFailed(msg)
         }
-        CuaAction::KeyboardType { text } => {
-            Command::new(&driver_path)
-                .args(["type", "--text", text])
-                .output()
-        }
-        CuaAction::MouseMove { x, y } => {
-            let scaled_x = (*x as f32 * ctx.dpi_scale) as i32;
-            let scaled_y = (*y as f32 * ctx.dpi_scale) as i32;
-            Command::new(&driver_path)
-                .args(["move", &scaled_x.to_string(), &scaled_y.to_string()])
-                .output()
-        }
-        _ => {
-            // cua-driver only handles mouse and keyboard — others unsupported
-            return Ok(());
-        }
-    };
-
-    match result {
-        Ok(output) if output.status.success() => Ok(()),
-        Ok(output) => Err(ExecutorError::CuaDriverFailed(
-            String::from_utf8_lossy(&output.stderr).to_string(),
-        )),
-        Err(e) => Err(ExecutorError::CuaDriverFailed(e.to_string())),
-    }
-}
-
-/// Find the installed cua-driver binary
-fn find_cua_driver() -> Option<std::path::PathBuf> {
-    let candidates = [
-        dirs::data_local_dir().map(|d| d.join("Programs").join("Cua").join("cua-driver").join("bin").join("cua-driver.exe")),
-        dirs::home_dir().map(|h| h.join(".cua").join("bin").join("cua-driver.exe")),
-        Some(std::path::PathBuf::from("C:/Program Files/cua-driver/cua-driver.exe")),
-        Some(std::path::PathBuf::from("C:/ProgramData/cua-driver/cua-driver.exe")),
-    ];
-
-    for candidate in candidates.into_iter().flatten() {
-        if candidate.exists() {
-            return Some(candidate);
-        }
-    }
-
-    // Also check PATH
-    if let Ok(output) = std::process::Command::new("where")
-        .arg("cua-driver")
-        .output()
-    {
-        if output.status.success() {
-            let path = String::from_utf8_lossy(&output.stdout);
-            let first_line = path.lines().next().unwrap_or("").trim().to_string();
-            if !first_line.is_empty() {
-                return Some(std::path::PathBuf::from(first_line));
-            }
-        }
-    }
-
-    None
+    })
 }
 
 /// Verify the action completed correctly using farscry OCR comparison.
@@ -492,18 +425,16 @@ async fn verify_action(
     }
 
     // Fallback: If before and after hashes differ, something changed — consider success
-    // For keyboard type: always considered success (no visual check possible without farscry)
+    if before_hash.is_empty() || after_hash.is_empty() {
+        return Err(ExecutorError::VerificationFailed("Verification screenshots unavailable".into()));
+    }
+
     let success = match action {
         CuaAction::KeyboardType { .. } | CuaAction::KeyboardCombo { .. } | CuaAction::KeyboardShortcut { .. } => {
-            true // Keyboard actions assumed successful if no exception
+            true // Keyboard actions assumed successful if no exception and screenshots are available
         }
         _ => {
-            // For mouse actions: check if screenshot changed
-            if before_hash.is_empty() || after_hash.is_empty() {
-                true // Can't verify — assume success
-            } else {
-                before_hash != after_hash // Something changed
-            }
+            before_hash != after_hash // Something changed
         }
     };
 

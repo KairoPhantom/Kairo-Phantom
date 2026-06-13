@@ -15,6 +15,12 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, Any, Optional
 
+try:
+    import llamafactory
+    LLAMAFACTORY_AVAILABLE = True
+except ImportError:
+    LLAMAFACTORY_AVAILABLE = False
+
 log = logging.getLogger("kairo-sidecar.personal_finetune")
 
 
@@ -109,6 +115,18 @@ class PersonalFinetuner:
                         )
                 except Exception as e:
                     raise ValueError(f"Compliance Error: SFT data validation failed: {e}")
+
+        if not LLAMAFACTORY_AVAILABLE:
+            if os.environ.get("SKIP_FINETUNE") != "1":
+                raise RuntimeError(
+                    "LlamaFactory library is not installed. Cannot run real personal fine-tuning. "
+                    "Set environment variable SKIP_FINETUNE=1 to bypass this check."
+                )
+            log.warning("LlamaFactory is not installed. Running simulated fine-tuning step...")
+            output_adapter_dir = self.models_dir / f"kairo-personal-{user_id}-lora"
+            output_adapter_dir.mkdir(parents=True, exist_ok=True)
+            (output_adapter_dir / "adapter_config.json").write_text('{"peft_type": "LORA", "r": 16}', encoding="utf-8")
+            return str(output_adapter_dir)
 
         log.info("Registering personal dataset in LlamaFactory...")
         try:

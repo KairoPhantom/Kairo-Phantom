@@ -216,25 +216,43 @@ def adeu_apply_edits(
     if not edits:
         return _error("edits list is empty — nothing to apply")
 
+    res = None
     # --- Strategy 1: Live Word COM injection (best quality)
     if _word_is_open_with_file(file_path):
         live_result = _adeu_live_apply(file_path, edits, author)
         if live_result["ok"]:
-            return live_result
-        log.warning("Live COM injection failed, falling back to SDK: %s", live_result.get("error"))
+            res = live_result
+        else:
+            log.warning("Live COM injection failed, falling back to SDK: %s", live_result.get("error"))
 
-    # --- Strategy 2: Python SDK file-based injection
-    if _adeu_sdk_available():
-        return _adeu_sdk_apply(file_path, edits, output_path, author)
+    if res is None:
+        # --- Strategy 2: Python SDK file-based injection
+        if _adeu_sdk_available():
+            res = _adeu_sdk_apply(file_path, edits, output_path, author)
+        # --- Strategy 3: CLI-based fallback (adeu apply)
+        elif _adeu_installed():
+            res = _adeu_cli_apply(file_path, edits, output_path, author)
+        # --- Strategy 4: Fallback Track Changes using python-docx XML w:ins/w:del revision marks
+        else:
+            log.info("Adeu not available, using python-docx XML tracked changes fallback")
+            res = _python_docx_tracked_fallback(file_path, edits, output_path, author)
 
-    # --- Strategy 3: CLI-based fallback (adeu apply)
-    if _adeu_installed():
-        return _adeu_cli_apply(file_path, edits, output_path, author)
+    if res.get("ok") and "data" in res and res["data"] is not None:
+        # Guarantee keys in both top-level and data
+        data = res["data"]
+        applied = res.get("applied_count", data.get("applied_count", len(edits)))
+        skipped = res.get("skipped_count", data.get("skipped_count", 0))
+        backend = res.get("backend", data.get("backend", "unknown"))
+        
+        data["applied_count"] = applied
+        data["skipped_count"] = skipped
+        data["backend"] = backend
+        
+        res["applied_count"] = applied
+        res["skipped_count"] = skipped
+        res["backend"] = backend
 
-    return _unavailable(
-        "Adeu is not installed. Run: pip install adeu\n"
-        "Then restart the Kairo sidecar."
-    )
+    return res
 
 
 def adeu_read_live_document() -> dict:
@@ -378,6 +396,9 @@ def _adeu_sdk_apply(
         )
         return {
             "ok": True,
+            "applied_count": applied_count,
+            "skipped_count": skipped_count,
+            "backend": "adeu_sdk",
             "data": {
                 "output_path": output_path,
                 "applied_count": applied_count,
@@ -390,6 +411,133 @@ def _adeu_sdk_apply(
         return _unavailable("adeu Python SDK import failed (pip install adeu)")
     except Exception:
         return _error(traceback.format_exc())
+
+def _python_docx_tracked_fallback(
+    file_path: str,
+    edits: list[dict],
+    output_path: str | None,
+    author: str,
+) -> dict:
+    """Fallback Track Changes using python-docx XML w:ins/w:del revision marks."""
+    try:
+        from docx import Document
+        from docx.oxml import OxmlElement
+        from docx.oxml.ns import qn
+        import datetime
+
+        if output_path is None:
+            base, ext = os.path.splitext(file_path)
+            output_path = f"{base}_redlined{ext}"
+
+        doc = Document(file_path)
+        
+        # Enable track revisions via document settings XML
+        settings_element = doc.settings.element
+        track_revisions = settings_element.find(qn('w:trackRevisions'))
+        if track_revisions is None:
+            track_revisions = OxmlElement('w:trackRevisions')
+            settings_element.append(track_revisions)
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+
+        applied_count = 0
+        for edit in edits:
+            target = edit.get("target_text", "").strip()
+            new = edit.get("new_text", "")
+            if not target:
+                continue
+            if new is None:
+                new = ""
+
+            for p in doc.paragraphs:
+                if target in p.text:
+                    text = p.text
+                    p.text = ""
+                    parts = text.split(target, 1)
+                    if parts[0]:
+                        p.add_run(parts[0])
+
+                    # Add w:del
+                    w_del = OxmlElement('w:del')
+                    w_del.set(qn('w:author'), author)
+                    w_del.set(qn('w:date'), timestamp)
+                    w_del.set(qn('w:id'), str(applied_count * 2))
+                    r_del = OxmlElement('w:r')
+                    del_text = OxmlElement('w:delText')
+                    del_text.text = target
+                    r_del.append(del_text)
+                    w_del.append(r_del)
+                    p._p.append(w_del)
+
+                    # Add w:ins (only if new is not empty)
+                    if new:
+                        if "\n" in new:
+                            lines = new.split("\n")
+                            # First line goes to the current paragraph
+                            if lines[0]:
+                                w_ins = OxmlElement('w:ins')
+                                w_ins.set(qn('w:author'), author)
+                                w_ins.set(qn('w:date'), timestamp)
+                                w_ins.set(qn('w:id'), str(applied_count * 2 + 1))
+                                r_ins = OxmlElement('w:r')
+                                ins_text = OxmlElement('w:t')
+                                ins_text.text = lines[0]
+                                r_ins.append(ins_text)
+                                w_ins.append(r_ins)
+                                p._p.append(w_ins)
+                            
+                            # The remaining lines are added as new paragraphs with track changes (w:ins)
+                            current_p = p
+                            for idx, line in enumerate(lines[1:]):
+                                next_p_elem = OxmlElement('w:p')
+                                current_p._p.addnext(next_p_elem)
+                                from docx.text.paragraph import Paragraph
+                                next_p = Paragraph(next_p_elem, doc)
+                                
+                                w_ins_next = OxmlElement('w:ins')
+                                w_ins_next.set(qn('w:author'), author)
+                                w_ins_next.set(qn('w:date'), timestamp)
+                                w_ins_next.set(qn('w:id'), str(applied_count * 1000 + idx))
+                                r_ins_next = OxmlElement('w:r')
+                                ins_text_next = OxmlElement('w:t')
+                                ins_text_next.text = line
+                                r_ins_next.append(ins_text_next)
+                                w_ins_next.append(r_ins_next)
+                                next_p_elem.append(w_ins_next)
+                                current_p = next_p
+                        else:
+                            w_ins = OxmlElement('w:ins')
+                            w_ins.set(qn('w:author'), author)
+                            w_ins.set(qn('w:date'), timestamp)
+                            w_ins.set(qn('w:id'), str(applied_count * 2 + 1))
+                            r_ins = OxmlElement('w:r')
+                            ins_text = OxmlElement('w:t')
+                            ins_text.text = new
+                            r_ins.append(ins_text)
+                            w_ins.append(r_ins)
+                            p._p.append(w_ins)
+
+                    if len(parts) > 1 and parts[1]:
+                        p.add_run(parts[1])
+
+                    applied_count += 1
+                    break
+
+        doc.save(output_path)
+        skipped_count = len(edits) - applied_count
+        return {
+            "ok": True,
+            "applied_count": applied_count,
+            "skipped_count": skipped_count,
+            "backend": "python_docx_fallback",
+            "data": {
+                "output_path": output_path,
+                "applied_count": applied_count,
+                "skipped_count": skipped_count,
+                "backend": "python_docx_fallback",
+            }
+        }
+    except Exception as e:
+        return _error(f"Tracked changes fallback failed: {e}")
 
 
 def _adeu_cli_apply(
@@ -425,9 +573,13 @@ def _adeu_cli_apply(
         log.info("adeu_cli_apply OK: %d edits → %s", len(edits), output_path)
         return {
             "ok": True,
+            "applied_count": len(edits),
+            "skipped_count": 0,
+            "backend": "adeu_cli",
             "data": {
                 "output_path": output_path,
                 "applied_count": len(edits),
+                "skipped_count": 0,
                 "backend": "adeu_cli",
             },
         }
@@ -476,8 +628,12 @@ def _adeu_live_apply(
         log.info("adeu_live_apply OK: %d edits injected via COM", len(edits))
         return {
             "ok": True,
+            "applied_count": len(edits),
+            "skipped_count": 0,
+            "backend": "adeu_live_com",
             "data": {
                 "applied_count": len(edits),
+                "skipped_count": 0,
                 "backend": "adeu_live_com",
             },
         }

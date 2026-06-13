@@ -1,3 +1,7 @@
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent.resolve()))
+
 import pytest
 from sidecar.safety.bmc_gate import SuffixAutomaton, longest_common_substring_with_tolerance, BmcGate, tokenize
 

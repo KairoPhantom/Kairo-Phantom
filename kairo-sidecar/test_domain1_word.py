@@ -377,6 +377,40 @@ class TestAdeuBridgeHelpers:
         result = _adeu_sdk_available()
         assert isinstance(result, bool)
 
+    def test_adeu_apply_edits_fallback_docx(self):
+        from sidecar.parsers.adeu_bridge import adeu_apply_edits
+        from unittest.mock import patch
+        from docx import Document
+        
+        # Create a temp docx file
+        temp_dir = tempfile.mkdtemp()
+        docx_path = os.path.join(temp_dir, "test.docx")
+        doc = Document()
+        doc.add_paragraph("This is a sample agreement.")
+        doc.save(docx_path)
+        
+        edits = [{"target_text": "sample", "new_text": "drafted"}]
+        out_path = os.path.join(temp_dir, "test_redlined.docx")
+        
+        with patch("sidecar.parsers.adeu_bridge._adeu_installed", return_value=False), \
+             patch("sidecar.parsers.adeu_bridge._adeu_sdk_available", return_value=False), \
+             patch("sidecar.parsers.adeu_bridge._word_is_open_with_file", return_value=False):
+            res = adeu_apply_edits(docx_path, edits, output_path=out_path)
+            
+        assert res["ok"] is True
+        assert res["data"]["backend"] == "python_docx_fallback"
+        assert res["data"]["applied_count"] == 1
+        
+        # Verify document was modified and exists
+        assert os.path.exists(out_path)
+        doc2 = Document(out_path)
+        # Check that revision tracking was turned on via XML
+        from docx.oxml.ns import qn
+        assert doc2.settings.element.find(qn('w:trackRevisions')) is not None
+        
+        # Clean up
+        shutil.rmtree(temp_dir)
+
 
 # ─── Gate 2: safe-docx Bridge Unit Tests ─────────────────────────────────────
 
@@ -511,6 +545,57 @@ class TestRuleBasedRedlines:
     def test_risk_reduction_balanced_high_to_medium(self):
         r = _estimate_risk_reduction("liability_cap", "balanced")
         assert "MEDIUM" in r
+    def test_word_writer_routes_to_adeu_on_track_revisions(self):
+        from sidecar.masters.word_master import WordWriter, WordContext
+        from docx import Document
+        from docx.oxml import OxmlElement
+        from docx.oxml.ns import qn
+        import tempfile
+        import shutil
+        import os
+
+        # Create a temp docx file with track revisions active
+        temp_dir = tempfile.mkdtemp()
+        docx_path = os.path.join(temp_dir, "track_test.docx")
+        doc = Document()
+        doc.add_paragraph("This is the original paragraph.")
+        
+        # Turn on track revisions
+        settings_element = doc.settings.element
+        track_revisions = OxmlElement('w:trackRevisions')
+        settings_element.append(track_revisions)
+        doc.save(docx_path)
+
+        # Call apply_operations
+        writer = WordWriter()
+        from unittest.mock import MagicMock
+        context = MagicMock()
+        ops = [{
+            "type": "replace_paragraph",
+            "paragraph_index": 0,
+            "runs": [{"text": "This is the updated paragraph."}]
+        }]
+        
+        # Mock _adeu_installed and _adeu_sdk_available to force python_docx_fallback path
+        from unittest.mock import patch
+        with patch("sidecar.parsers.adeu_bridge._adeu_installed", return_value=False), \
+             patch("sidecar.parsers.adeu_bridge._adeu_sdk_available", return_value=False):
+            res = writer.apply_operations(docx_path, ops, context)
+
+        assert "errors" in res
+        assert res["applied_count"] == 1
+        
+        # Verify the saved document
+        doc2 = Document(docx_path)
+        # Verify that w:ins exists
+        assert doc2.settings.element.find(qn('w:trackRevisions')) is not None
+        # Verify w:del and w:ins exist in the XML
+        body_xml = doc2._body._element.xml
+        assert "w:del" in body_xml
+        assert "w:ins" in body_xml
+        
+        # Clean up
+        shutil.rmtree(temp_dir)
 
 
 if __name__ == "__main__":

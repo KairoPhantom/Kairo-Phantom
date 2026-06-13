@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import sidecar.crash_reporter as crash_module
 from sidecar.crash_reporter import (
@@ -16,10 +16,12 @@ from sidecar.crash_reporter import (
 
 def test_install_crash_handler():
     original = sys.excepthook
-    install_crash_handler()
-    assert sys.excepthook is not original
-    # Restore
-    sys.excepthook = original
+    sys.excepthook = lambda *a: None
+    try:
+        install_crash_handler()
+        assert sys.excepthook is _crash_handler
+    finally:
+        sys.excepthook = original
 
 
 def test_write_crash_report(tmp_path):

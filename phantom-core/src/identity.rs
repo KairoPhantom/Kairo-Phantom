@@ -207,6 +207,8 @@ pub struct AuditChainEntry {
     pub prev_hash: String,
     /// SHA-256 hash of this entry's JSON (self-hash for verification)
     pub self_hash: String,
+    #[serde(default)]
+    pub signature: String,
 }
 
 impl AuditChainEntry {
@@ -223,6 +225,7 @@ impl AuditChainEntry {
             result: result.to_string(),
             prev_hash: prev_hash.to_string(),
             self_hash: String::new(),
+            signature: String::new(),
         };
         // Compute self-hash
         let json = serde_json::to_string(&entry).unwrap_or_default();
@@ -258,9 +261,10 @@ impl TamperEvidentAuditLog {
         "genesis".to_string()
     }
 
-    pub fn append(&self, agent_id: &str, user_id: &str, action: &str, doc_path: &str, result: &str) {
+    pub fn append(&self, identity: &AgentIdentity, user_id: &str, action: &str, doc_path: &str, result: &str) {
         let mut last = self.last_hash.lock().unwrap();
-        let entry = AuditChainEntry::new(agent_id, user_id, action, doc_path, result, &last);
+        let mut entry = AuditChainEntry::new(&identity.agent_id, user_id, action, doc_path, result, &last);
+        entry.signature = identity.sign(entry.self_hash.as_bytes()).unwrap_or_default();
         *last = entry.self_hash.clone();
 
         let line = serde_json::to_string(&entry).unwrap_or_default();
@@ -285,13 +289,63 @@ impl TamperEvidentAuditLog {
                     warn!("[AuditChain] CHAIN VIOLATION at line {}: prev_hash mismatch", i+1);
                     violations += 1;
                 }
+
+                // Verify self-hash
+                let mut temp_entry = entry.clone();
+                temp_entry.self_hash = String::new();
+                temp_entry.signature = String::new();
+                let json = serde_json::to_string(&temp_entry).unwrap_or_default();
+                let computed_hash = sha256_hex(json.as_bytes());
+                if computed_hash != entry.self_hash {
+                    warn!("[AuditChain] CHAIN VIOLATION at line {}: self_hash mismatch", i+1);
+                    violations += 1;
+                }
+
+                // Verify signature
+                if !Self::verify_signature(&entry.agent_id, entry.self_hash.as_bytes(), &entry.signature) {
+                    warn!("[AuditChain] CHAIN VIOLATION at line {}: invalid signature", i+1);
+                    violations += 1;
+                }
+
                 prev_hash = entry.self_hash.clone();
+            } else {
+                warn!("[AuditChain] CHAIN VIOLATION at line {}: failed to parse line", i+1);
+                violations += 1;
             }
         }
         if violations == 0 {
             info!("[AuditChain] Chain verified OK — no tampering detected");
         }
         violations
+    }
+
+    pub fn verify_signature(agent_id: &str, data: &[u8], signature_hex: &str) -> bool {
+        use ed25519_dalek::{VerifyingKey, Signature, Verifier};
+        let public_key_bytes = match hex_decode(agent_id) {
+            Ok(b) => b,
+            Err(_) => return false,
+        };
+        let sig_bytes = match hex_decode(signature_hex) {
+            Ok(b) => b,
+            Err(_) => return false,
+        };
+        
+        let public_key_arr: [u8; 32] = match public_key_bytes.try_into() {
+            Ok(arr) => arr,
+            Err(_) => return false,
+        };
+        let sig_arr: [u8; 64] = match sig_bytes.try_into() {
+            Ok(arr) => arr,
+            Err(_) => return false,
+        };
+
+        let verifying_key = match VerifyingKey::from_bytes(&public_key_arr) {
+            Ok(key) => key,
+            Err(_) => return false,
+        };
+        let signature = Signature::from_bytes(&sig_arr);
+
+        verifying_key.verify(data, &signature).is_ok()
     }
 }
 
@@ -319,7 +373,7 @@ impl IdentityManager {
         if !allowed {
             tracing::warn!("[RBAC] Agent '{}' denied: '{}'", agent_id, file_path);
             if let Some(log) = &self.audit_log {
-                log.append(agent_id, "system", "rbac_denied", file_path, "denied");
+                log.append(&self.identity, "system", "rbac_denied", file_path, "denied");
             }
         }
         allowed
@@ -332,7 +386,7 @@ impl IdentityManager {
     pub fn log_action(&self, action: &str, doc_path: &str, result: &str) {
         if let Some(log) = &self.audit_log {
             let user = std::env::var("USERNAME").or_else(|_| std::env::var("USER")).unwrap_or_else(|_| "local".into());
-            log.append(&self.identity.agent_id, &user, action, doc_path, result);
+            log.append(&self.identity, &user, action, doc_path, result);
         }
     }
 }

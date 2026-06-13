@@ -396,15 +396,18 @@ class KamiCommandHandler:
 
     def _copy_to_clipboard(self, text: str) -> None:
         """Copy a string to the clipboard safely using PowerShell on Windows."""
-        import platform
-        if platform.system() == "Windows":
-            # Sanitize single quotes and execute PowerShell command
-            escaped = text.replace("'", "''").replace("\r", "").replace("\n", "`n")
-            cmd = f"Set-Clipboard -Value '{escaped}'"
-            subprocess.run(["powershell", "-Command", cmd], shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        else:
-            # Fallback simple print for non-windows
-            logger.info(f"Clipboard mock payload: {text[:60]}...")
+        from sidecar.clipboard_mutex import CLIPBOARD_LOCK
+        with CLIPBOARD_LOCK:
+            import platform
+            import subprocess
+            if platform.system() == "Windows":
+                # Sanitize single quotes and execute PowerShell command
+                escaped = text.replace("'", "''").replace("\r", "").replace("\n", "`n")
+                cmd = f"Set-Clipboard -Value '{escaped}'"
+                subprocess.run(["powershell", "-Command", cmd], shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            else:
+                # Fallback simple print for non-windows
+                logger.info(f"Clipboard mock payload: {text[:60]}...")
 
     def _get_quarkdown(self):
         """Lazy load the Quarkdown compiler wrapper."""

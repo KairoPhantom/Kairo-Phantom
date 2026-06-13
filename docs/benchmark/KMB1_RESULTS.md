@@ -101,7 +101,7 @@ The KMB-1 benchmark tests `phantom-core/src/memory/` in production configuration
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 # Clone and build
-git clone https://github.com/Kartik24Hulmukh/Kairo-Phantom.git
+git clone https://github.com/KairoPhantom/Kairo-Phantom.git
 cd Kairo-Phantom/phantom-core
 cargo build --release
 ```
@@ -110,7 +110,7 @@ cargo build --release
 
 ```bash
 # Download the KMB-1 test corpus (100 synthetic user profiles)
-curl -L https://github.com/Kartik24Hulmukh/Kairo-Phantom/releases/download/v0.3.0/kmb1_corpus.tar.gz | tar xz
+curl -L https://github.com/KairoPhantom/Kairo-Phantom/releases/download/v0.3.0/kmb1_corpus.tar.gz | tar xz
 
 # Run benchmark
 cargo test --release --test kmb1_benchmark -- --nocapture
@@ -143,10 +143,10 @@ If you use KMB-1 in research, please cite:
   title={KMB-1: Kairo Memory Benchmark for AI Ghost-Writing Personalization},
   author={Kairo Phantom Contributors},
   year={2026},
-  url={https://github.com/Kartik24Hulmukh/Kairo-Phantom}
+  url={https://github.com/KairoPhantom/Kairo-Phantom}
 }
 ```
 
 ---
 
-*Benchmark data and evaluation scripts available in the [GitHub repository](https://github.com/Kartik24Hulmukh/Kairo-Phantom/tree/main/benchmarks/kmb1). All evaluation code is MIT-licensed.*
+*Benchmark data and evaluation scripts available in the [GitHub repository](https://github.com/KairoPhantom/Kairo-Phantom/tree/main/benchmarks/kmb1). All evaluation code is MIT-licensed.*

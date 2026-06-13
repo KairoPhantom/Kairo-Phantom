@@ -62,7 +62,7 @@ impl DeepPresenter {
     pub fn new(base_url: Option<&str>) -> Self {
         Self {
             base_url: base_url.unwrap_or(DEEPRESENTER_DEFAULT_URL).to_string(),
-            client: reqwest::Client::new(),
+            client: crate::config::get_client_builder().build().unwrap_or_default(),
         }
     }
 

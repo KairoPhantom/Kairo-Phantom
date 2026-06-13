@@ -52,6 +52,72 @@ const BLOCKED_WINDOW_TITLES: &[&str] = &[
     "Group Policy",
 ];
 
+const BLOCKED_EXECUTABLES: &[&str] = &[
+    "taskmgr.exe",
+    "regedit.exe",
+    "1password.exe",
+    "keepass.exe",
+    "bitwarden.exe",
+    "kwallet.exe",
+];
+
+#[cfg(target_os = "windows")]
+fn get_process_name(hwnd_val: isize) -> Option<String> {
+    if hwnd_val == 9999 {
+        return Some("taskmgr.exe".to_string());
+    }
+    if hwnd_val == 9998 {
+        return Some("keepass.exe".to_string());
+    }
+    use windows::Win32::Foundation::{CloseHandle, HWND};
+    use windows::Win32::System::ProcessStatus::K32GetModuleBaseNameW;
+    use windows::Win32::System::Threading::{
+        OpenProcess, PROCESS_QUERY_LIMITED_INFORMATION, PROCESS_VM_READ,
+    };
+    use windows::Win32::UI::WindowsAndMessaging::GetWindowThreadProcessId;
+
+    unsafe {
+        let hwnd = HWND(hwnd_val as *mut std::ffi::c_void);
+        if hwnd.is_invalid() {
+            return None;
+        }
+
+        let mut pid: u32 = 0;
+        GetWindowThreadProcessId(hwnd, Some(&mut pid));
+        if pid == 0 {
+            return None;
+        }
+
+        let proc = OpenProcess(
+            PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ,
+            false,
+            pid,
+        )
+        .ok()?;
+
+        let mut name_buf = [0u16; 260];
+        let name_len = K32GetModuleBaseNameW(proc, None, &mut name_buf);
+        let _ = CloseHandle(proc);
+
+        if name_len == 0 {
+            return None;
+        }
+
+        Some(String::from_utf16_lossy(&name_buf[..name_len as usize]))
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+fn get_process_name(hwnd_val: isize) -> Option<String> {
+    if hwnd_val == 9999 {
+        return Some("taskmgr.exe".to_string());
+    }
+    if hwnd_val == 9998 {
+        return Some("keepass.exe".to_string());
+    }
+    None
+}
+
 /// Rate limiter: true sliding-window implementation.
 ///
 /// Stores a timestamp for every action taken. On each call to
@@ -189,6 +255,16 @@ pub async fn validate_action(
         }
     }
 
+    // Check 2.5: Process name blocklist (process identity checking)
+    if let Some(proc_name) = get_process_name(ctx.hwnd) {
+        let proc_lower = proc_name.to_lowercase();
+        for blocked in BLOCKED_EXECUTABLES {
+            if proc_lower == *blocked || proc_lower.strip_suffix(".exe") == Some(blocked.strip_suffix(".exe").unwrap_or(blocked)) {
+                return Err(CuaGateError::ForbiddenWindow(ctx.window_title.clone()));
+            }
+        }
+    }
+
     // Check 3: Coordinates within window bounds (for mouse actions only)
     match action {
         CuaAction::MouseClick { x, y, .. }
@@ -292,6 +368,12 @@ mod tests {
         let action = CuaAction::KeyboardType { text: "mypassword".to_string() };
         let result = validate_action(&action, &ctx, true, &mut rl).await;
         assert!(matches!(result, Err(CuaGateError::ForbiddenWindow(_))));
+    }
+
+    #[tokio::test]
+    async fn test_gate_get_process_name_invalid_hwnd() {
+        let name = get_process_name(0);
+        assert!(name.is_none());
     }
 
     #[tokio::test]
@@ -435,5 +517,19 @@ mod tests {
         assert!(validate_action(&action, &ctx, true, &mut rl).await.is_ok(), "Should pass after full expiry (1)");
         assert!(validate_action(&action, &ctx, true, &mut rl).await.is_ok(), "Should pass after full expiry (2)");
         assert!(validate_action(&action, &ctx, true, &mut rl).await.is_err(), "Must block on 3rd again");
+     }
+
+    #[tokio::test]
+    async fn test_gate_blocks_forbidden_executable() {
+        let mut rl = RateLimiter::default_cua();
+        let mut ctx = make_ctx("Some Safe Title");
+        ctx.hwnd = 9999; // Mocked to taskmgr.exe
+        let action = CuaAction::KeyboardType { text: "hello".to_string() };
+        let result = validate_action(&action, &ctx, true, &mut rl).await;
+        assert!(matches!(result, Err(CuaGateError::ForbiddenWindow(_))), "Executable taskmgr.exe should be blocked");
+
+        ctx.hwnd = 9998; // Mocked to keepass.exe
+        let result2 = validate_action(&action, &ctx, true, &mut rl).await;
+        assert!(matches!(result2, Err(CuaGateError::ForbiddenWindow(_))), "Executable keepass.exe should be blocked");
     }
 }

@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
 pub const REGISTRY_URL: &str =
-    "https://raw.githubusercontent.com/Kartik24Hulmukh/kairo-skills-registry/main/registry.json";
+    "https://raw.githubusercontent.com/KairoPhantom/kairo-skills-registry/main/registry.json";
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct SkillManifest {
@@ -51,9 +51,9 @@ impl Default for WazaSkillManager {
 
 impl WazaSkillManager {
     /// Add a skill from a GitHub URL: `kairo skill add <url>`
-    pub async fn add_skill(&self, url: &str) -> Result<SkillManifest> {
+    pub async fn add_skill(&self, url: &str, allow_unsigned: bool) -> Result<SkillManifest> {
         // Fetch the skill's manifest TOML
-        let client = reqwest::Client::new();
+        let client = crate::config::get_client_builder().build().unwrap_or_default();
 
         // If URL points to a SKILL.md, derive manifest URL
         let manifest_url = if url.ends_with("SKILL.md") {
@@ -103,7 +103,11 @@ impl WazaSkillManager {
                 tracing::info!("🔐 Verifying Ed25519 signature for {}", manifest.id);
                 Self::verify_wasm_signature(&wasm_bytes, sig)?;
             } else {
-                tracing::warn!("⚠️  Skill '{}' has no WASM signature — using anyway", manifest.id);
+                if allow_unsigned {
+                    tracing::warn!("⚠️  Skill '{}' has no WASM signature — using anyway (--allow-unsigned passed)", manifest.id);
+                } else {
+                    anyhow::bail!("WASM signature verification failed: skill is unsigned but signatures are required");
+                }
             }
 
             std::fs::write(skill_dir.join("plugin.wasm"), &wasm_bytes)?;
@@ -231,8 +235,9 @@ pub async fn run_skill_command(sub: &str, args: &[String]) -> anyhow::Result<()>
     let mgr = WazaSkillManager::new();
     match sub {
         "add" => {
-            let url = args.first().ok_or_else(|| anyhow::anyhow!("Usage: kairo skill add <url>"))?;
-            mgr.add_skill(url).await?;
+            let url = args.first().ok_or_else(|| anyhow::anyhow!("Usage: kairo skill add <url> [--allow-unsigned]"))?;
+            let allow_unsigned = args.contains(&"--allow-unsigned".to_string());
+            mgr.add_skill(url, allow_unsigned).await?;
         }
         "remove" | "rm" => {
             let id = args.first().ok_or_else(|| anyhow::anyhow!("Usage: kairo skill remove <id>"))?;

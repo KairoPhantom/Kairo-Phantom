@@ -131,7 +131,7 @@ pub enum PhantomEvent {
 
 /// Checks if Ollama is running at the given base URL.
 async fn check_ollama_health(base_url: &str) -> bool {
-    let client = reqwest::Client::builder()
+    let client = crate::config::get_client_builder()
         .timeout(std::time::Duration::from_secs(5))
         .build()
         .unwrap_or_default();
@@ -451,6 +451,43 @@ async fn async_main() -> Result<()> {
         return Ok(());
     }
 
+    // kairo doctor — print system capability report
+    if args.len() >= 2 && args[1] == "doctor" {
+        println!("🩺 Kairo Doctor — System Capability Report");
+        println!("==========================================");
+        match sidecar_client::self_check().await {
+            Ok(val) => {
+                if let Some(obj) = val.get("data").and_then(|d| d.as_object()) {
+                    println!("Version:      {}", obj.get("version").and_then(|v| v.as_str()).unwrap_or("unknown"));
+                    println!("Offline Mode: {}", obj.get("offline_mode").and_then(|v| v.as_bool()).unwrap_or(false));
+                    
+                    println!("\nDocument Intelligence Domains:");
+                    println!("------------------------------");
+                    let d1 = obj.get("domain_1_word").and_then(|v| v.as_bool()).unwrap_or(false);
+                    println!("Domain 1 (Word/DOCX):    {}", if d1 { "✅ AVAILABLE" } else { "❌ UNAVAILABLE" });
+                    let d2 = obj.get("domain_2_excel").and_then(|v| v.as_bool()).unwrap_or(false);
+                    println!("Domain 2 (Excel/XLSX):   {}", if d2 { "✅ AVAILABLE" } else { "❌ UNAVAILABLE" });
+                    let d3 = obj.get("domain_3_pptx").and_then(|v| v.as_bool()).unwrap_or(false);
+                    println!("Domain 3 (PPTX/Slides):  {}", if d3 { "✅ AVAILABLE" } else { "❌ UNAVAILABLE" });
+                    let d4 = obj.get("domain_4_pdf").and_then(|v| v.as_bool()).unwrap_or(false);
+                    println!("Domain 4 (PDF/Extract):  {}", if d4 { "✅ AVAILABLE" } else { "❌ UNAVAILABLE" });
+                    
+                    println!("\nLocal LLM Connectivity:");
+                    println!("-----------------------");
+                    let llm = obj.get("llm_available").and_then(|v| v.as_bool()).unwrap_or(false);
+                    println!("Local LLM Endpoint:      {}", if llm { "✅ CONNECTED (LiteLLM/Ollama)" } else { "❌ DISCONNECTED" });
+                } else {
+                    println!("❌ Invalid response format from sidecar.");
+                }
+            }
+            Err(e) => {
+                println!("❌ Failed to connect to Kairo Sidecar: {}", e);
+                println!("   Ensure the Python sidecar is running (python kairo-sidecar/sidecar.py)");
+            }
+        }
+        return Ok(());
+    }
+
 
 
     // kairo memory sync <discover|pull <peer>|serve>
@@ -470,7 +507,7 @@ async fn async_main() -> Result<()> {
         println!("Downloading latest community shortcuts registry...");
         let url = "https://raw.githubusercontent.com/kairo-phantom/community-shortcuts/main/cua_shortcuts.toml";
         
-        let client = reqwest::Client::new();
+        let client = crate::config::get_client_builder().build().unwrap_or_default();
         match client.get(url).timeout(std::time::Duration::from_secs(10)).send().await {
             Ok(resp) => {
                 let status = resp.status();
@@ -551,6 +588,35 @@ async fn async_main() -> Result<()> {
     // Load config from ~/.kairo-phantom/config.toml
     let config = PhantomConfig::load_or_default()?;
     info!("⚙️  Config loaded: provider={} model={}", config.model.provider, config.model.model_name.as_deref().unwrap_or("default"));
+
+    if std::env::var("KAIRO_OFFLINE").unwrap_or_default() == "1" {
+        let is_running = ollama_bootstrap::OllamaBootstrap::is_running().await;
+        let configured_model = config.model.model_name.as_deref().unwrap_or("qwen2.5-coder:14b");
+        let has_model = if is_running {
+            ollama_bootstrap::OllamaBootstrap::has_model(configured_model).await
+        } else {
+            false
+        };
+
+        if !is_running || !has_model {
+            eprintln!("======================================================================");
+            eprintln!("❌ KAIRO OFFLINE BOOTSTRAP FAILURE");
+            eprintln!("======================================================================");
+            if !is_running {
+                eprintln!("Ollama is not running locally. In offline mode, a local Ollama instance is required.");
+                eprintln!("Please start Ollama:");
+                eprintln!("  Windows: Start Ollama application or run 'ollama serve' in PowerShell.");
+                eprintln!("  macOS/Linux: Run 'ollama serve' in your terminal.");
+            } else {
+                eprintln!("Required local model '{}' is missing from Ollama.", configured_model);
+                eprintln!("Since KAIRO_OFFLINE=1 is active, Kairo cannot automatically download the model.");
+                eprintln!("Please pull the model manually before starting Kairo:");
+                eprintln!("  ollama pull {}", configured_model);
+            }
+            eprintln!("======================================================================");
+            std::process::exit(1);
+        }
+    }
 
     // Phase 3: Ollama Health Check
     if config.model.provider == "ollama" {
@@ -1763,14 +1829,15 @@ async fn async_main() -> Result<()> {
                         warn!("⚠️  [L1] Advisory: {}", advisory_msg);
                     }
 
-                    // Clarity check: if unclear, inject clarification and stop
-                    if !intent_analysis.is_clear {
-                        if let Some(question) = &intent_analysis.clarification_question {
-                            info!("❓ [L1] Low confidence — showing clarification toast");
-                            crate::toast_notification::show_clarification_toast(question.as_str());
-                            last_processed_prompt = String::new(); // allow re-prompt
-                            continue;
-                        }
+                    // Clarity check: if unclear or confidence below clarity_threshold, inject clarification and stop
+                    let is_low_confidence = intent_analysis.confidence < config.clarity_threshold;
+                    if !intent_analysis.is_clear || is_low_confidence {
+                        let question = intent_analysis.clarification_question.as_deref()
+                            .unwrap_or("Could you please clarify your request?");
+                        info!("❓ [L1] Low confidence — showing clarification toast");
+                        crate::toast_notification::show_clarification_toast(question);
+                        last_processed_prompt = String::new(); // allow re-prompt
+                        continue;
                     }
 
                     // CUA Escalation check
@@ -2444,18 +2511,25 @@ async fn async_main() -> Result<()> {
                         clean_response = stripped.trim().to_string();
                     }
 
-                    // ── PHASE 1 HARDENING: Sentinel sanitization before injection ──
-                    // Every LLM response MUST pass sentinel scan before reaching the injector.
-                    // If leakage detected, retry with hardened prompt (max 2 retries).
-                    // On persistent failure, show error overlay — NEVER inject leaked content.
+                    // ── PHASE 1 HARDENING: Sentinel sanitization & Response Validation before injection ──
+                    // Every LLM response MUST pass sentinel scan and response validation before reaching the injector.
+                    // If leakage detected or validation fails, retry with hardened prompt (max 2 retries).
+                    // On persistent failure, show error overlay — NEVER inject blocked content.
                     {
                         let scan_result = sentinel.sanitize(&clean_response);
-                        if scan_result.contains("[BLOCKED") {
-                            warn!("🔒 [SENTINEL] Leakage detected in response — initiating retry...");
-                            // Retry up to 2 times with a hardened system prompt
-                            let mut retry_response = scan_result.clone();
+                        let val_result = response_validator.validate(&prompt_text, &scan_result);
+                        if scan_result.contains("[BLOCKED") || !val_result.is_valid() {
+                            let initial_reason = if scan_result.contains("[BLOCKED") {
+                                "Instruction leakage detected.".to_string()
+                            } else {
+                                val_result.reason()
+                            };
+                            warn!("🔒 [VALIDATION] Initial check failed ({}). Initiating retry...", initial_reason);
+                            let mut final_error_message = initial_reason;
+                            let mut success = false;
+                            
                             'retry: for retry_attempt in 1..=2usize {
-                                warn!("🔄 [SENTINEL] Retry attempt {}/2 with hardened instruction hierarchy", retry_attempt);
+                                warn!("🔄 [VALIDATION] Retry attempt {}/2 with hardened instruction hierarchy", retry_attempt);
                                 let hardened_system = format!(
                                     "{}\n\n\
                                     CRITICAL SECURITY POLICY (attempt {}/2):\n\
@@ -2476,18 +2550,51 @@ async fn async_main() -> Result<()> {
                                 while let Some(tok) = retry_rx.recv().await {
                                     retry_collected.push_str(&tok);
                                 }
-                                let retry_scan = sentinel.sanitize(&retry_collected);
-                                if !retry_scan.contains("[BLOCKED") {
-                                    info!("✅ [SENTINEL] Retry {} succeeded — clean response obtained", retry_attempt);
-                                    clean_response = retry_scan;
-                                    break 'retry;
+                                
+                                // Strip any [MCP:...] in retry_collected first
+                                let mut stripped_retry = String::with_capacity(retry_collected.len());
+                                let r_bytes = retry_collected.as_bytes();
+                                let mut ri = 0;
+                                while ri < r_bytes.len() {
+                                    if ri + 5 <= r_bytes.len() && &r_bytes[ri..ri+5] == b"[MCP:" {
+                                        let r_start = ri;
+                                        ri += 5;
+                                        let mut r_depth = 1i32;
+                                        while ri < r_bytes.len() && r_depth > 0 {
+                                            if r_bytes[ri] == b'[' { r_depth += 1; }
+                                            else if r_bytes[ri] == b']' { r_depth -= 1; }
+                                            ri += 1;
+                                        }
+                                        if ri < r_bytes.len() && r_bytes[ri] == b'\n' { ri += 1; }
+                                    } else {
+                                        stripped_retry.push(r_bytes[ri] as char);
+                                        ri += 1;
+                                    }
                                 }
-                                warn!("⚠️  [SENTINEL] Retry {} still blocked", retry_attempt);
-                                retry_response = retry_scan;
+                                let clean_retry = stripped_retry.trim().to_string();
+
+                                let retry_scan = sentinel.sanitize(&clean_retry);
+                                if retry_scan.contains("[BLOCKED") {
+                                    final_error_message = "Instruction leakage detected.".to_string();
+                                    warn!("⚠️  [VALIDATION] Retry {} failed: Instruction leakage detected.", retry_attempt);
+                                    continue 'retry;
+                                }
+                                let val_res = response_validator.validate(&prompt_text, &retry_scan);
+                                if !val_res.is_valid() {
+                                    final_error_message = val_res.reason();
+                                    warn!("⚠️  [VALIDATION] Retry {} failed: {}", retry_attempt, final_error_message);
+                                    continue 'retry;
+                                }
+                                
+                                info!("✅ [VALIDATION] Retry {} succeeded — clean & valid response obtained", retry_attempt);
+                                clean_response = retry_scan;
+                                success = true;
+                                break 'retry;
                             }
-                            // If still blocked after retries, show error overlay and skip injection
-                            if retry_response.contains("[BLOCKED") {
-                                warn!("🚨 [SENTINEL] All retries failed — blocking injection and showing error");
+
+                            if !success {
+                                warn!("🚨 [VALIDATION] All retries failed — blocking injection and showing error");
+                                crate::toast_notification::show_error_toast(&format!("Response Blocked: {}", final_error_message));
                                 continue;
                             }
                         } else {
@@ -3562,15 +3669,19 @@ Do NOT include any markdown formatting. Output ONLY the GAP instruction or VERIF
                 if !was_cancelled {
                     // Layer 4: Validate response (hallucination / roleplay detection)
                     let val_result = response_validator.validate(&prompt_text, &full_response);
-                    if !val_result.is_valid() {
-                        warn!("⚠️  [RESPONSE VALIDATOR] {}", val_result.reason());
-                        // Log but don't block — validator is advisory for now
-                    }
+                    let validation_failed = !val_result.is_valid();
 
                     // Sanitize the final response through sentinel
                     let sanitized = sentinel.sanitize(&full_response);
-                    if sanitized == "[BLOCKED: SECURITY POLICY VIOLATION]" {
-                        warn!("❌ RESPONSE BLOCKED: Instruction leakage detected.");
+                    let sentinel_failed = sanitized == "[BLOCKED: SECURITY POLICY VIOLATION]";
+
+                    if validation_failed || sentinel_failed {
+                        let reason = if validation_failed {
+                            val_result.reason()
+                        } else {
+                            "Instruction leakage detected.".to_string()
+                        };
+                        warn!("❌ RESPONSE BLOCKED: {}", reason);
                         injector.type_text("\n[SECURITY ALERT: RESPONSE BLOCKED]");
                         audit_logger.log_ghost_session(
                             AuditEvent::GhostSessionBlocked,
@@ -4038,5 +4149,5 @@ fn print_help() {
     println!("  summarize              Summarize document into 3 bullets");
     println!("\n  Alt+V                  Start voice dictation (microphone)");
     println!("  Alt+Shift+M            Capture screen context");
-    println!("\nFor docs: https://github.com/Kartik24Hulmukh/Kairo-Phantom");
+    println!("\nFor docs: https://github.com/KairoPhantom/Kairo-Phantom");
 }

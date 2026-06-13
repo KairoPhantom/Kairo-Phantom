@@ -96,7 +96,7 @@ The main loop is an event-driven Tokio async runtime that:
 
 **Cargo.toml highlights:** tokio, rdev, windows-rs, ollama-rs, yrs (CRDT), wasmtime, ed25519-dalek
 
-GitHub: https://github.com/Kartik24Hulmukh/Kairo-Phantom
+GitHub: https://github.com/KairoPhantom/Kairo-Phantom
 
 Happy to discuss any part of the architecture!
 ```
@@ -123,7 +123,7 @@ What I think is genuinely novel:
 
 It's MIT-licensed, runs offline with Ollama, and is written entirely in Rust.
 
-https://github.com/Kartik24Hulmukh/Kairo-Phantom
+https://github.com/KairoPhantom/Kairo-Phantom
 ```
 
 ---
@@ -164,7 +164,7 @@ Tested with: qwen2.5:7b, llama3.2:3b, mistral:7b, phi4, deepseek-r1:7b
 
 Would love to know what models people are getting good writing results with!
 
-https://github.com/Kartik24Hulmukh/Kairo-Phantom
+https://github.com/KairoPhantom/Kairo-Phantom
 Install: `cargo install kairo-phantom`
 ```
 
@@ -195,7 +195,7 @@ It's a system tray app that reads the focused window, sends the text + your `//`
 - Document health checker
 - Contract clause identifier (CUAD model via Python sidecar)
 
-https://github.com/Kartik24Hulmukh/Kairo-Phantom
+https://github.com/KairoPhantom/Kairo-Phantom
 ```
 
 ---

@@ -98,6 +98,12 @@ def longest_common_substring_with_tolerance(s1: List[str], s2: List[str], max_ra
     
     Uses a Smith-Waterman style local alignment dynamic programming matrix.
     """
+    # Protect against memory/time explosion for extremely long texts
+    if len(s1) > 2000:
+        s1 = s1[:2000]
+    if len(s2) > 2000:
+        s2 = s2[:2000]
+
     n1, n2 = len(s1), len(s2)
     if n1 == 0 or n2 == 0:
         return 0

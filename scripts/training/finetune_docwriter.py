@@ -55,6 +55,11 @@ def run_sft_pipeline(
                 raise ValueError(f"Compliance Error: SFT data validation failed: {e}")
         
     if not UNSLOTH_AVAILABLE:
+        if os.environ.get("SKIP_FINETUNE") != "1":
+            raise RuntimeError(
+                "Unsloth library is not installed. Cannot run real fine-tuning pipeline. "
+                "Set environment variable SKIP_FINETUNE=1 to bypass this check."
+            )
         print("Unsloth is not installed. Running simulated fine-tuning SFT pipeline pass...")
         Path(output_dir).mkdir(parents=True, exist_ok=True)
         # Write dummy adapter info

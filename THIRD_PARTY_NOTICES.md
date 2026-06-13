@@ -240,4 +240,4 @@ The following external tools are *not* bundled with Kairo Phantom but are requir
 
 ---
 
-*If you believe a dependency or attribution has been omitted, please [open an issue](https://github.com/Kartik24Hulmukh/Kairo-Phantom/issues).*
+*If you believe a dependency or attribution has been omitted, please [open an issue](https://github.com/KairoPhantom/Kairo-Phantom/issues).*

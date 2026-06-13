@@ -39,13 +39,17 @@ except Exception as e:
 # ─── Domain 1: Word / DOCX Native Track Changes ───────────────────────────────
 DOMAIN1_AVAILABLE = True
 DOMAIN1_ERROR = None
+ADEU_AVAILABLE = False
 try:
     from sidecar.parsers.adeu_bridge import (
         adeu_read_document,
         adeu_apply_edits,
         adeu_read_live_document,
         adeu_sanitize,
+        _adeu_installed,
+        _adeu_sdk_available,
     )
+    ADEU_AVAILABLE = _adeu_installed() or _adeu_sdk_available()
     from sidecar.parsers.safedocx_bridge import (
         safedocx_read_file,
         safedocx_grep_and_replace,
@@ -128,6 +132,16 @@ logging.basicConfig(
 )
 log = logging.getLogger("kairo-sidecar.main")
 
+def check_llm_available() -> bool:
+    import socket
+    for port in (4000, 11434):
+        try:
+            with socket.create_connection(("127.0.0.1", port), timeout=0.2):
+                return True
+        except Exception:
+            continue
+    return False
+
 # Log available domains on startup
 if not CORE_AVAILABLE:
     log.error(f"Core imports failed: {CORE_ERROR}")
@@ -189,6 +203,22 @@ async def handle_request(req: dict) -> dict:
     try:
         if action == "ping":
             return {"id": req_id, "ok": True, "data": {"pong": True, "version": "1.2.0"}}
+
+        elif action == "self_check":
+            import os
+            return {
+                "id": req_id,
+                "ok": True,
+                "data": {
+                    "version": "1.2.0",
+                    "domain_1_word": DOMAIN1_AVAILABLE,
+                    "domain_2_excel": DOMAIN2_AVAILABLE,
+                    "domain_3_pptx": DOMAIN3_AVAILABLE,
+                    "domain_4_pdf": DOMAIN4_AVAILABLE,
+                    "llm_available": check_llm_available(),
+                    "offline_mode": os.environ.get("KAIRO_OFFLINE") == "1",
+                }
+            }
 
         elif action == "read_docx":
             raw_data = parse_docx(path)
@@ -381,6 +411,8 @@ async def handle_request(req: dict) -> dict:
             return {"id": req_id, **result}
 
         elif action == "generate_redline":
+            if not ADEU_AVAILABLE:
+                return {"id": req_id, "ok": False, "error": "Track Changes requires adeu. Install: pip install adeu"}
             # Generate AI redline for a single clause text
             clause_text = payload.get("clause_text", "")
             clause_id = payload.get("clause_id", "")
@@ -812,6 +844,22 @@ async def handle_request(req: dict) -> dict:
                     "available": available,
                     "url": moonshine_url,
                     "supported_languages": languages,
+                },
+            }
+
+        elif action == "deeppresenter_health":
+            # Check DeepPresenter service health
+            from sidecar.parsers.deeppresenter_bridge import DeepPresenterBridge
+            bridge = DeepPresenterBridge()
+            available = bridge.is_available()
+            healthy = bridge.check_health() if available else False
+            return {
+                "id": req_id,
+                "ok": True,
+                "data": {
+                    "available": available,
+                    "healthy": healthy,
+                    "status": "online" if healthy else "offline",
                 },
             }
 

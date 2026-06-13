@@ -4,7 +4,7 @@
 #define MyAppName "Kairo Phantom"
 #define MyAppVersion "1.1.0"
 #define MyAppPublisher "Kairo Phantom"
-#define MyAppURL "https://github.com/Kartik24Hulmukh/Kairo-Phantom"
+#define MyAppURL "https://github.com/KairoPhantom/Kairo-Phantom"
 #define MyAppExeName "kairo-phantom.exe"
 
 [Setup]

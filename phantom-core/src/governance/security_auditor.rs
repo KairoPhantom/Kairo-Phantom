@@ -7,6 +7,7 @@ use tracing::{info, warn};
 pub struct SecurityAuditor {
     pii_guard: PiiGuard,
     audit_logger: AuditLogger,
+    pub strict: bool,
 }
 
 impl SecurityAuditor {
@@ -14,6 +15,7 @@ impl SecurityAuditor {
         Self {
             pii_guard: PiiGuard::new(),
             audit_logger,
+            strict: true,
         }
     }
 
@@ -32,7 +34,6 @@ impl SecurityAuditor {
         for keyword in sensitive_keywords {
             if redacted_text.to_lowercase().contains(keyword) {
                 warn!("⚠️ Sensitive keyword '{}' detected in {}", keyword, app_name);
-                // In strict mode, we might block this, but for now we just log it.
                 self.audit_logger.log_ghost_session(
                     AuditEvent::GhostSessionBlocked,
                     AuditOutcome::Blocked,
@@ -41,6 +42,9 @@ impl SecurityAuditor {
                     "n/a",
                     redacted_text.len(),
                 );
+                if self.strict {
+                    return Err(anyhow::anyhow!("Sensitive keyword '{}' detected in {} (Strict Block Mode)", keyword, app_name));
+                }
             }
         }
 

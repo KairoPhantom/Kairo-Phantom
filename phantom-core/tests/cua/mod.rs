@@ -380,3 +380,29 @@ async fn test_dpi_scaling_applied_to_mouse_coordinates() {
         "Coordinates must be scaled by 1.5x DPI factor (100 * 1.5 = 150, 200 * 1.5 = 300)"
     );
 }
+
+/// Test that CUA executor fails closed when after-action verification is unavailable
+#[tokio::test]
+async fn test_executor_fails_closed_when_verification_unavailable() {
+    let cancellation = CancellationToken::new();
+    let mut ctx = safe_ctx();
+    ctx.before_screenshot_path = None; // Screenshots unavailable
+
+    let action = CuaAction::Screenshot;
+
+    let result = phantom_core::cua::cua_executor::execute(
+        &action,
+        &ctx,
+        &CuaBackend::Enigo,
+        &cancellation,
+    )
+    .await;
+
+    println!("DEBUG RESULT: {:?}", result);
+
+    assert!(
+        matches!(result, CuaResult::Failed(ref e) if e == "Unverified"),
+        "Should fail closed with 'Unverified' when screenshot verification is unavailable"
+    );
+}
+

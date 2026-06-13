@@ -5,6 +5,8 @@ import traceback
 from pathlib import Path
 from typing import List, Dict, Any
 
+from sidecar.constants import KAIRO_BACKUP_SUFFIX
+
 try:
     import win32com.client
     import pythoncom
@@ -55,7 +57,7 @@ def write_docx(file_path: str, operations: List[Dict[str, Any]]) -> dict:
         log.warning(f"COM write attempt failed: {com_result.get('error')} — falling back to file write")
 
     # Fallback: python-docx file write
-    backup_path = path.with_suffix(path.suffix + ".kairo_backup")
+    backup_path = path.with_suffix(path.suffix + KAIRO_BACKUP_SUFFIX)
     try:
         shutil.copy2(path, backup_path)
     except Exception as e:

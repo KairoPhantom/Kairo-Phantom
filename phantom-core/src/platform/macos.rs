@@ -3,6 +3,8 @@
 /// No focus stealing, no cursor jumping — pure background magic.
 
 use tracing::{info, warn, debug};
+use super::{AccessibilityReader, PlatformInjector, PlatformCuaDriver, CuaAction, CuaContext};
+use anyhow::{Result, anyhow};
 
 #[cfg(target_os = "macos")]
 mod macos_impl {
@@ -31,23 +33,18 @@ mod macos_impl {
     use core_graphics::event_source::{CGEventSource, CGEventSourceStateID};
     
     /// Map a character to a CGKeyCode and flags.
-    /// Note: This is a simplistic mapping for demonstration. Real implementations need
-    /// complete keyboard layout mapping (TISCopyCurrentKeyboardInputSource).
     fn char_to_keycode(c: char) -> Option<(CGKeyCode, CGEventFlags)> {
         match c {
-            'a'..='z' => Some(((c as u16) - ('a' as u16) + 0x00, CGEventFlags::empty())), // Very rough mapping
+            'a'..='z' => Some(((c as u16) - ('a' as u16) + 0x00, CGEventFlags::empty())),
             'A'..='Z' => Some(((c as u16) - ('A' as u16) + 0x00, CGEventFlags::CGEventFlagShift)),
             ' ' => Some((0x31, CGEventFlags::empty())),
             '\n' => Some((0x24, CGEventFlags::empty())),
-            _ => None, // Fallback needed
+            _ => None,
         }
     }
 
     /// Inject text into the focused process via CGEventPostToPid.
-    /// This is true background injection without stealing focus.
     pub fn inject_text_via_clipboard(text: &str) -> bool {
-        // We still use pbcopy for the actual payload since mapping arbitrary Unicode
-        // to CGKeyCodes requires complex TIS layout translation.
         let mut child = match std::process::Command::new("pbcopy")
             .stdin(std::process::Stdio::piped())
             .spawn() {
@@ -64,7 +61,6 @@ mod macos_impl {
         }
         let _ = child.wait();
 
-        // Small settle delay for clipboard sync
         std::thread::sleep(std::time::Duration::from_millis(30));
 
         let pid = match get_focused_pid() {
@@ -72,10 +68,8 @@ mod macos_impl {
             None => return false,
         };
 
-        // Send Cmd+V via CGEventPostToPid directly to the target app's event queue
         let source = CGEventSource::new(CGEventSourceStateID::HIDSystemState).unwrap();
         
-        // 0x09 is 'v' keycode
         let mut v_down = CGEvent::new_keyboard_event(source.clone(), 0x09, true).unwrap();
         v_down.set_flags(CGEventFlags::CGEventFlagCommand);
         
@@ -90,9 +84,7 @@ mod macos_impl {
         true
     }
 
-    /// Send a CGEventKeyDown/Up sequence for a single keystroke directly to PID.
     pub fn send_keystroke_applescript(key: &str, _modifiers: &[&str]) -> bool {
-        // Fallback for complex keys
         let pid = match get_focused_pid() {
             Some(p) => p,
             None => return false,
@@ -100,7 +92,7 @@ mod macos_impl {
         
         let source = CGEventSource::new(CGEventSourceStateID::HIDSystemState).unwrap();
         let keycode = match key {
-            "delete" => 0x33, // Delete key
+            "delete" => 0x33,
             "return" => 0x24,
             "escape" => 0x35,
             _ => return false,
@@ -116,7 +108,6 @@ mod macos_impl {
         true
     }
 
-    /// Erase N characters backwards using Delete key simulation via CGEventPostToPid.
     pub fn erase_chars(count: usize) -> bool {
         let pid = match get_focused_pid() {
             Some(p) => p,
@@ -126,7 +117,7 @@ mod macos_impl {
         let source = CGEventSource::new(CGEventSourceStateID::HIDSystemState).unwrap();
         
         for _ in 0..count {
-            let event_down = CGEvent::new_keyboard_event(source.clone(), 0x33, true).unwrap(); // 0x33 is delete
+            let event_down = CGEvent::new_keyboard_event(source.clone(), 0x33, true).unwrap();
             let event_up = CGEvent::new_keyboard_event(source.clone(), 0x33, false).unwrap();
             
             event_down.post_to_pid(pid);
@@ -137,15 +128,10 @@ mod macos_impl {
         true
     }
 
-    /// Check if Accessibility permission is granted using CoreGraphics.
     pub fn check_accessibility_permission() -> bool {
-        // CGEvent::post requires accessibility permissions in modern macOS
-        // We can do a dummy post to our own PID
         let pid = std::process::id() as i32;
         let source = CGEventSource::new(CGEventSourceStateID::HIDSystemState).unwrap();
         if let Ok(event) = CGEvent::new_keyboard_event(source, 0xFF, true) {
-            // If we can create and post it, we likely have permissions (or are testing ourselves)
-            // A more robust check requires AXIsProcessTrusted() from ApplicationServices
             event.post_to_pid(pid);
             true
         } else {
@@ -164,8 +150,6 @@ mod macos_impl {
     pub fn check_accessibility_permission() -> bool { false }
 }
 
-// ── Public API ─────────────────────────────────────────────────────────────────
-
 pub use macos_impl::*;
 
 /// macOS-specific injector that wraps all platform capabilities.
@@ -173,30 +157,11 @@ pub struct MacOsInjector;
 
 impl MacOsInjector {
     pub fn new() -> Self { Self }
-
-    /// Inject text without stealing focus.
-    pub fn inject(&self, text: &str) -> bool {
-        inject_text_via_clipboard(text)
-    }
-
-    /// Erase N characters at the current cursor position.
-    pub fn erase(&self, count: usize) -> bool {
-        erase_chars(count)
-    }
-
-    /// Check if the necessary permissions are granted.
-    pub fn has_permission(&self) -> bool {
-        check_accessibility_permission()
-    }
-
-    /// Get display name for the focused app.
-    pub fn focused_app(&self) -> Option<String> {
-        get_focused_bundle_id()
-    }
+    pub fn inject(&self, text: &str) -> bool { inject_text_via_clipboard(text) }
+    pub fn erase(&self, count: usize) -> bool { erase_chars(count) }
+    pub fn has_permission(&self) -> bool { check_accessibility_permission() }
+    pub fn focused_app(&self) -> Option<String> { get_focused_bundle_id() }
 }
-
-use crate::platform::AccessibilityReader;
-use anyhow::{Result, anyhow};
 
 /// macOS implementation of the AccessibilityReader trait using AXUIElement.
 pub struct MacOsAccessibilityReader;
@@ -212,15 +177,12 @@ impl AccessibilityReader for MacOsAccessibilityReader {
     fn get_focused_text(&self) -> Result<String> {
         use macos_accessibility_client::accessibility::{application::Application, element::AXUIElement};
         
-        // 1. Get the system-wide focused UI element using AXUIElement CreateSystemWide
-        // Or get the active application first.
         let app = Application::frontmost()
             .ok_or_else(|| anyhow!("No frontmost application found"))?;
             
         let focused_element = app.focused_element()
             .ok_or_else(|| anyhow!("No focused element found in frontmost app"))?;
             
-        // 2. Query the AXValue or AXSelectedText attribute
         let text = focused_element.value()
             .or_else(|| focused_element.title())
             .ok_or_else(|| anyhow!("Failed to extract text from focused AXUIElement"))?;
@@ -256,5 +218,44 @@ impl AccessibilityReader for MacOsAccessibilityReader {
     }
     fn set_focused_text(&self, _text: &str) -> Result<()> {
         Err(anyhow!("macOS accessibility is not supported on this platform"))
+    }
+}
+
+// ─── macOS Platform Injector & CUA Driver (B-13 Stub) ─────────────────────────
+
+pub struct MacOsPlatformInjector;
+
+impl MacOsPlatformInjector {
+    pub fn new() -> Self { MacOsPlatformInjector }
+}
+
+impl Default for MacOsPlatformInjector {
+    fn default() -> Self { Self::new() }
+}
+
+impl PlatformInjector for MacOsPlatformInjector {
+    fn set_clipboard(&self, _text: &str) -> bool { false }
+    fn get_clipboard(&self) -> Option<String> { None }
+    fn send_char(&self, _c: char) {}
+    fn send_vk(&self, _vk: u16) {}
+    fn send_ctrl_v(&self) {}
+    fn inject_via_value_pattern(&self, _text: &str) -> bool { false }
+    fn select_backward(&self, _count: usize) {}
+    fn focus_window(&self, _hwnd: isize) -> bool { false }
+}
+
+pub struct MacOsPlatformCuaDriver;
+
+impl MacOsPlatformCuaDriver {
+    pub fn new() -> Self { MacOsPlatformCuaDriver }
+}
+
+impl Default for MacOsPlatformCuaDriver {
+    fn default() -> Self { Self::new() }
+}
+
+impl PlatformCuaDriver for MacOsPlatformCuaDriver {
+    fn execute_driver(&self, _action: &CuaAction, _ctx: &CuaContext) -> Result<(), anyhow::Error> {
+        Err(anyhow!("macOS CUA driver: Unsupported/Experimental"))
     }
 }

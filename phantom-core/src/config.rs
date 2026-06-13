@@ -54,6 +54,14 @@ pub struct PhantomConfig {
     /// List of folders to index for Document Graph Memory
     #[serde(default = "default_document_graph_folders")]
     pub document_graph_folders: Vec<String>,
+
+    /// Relevance floor for calibration
+    #[serde(default = "default_relevance_floor")]
+    pub relevance_floor: f32,
+
+    /// Clarity threshold for calibration
+    #[serde(default = "default_clarity_threshold")]
+    pub clarity_threshold: f32,
 }
 
 /// Domain 9 — Enterprise Governance & Compliance configuration.
@@ -356,6 +364,9 @@ fn default_document_graph_folders() -> Vec<String> {
     ]
 }
 
+fn default_relevance_floor() -> f32 { 0.05 }
+fn default_clarity_threshold() -> f32 { 0.4 }
+
 impl Default for PhantomConfig {
     fn default() -> Self {
         PhantomConfig {
@@ -371,6 +382,8 @@ impl Default for PhantomConfig {
             screen_context: ScreenContextConfig::default(),
             enterprise: EnterpriseConfig::default(),
             document_graph_folders: default_document_graph_folders(),
+            relevance_floor: default_relevance_floor(),
+            clarity_threshold: default_clarity_threshold(),
         }
     }
 }
@@ -405,3 +418,16 @@ impl PhantomConfig {
             .join("config.toml")
     }
 }
+
+/// Helper to get a configured reqwest ClientBuilder.
+/// If KAIRO_OFFLINE=1 env var is active, all non-local HTTP egress is routed to a dummy proxy.
+pub fn get_client_builder() -> reqwest::ClientBuilder {
+    let mut builder = reqwest::Client::builder();
+    if std::env::var("KAIRO_OFFLINE").unwrap_or_default() == "1" {
+        if let Ok(proxy) = reqwest::Proxy::all("http://127.0.0.1:9999") {
+            builder = builder.proxy(proxy.no_proxy(reqwest::NoProxy::from_string("localhost,127.0.0.1,::1")));
+        }
+    }
+    builder
+}
+

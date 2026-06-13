@@ -67,3 +67,28 @@ def test_formula_validation_rejection(excel_context, formula):
     # Specifically, if it cannot be corrected to a valid formula, it is rejected.
     # To be precise, let's check the result:
     assert (result.valid is False) or (result.op["formula"] != formula)
+
+
+def test_forge_validator_semantic_evaluation():
+    from sidecar.parsers.forge_bridge import ForgeValidator
+    v = ForgeValidator()
+    
+    # Valid formula
+    res1 = v.validate("=SUM(A1, B1)")
+    assert res1["valid"] is True
+    
+    # Semantically invalid (compile failure - syntax error)
+    res2 = v.validate("=SUM(A1+")
+    assert res2["valid"] is False
+    assert "Semantic evaluation failed" in res2["error"]
+    
+    # Semantically invalid (compile failure - operator syntax error)
+    res3 = v.validate("=SUM(A1, B1+)")
+    assert res3["valid"] is False
+    assert "Semantic evaluation failed" in res3["error"]
+    
+    # Semantically invalid (evaluation failure - division by zero)
+    res4 = v.validate("=A1/0")
+    assert res4["valid"] is False
+    assert "Semantic evaluation failed" in res4["error"]
+

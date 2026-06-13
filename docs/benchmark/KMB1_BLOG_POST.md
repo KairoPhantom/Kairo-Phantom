@@ -12,7 +12,7 @@ a baseline model with no memory. Here's exactly how we measured it, and how you
 can reproduce it yourself.
 
 ```bash
-git clone https://github.com/Kartik24Hulmukh/Kairo-Phantom
+git clone https://github.com/KairoPhantom/Kairo-Phantom
 cd Kairo-Phantom/phantom-core
 cargo bench --bench memory_benchmark
 ```
@@ -123,7 +123,7 @@ Score = 0.40 × retention + 0.30 × coherence + 0.20 × fidelity + 0.10 × delta
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 # Clone the repo
-git clone https://github.com/Kartik24Hulmukh/Kairo-Phantom
+git clone https://github.com/KairoPhantom/Kairo-Phantom
 cd Kairo-Phantom/phantom-core
 ```
 

@@ -1,9 +1,9 @@
 # yaml-language-server: $schema=https://aka.ms/winget-manifest.singleton.1.6.0.schema.json
 
-PackageIdentifier: Kartik24Hulmukh.KairoPhantom
+PackageIdentifier: KairoPhantom.KairoPhantom
 PackageVersion: 3.9.0
 PackageName: Kairo Phantom
-Publisher: Kartik24Hulmukh
+Publisher: KairoPhantom
 License: MIT
 Moniker: kairo-phantom
 Tags:
@@ -21,7 +21,7 @@ Description: >-
 InstallerType: inno
 Installers:
   - Architecture: x64
-    InstallerUrl: https://github.com/Kartik24Hulmukh/Kairo-Phantom/releases/download/v3.9.0/KairoSetup.exe
+    InstallerUrl: https://github.com/KairoPhantom/Kairo-Phantom/releases/download/v3.9.0/KairoSetup.exe
     InstallerSha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
     InstallerSwitches:
       Silent: /VERYSILENT /SUPPRESSMSGBOXES /NORESTART

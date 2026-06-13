@@ -21,3 +21,16 @@ fn test_orchestrator_domain_capabilities() {
     let engineer_cap = orchestrator.get_domain_capability("engineer");
     assert_eq!(engineer_cap, Some(DomainCapability::PromptOnly));
 }
+
+#[tokio::test]
+async fn test_pro_stubs_fail() {
+    use phantom_core::pro::{KairoPro, TeamMemoryVault, AuditExport};
+    let pro = KairoPro::new();
+    let res = TeamMemoryVault::sync_to_s3(&pro).await;
+    assert!(res.is_err());
+    assert_eq!(res.unwrap_err().to_string(), "Pro sync not yet available");
+    
+    let res2 = AuditExport::export_csv(&pro, "user", "app", "agent", "hash", "outcome", 100);
+    assert!(res2.is_err());
+    assert_eq!(res2.unwrap_err().to_string(), "Audit export not yet available");
+}

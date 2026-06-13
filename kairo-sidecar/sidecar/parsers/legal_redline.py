@@ -1,13 +1,13 @@
 """
 Legal Redline Tools — Contract Intelligence for Kairo Phantom.
 ==============================================================
-Provides AI-powered contract clause detection, CUAD labelling,
-and redline generation for legal documents.
+Provides a deterministic CUAD keyword/regex parser and redline
+generation for legal documents.
 
 Key capabilities:
   - CUAD clause detection (41 standard contract risk categories)
-  - Semantic clause matching via Model2Vec embeddings
-  - AI-generated redlines with Kairo's LLM backend
+  - Deterministic CUAD keyword/regex parser
+  - Rule-based suggested redlines
   - Risk summary generation
 
 All functions return Kairo sidecar JSON envelopes:

@@ -17,7 +17,7 @@ def run_notepad_scenario(scenario_id, logger):
             import kairo_test_utils
             kairo_test_utils.focus_window_by_name("notepad.exe")
             pyautogui.typewrite("Create a quick meeting agenda for our Kairo Phantom sync tomorrow at 10 AM. Include status update, blockers, and next steps.")
-            pyautogui.hotkey('alt', 'm')
+            pyautogui.hotkey('ctrl', 'alt', 'm')
             time.sleep(8)
             pyautogui.hotkey('tab')
             time.sleep(1)
@@ -44,7 +44,7 @@ def run_notepad_scenario(scenario_id, logger):
             # Since we can't easily turn off network via pywinauto, we simulate the text input.
             # In a real environment, the chaos monkey handles network disruption.
             pyautogui.typewrite("Write a Python script that reads a text file and prints the number of lines. (OFFLINE TEST)")
-            pyautogui.hotkey('alt', 'm')
+            pyautogui.hotkey('ctrl', 'alt', 'm')
             time.sleep(15)  # Offline models might take slightly longer
             pyautogui.hotkey('tab')
             time.sleep(1)
@@ -64,7 +64,7 @@ def run_notepad_scenario(scenario_id, logger):
             pyautogui.hotkey('ctrl', 'a')
             time.sleep(0.5)
             pyautogui.typewrite("Convert this CSV into a pretty markdown table.")
-            pyautogui.hotkey('alt', 'm')
+            pyautogui.hotkey('ctrl', 'alt', 'm')
             time.sleep(10)
             pyautogui.hotkey('tab')
             time.sleep(1)

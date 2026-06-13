@@ -96,9 +96,9 @@ async def test_docx_read_write():
     ]
     r2 = await send("write_docx", path=tmp_path, payload={"operations": ops})
     assert r2["ok"], f"Write failed: {r2}"
-    assert r2["data"]["applied"] == 2, f"Expected 2 applied: {r2}"
+    assert r2["data"]["applied_count"] == 2, f"Expected 2 applied: {r2}"
     record("DOCX: write operations", PASS,
-           f"applied={r2['data']['applied']} errors={r2['data']['errors']}")
+           f"applied_count={r2['data']['applied_count']} errors={r2['data']['errors']}")
 
     # Verify written content
     r3 = await send("read_docx", path=tmp_path)
@@ -131,7 +131,7 @@ async def test_docx_table_insert():
             "content": ""}]
     r = await send("write_docx", path=tmp, payload={"operations": ops})
     assert r["ok"], f"Table insert failed: {r}"
-    record("DOCX: insert table", PASS, f"applied={r['data']['applied']}")
+    record("DOCX: insert table", PASS, f"applied_count={r['data']['applied_count']}")
     os.unlink(tmp)
 
 
@@ -177,7 +177,7 @@ async def test_xlsx_read_write():
     r2 = await send("write_xlsx", path=tmp, payload={"operations": ops})
     assert r2["ok"], f"XLSX write failed: {r2}"
     record("XLSX: write formulas", PASS,
-           f"applied={r2['data']['applied']} errors={r2['data']['errors']}")
+           f"applied_count={r2['data']['applied_count']} errors={r2['data']['errors']}")
 
     # Verify formula was written
     wb2 = openpyxl.load_workbook(tmp)
@@ -235,7 +235,7 @@ async def test_pptx_read_write():
     assert r2["ok"], f"PPTX write failed: {r2}"
     assert len(r2["data"]["errors"]) == 0
     record("PPTX: write bullets", PASS,
-           f"applied={r2['data']['applied']} errors={r2['data']['errors']}")
+           f"applied_count={r2['data']['applied_count']} errors={r2['data']['errors']}")
 
     # Verify slide 2 was NOT touched
     prs2 = Presentation(tmp)
@@ -292,7 +292,7 @@ async def test_backup_created():
     # After successful write, backup is cleaned up (no errors = backup removed)
     assert r["ok"]
     record("DOCX: atomic write (backup→rename)", PASS,
-           f"applied={r['data']['applied']} errors={r['data']['errors']}")
+           f"applied_count={r['data']['applied_count']} errors={r['data']['errors']}")
     if os.path.exists(tmp):
         os.unlink(tmp)
 

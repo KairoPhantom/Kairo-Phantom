@@ -16,6 +16,6 @@ ReleaseNotes: |-
   - MemMachine cross-session style recall
   - 4-tier LiteLLM routing
   - 12/12 production gates passing
-ReleaseNotesUrl: https://github.com/Kartik24Hulmukh/Kairo-Phantom/releases/tag/v1.0.0
+ReleaseNotesUrl: https://github.com/KairoPhantom/Kairo-Phantom/releases/tag/v1.0.0
 ManifestType: locale
 ManifestVersion: 1.6.0
