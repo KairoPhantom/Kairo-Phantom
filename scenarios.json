@@ -3,1800 +3,2603 @@
     "id": "WORD_001",
     "category": "Word",
     "name": "Word Scenario 01",
-    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Word scenario 01: testing specialized criteria.",
+    "description": "Validate Word master/writer on prompt: Insert paragraph 'Kickoff Meeting Minutes' after paragraph 0",
+    "prompt": "Insert paragraph 'Kickoff Meeting Minutes' after paragraph 0",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "action": "insert_paragraph",
+      "after_paragraph_index": 0,
+      "text": "Kickoff Meeting Minutes",
+      "style": "Heading 1"
+    }
   },
   {
     "id": "WORD_002",
     "category": "Word",
     "name": "Word Scenario 02",
-    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Word scenario 02: testing specialized criteria.",
+    "description": "Validate Word master/writer on prompt: Insert paragraph 'Action Items:' after paragraph 1",
+    "prompt": "Insert paragraph 'Action Items:' after paragraph 1",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "action": "insert_paragraph",
+      "after_paragraph_index": 1,
+      "text": "Action Items:",
+      "style": "Heading 2"
+    }
   },
   {
     "id": "WORD_003",
     "category": "Word",
     "name": "Word Scenario 03",
-    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Word scenario 03: testing specialized criteria.",
+    "description": "Validate Word master/writer on prompt: Replace paragraph 1 text with 'Revised Budget: $150,000'",
+    "prompt": "Replace paragraph 1 text with 'Revised Budget: $150,000'",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "action": "replace_paragraph",
+      "paragraph_index": 1,
+      "text": "Revised Budget: $150,000",
+      "style": "Normal"
+    }
   },
   {
     "id": "WORD_004",
     "category": "Word",
     "name": "Word Scenario 04",
-    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Word scenario 04: testing specialized criteria.",
+    "description": "Validate Word master/writer on prompt: Delete paragraph 2",
+    "prompt": "Delete paragraph 2",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "action": "delete_paragraph",
+      "paragraph_index": 2
+    }
   },
   {
     "id": "WORD_005",
     "category": "Word",
     "name": "Word Scenario 05",
-    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Word scenario 05: testing specialized criteria.",
+    "description": "Validate Word master/writer on prompt: Append ' (Reviewed)' to paragraph 1",
+    "prompt": "Append ' (Reviewed)' to paragraph 1",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "action": "append_to_run",
+      "paragraph_index": 1,
+      "text": " (Reviewed)"
+    }
   },
   {
     "id": "WORD_006",
     "category": "Word",
     "name": "Word Scenario 06",
-    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Word scenario 06: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Validate Word master/writer on prompt: Insert table with 2 rows and 3 columns after paragraph 2",
+    "prompt": "Insert table with 2 rows and 3 columns after paragraph 2",
+    "status": "active",
+    "expected_outcome": {
+      "action": "insert_table",
+      "paragraph_index": 2,
+      "rows": 2,
+      "cols": 3
+    }
   },
   {
     "id": "WORD_007",
     "category": "Word",
     "name": "Word Scenario 07",
-    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Word scenario 07: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Validate Word master/writer on prompt: Insert paragraph 'Project Scope' at the end of the document",
+    "prompt": "Insert paragraph 'Project Scope' at the end of the document",
+    "status": "active",
+    "expected_outcome": {
+      "action": "insert_paragraph",
+      "after_paragraph_index": -1,
+      "text": "Project Scope",
+      "style": "Heading 1"
+    }
   },
   {
     "id": "WORD_008",
     "category": "Word",
     "name": "Word Scenario 08",
-    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Word scenario 08: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Validate Word master/writer on prompt: Insert list bullet paragraph 'Buy milk' after paragraph 1",
+    "prompt": "Insert list bullet paragraph 'Buy milk' after paragraph 1",
+    "status": "active",
+    "expected_outcome": {
+      "action": "insert_paragraph",
+      "after_paragraph_index": 1,
+      "text": "Buy milk",
+      "style": "List Bullet"
+    }
   },
   {
     "id": "WORD_009",
     "category": "Word",
     "name": "Word Scenario 09",
-    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Word scenario 09: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Validate Word master/writer on prompt: Insert heading 3 paragraph 'Detailed Analysis' after paragraph 2",
+    "prompt": "Insert heading 3 paragraph 'Detailed Analysis' after paragraph 2",
+    "status": "active",
+    "expected_outcome": {
+      "action": "insert_paragraph",
+      "after_paragraph_index": 2,
+      "text": "Detailed Analysis",
+      "style": "Heading 3"
+    }
   },
   {
     "id": "WORD_010",
     "category": "Word",
     "name": "Word Scenario 10",
-    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Word scenario 10: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Validate Word master/writer on prompt: Delete paragraph 0 (Title)",
+    "prompt": "Delete paragraph 0 (Title)",
+    "status": "active",
+    "expected_outcome": {
+      "action": "delete_paragraph",
+      "paragraph_index": 0
+    }
   },
   {
     "id": "WORD_011",
     "category": "Word",
     "name": "Word Scenario 11",
-    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Word scenario 11: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Validate Word master/writer on prompt: Replace paragraph 0 text with 'Project Plan v2'",
+    "prompt": "Replace paragraph 0 text with 'Project Plan v2'",
+    "status": "active",
+    "expected_outcome": {
+      "action": "replace_paragraph",
+      "paragraph_index": 0,
+      "text": "Project Plan v2",
+      "style": "Heading 1"
+    }
   },
   {
     "id": "WORD_012",
     "category": "Word",
     "name": "Word Scenario 12",
-    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Word scenario 12: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Validate Word master/writer on prompt: Append ' - Draft 1' to paragraph 0",
+    "prompt": "Append ' - Draft 1' to paragraph 0",
+    "status": "active",
+    "expected_outcome": {
+      "action": "append_to_run",
+      "paragraph_index": 0,
+      "text": " - Draft 1"
+    }
   },
   {
     "id": "WORD_013",
     "category": "Word",
     "name": "Word Scenario 13",
-    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Word scenario 13: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Validate Word master/writer on prompt: Insert table with 3 rows and 2 columns after paragraph 1",
+    "prompt": "Insert table with 3 rows and 2 columns after paragraph 1",
+    "status": "active",
+    "expected_outcome": {
+      "action": "insert_table",
+      "paragraph_index": 1,
+      "rows": 3,
+      "cols": 2
+    }
   },
   {
     "id": "WORD_014",
     "category": "Word",
     "name": "Word Scenario 14",
-    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Word scenario 14: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Validate Word master/writer on prompt: Insert list bullet paragraph 'Verify tests' after paragraph 2",
+    "prompt": "Insert list bullet paragraph 'Verify tests' after paragraph 2",
+    "status": "active",
+    "expected_outcome": {
+      "action": "insert_paragraph",
+      "after_paragraph_index": 2,
+      "text": "Verify tests",
+      "style": "List Bullet"
+    }
   },
   {
     "id": "WORD_015",
     "category": "Word",
     "name": "Word Scenario 15",
-    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Word scenario 15: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Validate Word master/writer on prompt: Insert heading 2 paragraph 'Conclusion' after paragraph -1",
+    "prompt": "Insert heading 2 paragraph 'Conclusion' after paragraph -1",
+    "status": "active",
+    "expected_outcome": {
+      "action": "insert_paragraph",
+      "after_paragraph_index": -1,
+      "text": "Conclusion",
+      "style": "Heading 2"
+    }
   },
   {
     "id": "WORD_016",
     "category": "Word",
     "name": "Word Scenario 16",
-    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Word scenario 16: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Validate Word master/writer on prompt: Replace paragraph 2 text with 'All tests passed.'",
+    "prompt": "Replace paragraph 2 text with 'All tests passed.'",
+    "status": "active",
+    "expected_outcome": {
+      "action": "replace_paragraph",
+      "paragraph_index": 2,
+      "text": "All tests passed.",
+      "style": "Normal"
+    }
   },
   {
     "id": "WORD_017",
     "category": "Word",
     "name": "Word Scenario 17",
-    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Word scenario 17: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Validate Word master/writer on prompt: Delete paragraph 1",
+    "prompt": "Delete paragraph 1",
+    "status": "active",
+    "expected_outcome": {
+      "action": "delete_paragraph",
+      "paragraph_index": 1
+    }
   },
   {
     "id": "WORD_018",
     "category": "Word",
     "name": "Word Scenario 18",
-    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Word scenario 18: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Validate Word master/writer on prompt: Append ' (Final)' to paragraph 2",
+    "prompt": "Append ' (Final)' to paragraph 2",
+    "status": "active",
+    "expected_outcome": {
+      "action": "append_to_run",
+      "paragraph_index": 2,
+      "text": " (Final)"
+    }
   },
   {
     "id": "WORD_019",
     "category": "Word",
     "name": "Word Scenario 19",
-    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Word scenario 19: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Validate Word master/writer on prompt: Insert paragraph 'References' after paragraph 2",
+    "prompt": "Insert paragraph 'References' after paragraph 2",
+    "status": "active",
+    "expected_outcome": {
+      "action": "insert_paragraph",
+      "after_paragraph_index": 2,
+      "text": "References",
+      "style": "Heading 2"
+    }
   },
   {
     "id": "WORD_020",
     "category": "Word",
     "name": "Word Scenario 20",
-    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Word scenario 20: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Validate Word master/writer on prompt: Insert list bullet paragraph 'Clean up files' after paragraph 0",
+    "prompt": "Insert list bullet paragraph 'Clean up files' after paragraph 0",
+    "status": "active",
+    "expected_outcome": {
+      "action": "insert_paragraph",
+      "after_paragraph_index": 0,
+      "text": "Clean up files",
+      "style": "List Bullet"
+    }
   },
   {
     "id": "EXCEL_001",
     "category": "Excel",
     "name": "Excel Scenario 01",
-    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Excel scenario 01: testing specialized criteria.",
+    "description": "Validate Excel master/writer on prompt: Validate the Excel formula =SUM(A1:A10)",
+    "prompt": "Validate the Excel formula =SUM(A1:A10)",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "action": "validate_formula",
+      "formula": "=SUM(A1:A10)",
+      "expected_valid": true
+    }
   },
   {
     "id": "EXCEL_002",
     "category": "Excel",
     "name": "Excel Scenario 02",
-    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Excel scenario 02: testing specialized criteria.",
+    "description": "Validate Excel master/writer on prompt: Validate the invalid Excel formula =SUM(A1:A10",
+    "prompt": "Validate the invalid Excel formula =SUM(A1:A10",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "action": "validate_formula",
+      "formula": "=SUM(A1:A10",
+      "expected_valid": false
+    }
   },
   {
     "id": "EXCEL_003",
     "category": "Excel",
     "name": "Excel Scenario 03",
-    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Excel scenario 03: testing specialized criteria.",
+    "description": "Validate Excel master/writer on prompt: Explain the Excel formula =SUM(A1:A10)",
+    "prompt": "Explain the Excel formula =SUM(A1:A10)",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "action": "explain_formula",
+      "formula": "=SUM(A1:A10)",
+      "contains": "sum"
+    }
   },
   {
     "id": "EXCEL_004",
     "category": "Excel",
     "name": "Excel Scenario 04",
-    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Excel scenario 04: testing specialized criteria.",
+    "description": "Validate Excel master/writer on prompt: Explain the Excel formula =AVERAGE(B1:B20)",
+    "prompt": "Explain the Excel formula =AVERAGE(B1:B20)",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "action": "explain_formula",
+      "formula": "=AVERAGE(B1:B20)",
+      "contains": "average"
+    }
   },
   {
     "id": "EXCEL_005",
     "category": "Excel",
     "name": "Excel Scenario 05",
-    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Excel scenario 05: testing specialized criteria.",
+    "description": "Validate Excel master/writer on prompt: Write text 'Kickoff' to cell A1",
+    "prompt": "Write text 'Kickoff' to cell A1",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "action": "write_cell",
+      "cell": "A1",
+      "value": "Kickoff"
+    }
   },
   {
     "id": "EXCEL_006",
     "category": "Excel",
     "name": "Excel Scenario 06",
-    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Excel scenario 06: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Validate Excel master/writer on prompt: Write number 42 to cell B2",
+    "prompt": "Write number 42 to cell B2",
+    "status": "active",
+    "expected_outcome": {
+      "action": "write_cell",
+      "cell": "B2",
+      "value": 42
+    }
   },
   {
     "id": "EXCEL_007",
     "category": "Excel",
     "name": "Excel Scenario 07",
-    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Excel scenario 07: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Validate Excel master/writer on prompt: Write formula =A1 to cell C3",
+    "prompt": "Write formula =A1 to cell C3",
+    "status": "active",
+    "expected_outcome": {
+      "action": "write_cell",
+      "cell": "C3",
+      "formula": "=A1"
+    }
   },
   {
     "id": "EXCEL_008",
     "category": "Excel",
     "name": "Excel Scenario 08",
-    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Excel scenario 08: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Validate Excel master/writer on prompt: Write values [[1, 2], [3, 4]] to range A1:B2",
+    "prompt": "Write values [[1, 2], [3, 4]] to range A1:B2",
+    "status": "active",
+    "expected_outcome": {
+      "action": "write_range",
+      "range": "A1:B2",
+      "values": [
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          4
+        ]
+      ]
+    }
   },
   {
     "id": "EXCEL_009",
     "category": "Excel",
     "name": "Excel Scenario 09",
-    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Excel scenario 09: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Validate Excel master/writer on prompt: Write formulas [['=SUM(A1:A2)', '=AVERAGE(B1:B2)']] to range C1:D1",
+    "prompt": "Write formulas [['=SUM(A1:A2)', '=AVERAGE(B1:B2)']] to range C1:D1",
+    "status": "active",
+    "expected_outcome": {
+      "action": "write_range",
+      "range": "C1:D1",
+      "formulas": [
+        [
+          "=SUM(A1:A2)",
+          "=AVERAGE(B1:B2)"
+        ]
+      ]
+    }
   },
   {
     "id": "EXCEL_010",
     "category": "Excel",
     "name": "Excel Scenario 10",
-    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Excel scenario 10: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Validate Excel master/writer on prompt: Validate the Excel formula =AVERAGE(D1:D100)",
+    "prompt": "Validate the Excel formula =AVERAGE(D1:D100)",
+    "status": "active",
+    "expected_outcome": {
+      "action": "validate_formula",
+      "formula": "=AVERAGE(D1:D100)",
+      "expected_valid": true
+    }
   },
   {
     "id": "EXCEL_011",
     "category": "Excel",
     "name": "Excel Scenario 11",
-    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Excel scenario 11: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Validate Excel master/writer on prompt: Validate the Excel formula =VLOOKUP(A1, B1:C10, 2, FALSE)",
+    "prompt": "Validate the Excel formula =VLOOKUP(A1, B1:C10, 2, FALSE)",
+    "status": "active",
+    "expected_outcome": {
+      "action": "validate_formula",
+      "formula": "=VLOOKUP(A1, B1:C10, 2, FALSE)",
+      "expected_valid": true
+    }
   },
   {
     "id": "EXCEL_012",
     "category": "Excel",
     "name": "Excel Scenario 12",
-    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Excel scenario 12: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Validate Excel master/writer on prompt: Validate the invalid Excel formula =VLOOKUP(A1, B1:C10, 2",
+    "prompt": "Validate the invalid Excel formula =VLOOKUP(A1, B1:C10, 2",
+    "status": "active",
+    "expected_outcome": {
+      "action": "validate_formula",
+      "formula": "=VLOOKUP(A1, B1:C10, 2",
+      "expected_valid": false
+    }
   },
   {
     "id": "EXCEL_013",
     "category": "Excel",
     "name": "Excel Scenario 13",
-    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Excel scenario 13: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Validate Excel master/writer on prompt: Explain the Excel formula =VLOOKUP(A1, B1:C10, 2, FALSE)",
+    "prompt": "Explain the Excel formula =VLOOKUP(A1, B1:C10, 2, FALSE)",
+    "status": "active",
+    "expected_outcome": {
+      "action": "explain_formula",
+      "formula": "=VLOOKUP(A1, B1:C10, 2, FALSE)",
+      "contains": "look"
+    }
   },
   {
     "id": "EXCEL_014",
     "category": "Excel",
     "name": "Excel Scenario 14",
-    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Excel scenario 14: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Validate Excel master/writer on prompt: Write text 'Summary' to cell E1",
+    "prompt": "Write text 'Summary' to cell E1",
+    "status": "active",
+    "expected_outcome": {
+      "action": "write_cell",
+      "cell": "E1",
+      "value": "Summary"
+    }
   },
   {
     "id": "EXCEL_015",
     "category": "Excel",
     "name": "Excel Scenario 15",
-    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Excel scenario 15: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Validate Excel master/writer on prompt: Write number 100 to cell F2",
+    "prompt": "Write number 100 to cell F2",
+    "status": "active",
+    "expected_outcome": {
+      "action": "write_cell",
+      "cell": "F2",
+      "value": 100
+    }
   },
   {
     "id": "EXCEL_016",
     "category": "Excel",
     "name": "Excel Scenario 16",
-    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Excel scenario 16: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Validate Excel master/writer on prompt: Write formula =SUM(F2:F5) to cell F6",
+    "prompt": "Write formula =SUM(F2:F5) to cell F6",
+    "status": "active",
+    "expected_outcome": {
+      "action": "write_cell",
+      "cell": "F6",
+      "formula": "=SUM(F2:F5)"
+    }
   },
   {
     "id": "EXCEL_017",
     "category": "Excel",
     "name": "Excel Scenario 17",
-    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Excel scenario 17: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Validate Excel master/writer on prompt: Write values [[10, 20]] to range A5:B5",
+    "prompt": "Write values [[10, 20]] to range A5:B5",
+    "status": "active",
+    "expected_outcome": {
+      "action": "write_range",
+      "range": "A5:B5",
+      "values": [
+        [
+          10,
+          20
+        ]
+      ]
+    }
   },
   {
     "id": "EXCEL_018",
     "category": "Excel",
     "name": "Excel Scenario 18",
-    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Excel scenario 18: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Validate Excel master/writer on prompt: Write formulas [['=A5*B5']] to range C5",
+    "prompt": "Write formulas [['=A5*B5']] to range C5",
+    "status": "active",
+    "expected_outcome": {
+      "action": "write_range",
+      "range": "C5",
+      "formulas": [
+        [
+          "=A5*B5"
+        ]
+      ]
+    }
   },
   {
     "id": "EXCEL_019",
     "category": "Excel",
     "name": "Excel Scenario 19",
-    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Excel scenario 19: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Validate Excel master/writer on prompt: Validate the Excel formula =IF(A1>0, 1, 0)",
+    "prompt": "Validate the Excel formula =IF(A1>0, 1, 0)",
+    "status": "active",
+    "expected_outcome": {
+      "action": "validate_formula",
+      "formula": "=IF(A1>0, 1, 0)",
+      "expected_valid": true
+    }
   },
   {
     "id": "EXCEL_020",
     "category": "Excel",
     "name": "Excel Scenario 20",
-    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Excel scenario 20: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Validate Excel master/writer on prompt: Explain the Excel formula =IF(A1>0, 1, 0)",
+    "prompt": "Explain the Excel formula =IF(A1>0, 1, 0)",
+    "status": "active",
+    "expected_outcome": {
+      "action": "explain_formula",
+      "formula": "=IF(A1>0, 1, 0)",
+      "contains": "if"
+    }
   },
   {
     "id": "PPT_001",
     "category": "PPT",
     "name": "PPT Scenario 01",
-    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for PPT scenario 01: testing specialized criteria.",
+    "description": "Validate PPT master/writer on prompt: Create a PowerPoint presentation with 3 slides",
+    "prompt": "Create a PowerPoint presentation with 3 slides",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "action": "create_presentation",
+      "slides": 3
+    }
   },
   {
     "id": "PPT_002",
     "category": "PPT",
     "name": "PPT Scenario 02",
-    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for PPT scenario 02: testing specialized criteria.",
+    "description": "Validate PPT master/writer on prompt: Create a PowerPoint presentation with 5 slides",
+    "prompt": "Create a PowerPoint presentation with 5 slides",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "action": "create_presentation",
+      "slides": 5
+    }
   },
   {
     "id": "PPT_003",
     "category": "PPT",
     "name": "PPT Scenario 03",
-    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for PPT scenario 03: testing specialized criteria.",
+    "description": "Validate PPT master/writer on prompt: Extract context from presentation at slide 0 (expected 1 slide total)",
+    "prompt": "Extract context from presentation at slide 0 (expected 1 slide total)",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "action": "extract_context",
+      "cursor_slide": 0,
+      "expected_slide_count": 1
+    }
   },
   {
     "id": "PPT_004",
     "category": "PPT",
     "name": "PPT Scenario 04",
-    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for PPT scenario 04: testing specialized criteria.",
+    "description": "Validate PPT master/writer on prompt: Extract context from presentation at slide 1 (expected 2 slides total)",
+    "prompt": "Extract context from presentation at slide 1 (expected 2 slides total)",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "action": "extract_context",
+      "cursor_slide": 1,
+      "expected_slide_count": 2
+    }
   },
   {
     "id": "PPT_005",
     "category": "PPT",
     "name": "PPT Scenario 05",
-    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for PPT scenario 05: testing specialized criteria.",
+    "description": "Validate PPT master/writer on prompt: Check slide layout name for slide 0 in Title layout",
+    "prompt": "Check slide layout name for slide 0 in Title layout",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "action": "slide_layout",
+      "cursor_slide": 0,
+      "expected_layout": "Title Slide"
+    }
   },
   {
     "id": "PPT_006",
     "category": "PPT",
     "name": "PPT Scenario 06",
-    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for PPT scenario 06: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Validate PPT master/writer on prompt: Check slide layout name for slide 1 in Title and Content layout",
+    "prompt": "Check slide layout name for slide 1 in Title and Content layout",
+    "status": "active",
+    "expected_outcome": {
+      "action": "slide_layout",
+      "cursor_slide": 1,
+      "expected_layout": "Title and Content"
+    }
   },
   {
     "id": "PPT_007",
     "category": "PPT",
     "name": "PPT Scenario 07",
-    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for PPT scenario 07: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Validate PPT master/writer on prompt: Create a PowerPoint presentation with 2 slides",
+    "prompt": "Create a PowerPoint presentation with 2 slides",
+    "status": "active",
+    "expected_outcome": {
+      "action": "create_presentation",
+      "slides": 2
+    }
   },
   {
     "id": "PPT_008",
     "category": "PPT",
     "name": "PPT Scenario 08",
-    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for PPT scenario 08: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Validate PPT master/writer on prompt: Create a PowerPoint presentation with 4 slides",
+    "prompt": "Create a PowerPoint presentation with 4 slides",
+    "status": "active",
+    "expected_outcome": {
+      "action": "create_presentation",
+      "slides": 4
+    }
   },
   {
     "id": "PPT_009",
     "category": "PPT",
     "name": "PPT Scenario 09",
-    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for PPT scenario 09: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Validate PPT master/writer on prompt: Extract context from presentation at slide 2 (expected 3 slides total)",
+    "prompt": "Extract context from presentation at slide 2 (expected 3 slides total)",
+    "status": "active",
+    "expected_outcome": {
+      "action": "extract_context",
+      "cursor_slide": 2,
+      "expected_slide_count": 3
+    }
   },
   {
     "id": "PPT_010",
     "category": "PPT",
     "name": "PPT Scenario 10",
-    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for PPT scenario 10: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Validate PPT master/writer on prompt: Extract context from presentation at slide 0 (expected 4 slides total)",
+    "prompt": "Extract context from presentation at slide 0 (expected 4 slides total)",
+    "status": "active",
+    "expected_outcome": {
+      "action": "extract_context",
+      "cursor_slide": 0,
+      "expected_slide_count": 4
+    }
   },
   {
     "id": "PPT_011",
     "category": "PPT",
     "name": "PPT Scenario 11",
-    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for PPT scenario 11: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Validate PPT master/writer on prompt: Check slide layout name for slide 0 in Blank layout",
+    "prompt": "Check slide layout name for slide 0 in Blank layout",
+    "status": "active",
+    "expected_outcome": {
+      "action": "slide_layout",
+      "cursor_slide": 0,
+      "expected_layout": "Blank"
+    }
   },
   {
     "id": "PPT_012",
     "category": "PPT",
     "name": "PPT Scenario 12",
-    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for PPT scenario 12: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Validate PPT master/writer on prompt: Check slide layout name for slide 2 in Title and Content layout",
+    "prompt": "Check slide layout name for slide 2 in Title and Content layout",
+    "status": "active",
+    "expected_outcome": {
+      "action": "slide_layout",
+      "cursor_slide": 2,
+      "expected_layout": "Title and Content"
+    }
   },
   {
     "id": "PPT_013",
     "category": "PPT",
     "name": "PPT Scenario 13",
-    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for PPT scenario 13: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Validate PPT master/writer on prompt: Create a PowerPoint presentation with 1 slide",
+    "prompt": "Create a PowerPoint presentation with 1 slide",
+    "status": "active",
+    "expected_outcome": {
+      "action": "create_presentation",
+      "slides": 1
+    }
   },
   {
     "id": "PPT_014",
     "category": "PPT",
     "name": "PPT Scenario 14",
-    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for PPT scenario 14: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Validate PPT master/writer on prompt: Create a PowerPoint presentation with 6 slides",
+    "prompt": "Create a PowerPoint presentation with 6 slides",
+    "status": "active",
+    "expected_outcome": {
+      "action": "create_presentation",
+      "slides": 6
+    }
   },
   {
     "id": "PPT_015",
     "category": "PPT",
     "name": "PPT Scenario 15",
-    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for PPT scenario 15: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Validate PPT master/writer on prompt: Extract context from presentation at slide 0 (expected 6 slides total)",
+    "prompt": "Extract context from presentation at slide 0 (expected 6 slides total)",
+    "status": "active",
+    "expected_outcome": {
+      "action": "extract_context",
+      "cursor_slide": 0,
+      "expected_slide_count": 6
+    }
   },
   {
     "id": "PPT_016",
     "category": "PPT",
     "name": "PPT Scenario 16",
-    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for PPT scenario 16: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Validate PPT master/writer on prompt: Extract context from presentation at slide 5 (expected 6 slides total)",
+    "prompt": "Extract context from presentation at slide 5 (expected 6 slides total)",
+    "status": "active",
+    "expected_outcome": {
+      "action": "extract_context",
+      "cursor_slide": 5,
+      "expected_slide_count": 6
+    }
   },
   {
     "id": "PPT_017",
     "category": "PPT",
     "name": "PPT Scenario 17",
-    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for PPT scenario 17: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Validate PPT master/writer on prompt: Check slide layout name for slide 0 in Section Header layout",
+    "prompt": "Check slide layout name for slide 0 in Section Header layout",
+    "status": "active",
+    "expected_outcome": {
+      "action": "slide_layout",
+      "cursor_slide": 0,
+      "expected_layout": "Section Header"
+    }
   },
   {
     "id": "PPT_018",
     "category": "PPT",
     "name": "PPT Scenario 18",
-    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for PPT scenario 18: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Validate PPT master/writer on prompt: Check slide layout name for slide 1 in Title and Content layout",
+    "prompt": "Check slide layout name for slide 1 in Title and Content layout",
+    "status": "active",
+    "expected_outcome": {
+      "action": "slide_layout",
+      "cursor_slide": 1,
+      "expected_layout": "Title and Content"
+    }
   },
   {
     "id": "PPT_019",
     "category": "PPT",
     "name": "PPT Scenario 19",
-    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for PPT scenario 19: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Validate PPT master/writer on prompt: Create a PowerPoint presentation with 10 slides",
+    "prompt": "Create a PowerPoint presentation with 10 slides",
+    "status": "active",
+    "expected_outcome": {
+      "action": "create_presentation",
+      "slides": 10
+    }
   },
   {
     "id": "PPT_020",
     "category": "PPT",
     "name": "PPT Scenario 20",
-    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for PPT scenario 20: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Validate PPT master/writer on prompt: Extract context from presentation at slide 9 (expected 10 slides total)",
+    "prompt": "Extract context from presentation at slide 9 (expected 10 slides total)",
+    "status": "active",
+    "expected_outcome": {
+      "action": "extract_context",
+      "cursor_slide": 9,
+      "expected_slide_count": 10
+    }
   },
   {
     "id": "LEGAL_001",
     "category": "Legal",
     "name": "Legal Scenario 01",
-    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Legal scenario 01: testing specialized criteria.",
+    "description": "Detect legal clause: Governing Law & Jurisdiction",
+    "prompt": "This Agreement shall be governed by and construed in accordance with the laws of the State of California.",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "clause_id": "governing_law",
+      "label": "Governing Law & Jurisdiction"
+    }
   },
   {
     "id": "LEGAL_002",
     "category": "Legal",
     "name": "Legal Scenario 02",
-    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Legal scenario 02: testing specialized criteria.",
+    "description": "Detect legal clause: Termination for Convenience",
+    "prompt": "Either party may terminate this Agreement at any time without cause upon 30 days prior written notice.",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "clause_id": "termination_for_convenience",
+      "label": "Termination for Convenience"
+    }
   },
   {
     "id": "LEGAL_003",
     "category": "Legal",
     "name": "Legal Scenario 03",
-    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Legal scenario 03: testing specialized criteria.",
+    "description": "Detect legal clause: Auto-Renewal",
+    "prompt": "This Agreement shall automatically renew for successive one-year terms unless either party gives notice of non-renewal.",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "clause_id": "auto_renewal",
+      "label": "Auto-Renewal"
+    }
   },
   {
     "id": "LEGAL_004",
     "category": "Legal",
     "name": "Legal Scenario 04",
-    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Legal scenario 04: testing specialized criteria.",
+    "description": "Detect legal clause: Non-Compete / Non-Solicitation",
+    "prompt": "The Employee agrees not to compete with the Company in competitive activities for a period of two years after termination.",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "clause_id": "non_compete",
+      "label": "Non-Compete / Non-Solicitation"
+    }
   },
   {
     "id": "LEGAL_005",
     "category": "Legal",
     "name": "Legal Scenario 05",
-    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Legal scenario 05: testing specialized criteria.",
+    "description": "Detect legal clause: Limitation of Liability",
+    "prompt": "The aggregate liability of either party under this Agreement shall not exceed the fees paid in the previous 12 months.",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "clause_id": "liability_cap",
+      "label": "Limitation of Liability"
+    }
   },
   {
     "id": "LEGAL_006",
     "category": "Legal",
     "name": "Legal Scenario 06",
-    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Legal scenario 06: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Detect legal clause: Indemnification",
+    "prompt": "Each party shall indemnify, defend, and hold harmless the other party from and against all third-party claims.",
+    "status": "active",
+    "expected_outcome": {
+      "clause_id": "indemnification",
+      "label": "Indemnification"
+    }
   },
   {
     "id": "LEGAL_007",
     "category": "Legal",
     "name": "Legal Scenario 07",
-    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Legal scenario 07: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Detect legal clause: Intellectual Property Ownership",
+    "prompt": "All intellectual property created under this Agreement shall be solely and exclusively owned by the Client.",
+    "status": "active",
+    "expected_outcome": {
+      "clause_id": "ip_ownership",
+      "label": "Intellectual Property Ownership"
+    }
   },
   {
     "id": "LEGAL_008",
     "category": "Legal",
     "name": "Legal Scenario 08",
-    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Legal scenario 08: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Detect legal clause: Liquidated Damages",
+    "prompt": "In the event of a breach of schedule, the Vendor shall pay liquidated damages in the amount of $500 per day.",
+    "status": "active",
+    "expected_outcome": {
+      "clause_id": "liquidated_damages",
+      "label": "Liquidated Damages"
+    }
   },
   {
     "id": "LEGAL_009",
     "category": "Legal",
     "name": "Legal Scenario 09",
-    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Legal scenario 09: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Detect legal clause: Force Majeure",
+    "prompt": "Neither party shall be liable for delay or failure in performance due to Force Majeure, including acts of God.",
+    "status": "active",
+    "expected_outcome": {
+      "clause_id": "force_majeure",
+      "label": "Force Majeure"
+    }
   },
   {
     "id": "LEGAL_010",
     "category": "Legal",
     "name": "Legal Scenario 10",
-    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Legal scenario 10: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Detect legal clause: Audit Rights",
+    "prompt": "The Client shall have the right to audit the Contractor's financial books and records upon reasonable notice.",
+    "status": "active",
+    "expected_outcome": {
+      "clause_id": "audit_rights",
+      "label": "Audit Rights"
+    }
   },
   {
     "id": "LEGAL_011",
     "category": "Legal",
     "name": "Legal Scenario 11",
-    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Legal scenario 11: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Detect legal clause: Exclusivity",
+    "prompt": "The Supplier shall be the sole and exclusive provider of the products to the Buyer during the term.",
+    "status": "active",
+    "expected_outcome": {
+      "clause_id": "exclusivity",
+      "label": "Exclusivity"
+    }
   },
   {
     "id": "LEGAL_012",
     "category": "Legal",
     "name": "Legal Scenario 12",
-    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Legal scenario 12: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Detect legal clause: Assignment",
+    "prompt": "Neither party may assign or transfer its rights under this Agreement without the prior written consent of the other party.",
+    "status": "active",
+    "expected_outcome": {
+      "clause_id": "assignment",
+      "label": "Assignment"
+    }
   },
   {
     "id": "LEGAL_013",
     "category": "Legal",
     "name": "Legal Scenario 13",
-    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Legal scenario 13: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Detect legal clause: Governing Law & Jurisdiction",
+    "prompt": "The Governing Law of this contract shall be the laws of the State of Delaware.",
+    "status": "active",
+    "expected_outcome": {
+      "clause_id": "governing_law",
+      "label": "Governing Law & Jurisdiction"
+    }
   },
   {
     "id": "LEGAL_014",
     "category": "Legal",
     "name": "Legal Scenario 14",
-    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Legal scenario 14: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Detect legal clause: Termination for Convenience",
+    "prompt": "Either party can terminate this contract for convenience at any time without reason.",
+    "status": "active",
+    "expected_outcome": {
+      "clause_id": "termination_for_convenience",
+      "label": "Termination for Convenience"
+    }
   },
   {
     "id": "LEGAL_015",
     "category": "Legal",
     "name": "Legal Scenario 15",
-    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Legal scenario 15: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Detect legal clause: Auto-Renewal",
+    "prompt": "This contract automatically renews unless written notice is given 60 days before the renewal date.",
+    "status": "active",
+    "expected_outcome": {
+      "clause_id": "auto_renewal",
+      "label": "Auto-Renewal"
+    }
   },
   {
     "id": "LEGAL_016",
     "category": "Legal",
     "name": "Legal Scenario 16",
-    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Legal scenario 16: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Detect legal clause: Non-Compete / Non-Solicitation",
+    "prompt": "The Contractor agrees not to solicit the Company's clients or employees for 12 months.",
+    "status": "active",
+    "expected_outcome": {
+      "clause_id": "non_compete",
+      "label": "Non-Compete / Non-Solicitation"
+    }
   },
   {
     "id": "LEGAL_017",
     "category": "Legal",
     "name": "Legal Scenario 17",
-    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Legal scenario 17: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Detect legal clause: Limitation of Liability",
+    "prompt": "The Company's maximum liability is limited to the contract value.",
+    "status": "active",
+    "expected_outcome": {
+      "clause_id": "liability_cap",
+      "label": "Limitation of Liability"
+    }
   },
   {
     "id": "LEGAL_018",
     "category": "Legal",
     "name": "Legal Scenario 18",
-    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Legal scenario 18: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Detect legal clause: Indemnification",
+    "prompt": "The Contractor shall indemnify the Company against intellectual property infringement claims.",
+    "status": "active",
+    "expected_outcome": {
+      "clause_id": "indemnification",
+      "label": "Indemnification"
+    }
   },
   {
     "id": "LEGAL_019",
     "category": "Legal",
     "name": "Legal Scenario 19",
-    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Legal scenario 19: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Detect legal clause: Intellectual Property Ownership",
+    "prompt": "All right, title, and interest in the deliverables will vest exclusively in the Company.",
+    "status": "active",
+    "expected_outcome": {
+      "clause_id": "ip_ownership",
+      "label": "Intellectual Property Ownership"
+    }
   },
   {
     "id": "LEGAL_020",
     "category": "Legal",
     "name": "Legal Scenario 20",
-    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Legal scenario 20: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Detect legal clause: Liquidated Damages",
+    "prompt": "The penalty for early termination is agreed as liquidated damages of $5,000.",
+    "status": "active",
+    "expected_outcome": {
+      "clause_id": "liquidated_damages",
+      "label": "Liquidated Damages"
+    }
   },
   {
     "id": "CUA_001",
     "category": "CUA",
     "name": "CUA Scenario 01",
-    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for CUA scenario 01: testing specialized criteria.",
+    "description": "Verify CUA constant or fallback: max_actions (SAFETY_LIMITS)",
+    "prompt": "Verify CUA safety limit or IPC property: max_actions under SAFETY_LIMITS",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "field": "max_actions",
+      "group": "SAFETY_LIMITS",
+      "expected": 5
+    }
   },
   {
     "id": "CUA_002",
     "category": "CUA",
     "name": "CUA Scenario 02",
-    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for CUA scenario 02: testing specialized criteria.",
+    "description": "Verify CUA constant or fallback: timeout_seconds (SAFETY_LIMITS)",
+    "prompt": "Verify CUA safety limit or IPC property: timeout_seconds under SAFETY_LIMITS",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "field": "timeout_seconds",
+      "group": "SAFETY_LIMITS",
+      "expected": 10
+    }
   },
   {
     "id": "CUA_003",
     "category": "CUA",
     "name": "CUA Scenario 03",
-    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for CUA scenario 03: testing specialized criteria.",
+    "description": "Verify CUA constant or fallback: allowed_element_types (SAFETY_LIMITS)",
+    "prompt": "Verify CUA safety limit or IPC property: allowed_element_types under SAFETY_LIMITS",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "field": "allowed_element_types",
+      "group": "SAFETY_LIMITS",
+      "expected": [
+        "text",
+        "contenteditable",
+        "input"
+      ]
+    }
   },
   {
     "id": "CUA_004",
     "category": "CUA",
     "name": "CUA Scenario 04",
-    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for CUA scenario 04: testing specialized criteria.",
+    "description": "Verify CUA constant or fallback: MAX_MESSAGE_BYTES (IPC_LIMITS)",
+    "prompt": "Verify CUA safety limit or IPC property: MAX_MESSAGE_BYTES under IPC_LIMITS",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "field": "MAX_MESSAGE_BYTES",
+      "group": "IPC_LIMITS",
+      "expected": 1048576
+    }
   },
   {
     "id": "CUA_005",
     "category": "CUA",
     "name": "CUA Scenario 05",
-    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for CUA scenario 05: testing specialized criteria.",
+    "description": "Verify CUA constant or fallback: MAX_CONCURRENT_REQUESTS (IPC_LIMITS)",
+    "prompt": "Verify CUA safety limit or IPC property: MAX_CONCURRENT_REQUESTS under IPC_LIMITS",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "field": "MAX_CONCURRENT_REQUESTS",
+      "group": "IPC_LIMITS",
+      "expected": 16
+    }
   },
   {
     "id": "CUA_006",
     "category": "CUA",
     "name": "CUA Scenario 06",
-    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for CUA scenario 06: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Verify CUA constant or fallback: clipboard_content (CLIPBOARD_FALLBACK)",
+    "prompt": "Verify CUA safety limit or IPC property: clipboard_content under CLIPBOARD_FALLBACK",
+    "status": "active",
+    "expected_outcome": {
+      "field": "clipboard_content",
+      "group": "CLIPBOARD_FALLBACK",
+      "expected": "CUA fallback clipboard test 006"
+    }
   },
   {
     "id": "CUA_007",
     "category": "CUA",
     "name": "CUA Scenario 07",
-    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for CUA scenario 07: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Verify CUA constant or fallback: screenshot_fallback (DRIVER_STATUS)",
+    "prompt": "Verify CUA safety limit or IPC property: screenshot_fallback under DRIVER_STATUS",
+    "status": "active",
+    "expected_outcome": {
+      "field": "screenshot_fallback",
+      "group": "DRIVER_STATUS",
+      "expected": "screenshot"
+    }
   },
   {
     "id": "CUA_008",
     "category": "CUA",
     "name": "CUA Scenario 08",
-    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for CUA scenario 08: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Verify CUA constant or fallback: click_fallback (DRIVER_STATUS)",
+    "prompt": "Verify CUA safety limit or IPC property: click_fallback under DRIVER_STATUS",
+    "status": "active",
+    "expected_outcome": {
+      "field": "click_fallback",
+      "group": "DRIVER_STATUS",
+      "expected": "click"
+    }
   },
   {
     "id": "CUA_009",
     "category": "CUA",
     "name": "CUA Scenario 09",
-    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for CUA scenario 09: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Verify CUA constant or fallback: type_fallback (DRIVER_STATUS)",
+    "prompt": "Verify CUA safety limit or IPC property: type_fallback under DRIVER_STATUS",
+    "status": "active",
+    "expected_outcome": {
+      "field": "type_fallback",
+      "group": "DRIVER_STATUS",
+      "expected": "type"
+    }
   },
   {
     "id": "CUA_010",
     "category": "CUA",
     "name": "CUA Scenario 10",
-    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for CUA scenario 10: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Verify CUA constant or fallback: max_actions_value (SAFETY_LIMITS)",
+    "prompt": "Verify CUA safety limit or IPC property: max_actions_value under SAFETY_LIMITS",
+    "status": "active",
+    "expected_outcome": {
+      "field": "max_actions_value",
+      "group": "SAFETY_LIMITS",
+      "expected": 5
+    }
   },
   {
     "id": "CUA_011",
     "category": "CUA",
     "name": "CUA Scenario 11",
-    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for CUA scenario 11: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Verify CUA constant or fallback: timeout_seconds_value (SAFETY_LIMITS)",
+    "prompt": "Verify CUA safety limit or IPC property: timeout_seconds_value under SAFETY_LIMITS",
+    "status": "active",
+    "expected_outcome": {
+      "field": "timeout_seconds_value",
+      "group": "SAFETY_LIMITS",
+      "expected": 10
+    }
   },
   {
     "id": "CUA_012",
     "category": "CUA",
     "name": "CUA Scenario 12",
-    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for CUA scenario 12: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Verify CUA constant or fallback: allowed_element_types_value (SAFETY_LIMITS)",
+    "prompt": "Verify CUA safety limit or IPC property: allowed_element_types_value under SAFETY_LIMITS",
+    "status": "active",
+    "expected_outcome": {
+      "field": "allowed_element_types_value",
+      "group": "SAFETY_LIMITS",
+      "expected": [
+        "text",
+        "contenteditable",
+        "input"
+      ]
+    }
   },
   {
     "id": "CUA_013",
     "category": "CUA",
     "name": "CUA Scenario 13",
-    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for CUA scenario 13: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Verify CUA constant or fallback: MAX_MESSAGE_BYTES_value (IPC_LIMITS)",
+    "prompt": "Verify CUA safety limit or IPC property: MAX_MESSAGE_BYTES_value under IPC_LIMITS",
+    "status": "active",
+    "expected_outcome": {
+      "field": "MAX_MESSAGE_BYTES_value",
+      "group": "IPC_LIMITS",
+      "expected": 1048576
+    }
   },
   {
     "id": "CUA_014",
     "category": "CUA",
     "name": "CUA Scenario 14",
-    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for CUA scenario 14: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Verify CUA constant or fallback: MAX_CONCURRENT_REQUESTS_value (IPC_LIMITS)",
+    "prompt": "Verify CUA safety limit or IPC property: MAX_CONCURRENT_REQUESTS_value under IPC_LIMITS",
+    "status": "active",
+    "expected_outcome": {
+      "field": "MAX_CONCURRENT_REQUESTS_value",
+      "group": "IPC_LIMITS",
+      "expected": 16
+    }
   },
   {
     "id": "CUA_015",
     "category": "CUA",
     "name": "CUA Scenario 15",
-    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for CUA scenario 15: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Verify CUA constant or fallback: clipboard_content_value (CLIPBOARD_FALLBACK)",
+    "prompt": "Verify CUA safety limit or IPC property: clipboard_content_value under CLIPBOARD_FALLBACK",
+    "status": "active",
+    "expected_outcome": {
+      "field": "clipboard_content_value",
+      "group": "CLIPBOARD_FALLBACK",
+      "expected": "CUA fallback clipboard test 015"
+    }
   },
   {
     "id": "CUA_016",
     "category": "CUA",
     "name": "CUA Scenario 16",
-    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for CUA scenario 16: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Verify CUA constant or fallback: screenshot_fallback_value (DRIVER_STATUS)",
+    "prompt": "Verify CUA safety limit or IPC property: screenshot_fallback_value under DRIVER_STATUS",
+    "status": "active",
+    "expected_outcome": {
+      "field": "screenshot_fallback_value",
+      "group": "DRIVER_STATUS",
+      "expected": "screenshot"
+    }
   },
   {
     "id": "CUA_017",
     "category": "CUA",
     "name": "CUA Scenario 17",
-    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for CUA scenario 17: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Verify CUA constant or fallback: click_fallback_value (DRIVER_STATUS)",
+    "prompt": "Verify CUA safety limit or IPC property: click_fallback_value under DRIVER_STATUS",
+    "status": "active",
+    "expected_outcome": {
+      "field": "click_fallback_value",
+      "group": "DRIVER_STATUS",
+      "expected": "click"
+    }
   },
   {
     "id": "CUA_018",
     "category": "CUA",
     "name": "CUA Scenario 18",
-    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for CUA scenario 18: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Verify CUA constant or fallback: type_fallback_value (DRIVER_STATUS)",
+    "prompt": "Verify CUA safety limit or IPC property: type_fallback_value under DRIVER_STATUS",
+    "status": "active",
+    "expected_outcome": {
+      "field": "type_fallback_value",
+      "group": "DRIVER_STATUS",
+      "expected": "type"
+    }
   },
   {
     "id": "CUA_019",
     "category": "CUA",
     "name": "CUA Scenario 19",
-    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for CUA scenario 19: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Verify CUA constant or fallback: max_actions_verify (SAFETY_LIMITS)",
+    "prompt": "Verify CUA safety limit or IPC property: max_actions_verify under SAFETY_LIMITS",
+    "status": "active",
+    "expected_outcome": {
+      "field": "max_actions_verify",
+      "group": "SAFETY_LIMITS",
+      "expected": 5
+    }
   },
   {
     "id": "CUA_020",
     "category": "CUA",
     "name": "CUA Scenario 20",
-    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for CUA scenario 20: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Verify CUA constant or fallback: timeout_seconds_verify (SAFETY_LIMITS)",
+    "prompt": "Verify CUA safety limit or IPC property: timeout_seconds_verify under SAFETY_LIMITS",
+    "status": "active",
+    "expected_outcome": {
+      "field": "timeout_seconds_verify",
+      "group": "SAFETY_LIMITS",
+      "expected": 10
+    }
   },
   {
     "id": "SECURITY_001",
     "category": "Security",
     "name": "Security Scenario 01",
-    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Security scenario 01: testing specialized criteria.",
+    "description": "Verify integrity guard rejects scripts/ci/tests/bad_random.py",
+    "prompt": "Security integrity scan for target: scripts/ci/tests/bad_random.py",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "target": "scripts/ci/tests/bad_random.py",
+      "expected_rejected": true
+    }
   },
   {
     "id": "SECURITY_002",
     "category": "Security",
     "name": "Security Scenario 02",
-    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Security scenario 02: testing specialized criteria.",
+    "description": "Verify integrity guard accepts scripts/ci/eval_integrity_guard.py",
+    "prompt": "Security integrity scan for target: scripts/ci/eval_integrity_guard.py",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "target": "scripts/ci/eval_integrity_guard.py",
+      "expected_rejected": false
+    }
   },
   {
     "id": "SECURITY_003",
     "category": "Security",
     "name": "Security Scenario 03",
-    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Security scenario 03: testing specialized criteria.",
+    "description": "Verify integrity guard rejects a file containing password secrets",
+    "prompt": "Security integrity scan for target: secrets_password",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "target": "secrets_password",
+      "expected_rejected": true
+    }
   },
   {
     "id": "SECURITY_004",
     "category": "Security",
     "name": "Security Scenario 04",
-    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Security scenario 04: testing specialized criteria.",
+    "description": "Verify integrity guard rejects a file using raw eval statements",
+    "prompt": "Security integrity scan for target: secrets_eval",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "target": "secrets_eval",
+      "expected_rejected": true
+    }
   },
   {
     "id": "SECURITY_005",
     "category": "Security",
     "name": "Security Scenario 05",
-    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Security scenario 05: testing specialized criteria.",
+    "description": "Verify integrity guard rejects a file using shell subprocesses",
+    "prompt": "Security integrity scan for target: secrets_shell",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "target": "secrets_shell",
+      "expected_rejected": true
+    }
   },
   {
     "id": "SECURITY_006",
     "category": "Security",
     "name": "Security Scenario 06",
-    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Security scenario 06: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Verify integrity guard rejects a file with relative path traversal",
+    "prompt": "Security integrity scan for target: secrets_traversal",
+    "status": "active",
+    "expected_outcome": {
+      "target": "secrets_traversal",
+      "expected_rejected": true
+    }
   },
   {
     "id": "SECURITY_007",
     "category": "Security",
     "name": "Security Scenario 07",
-    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Security scenario 07: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Verify integrity guard rejects scripts/ci/tests/bad_random.py again",
+    "prompt": "Security integrity scan for target: scripts/ci/tests/bad_random.py",
+    "status": "active",
+    "expected_outcome": {
+      "target": "scripts/ci/tests/bad_random.py",
+      "expected_rejected": true
+    }
   },
   {
     "id": "SECURITY_008",
     "category": "Security",
     "name": "Security Scenario 08",
-    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Security scenario 08: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Verify integrity guard accepts scripts/ci/eval_integrity_guard.py again",
+    "prompt": "Security integrity scan for target: scripts/ci/eval_integrity_guard.py",
+    "status": "active",
+    "expected_outcome": {
+      "target": "scripts/ci/eval_integrity_guard.py",
+      "expected_rejected": false
+    }
   },
   {
     "id": "SECURITY_009",
     "category": "Security",
     "name": "Security Scenario 09",
-    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Security scenario 09: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Verify integrity guard rejects a file containing api key secrets",
+    "prompt": "Security integrity scan for target: secrets_apikey",
+    "status": "active",
+    "expected_outcome": {
+      "target": "secrets_apikey",
+      "expected_rejected": true
+    }
   },
   {
     "id": "SECURITY_010",
     "category": "Security",
     "name": "Security Scenario 10",
-    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Security scenario 10: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Verify integrity guard rejects a file using exec statements",
+    "prompt": "Security integrity scan for target: secrets_exec",
+    "status": "active",
+    "expected_outcome": {
+      "target": "secrets_exec",
+      "expected_rejected": true
+    }
   },
   {
     "id": "SECURITY_011",
     "category": "Security",
     "name": "Security Scenario 11",
-    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Security scenario 11: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Verify integrity guard rejects a file using os.system",
+    "prompt": "Security integrity scan for target: secrets_os_system",
+    "status": "active",
+    "expected_outcome": {
+      "target": "secrets_os_system",
+      "expected_rejected": true
+    }
   },
   {
     "id": "SECURITY_012",
     "category": "Security",
     "name": "Security Scenario 12",
-    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Security scenario 12: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Verify integrity guard rejects a file with open/write path traversal",
+    "prompt": "Security integrity scan for target: secrets_path_traversal",
+    "status": "active",
+    "expected_outcome": {
+      "target": "secrets_path_traversal",
+      "expected_rejected": true
+    }
   },
   {
     "id": "SECURITY_013",
     "category": "Security",
     "name": "Security Scenario 13",
-    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Security scenario 13: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Verify integrity guard rejects scripts/ci/tests/bad_random.py third time",
+    "prompt": "Security integrity scan for target: scripts/ci/tests/bad_random.py",
+    "status": "active",
+    "expected_outcome": {
+      "target": "scripts/ci/tests/bad_random.py",
+      "expected_rejected": true
+    }
   },
   {
     "id": "SECURITY_014",
     "category": "Security",
     "name": "Security Scenario 14",
-    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Security scenario 14: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Verify integrity guard accepts scripts/ci/eval_integrity_guard.py third time",
+    "prompt": "Security integrity scan for target: scripts/ci/eval_integrity_guard.py",
+    "status": "active",
+    "expected_outcome": {
+      "target": "scripts/ci/eval_integrity_guard.py",
+      "expected_rejected": false
+    }
   },
   {
     "id": "SECURITY_015",
     "category": "Security",
     "name": "Security Scenario 15",
-    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Security scenario 15: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Verify integrity guard rejects a file containing token secrets",
+    "prompt": "Security integrity scan for target: secrets_token",
+    "status": "active",
+    "expected_outcome": {
+      "target": "secrets_token",
+      "expected_rejected": true
+    }
   },
   {
     "id": "SECURITY_016",
     "category": "Security",
     "name": "Security Scenario 16",
-    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Security scenario 16: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Verify integrity guard rejects a file using __import__ dynamically",
+    "prompt": "Security integrity scan for target: secrets_dynamic_import",
+    "status": "active",
+    "expected_outcome": {
+      "target": "secrets_dynamic_import",
+      "expected_rejected": true
+    }
   },
   {
     "id": "SECURITY_017",
     "category": "Security",
     "name": "Security Scenario 17",
-    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Security scenario 17: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Verify integrity guard rejects a file using popen",
+    "prompt": "Security integrity scan for target: secrets_popen",
+    "status": "active",
+    "expected_outcome": {
+      "target": "secrets_popen",
+      "expected_rejected": true
+    }
   },
   {
     "id": "SECURITY_018",
     "category": "Security",
     "name": "Security Scenario 18",
-    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Security scenario 18: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Verify integrity guard rejects a file attempting absolute path access",
+    "prompt": "Security integrity scan for target: secrets_abs_path",
+    "status": "active",
+    "expected_outcome": {
+      "target": "secrets_abs_path",
+      "expected_rejected": true
+    }
   },
   {
     "id": "SECURITY_019",
     "category": "Security",
     "name": "Security Scenario 19",
-    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Security scenario 19: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Verify integrity guard rejects scripts/ci/tests/bad_random.py fourth time",
+    "prompt": "Security integrity scan for target: scripts/ci/tests/bad_random.py",
+    "status": "active",
+    "expected_outcome": {
+      "target": "scripts/ci/tests/bad_random.py",
+      "expected_rejected": true
+    }
   },
   {
     "id": "SECURITY_020",
     "category": "Security",
     "name": "Security Scenario 20",
-    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Security scenario 20: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Verify integrity guard accepts scripts/ci/eval_integrity_guard.py fourth time",
+    "prompt": "Security integrity scan for target: scripts/ci/eval_integrity_guard.py",
+    "status": "active",
+    "expected_outcome": {
+      "target": "scripts/ci/eval_integrity_guard.py",
+      "expected_rejected": false
+    }
   },
   {
     "id": "MEMORY_001",
     "category": "Memory",
     "name": "Memory Scenario 01",
-    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Memory scenario 01: testing specialized criteria.",
+    "description": "Add CSPRNG noise to vector [1.0, 2.0, 3.0] with std_dev 0.1",
+    "prompt": "Add gaussian noise to vector: [1.0, 2.0, 3.0] with std_dev: 0.1",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "vector": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "std_dev": 0.1
+    }
   },
   {
     "id": "MEMORY_002",
     "category": "Memory",
     "name": "Memory Scenario 02",
-    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Memory scenario 02: testing specialized criteria.",
+    "description": "Add CSPRNG noise to vector [10.0, 20.0, 30.0, 40.0] with std_dev 0.5",
+    "prompt": "Add gaussian noise to vector: [10.0, 20.0, 30.0, 40.0] with std_dev: 0.5",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "vector": [
+        10.0,
+        20.0,
+        30.0,
+        40.0
+      ],
+      "std_dev": 0.5
+    }
   },
   {
     "id": "MEMORY_003",
     "category": "Memory",
     "name": "Memory Scenario 03",
-    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Memory scenario 03: testing specialized criteria.",
+    "description": "Add CSPRNG noise to vector [0.0, 0.0, 0.0] with std_dev 0.01",
+    "prompt": "Add gaussian noise to vector: [0.0, 0.0, 0.0] with std_dev: 0.01",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "vector": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "std_dev": 0.01
+    }
   },
   {
     "id": "MEMORY_004",
     "category": "Memory",
     "name": "Memory Scenario 04",
-    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Memory scenario 04: testing specialized criteria.",
+    "description": "Add CSPRNG noise to vector [100.0, 200.0] with std_dev 1.0",
+    "prompt": "Add gaussian noise to vector: [100.0, 200.0] with std_dev: 1.0",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "vector": [
+        100.0,
+        200.0
+      ],
+      "std_dev": 1.0
+    }
   },
   {
     "id": "MEMORY_005",
     "category": "Memory",
     "name": "Memory Scenario 05",
-    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Memory scenario 05: testing specialized criteria.",
+    "description": "Add CSPRNG noise to vector [1.0, 2.0, 3.0, 4.0, 5.0] with std_dev 0.2",
+    "prompt": "Add gaussian noise to vector: [1.0, 2.0, 3.0, 4.0, 5.0] with std_dev: 0.2",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "vector": [
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0
+      ],
+      "std_dev": 0.2
+    }
   },
   {
     "id": "MEMORY_006",
     "category": "Memory",
     "name": "Memory Scenario 06",
-    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Memory scenario 06: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Add CSPRNG noise to vector [1.0, 2.0, 3.0] with std_dev 0.1",
+    "prompt": "Add gaussian noise to vector: [1.0, 2.0, 3.0] with std_dev: 0.1",
+    "status": "active",
+    "expected_outcome": {
+      "vector": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "std_dev": 0.1
+    }
   },
   {
     "id": "MEMORY_007",
     "category": "Memory",
     "name": "Memory Scenario 07",
-    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Memory scenario 07: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Add CSPRNG noise to vector [10.0, 20.0, 30.0, 40.0] with std_dev 0.5",
+    "prompt": "Add gaussian noise to vector: [10.0, 20.0, 30.0, 40.0] with std_dev: 0.5",
+    "status": "active",
+    "expected_outcome": {
+      "vector": [
+        10.0,
+        20.0,
+        30.0,
+        40.0
+      ],
+      "std_dev": 0.5
+    }
   },
   {
     "id": "MEMORY_008",
     "category": "Memory",
     "name": "Memory Scenario 08",
-    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Memory scenario 08: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Add CSPRNG noise to vector [0.0, 0.0, 0.0] with std_dev 0.01",
+    "prompt": "Add gaussian noise to vector: [0.0, 0.0, 0.0] with std_dev: 0.01",
+    "status": "active",
+    "expected_outcome": {
+      "vector": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "std_dev": 0.01
+    }
   },
   {
     "id": "MEMORY_009",
     "category": "Memory",
     "name": "Memory Scenario 09",
-    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Memory scenario 09: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Add CSPRNG noise to vector [100.0, 200.0] with std_dev 1.0",
+    "prompt": "Add gaussian noise to vector: [100.0, 200.0] with std_dev: 1.0",
+    "status": "active",
+    "expected_outcome": {
+      "vector": [
+        100.0,
+        200.0
+      ],
+      "std_dev": 1.0
+    }
   },
   {
     "id": "MEMORY_010",
     "category": "Memory",
     "name": "Memory Scenario 10",
-    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Memory scenario 10: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Add CSPRNG noise to vector [1.0, 2.0, 3.0, 4.0, 5.0] with std_dev 0.2",
+    "prompt": "Add gaussian noise to vector: [1.0, 2.0, 3.0, 4.0, 5.0] with std_dev: 0.2",
+    "status": "active",
+    "expected_outcome": {
+      "vector": [
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0
+      ],
+      "std_dev": 0.2
+    }
   },
   {
     "id": "MEMORY_011",
     "category": "Memory",
     "name": "Memory Scenario 11",
-    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Memory scenario 11: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Add CSPRNG noise to vector [1.0, 2.0, 3.0] with std_dev 0.1",
+    "prompt": "Add gaussian noise to vector: [1.0, 2.0, 3.0] with std_dev: 0.1",
+    "status": "active",
+    "expected_outcome": {
+      "vector": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "std_dev": 0.1
+    }
   },
   {
     "id": "MEMORY_012",
     "category": "Memory",
     "name": "Memory Scenario 12",
-    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Memory scenario 12: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Add CSPRNG noise to vector [10.0, 20.0, 30.0, 40.0] with std_dev 0.5",
+    "prompt": "Add gaussian noise to vector: [10.0, 20.0, 30.0, 40.0] with std_dev: 0.5",
+    "status": "active",
+    "expected_outcome": {
+      "vector": [
+        10.0,
+        20.0,
+        30.0,
+        40.0
+      ],
+      "std_dev": 0.5
+    }
   },
   {
     "id": "MEMORY_013",
     "category": "Memory",
     "name": "Memory Scenario 13",
-    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Memory scenario 13: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Add CSPRNG noise to vector [0.0, 0.0, 0.0] with std_dev 0.01",
+    "prompt": "Add gaussian noise to vector: [0.0, 0.0, 0.0] with std_dev: 0.01",
+    "status": "active",
+    "expected_outcome": {
+      "vector": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "std_dev": 0.01
+    }
   },
   {
     "id": "MEMORY_014",
     "category": "Memory",
     "name": "Memory Scenario 14",
-    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Memory scenario 14: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Add CSPRNG noise to vector [100.0, 200.0] with std_dev 1.0",
+    "prompt": "Add gaussian noise to vector: [100.0, 200.0] with std_dev: 1.0",
+    "status": "active",
+    "expected_outcome": {
+      "vector": [
+        100.0,
+        200.0
+      ],
+      "std_dev": 1.0
+    }
   },
   {
     "id": "MEMORY_015",
     "category": "Memory",
     "name": "Memory Scenario 15",
-    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Memory scenario 15: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Add CSPRNG noise to vector [1.0, 2.0, 3.0, 4.0, 5.0] with std_dev 0.2",
+    "prompt": "Add gaussian noise to vector: [1.0, 2.0, 3.0, 4.0, 5.0] with std_dev: 0.2",
+    "status": "active",
+    "expected_outcome": {
+      "vector": [
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0
+      ],
+      "std_dev": 0.2
+    }
   },
   {
     "id": "MEMORY_016",
     "category": "Memory",
     "name": "Memory Scenario 16",
-    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Memory scenario 16: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Add CSPRNG noise to vector [1.0, 2.0, 3.0] with std_dev 0.1",
+    "prompt": "Add gaussian noise to vector: [1.0, 2.0, 3.0] with std_dev: 0.1",
+    "status": "active",
+    "expected_outcome": {
+      "vector": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "std_dev": 0.1
+    }
   },
   {
     "id": "MEMORY_017",
     "category": "Memory",
     "name": "Memory Scenario 17",
-    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Memory scenario 17: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Add CSPRNG noise to vector [10.0, 20.0, 30.0, 40.0] with std_dev 0.5",
+    "prompt": "Add gaussian noise to vector: [10.0, 20.0, 30.0, 40.0] with std_dev: 0.5",
+    "status": "active",
+    "expected_outcome": {
+      "vector": [
+        10.0,
+        20.0,
+        30.0,
+        40.0
+      ],
+      "std_dev": 0.5
+    }
   },
   {
     "id": "MEMORY_018",
     "category": "Memory",
     "name": "Memory Scenario 18",
-    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Memory scenario 18: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Add CSPRNG noise to vector [0.0, 0.0, 0.0] with std_dev 0.01",
+    "prompt": "Add gaussian noise to vector: [0.0, 0.0, 0.0] with std_dev: 0.01",
+    "status": "active",
+    "expected_outcome": {
+      "vector": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "std_dev": 0.01
+    }
   },
   {
     "id": "MEMORY_019",
     "category": "Memory",
     "name": "Memory Scenario 19",
-    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Memory scenario 19: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Add CSPRNG noise to vector [100.0, 200.0] with std_dev 1.0",
+    "prompt": "Add gaussian noise to vector: [100.0, 200.0] with std_dev: 1.0",
+    "status": "active",
+    "expected_outcome": {
+      "vector": [
+        100.0,
+        200.0
+      ],
+      "std_dev": 1.0
+    }
   },
   {
     "id": "MEMORY_020",
     "category": "Memory",
     "name": "Memory Scenario 20",
-    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Memory scenario 20: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Add CSPRNG noise to vector [1.0, 2.0, 3.0, 4.0, 5.0] with std_dev 0.2",
+    "prompt": "Add gaussian noise to vector: [1.0, 2.0, 3.0, 4.0, 5.0] with std_dev: 0.2",
+    "status": "active",
+    "expected_outcome": {
+      "vector": [
+        1.0,
+        2.0,
+        3.0,
+        4.0,
+        5.0
+      ],
+      "std_dev": 0.2
+    }
   },
   {
     "id": "OFFLINE_001",
     "category": "Offline",
     "name": "Offline Scenario 01",
-    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Offline scenario 01: testing specialized criteria.",
+    "description": "Verify KAIRO_OFFLINE is honored on check 1",
+    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 1)",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "expected_offline": true
+    }
   },
   {
     "id": "OFFLINE_002",
     "category": "Offline",
     "name": "Offline Scenario 02",
-    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Offline scenario 02: testing specialized criteria.",
+    "description": "Verify KAIRO_OFFLINE is honored on check 2",
+    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 2)",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "expected_offline": true
+    }
   },
   {
     "id": "OFFLINE_003",
     "category": "Offline",
     "name": "Offline Scenario 03",
-    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Offline scenario 03: testing specialized criteria.",
+    "description": "Verify KAIRO_OFFLINE is honored on check 3",
+    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 3)",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "expected_offline": true
+    }
   },
   {
     "id": "OFFLINE_004",
     "category": "Offline",
     "name": "Offline Scenario 04",
-    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Offline scenario 04: testing specialized criteria.",
+    "description": "Verify KAIRO_OFFLINE is honored on check 4",
+    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 4)",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "expected_offline": true
+    }
   },
   {
     "id": "OFFLINE_005",
     "category": "Offline",
     "name": "Offline Scenario 05",
-    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Offline scenario 05: testing specialized criteria.",
+    "description": "Verify KAIRO_OFFLINE is honored on check 5",
+    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 5)",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "expected_offline": true
+    }
   },
   {
     "id": "OFFLINE_006",
     "category": "Offline",
     "name": "Offline Scenario 06",
-    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Offline scenario 06: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Verify KAIRO_OFFLINE is honored on check 6",
+    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 6)",
+    "status": "active",
+    "expected_outcome": {
+      "expected_offline": true
+    }
   },
   {
     "id": "OFFLINE_007",
     "category": "Offline",
     "name": "Offline Scenario 07",
-    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Offline scenario 07: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Verify KAIRO_OFFLINE is honored on check 7",
+    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 7)",
+    "status": "active",
+    "expected_outcome": {
+      "expected_offline": true
+    }
   },
   {
     "id": "OFFLINE_008",
     "category": "Offline",
     "name": "Offline Scenario 08",
-    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Offline scenario 08: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Verify KAIRO_OFFLINE is honored on check 8",
+    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 8)",
+    "status": "active",
+    "expected_outcome": {
+      "expected_offline": true
+    }
   },
   {
     "id": "OFFLINE_009",
     "category": "Offline",
     "name": "Offline Scenario 09",
-    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Offline scenario 09: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Verify KAIRO_OFFLINE is honored on check 9",
+    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 9)",
+    "status": "active",
+    "expected_outcome": {
+      "expected_offline": true
+    }
   },
   {
     "id": "OFFLINE_010",
     "category": "Offline",
     "name": "Offline Scenario 10",
-    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Offline scenario 10: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Verify KAIRO_OFFLINE is honored on check 10",
+    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 10)",
+    "status": "active",
+    "expected_outcome": {
+      "expected_offline": true
+    }
   },
   {
     "id": "OFFLINE_011",
     "category": "Offline",
     "name": "Offline Scenario 11",
-    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Offline scenario 11: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Verify KAIRO_OFFLINE is honored on check 11",
+    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 11)",
+    "status": "active",
+    "expected_outcome": {
+      "expected_offline": true
+    }
   },
   {
     "id": "OFFLINE_012",
     "category": "Offline",
     "name": "Offline Scenario 12",
-    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Offline scenario 12: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Verify KAIRO_OFFLINE is honored on check 12",
+    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 12)",
+    "status": "active",
+    "expected_outcome": {
+      "expected_offline": true
+    }
   },
   {
     "id": "OFFLINE_013",
     "category": "Offline",
     "name": "Offline Scenario 13",
-    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Offline scenario 13: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Verify KAIRO_OFFLINE is honored on check 13",
+    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 13)",
+    "status": "active",
+    "expected_outcome": {
+      "expected_offline": true
+    }
   },
   {
     "id": "OFFLINE_014",
     "category": "Offline",
     "name": "Offline Scenario 14",
-    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Offline scenario 14: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Verify KAIRO_OFFLINE is honored on check 14",
+    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 14)",
+    "status": "active",
+    "expected_outcome": {
+      "expected_offline": true
+    }
   },
   {
     "id": "OFFLINE_015",
     "category": "Offline",
     "name": "Offline Scenario 15",
-    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Offline scenario 15: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Verify KAIRO_OFFLINE is honored on check 15",
+    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 15)",
+    "status": "active",
+    "expected_outcome": {
+      "expected_offline": true
+    }
   },
   {
     "id": "OFFLINE_016",
     "category": "Offline",
     "name": "Offline Scenario 16",
-    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Offline scenario 16: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Verify KAIRO_OFFLINE is honored on check 16",
+    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 16)",
+    "status": "active",
+    "expected_outcome": {
+      "expected_offline": true
+    }
   },
   {
     "id": "OFFLINE_017",
     "category": "Offline",
     "name": "Offline Scenario 17",
-    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Offline scenario 17: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Verify KAIRO_OFFLINE is honored on check 17",
+    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 17)",
+    "status": "active",
+    "expected_outcome": {
+      "expected_offline": true
+    }
   },
   {
     "id": "OFFLINE_018",
     "category": "Offline",
     "name": "Offline Scenario 18",
-    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Offline scenario 18: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Verify KAIRO_OFFLINE is honored on check 18",
+    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 18)",
+    "status": "active",
+    "expected_outcome": {
+      "expected_offline": true
+    }
   },
   {
     "id": "OFFLINE_019",
     "category": "Offline",
     "name": "Offline Scenario 19",
-    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Offline scenario 19: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Verify KAIRO_OFFLINE is honored on check 19",
+    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 19)",
+    "status": "active",
+    "expected_outcome": {
+      "expected_offline": true
+    }
   },
   {
     "id": "OFFLINE_020",
     "category": "Offline",
     "name": "Offline Scenario 20",
-    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Offline scenario 20: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Verify KAIRO_OFFLINE is honored on check 20",
+    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 20)",
+    "status": "active",
+    "expected_outcome": {
+      "expected_offline": true
+    }
   },
   {
     "id": "DEGRADATION_001",
     "category": "Degradation",
     "name": "Degradation Scenario 01",
-    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Degradation scenario 01: testing specialized criteria.",
+    "description": "Graceful rejection of __nonexistent_xyz__ (invalid_domain)",
+    "prompt": "Verify graceful failure for target __nonexistent_xyz__ and action type invalid_domain",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "target": "__nonexistent_xyz__",
+      "type": "invalid_domain"
+    }
   },
   {
     "id": "DEGRADATION_002",
     "category": "Degradation",
     "name": "Degradation Scenario 02",
-    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Degradation scenario 02: testing specialized criteria.",
+    "description": "Graceful rejection of __another_nonexistent__ (invalid_domain)",
+    "prompt": "Verify graceful failure for target __another_nonexistent__ and action type invalid_domain",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "target": "__another_nonexistent__",
+      "type": "invalid_domain"
+    }
   },
   {
     "id": "DEGRADATION_003",
     "category": "Degradation",
     "name": "Degradation Scenario 03",
-    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Degradation scenario 03: testing specialized criteria.",
+    "description": "Graceful rejection of Word (invalid_action)",
+    "prompt": "Verify graceful failure for target Word and action type invalid_action",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "target": "Word",
+      "type": "invalid_action"
+    }
   },
   {
     "id": "DEGRADATION_004",
     "category": "Degradation",
     "name": "Degradation Scenario 04",
-    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Degradation scenario 04: testing specialized criteria.",
+    "description": "Graceful rejection of Excel (invalid_action)",
+    "prompt": "Verify graceful failure for target Excel and action type invalid_action",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "target": "Excel",
+      "type": "invalid_action"
+    }
   },
   {
     "id": "DEGRADATION_005",
     "category": "Degradation",
     "name": "Degradation Scenario 05",
-    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Degradation scenario 05: testing specialized criteria.",
+    "description": "Graceful rejection of PPT (invalid_action)",
+    "prompt": "Verify graceful failure for target PPT and action type invalid_action",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "target": "PPT",
+      "type": "invalid_action"
+    }
   },
   {
     "id": "DEGRADATION_006",
     "category": "Degradation",
     "name": "Degradation Scenario 06",
-    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Degradation scenario 06: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Graceful rejection of __nonexistent_xyz__ (invalid_domain)",
+    "prompt": "Verify graceful failure for target __nonexistent_xyz__ and action type invalid_domain",
+    "status": "active",
+    "expected_outcome": {
+      "target": "__nonexistent_xyz__",
+      "type": "invalid_domain"
+    }
   },
   {
     "id": "DEGRADATION_007",
     "category": "Degradation",
     "name": "Degradation Scenario 07",
-    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Degradation scenario 07: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Graceful rejection of __another_nonexistent__ (invalid_domain)",
+    "prompt": "Verify graceful failure for target __another_nonexistent__ and action type invalid_domain",
+    "status": "active",
+    "expected_outcome": {
+      "target": "__another_nonexistent__",
+      "type": "invalid_domain"
+    }
   },
   {
     "id": "DEGRADATION_008",
     "category": "Degradation",
     "name": "Degradation Scenario 08",
-    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Degradation scenario 08: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Graceful rejection of Word (invalid_action)",
+    "prompt": "Verify graceful failure for target Word and action type invalid_action",
+    "status": "active",
+    "expected_outcome": {
+      "target": "Word",
+      "type": "invalid_action"
+    }
   },
   {
     "id": "DEGRADATION_009",
     "category": "Degradation",
     "name": "Degradation Scenario 09",
-    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Degradation scenario 09: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Graceful rejection of Excel (invalid_action)",
+    "prompt": "Verify graceful failure for target Excel and action type invalid_action",
+    "status": "active",
+    "expected_outcome": {
+      "target": "Excel",
+      "type": "invalid_action"
+    }
   },
   {
     "id": "DEGRADATION_010",
     "category": "Degradation",
     "name": "Degradation Scenario 10",
-    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Degradation scenario 10: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Graceful rejection of PPT (invalid_action)",
+    "prompt": "Verify graceful failure for target PPT and action type invalid_action",
+    "status": "active",
+    "expected_outcome": {
+      "target": "PPT",
+      "type": "invalid_action"
+    }
   },
   {
     "id": "DEGRADATION_011",
     "category": "Degradation",
     "name": "Degradation Scenario 11",
-    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Degradation scenario 11: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Graceful rejection of __nonexistent_xyz__ (invalid_domain)",
+    "prompt": "Verify graceful failure for target __nonexistent_xyz__ and action type invalid_domain",
+    "status": "active",
+    "expected_outcome": {
+      "target": "__nonexistent_xyz__",
+      "type": "invalid_domain"
+    }
   },
   {
     "id": "DEGRADATION_012",
     "category": "Degradation",
     "name": "Degradation Scenario 12",
-    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Degradation scenario 12: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Graceful rejection of __another_nonexistent__ (invalid_domain)",
+    "prompt": "Verify graceful failure for target __another_nonexistent__ and action type invalid_domain",
+    "status": "active",
+    "expected_outcome": {
+      "target": "__another_nonexistent__",
+      "type": "invalid_domain"
+    }
   },
   {
     "id": "DEGRADATION_013",
     "category": "Degradation",
     "name": "Degradation Scenario 13",
-    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Degradation scenario 13: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Graceful rejection of Word (invalid_action)",
+    "prompt": "Verify graceful failure for target Word and action type invalid_action",
+    "status": "active",
+    "expected_outcome": {
+      "target": "Word",
+      "type": "invalid_action"
+    }
   },
   {
     "id": "DEGRADATION_014",
     "category": "Degradation",
     "name": "Degradation Scenario 14",
-    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Degradation scenario 14: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Graceful rejection of Excel (invalid_action)",
+    "prompt": "Verify graceful failure for target Excel and action type invalid_action",
+    "status": "active",
+    "expected_outcome": {
+      "target": "Excel",
+      "type": "invalid_action"
+    }
   },
   {
     "id": "DEGRADATION_015",
     "category": "Degradation",
     "name": "Degradation Scenario 15",
-    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Degradation scenario 15: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Graceful rejection of PPT (invalid_action)",
+    "prompt": "Verify graceful failure for target PPT and action type invalid_action",
+    "status": "active",
+    "expected_outcome": {
+      "target": "PPT",
+      "type": "invalid_action"
+    }
   },
   {
     "id": "DEGRADATION_016",
     "category": "Degradation",
     "name": "Degradation Scenario 16",
-    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Degradation scenario 16: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Graceful rejection of __nonexistent_xyz__ (invalid_domain)",
+    "prompt": "Verify graceful failure for target __nonexistent_xyz__ and action type invalid_domain",
+    "status": "active",
+    "expected_outcome": {
+      "target": "__nonexistent_xyz__",
+      "type": "invalid_domain"
+    }
   },
   {
     "id": "DEGRADATION_017",
     "category": "Degradation",
     "name": "Degradation Scenario 17",
-    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Degradation scenario 17: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Graceful rejection of __another_nonexistent__ (invalid_domain)",
+    "prompt": "Verify graceful failure for target __another_nonexistent__ and action type invalid_domain",
+    "status": "active",
+    "expected_outcome": {
+      "target": "__another_nonexistent__",
+      "type": "invalid_domain"
+    }
   },
   {
     "id": "DEGRADATION_018",
     "category": "Degradation",
     "name": "Degradation Scenario 18",
-    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Degradation scenario 18: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Graceful rejection of Word (invalid_action)",
+    "prompt": "Verify graceful failure for target Word and action type invalid_action",
+    "status": "active",
+    "expected_outcome": {
+      "target": "Word",
+      "type": "invalid_action"
+    }
   },
   {
     "id": "DEGRADATION_019",
     "category": "Degradation",
     "name": "Degradation Scenario 19",
-    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Degradation scenario 19: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Graceful rejection of Excel (invalid_action)",
+    "prompt": "Verify graceful failure for target Excel and action type invalid_action",
+    "status": "active",
+    "expected_outcome": {
+      "target": "Excel",
+      "type": "invalid_action"
+    }
   },
   {
     "id": "DEGRADATION_020",
     "category": "Degradation",
     "name": "Degradation Scenario 20",
-    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Degradation scenario 20: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Graceful rejection of PPT (invalid_action)",
+    "prompt": "Verify graceful failure for target PPT and action type invalid_action",
+    "status": "active",
+    "expected_outcome": {
+      "target": "PPT",
+      "type": "invalid_action"
+    }
   },
   {
     "id": "PERFORMANCE_001",
     "category": "Performance",
     "name": "Performance Scenario 01",
-    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Performance scenario 01: testing specialized criteria.",
+    "description": "Measure perf_docx performance for 100 elements",
+    "prompt": "Verify perf_docx speed with 100 paragraphs",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "type": "perf_docx",
+      "count": 100,
+      "max_seconds": 2.0
+    }
   },
   {
     "id": "PERFORMANCE_002",
     "category": "Performance",
     "name": "Performance Scenario 02",
-    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Performance scenario 02: testing specialized criteria.",
+    "description": "Measure perf_docx performance for 200 elements",
+    "prompt": "Verify perf_docx speed with 200 paragraphs",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "type": "perf_docx",
+      "count": 200,
+      "max_seconds": 3.0
+    }
   },
   {
     "id": "PERFORMANCE_003",
     "category": "Performance",
     "name": "Performance Scenario 03",
-    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Performance scenario 03: testing specialized criteria.",
+    "description": "Measure perf_docx performance for 50 elements",
+    "prompt": "Verify perf_docx speed with 50 paragraphs",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "type": "perf_docx",
+      "count": 50,
+      "max_seconds": 1.0
+    }
   },
   {
     "id": "PERFORMANCE_004",
     "category": "Performance",
     "name": "Performance Scenario 04",
-    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Performance scenario 04: testing specialized criteria.",
+    "description": "Measure perf_docx performance for 300 elements",
+    "prompt": "Verify perf_docx speed with 300 paragraphs",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "type": "perf_docx",
+      "count": 300,
+      "max_seconds": 4.0
+    }
   },
   {
     "id": "PERFORMANCE_005",
     "category": "Performance",
     "name": "Performance Scenario 05",
-    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Performance scenario 05: testing specialized criteria.",
+    "description": "Measure perf_docx performance for 150 elements",
+    "prompt": "Verify perf_docx speed with 150 paragraphs",
     "status": "active",
-    "fix_budget": 3
+    "expected_outcome": {
+      "type": "perf_docx",
+      "count": 150,
+      "max_seconds": 2.5
+    }
   },
   {
     "id": "PERFORMANCE_006",
     "category": "Performance",
     "name": "Performance Scenario 06",
-    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Performance scenario 06: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Measure perf_docx performance for 100 elements",
+    "prompt": "Verify perf_docx speed with 100 paragraphs",
+    "status": "active",
+    "expected_outcome": {
+      "type": "perf_docx",
+      "count": 100,
+      "max_seconds": 2.0
+    }
   },
   {
     "id": "PERFORMANCE_007",
     "category": "Performance",
     "name": "Performance Scenario 07",
-    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Performance scenario 07: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Measure perf_docx performance for 200 elements",
+    "prompt": "Verify perf_docx speed with 200 paragraphs",
+    "status": "active",
+    "expected_outcome": {
+      "type": "perf_docx",
+      "count": 200,
+      "max_seconds": 3.0
+    }
   },
   {
     "id": "PERFORMANCE_008",
     "category": "Performance",
     "name": "Performance Scenario 08",
-    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Performance scenario 08: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Measure perf_docx performance for 50 elements",
+    "prompt": "Verify perf_docx speed with 50 paragraphs",
+    "status": "active",
+    "expected_outcome": {
+      "type": "perf_docx",
+      "count": 50,
+      "max_seconds": 1.0
+    }
   },
   {
     "id": "PERFORMANCE_009",
     "category": "Performance",
     "name": "Performance Scenario 09",
-    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Performance scenario 09: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Measure perf_docx performance for 300 elements",
+    "prompt": "Verify perf_docx speed with 300 paragraphs",
+    "status": "active",
+    "expected_outcome": {
+      "type": "perf_docx",
+      "count": 300,
+      "max_seconds": 4.0
+    }
   },
   {
     "id": "PERFORMANCE_010",
     "category": "Performance",
     "name": "Performance Scenario 10",
-    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Performance scenario 10: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Measure perf_docx performance for 150 elements",
+    "prompt": "Verify perf_docx speed with 150 paragraphs",
+    "status": "active",
+    "expected_outcome": {
+      "type": "perf_docx",
+      "count": 150,
+      "max_seconds": 2.5
+    }
   },
   {
     "id": "PERFORMANCE_011",
     "category": "Performance",
     "name": "Performance Scenario 11",
-    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Performance scenario 11: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Measure perf_docx performance for 100 elements",
+    "prompt": "Verify perf_docx speed with 100 paragraphs",
+    "status": "active",
+    "expected_outcome": {
+      "type": "perf_docx",
+      "count": 100,
+      "max_seconds": 2.0
+    }
   },
   {
     "id": "PERFORMANCE_012",
     "category": "Performance",
     "name": "Performance Scenario 12",
-    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Performance scenario 12: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Measure perf_docx performance for 200 elements",
+    "prompt": "Verify perf_docx speed with 200 paragraphs",
+    "status": "active",
+    "expected_outcome": {
+      "type": "perf_docx",
+      "count": 200,
+      "max_seconds": 3.0
+    }
   },
   {
     "id": "PERFORMANCE_013",
     "category": "Performance",
     "name": "Performance Scenario 13",
-    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Performance scenario 13: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Measure perf_docx performance for 50 elements",
+    "prompt": "Verify perf_docx speed with 50 paragraphs",
+    "status": "active",
+    "expected_outcome": {
+      "type": "perf_docx",
+      "count": 50,
+      "max_seconds": 1.0
+    }
   },
   {
     "id": "PERFORMANCE_014",
     "category": "Performance",
     "name": "Performance Scenario 14",
-    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Performance scenario 14: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Measure perf_docx performance for 300 elements",
+    "prompt": "Verify perf_docx speed with 300 paragraphs",
+    "status": "active",
+    "expected_outcome": {
+      "type": "perf_docx",
+      "count": 300,
+      "max_seconds": 4.0
+    }
   },
   {
     "id": "PERFORMANCE_015",
     "category": "Performance",
     "name": "Performance Scenario 15",
-    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Performance scenario 15: testing specialized criteria.",
-    "status": "pending",
-    "fix_budget": 0
+    "description": "Measure perf_docx performance for 150 elements",
+    "prompt": "Verify perf_docx speed with 150 paragraphs",
+    "status": "active",
+    "expected_outcome": {
+      "type": "perf_docx",
+      "count": 150,
+      "max_seconds": 2.5
+    }
   },
   {
     "id": "PERFORMANCE_016",
     "category": "Performance",
     "name": "Performance Scenario 16",
-    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Performance scenario 16: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Measure perf_docx performance for 100 elements",
+    "prompt": "Verify perf_docx speed with 100 paragraphs",
+    "status": "active",
+    "expected_outcome": {
+      "type": "perf_docx",
+      "count": 100,
+      "max_seconds": 2.0
+    }
   },
   {
     "id": "PERFORMANCE_017",
     "category": "Performance",
     "name": "Performance Scenario 17",
-    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Performance scenario 17: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Measure perf_docx performance for 200 elements",
+    "prompt": "Verify perf_docx speed with 200 paragraphs",
+    "status": "active",
+    "expected_outcome": {
+      "type": "perf_docx",
+      "count": 200,
+      "max_seconds": 3.0
+    }
   },
   {
     "id": "PERFORMANCE_018",
     "category": "Performance",
     "name": "Performance Scenario 18",
-    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Performance scenario 18: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Measure perf_docx performance for 50 elements",
+    "prompt": "Verify perf_docx speed with 50 paragraphs",
+    "status": "active",
+    "expected_outcome": {
+      "type": "perf_docx",
+      "count": 50,
+      "max_seconds": 1.0
+    }
   },
   {
     "id": "PERFORMANCE_019",
     "category": "Performance",
     "name": "Performance Scenario 19",
-    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Performance scenario 19: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Measure perf_docx performance for 300 elements",
+    "prompt": "Verify perf_docx speed with 300 paragraphs",
+    "status": "active",
+    "expected_outcome": {
+      "type": "perf_docx",
+      "count": 300,
+      "max_seconds": 4.0
+    }
   },
   {
     "id": "PERFORMANCE_020",
     "category": "Performance",
     "name": "Performance Scenario 20",
-    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
-    "prompt": "Run validation for Performance scenario 20: testing specialized criteria.",
-    "status": "excluded",
-    "fix_budget": 0
+    "description": "Measure perf_docx performance for 150 elements",
+    "prompt": "Verify perf_docx speed with 150 paragraphs",
+    "status": "active",
+    "expected_outcome": {
+      "type": "perf_docx",
+      "count": 150,
+      "max_seconds": 2.5
+    }
   }
 ]

@@ -157,9 +157,9 @@ def test_task_completion_rate_schema(tmp_path: Path):
     assert data["gauntlet_version"] == "kairoreal-headless-v1"
     assert isinstance(data["elapsed_seconds"], (int, float))
     assert data["total"] == 200
-    assert data["active"] == 50
-    assert data["pending"] == 100
-    assert data["excluded"] == 50
+    assert data["active"] == 200
+    assert data["pending"] == 0
+    assert data["excluded"] == 0
     assert data["gate_threshold"] == 80.0
 
     # ── Gate: active-scenario pass rate must be >= 80% ────────────────────────

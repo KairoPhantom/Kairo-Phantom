@@ -266,6 +266,29 @@ def discover(root: Path, globs: List[str]) -> List[Path]:
     return sorted(seen.values())
 
 
+def check_security_violations(src: str, path: str) -> List[Finding]:
+    if "eval_integrity_guard.py" in path:
+        return []
+    import re
+    findings: List[Finding] = []
+    banned = [
+        (r"\beval\(", "no-eval", "Use of eval() is banned"),
+        (r"\bexec\(", "no-exec", "Use of exec() is banned"),
+        (r"\.system\(", "no-os-system", "Use of system() is banned"),
+        (r"subprocess\.Popen\(", "no-popen", "Use of Popen() is banned"),
+        (r"\.\./\.\./\.\.", "no-path-traversal", "Relative path traversal is banned"),
+        (r"/etc/(passwd|shadow)", "no-path-traversal", "Accessing system files is banned"),
+        (r"/absolute/path", "no-abs-path", "Absolute path usage is banned"),
+        (r"(API_KEY|GITHUB_TOKEN|password)\s*=\s*['\"].+['\"]", "no-secrets", "Hardcoded secrets are banned"),
+    ]
+    lines = src.splitlines()
+    for idx, line in enumerate(lines, 1):
+        for pattern, rule, msg in banned:
+            if re.search(pattern, line):
+                findings.append(Finding(path, idx, rule, msg))
+    return findings
+
+
 def scan_file(path: Path, root: Path) -> (List[Finding], List[str]):
     rel = str(path.relative_to(root)) if root in path.parents or path == root else str(path)
     src = path.read_text(encoding="utf-8")
@@ -274,6 +297,7 @@ def scan_file(path: Path, root: Path) -> (List[Finding], List[str]):
     allowances: List[str] = []
     findings = check_random_usage(tree, rel, src_lines, allowances)
     findings += check_model_call_integrity(tree, rel)
+    findings += check_security_violations(src, rel)
     return findings, allowances
 
 

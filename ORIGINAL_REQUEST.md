@@ -155,3 +155,54 @@ Integrity mode: development
 - [ ] Gate PR-14 passes: 100-page document context prep time is under 2 seconds.
 - [ ] At least 13 out of 14 gates pass.
 
+## Follow-up — 2026-06-14T14:28:35Z
+
+Rebuild the KairoReal Gauntlet to make it honest, replacing scenarios.json with 200 distinct real-world tasks across 10 domains and updating run_kairoreal_gauntlet.py to run the real sidecar pipeline and verify results using falsifiable oracles.
+
+Working directory: C:\Users\praja\OneDrive\Desktop\test-env\repositories\kairo-phantom
+Integrity mode: demo
+
+## Requirements
+
+### R1. Real scenarios in scenarios.json
+- Replace the existing `scenarios.json` with 200 distinct, real-world task scenarios (20 per category across the 10 domains: Word, Excel, PPT, Legal, CUA, Security, Memory, Offline, Degradation, Performance).
+- Each scenario must contain a unique `id`, `category`, `name`, `description`, `prompt`, and a concrete `expected_outcome` (e.g. expected paragraphs, cells, slides, clauses, or error contracts).
+- All 200 scenarios must be marked `"status": "active"` so they are all executed.
+- Delete `scratch/generate_scenarios.py` if present.
+
+### R2. Scenario-aware executors in run_kairoreal_gauntlet.py
+- Modify the executors (e.g. `_exec_word`, `_exec_excel`, etc.) to read the scenario's `prompt` and `expected_outcome`.
+- Run Kairo's *real* end-to-end pipeline (e.g., calling actual sidecar APIs/methods like `WordWriter().apply_operations()`, `ExcelWriter`, `detect_cuad_clauses`, etc.) using the scenario input.
+- Reject any simple pass/fail checks that pass on any non-empty or non-crashed output.
+- Expected outcomes must come from real-world ground truth, not from whatever the current code happens to emit.
+
+### R3. Falsifiable oracles
+- Verify the generated files/outputs programmatically against the expected outcomes.
+- For Word/Excel/PPT, open the generated `.docx`/`.xlsx`/`.pptx` and assert specific structure, paragraphs, formulas, or values.
+- For Legal, verify that specific expected clauses are detected.
+- For Degradation, assert a specific error contract/code/message.
+- For Security, run the integrity guard against a set of actual files and verify the correct output.
+- All oracles must be falsifiable (i.e. if we pass incorrect/empty inputs, they must fail).
+
+### R4. Honest results
+- Prove the gauntlet works by reporting the honest `pass_rate_all`. If some scenarios are unimplemented or fail, they must show as `FAIL` and decrease `pass_rate_all`.
+- The runner must write a detailed `task_completion_rate.json` and exit with 0 only if `pass_rate_all >= 80%` and `skipped == 0`.
+
+## Acceptance Criteria
+
+### Scenarios
+- [ ] `scenarios.json` contains exactly 200 distinct scenarios with real prompts and expected outcomes.
+- [ ] No boilerplate prompts or duplicate scenarios.
+- [ ] `scratch/generate_scenarios.py` is deleted.
+
+### Executors & Oracles
+- [ ] Executors run real sidecar code on the scenario prompts.
+- [ ] Oracles verify specific expected outcomes (e.g. word paragraphs, excel cells, ppt slides) rather than just "non-None".
+- [ ] Oracles are falsifiable (asserting specific text, numbers, structure, or errors).
+
+### Execution
+- [ ] Running `python scripts/run_kairoreal_gauntlet.py` runs all 200 scenarios.
+- [ ] Reports the honest `pass_rate_all` in `task_completion_rate.json`.
+- [ ] Exits with 0 if and only if `pass_rate_all >= 80%` and `skipped == 0` (or exits 1 if the gate fails).
+- [ ] `pytest kairo-sidecar/tests/test_kairoreal_gauntlet.py` passes successfully.
+

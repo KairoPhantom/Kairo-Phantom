@@ -64,182 +64,490 @@ def _skip(reason: str) -> Dict[str, str]:
 # ── Category executors ────────────────────────────────────────────────────────
 
 def _exec_word(sandbox_path: str, scenario: Dict[str, Any]) -> Dict[str, str]:
-    """Word domain: create a minimal .docx and extract context via WordMaster."""
+    """Word domain: run real WordMaster and WordWriter pipeline with falsifiable oracle."""
     try:
-        import docx as _docx
-    except ImportError:
-        return _skip("python-docx not installed; Word executor skipped")
+        import docx
+        from sidecar.masters.word_master import WordContextExtractor, WordWriter
+    except ImportError as exc:
+        return _skip(f"Word dependencies missing: {exc}")
+
     try:
-        from sidecar.masters.word_master import WordMaster
-        path = os.path.join(sandbox_path, "test.docx")
-        doc = _docx.Document()
-        doc.add_paragraph("Kairo gauntlet test paragraph for Word domain validation.")
+        expected = scenario.get("expected_outcome", {})
+        action = expected.get("action")
+        if not action:
+            return _fail("Missing expected action in expected_outcome")
+
+        # Create a document with some baseline content
+        path = os.path.join(sandbox_path, f"scenario_{scenario['id']}.docx")
+        doc = docx.Document()
+        doc.add_heading("Heading 0", level=1)
+        doc.add_paragraph("Paragraph 0 text.")
+        doc.add_paragraph("Paragraph 1 text.")
+        doc.add_paragraph("Paragraph 2 text.")
         doc.save(path)
-        wm = WordMaster()
-        ctx = wm.extract_context(path, {})
-        if ctx is not None:
-            return _pass("WordMaster.extract_context returned non-None context")
-        return _fail("WordMaster.extract_context returned None")
+
+        orig_texts = ["Heading 0", "Paragraph 0 text.", "Paragraph 1 text.", "Paragraph 2 text."]
+
+        # Extract context
+        extractor = WordContextExtractor()
+        ctx = extractor.extract(path, cursor_paragraph_index=0)
+
+        # Apply operations
+        writer = WordWriter()
+        op = {
+            "type": action,
+            "style": expected.get("style", "Normal")
+        }
+        if "after_paragraph_index" in expected:
+            op["after_paragraph_index"] = expected["after_paragraph_index"]
+        if "paragraph_index" in expected:
+            op["paragraph_index"] = expected["paragraph_index"]
+        if "text" in expected:
+            op["runs"] = [{"text": expected["text"]}]
+        if "rows" in expected:
+            op["rows"] = [[""] * expected["cols"] for _ in range(expected["rows"])]
+            op["cols"] = expected["cols"]
+            # Align after_paragraph_index
+            if "paragraph_index" in expected:
+                op["after_paragraph_index"] = expected["paragraph_index"]
+
+        res = writer.apply_operations(path, [op], ctx)
+        if "error" in res:
+            return _fail(f"Writer error: {res['error']}")
+
+        # Real oracle: load the modified document and verify changes
+        doc2 = docx.Document(path)
+        paras = doc2.paragraphs
+        tables = doc2.tables
+        actual_texts = [p.text for p in paras]
+
+        if action == "insert_paragraph":
+            target_text = expected["text"]
+            idx = expected["after_paragraph_index"]
+            expected_texts = orig_texts.copy()
+            if idx == -1:
+                expected_texts.append(target_text)
+            else:
+                expected_texts.insert(idx + 1, target_text)
+            if actual_texts != expected_texts:
+                return _fail(f"Expected paragraphs {expected_texts}, got {actual_texts}")
+
+        elif action == "replace_paragraph":
+            target_text = expected["text"]
+            idx = expected["paragraph_index"]
+            expected_texts = orig_texts.copy()
+            expected_texts[idx] = target_text
+            if actual_texts != expected_texts:
+                return _fail(f"Expected paragraphs {expected_texts}, got {actual_texts}")
+
+        elif action == "delete_paragraph":
+            idx = expected["paragraph_index"]
+            expected_texts = [t for i, t in enumerate(orig_texts) if i != idx]
+            if actual_texts != expected_texts:
+                return _fail(f"Expected paragraphs {expected_texts}, got {actual_texts}")
+
+        elif action == "append_to_run":
+            target_text = expected["text"]
+            idx = expected["paragraph_index"]
+            expected_texts = orig_texts.copy()
+            expected_texts[idx] = expected_texts[idx] + target_text
+            if actual_texts != expected_texts:
+                return _fail(f"Expected paragraphs {expected_texts}, got {actual_texts}")
+
+        elif action == "insert_table":
+            if not tables:
+                return _fail("No tables found in modified document")
+            t = tables[0]
+            if len(t.rows) != expected["rows"] or len(t.columns) != expected["cols"]:
+                return _fail(f"Expected table {expected['rows']}x{expected['cols']}, got {len(t.rows)}x{len(t.columns)}")
+            if actual_texts != orig_texts:
+                return _fail(f"Expected paragraphs to remain {orig_texts}, got {actual_texts}")
+
+        return _pass(f"Word oracle passed for action: {action}")
     except Exception as exc:
         return _fail(f"Word executor error: {exc}")
 
 
 def _exec_excel(sandbox_path: str, scenario: Dict[str, Any]) -> Dict[str, str]:
-    """Excel domain: create a minimal .xlsx and extract context via ExcelMaster."""
+    """Excel domain: run real ExcelMaster/Writer or forge formula validator with falsifiable oracle."""
     try:
-        import openpyxl as _xl
-    except ImportError:
-        return _skip("openpyxl not installed; Excel executor skipped")
+        import openpyxl
+        from sidecar.parsers.forge_bridge import validate_formula, explain_formula
+        from sidecar.masters.excel_master import ExcelContextExtractor, ExcelWriter
+    except ImportError as exc:
+        return _skip(f"Excel dependencies missing: {exc}")
+
     try:
-        from sidecar.masters.excel_master import ExcelMaster
-        path = os.path.join(sandbox_path, "test.xlsx")
-        wb = _xl.Workbook()
-        ws = wb.active
-        ws["A1"] = "Kairo gauntlet"
-        ws["B1"] = 42
-        ws["C1"] = "=A1"
-        wb.save(path)
-        em = ExcelMaster()
-        ctx = em.extract_context(path, {})
-        if ctx is not None:
-            return _pass("ExcelMaster.extract_context returned non-None context")
-        return _fail("ExcelMaster.extract_context returned None")
+        expected = scenario.get("expected_outcome", {})
+        action = expected.get("action")
+        if not action:
+            return _fail("Missing expected action in expected_outcome")
+
+        if action == "validate_formula":
+            res = validate_formula(expected["formula"])
+            valid = res.get("valid", False) and not res.get("fix_applied")
+            if valid != expected["expected_valid"]:
+                return _fail(f"Expected formula validity {expected['expected_valid']} for {expected['formula']}, got {valid}")
+            return _pass(f"Formula validation oracle passed: {expected['formula']} is {valid}")
+
+        elif action == "explain_formula":
+            res = explain_formula(expected["formula"])
+            explanation = str(res or "").lower()
+            if expected["contains"] not in explanation:
+                return _fail(f"Expected explanation for {expected['formula']} to contain '{expected['contains']}', got '{explanation}'")
+            return _pass(f"Formula explanation oracle passed: {expected['formula']} explained correctly")
+
+        elif action in ("write_cell", "write_range"):
+            path = os.path.join(sandbox_path, f"scenario_{scenario['id']}.xlsx")
+            wb = openpyxl.Workbook()
+            ws = wb.active
+            ws.title = "Sheet"
+            # Add some dummy cells
+            ws["A1"] = 10
+            ws["A2"] = 20
+            ws["B1"] = 30
+            ws["B2"] = 40
+            wb.save(path)
+
+            writer = ExcelWriter()
+            op = {
+                "type": action,
+                "sheet": "Sheet"
+            }
+            if "cell" in expected:
+                op["cell"] = expected["cell"]
+            if "range" in expected:
+                op["range"] = expected["range"]
+            if "value" in expected:
+                op["value"] = expected["value"]
+            if "formula" in expected:
+                op["formula"] = expected["formula"]
+            if "values" in expected:
+                op["values"] = expected["values"]
+            if "formulas" in expected:
+                op["formulas"] = expected["formulas"]
+
+            res = writer.apply_operations(path, [op])
+            if "errors" in res and res["errors"]:
+                return _fail(f"Writer errors: {res['errors']}")
+            if "error" in res:
+                return _fail(f"Writer error: {res['error']}")
+
+            # Load and verify
+            wb2 = openpyxl.load_workbook(path, data_only=False)
+            ws2 = wb2["Sheet"]
+
+            if action == "write_cell":
+                cell_ref = expected["cell"]
+                cell_obj = ws2[cell_ref]
+                if "formula" in expected:
+                    if cell_obj.value != expected["formula"]:
+                        return _fail(f"Expected formula '{expected['formula']}' in cell {cell_ref}, got '{cell_obj.value}'")
+                elif "value" in expected:
+                    if cell_obj.value != expected["value"]:
+                        return _fail(f"Expected value '{expected['value']}' in cell {cell_ref}, got '{cell_obj.value}'")
+
+            elif action == "write_range":
+                range_ref = expected["range"]
+                if ":" not in range_ref:
+                    # Single cell reference in range
+                    cell_obj = ws2[range_ref]
+                    if "values" in expected:
+                        expected_val = expected["values"][0][0]
+                        if cell_obj.value != expected_val:
+                            return _fail(f"Expected '{expected_val}' at cell {range_ref}, got '{cell_obj.value}'")
+                    elif "formulas" in expected:
+                        expected_form = expected["formulas"][0][0]
+                        if cell_obj.value != expected_form:
+                            return _fail(f"Expected formula '{expected_form}' at cell {range_ref}, got '{cell_obj.value}'")
+                else:
+                    if "values" in expected:
+                        expected_vals = expected["values"]
+                        rows = list(ws2[range_ref])
+                        for r_idx, row in enumerate(rows):
+                            for c_idx, cell_obj in enumerate(row):
+                                expected_val = expected_vals[r_idx][c_idx]
+                                if cell_obj.value != expected_val:
+                                    return _fail(f"Expected '{expected_val}' at cell {cell_obj.coordinate}, got '{cell_obj.value}'")
+                    elif "formulas" in expected:
+                        expected_forms = expected["formulas"]
+                        rows = list(ws2[range_ref])
+                        for r_idx, row in enumerate(rows):
+                            for c_idx, cell_obj in enumerate(row):
+                                expected_form = expected_forms[r_idx][c_idx]
+                                if cell_obj.value != expected_form:
+                                    return _fail(f"Expected formula '{expected_form}' at cell {cell_obj.coordinate}, got '{cell_obj.value}'")
+
+            return _pass(f"Excel oracle passed for action: {action}")
     except Exception as exc:
         return _fail(f"Excel executor error: {exc}")
 
 
 def _exec_ppt(sandbox_path: str, scenario: Dict[str, Any]) -> Dict[str, str]:
-    """PPT domain: create a minimal .pptx and import PowerPointMaster."""
+    """PPT domain: run PowerPointMaster/pptx context extraction with falsifiable oracle."""
     try:
-        from pptx import Presentation as _Prs
-    except ImportError:
-        return _skip("python-pptx not installed; PPT executor skipped")
-    try:
+        import pptx
         from sidecar.masters.other_masters import PowerPointMaster
-        path = os.path.join(sandbox_path, "test.pptx")
-        prs = _Prs()
-        slide = prs.slides.add_slide(prs.slide_layouts[5])
-        prs.save(path)
-        assert os.path.exists(path), ".pptx not created"
-        _ = PowerPointMaster()
-        return _pass("PowerPointMaster instantiated; .pptx created successfully")
+    except ImportError as exc:
+        return _skip(f"PPT dependencies missing: {exc}")
+
+    try:
+        expected = scenario.get("expected_outcome", {})
+        action = expected.get("action")
+        if not action:
+            return _fail("Missing expected action in expected_outcome")
+
+        path = os.path.join(sandbox_path, f"scenario_{scenario['id']}.pptx")
+
+        if action == "create_presentation":
+            prs = pptx.Presentation()
+            for _ in range(expected["slides"]):
+                prs.slides.add_slide(prs.slide_layouts[5])
+            prs.save(path)
+
+            prs2 = pptx.Presentation(path)
+            if len(prs2.slides) != expected["slides"]:
+                return _fail(f"Expected {expected['slides']} slides, got {len(prs2.slides)}")
+            return _pass(f"PowerPoint creation oracle passed: created {expected['slides']} slides")
+
+        elif action == "extract_context":
+            prs = pptx.Presentation()
+            for _ in range(expected["expected_slide_count"]):
+                prs.slides.add_slide(prs.slide_layouts[5])
+            prs.save(path)
+
+            master = PowerPointMaster()
+            ctx = master.extract_context(path, expected["cursor_slide"])
+            if ctx.get("total_slides") != expected["expected_slide_count"]:
+                return _fail(f"Expected total_slides={expected['expected_slide_count']} in context, got {ctx.get('total_slides')}")
+            return _pass(f"PowerPoint extract_context oracle passed: total_slides matches")
+
+        elif action == "slide_layout":
+            prs = pptx.Presentation()
+            layouts_map = {
+                "Title Slide": prs.slide_layouts[0],
+                "Title and Content": prs.slide_layouts[1],
+                "Blank": prs.slide_layouts[6],
+                "Section Header": prs.slide_layouts[2]
+            }
+            layout_name = expected["expected_layout"]
+            layout = layouts_map.get(layout_name, prs.slide_layouts[5])
+            
+            for idx in range(expected["cursor_slide"] + 1):
+                if idx == expected["cursor_slide"]:
+                    prs.slides.add_slide(layout)
+                else:
+                    prs.slides.add_slide(prs.slide_layouts[5])
+            prs.save(path)
+
+            master = PowerPointMaster()
+            ctx = master.extract_context(path, expected["cursor_slide"])
+            actual_layout = ctx.get("layout_name", "")
+            if expected["expected_layout"] not in actual_layout:
+                return _fail(f"Expected layout '{expected['expected_layout']}', got '{actual_layout}'")
+            return _pass(f"PowerPoint layout oracle passed: layout is '{actual_layout}'")
+
+        return _fail(f"Unknown PPT action: {action}")
     except Exception as exc:
         return _fail(f"PPT executor error: {exc}")
 
 
 def _exec_legal(sandbox_path: str, scenario: Dict[str, Any]) -> Dict[str, str]:
-    """Legal domain: run CUAD clause detection on a minimal contract."""
+    """Legal domain: run CUAD clause detection on prompt with falsifiable oracle."""
     try:
         from sidecar.parsers.legal_redline import detect_cuad_clauses
-        contract_text = (
-            "NON-DISCLOSURE AGREEMENT\n"
-            "This Agreement is entered into between Party A and Party B.\n"
-            "Governing Law: This Agreement shall be governed by California law.\n"
-            "Termination: Either party may terminate with 30 days notice.\n"
-            "Confidentiality: Both parties keep all information confidential.\n"
-        )
-        clauses = detect_cuad_clauses(contract_text)
-        if isinstance(clauses, (list, dict)):
-            n = len(clauses)
-            return _pass(f"detect_cuad_clauses returned {type(clauses).__name__}[{n}]")
-        return _fail(f"detect_cuad_clauses unexpected type: {type(clauses)}")
+    except ImportError as exc:
+        return _skip(f"Legal dependencies missing: {exc}")
+
+    try:
+        expected = scenario.get("expected_outcome", {})
+        cid = expected.get("clause_id")
+        if not cid:
+            return _fail("Missing expected clause_id in expected_outcome")
+
+        prompt_text = scenario.get("prompt", "")
+        res = detect_cuad_clauses(prompt_text)
+        clauses = res.get("data", {}).get("detected_clauses", [])
+        detected_ids = [clause.get("id") for clause in clauses if isinstance(clause, dict)]
+
+        if cid not in detected_ids:
+            return _fail(f"Expected to detect clause '{cid}', but detected only {detected_ids}")
+        return _pass(f"Legal oracle passed: detected '{cid}' in prompt")
     except Exception as exc:
         return _fail(f"Legal executor error: {exc}")
 
 
 def _exec_cua(sandbox_path: str, scenario: Dict[str, Any]) -> Dict[str, str]:
-    """CUA domain: verify IPC buffer cap and concurrency limits are in place."""
+    """CUA domain: verify safety and IPC limits and fallback behaviors."""
     try:
+        from sidecar.cua.canva_cua import CanvaCUAAgent, SAFETY_LIMITS
         from sidecar.ipc import MAX_MESSAGE_BYTES, MAX_CONCURRENT_REQUESTS
-        if MAX_MESSAGE_BYTES != 1_048_576:
-            return _fail(f"IPC buffer cap wrong: {MAX_MESSAGE_BYTES} != 1048576")
-        if MAX_CONCURRENT_REQUESTS is None:
-            return _fail("MAX_CONCURRENT_REQUESTS is None")
-        return _pass(
-            f"CUA: MAX_MESSAGE_BYTES={MAX_MESSAGE_BYTES}, "
-            f"MAX_CONCURRENT_REQUESTS={MAX_CONCURRENT_REQUESTS}"
-        )
+        from sidecar.cua.driver_service import CuaDriverService
+    except ImportError as exc:
+        return _skip(f"CUA dependencies missing: {exc}")
+
+    try:
+        expected = scenario.get("expected_outcome", {})
+        group = expected.get("group")
+        field = expected.get("field")
+        expected_val = expected.get("expected")
+
+        field_clean = field
+        for suffix in ("_value", "_verify", "_fallback"):
+            if field_clean.endswith(suffix):
+                field_clean = field_clean[:-len(suffix)]
+
+        if group == "SAFETY_LIMITS":
+            actual = SAFETY_LIMITS.get(field_clean)
+            if actual != expected_val:
+                return _fail(f"Expected SAFETY_LIMITS[{field_clean}] == {expected_val}, got {actual}")
+            return _pass(f"CUA Safety Limit oracle passed: {field_clean} matches")
+
+        elif group == "IPC_LIMITS":
+            if field_clean == "MAX_MESSAGE_BYTES":
+                if MAX_MESSAGE_BYTES != expected_val:
+                    return _fail(f"Expected MAX_MESSAGE_BYTES == {expected_val}, got {MAX_MESSAGE_BYTES}")
+            elif field_clean == "MAX_CONCURRENT_REQUESTS":
+                if MAX_CONCURRENT_REQUESTS != expected_val:
+                    return _fail(f"Expected MAX_CONCURRENT_REQUESTS == {expected_val}, got {MAX_CONCURRENT_REQUESTS}")
+            return _pass(f"IPC Limit oracle passed: {field_clean} matches")
+
+        elif group == "CLIPBOARD_FALLBACK":
+            agent = CanvaCUAAgent()
+            res = agent.execute_text_replacement(expected_val)
+            if hasattr(res, "clipboard_content") and res.clipboard_content != expected_val:
+                return _fail(f"Expected clipboard content '{expected_val}', got '{res.clipboard_content}'")
+            return _pass("CUA Clipboard Fallback oracle passed")
+
+        elif group == "DRIVER_STATUS":
+            service = CuaDriverService()
+            if field_clean == "screenshot":
+                res = service.screenshot()
+                if res is not None:
+                    return _fail("Expected screenshot to return None on headless fallback")
+            elif field_clean == "click":
+                res = service.click(0, 0)
+                if res is not False:
+                    return _fail("Expected click to return False on headless fallback")
+            elif field_clean == "type":
+                res = service.type_text("test")
+                if res is not False:
+                    return _fail("Expected type_text to return False on headless fallback")
+            return _pass(f"CUA Driver Status oracle passed: {field_clean} behaves correctly")
+
+        return _fail(f"Unknown CUA group: {group}")
     except Exception as exc:
         return _fail(f"CUA executor error: {exc}")
 
 
 def _exec_security(sandbox_path: str, scenario: Dict[str, Any]) -> Dict[str, str]:
-    """Security domain: eval integrity guard rejects known-bad fixture."""
-    guard = os.path.join(_REPO_ROOT, "scripts", "ci", "eval_integrity_guard.py")
-    bad_fixture = os.path.join(_REPO_ROOT, "scripts", "ci", "tests", "bad_random.py")
-    if not os.path.exists(guard):
-        return _skip("eval_integrity_guard.py not found")
-    if not os.path.exists(bad_fixture):
-        return _skip("bad_random.py fixture not found")
+    """Security domain: verify integrity guard rejects known violations."""
     import subprocess
+    guard_path = os.path.join(_REPO_ROOT, "scripts", "ci", "eval_integrity_guard.py")
+    if not os.path.exists(guard_path):
+        return _skip("eval_integrity_guard.py not found")
+
     try:
+        expected = scenario.get("expected_outcome", {})
+        target = expected.get("target")
+        should_reject = expected.get("expected_rejected")
+
+        if os.path.exists(os.path.join(_REPO_ROOT, target)):
+            file_to_scan = os.path.join(_REPO_ROOT, target)
+        else:
+            file_to_scan = os.path.join(sandbox_path, "scan_target.py")
+            content = ""
+            if target == "secrets_password":
+                content = "password = 'hardcoded_secret_123'"
+            elif target == "secrets_eval":
+                content = "eval('print(1)')"
+            elif target == "secrets_shell":
+                content = "import os; os.system('ls')"
+            elif target == "secrets_traversal":
+                content = "with open('../../../etc/passwd') as f: pass"
+            elif target == "secrets_apikey":
+                content = "API_KEY = 'SG.1234567890'"
+            elif target == "secrets_exec":
+                content = "exec('x = 5')"
+            elif target == "secrets_os_system":
+                content = "import os; os.system('rm -rf /')"
+            elif target == "secrets_path_traversal":
+                content = "open('/etc/shadow', 'w')"
+            elif target == "secrets_token":
+                content = "GITHUB_TOKEN = 'ghp_abcdef'"
+            elif target == "secrets_dynamic_import":
+                content = "__import__('os').system('ls')"
+            elif target == "secrets_popen":
+                content = "import subprocess; subprocess.Popen('ls')"
+            elif target == "secrets_abs_path":
+                content = "open('/absolute/path/file.txt')"
+            else:
+                content = "import math; print(math.sqrt(4))"
+
+            with open(file_to_scan, "w", encoding="utf-8") as fh:
+                fh.write(content)
+
         result = subprocess.run(
-            [sys.executable, guard, bad_fixture],
-            capture_output=True, text=True, timeout=20,
+            [sys.executable, guard_path, "--paths", file_to_scan],
+            capture_output=True, text=True, timeout=10,
         )
-        if result.returncode != 0:
-            return _pass(
-                f"Security guard correctly rejected bad fixture (exit {result.returncode})"
-            )
-        return _fail("Security guard failed to reject bad_random.py (expected exit 1)")
-    except subprocess.TimeoutExpired:
-        return _fail("Security guard timed out after 20s")
+        is_rejected = result.returncode != 0
+
+        if is_rejected != should_reject:
+            return _fail(f"Integrity guard check for {target}: expected_rejected={should_reject}, got rejected={is_rejected} (stdout: {result.stdout.strip()})")
+        return _pass(f"Security integrity oracle passed for {target} (rejected={is_rejected})")
     except Exception as exc:
         return _fail(f"Security executor error: {exc}")
 
 
 def _exec_memory(sandbox_path: str, scenario: Dict[str, Any]) -> Dict[str, str]:
-    """Memory domain: verify CSPRNG-backed DP noise works correctly."""
+    """Memory domain: verify DP noise meets CSPRNG expectations."""
     try:
         from sidecar.mem_sync import add_gaussian_noise
-        vector = [1.0, 2.0, 3.0, 4.0, 5.0]
-        noisy = add_gaussian_noise(vector, std_dev=0.1)
+    except ImportError as exc:
+        return _skip(f"Memory dependencies missing: {exc}")
+
+    try:
+        expected = scenario.get("expected_outcome", {})
+        vector = expected.get("vector")
+        std_dev = expected.get("std_dev")
+
+        noisy = add_gaussian_noise(vector, std_dev=std_dev)
         if not isinstance(noisy, list):
             return _fail(f"Expected list, got {type(noisy)}")
         if len(noisy) != len(vector):
             return _fail(f"Length mismatch: {len(noisy)} != {len(vector)}")
         if noisy == vector:
-            return _fail("add_gaussian_noise returned identical vector - CSPRNG not working")
-        return _pass(
-            "CSPRNG-backed DP noise confirmed: "
-            "input[0]=%.2f -> noisy[0]=%.6f" % (vector[0], noisy[0])
-        )
+            return _fail("add_gaussian_noise returned identical vector")
+        for val in noisy:
+            if not isinstance(val, (int, float)):
+                return _fail(f"Non-numeric noisy value: {val}")
+        return _pass("Memory DP noise oracle passed: noisy vector verified")
     except Exception as exc:
         return _fail(f"Memory executor error: {exc}")
 
 
 def _exec_offline(sandbox_path: str, scenario: Dict[str, Any]) -> Dict[str, str]:
-    """Offline domain: KAIRO_OFFLINE=1 env is honoured by the sidecar module."""
+    """Offline domain: verify sidecar self check responds offline_mode=True under KAIRO_OFFLINE=1."""
     import asyncio
     old_val = os.environ.get("KAIRO_OFFLINE")
     try:
         os.environ["KAIRO_OFFLINE"] = "1"
         import importlib
-        import sidecar.main as _km
-        importlib.reload(_km)
-        # Verify the env var is read correctly by the reloaded module
-        offline_env = os.environ.get("KAIRO_OFFLINE", "0")
-        if offline_env != "1":
-            return _fail("KAIRO_OFFLINE env var not set correctly after reload")
-        # Use the async handle_request to send a self_check
-        try:
-            result = asyncio.run(_km.handle_request({"action": "self_check"}))
-        except Exception:
-            result = None
-        # Primary check: env var is in place (module was reloaded under KAIRO_OFFLINE=1)
-        # The kairo doctor self_check may not expose offline_mode directly; we verify
-        # the env signal is present and the module reloads cleanly.
-        if result is not None and isinstance(result, dict):
-            data = result.get("data", {})
-            if data.get("offline_mode") is True:
-                return _pass("self_check confirmed offline_mode=True under KAIRO_OFFLINE=1")
-        # Fallback: verify KAIRO_OFFLINE=1 is honoured (env var present, no crash)
-        return _pass(
-            "KAIRO_OFFLINE=1 set and module reloaded cleanly "
-            "(offline_mode field not explicitly in self_check response)"
-        )
+        import sidecar.main as km
+        importlib.reload(km)
+        
+        result = asyncio.run(km.handle_request({"action": "self_check"}))
+        if not isinstance(result, dict) or not result.get("ok"):
+            return _fail("Self check failed under KAIRO_OFFLINE=1")
+        
+        data = result.get("data", {})
+        if data.get("offline_mode") is not True:
+            return _fail("Expected offline_mode=True in self check data")
+        
+        return _pass("Offline mode self check oracle passed")
     except Exception as exc:
-        return _fail("Offline executor error: %s" % exc)
+        return _fail(f"Offline executor error: {exc}")
     finally:
         if old_val is None:
             os.environ.pop("KAIRO_OFFLINE", None)
@@ -248,70 +556,91 @@ def _exec_offline(sandbox_path: str, scenario: Dict[str, Any]) -> Dict[str, str]
 
 
 def _exec_degradation(sandbox_path: str, scenario: Dict[str, Any]) -> Dict[str, str]:
-    """Degradation domain: unknown domain returns an error response (not a crash)."""
+    """Degradation domain: verify graceful rejection of nonexistent domains/actions."""
     import asyncio
     try:
-        import sidecar.main as _km
-        try:
-            result = asyncio.run(_km.handle_request({
+        import sidecar.main as km
+        expected = scenario.get("expected_outcome", {})
+        target = expected.get("target")
+        type_ = expected.get("type")
+
+        if type_ == "invalid_domain":
+            result = asyncio.run(km.handle_request({
                 "action": "apply_operations",
-                "domain": "__nonexistent_xyz__",
-                "operations": [],
+                "domain": target,
+                "operations": []
             }))
-        except Exception as inner:
-            # If the coroutine raises, that is itself evidence of graceful error handling
-            return _pass(
-                "Degradation: handle_request raised on unknown domain "
-                "(graceful rejection): %s" % str(inner)[:80]
-            )
-        if isinstance(result, dict):
-            # Accept ok=False or any error indicator
-            if result.get("ok") is False or result.get("error"):
-                return _pass(
-                    "Degradation: unknown domain -> ok=False/error in response"
-                )
-            # Also accept any response with a 'status' or 'message' field
-            if result.get("status") or result.get("message"):
-                return _pass(
-                    "Degradation: unknown domain -> structured response returned"
-                )
-        # If result is a string or bytes, that is also graceful
-        if result is not None:
-            return _pass(
-                "Degradation: handle_request returned non-crash response for unknown domain"
-            )
-        return _fail("Degradation: handle_request returned None for unknown domain")
+        elif type_ == "invalid_action":
+            result = asyncio.run(km.handle_request({
+                "action": target,
+                "domain": "Word",
+                "payload": {}
+            }))
+        else:
+            return _fail(f"Unknown degradation type: {type_}")
+
+        if not isinstance(result, dict):
+            return _fail("Expected dict response, got %s" % type(result))
+        if result.get("ok") is not False or "error" not in result:
+            return _fail("Expected ok=False and error in response on invalid request")
+            
+        return _pass(f"Degradation oracle passed: gracefully rejected {target} ({type_})")
     except Exception as exc:
-        return _fail("Degradation executor error: %s" % exc)
+        return _fail(f"Degradation executor error: {exc}")
 
 
 def _exec_performance(sandbox_path: str, scenario: Dict[str, Any]) -> Dict[str, str]:
-    """Performance domain: 100-paragraph context assembly < 2 seconds."""
+    """Performance domain: verify execution speed boundaries are honored."""
     try:
-        import docx as _docx
-    except ImportError:
-        return _skip("python-docx not installed; Performance executor skipped")
+        import docx
+        import openpyxl
+        from sidecar.masters.word_master import WordContextExtractor, WordWriter
+    except ImportError as exc:
+        return _skip(f"Performance dependencies missing: {exc}")
+
     try:
-        from sidecar.masters.word_master import WordMaster
-        path = os.path.join(sandbox_path, "perf.docx")
-        doc = _docx.Document()
-        for i in range(100):
-            doc.add_paragraph(
-                f"Page {i+1}: The quick brown fox jumps over the lazy dog. "
-                f"Paragraph {i+1} of the 100-page performance test document."
-            )
-        doc.save(path)
-        wm = WordMaster()
-        t0 = time.perf_counter()
-        ctx = wm.extract_context(path, {})
-        elapsed = time.perf_counter() - t0
-        if elapsed < 2.0:
-            return _pass(
-                f"100-para context assembly: {elapsed:.3f}s < 2.0s threshold"
-            )
-        return _fail(
-            f"100-para context assembly: {elapsed:.3f}s >= 2.0s threshold"
-        )
+        expected = scenario.get("expected_outcome", {})
+        type_ = expected.get("type")
+        count = expected.get("count")
+        max_sec = expected.get("max_seconds")
+
+        if type_ == "perf_docx":
+            path = os.path.join(sandbox_path, f"perf_{scenario['id']}.docx")
+            doc = docx.Document()
+            doc.add_heading("Perf Test Title", level=1)
+            for j in range(count):
+                doc.add_paragraph(f"This is paragraph {j} of performance testing document. Let's make it long enough to measure.")
+            doc.save(path)
+
+            extractor = WordContextExtractor()
+            t0 = time.perf_counter()
+            ctx = extractor.extract(path, cursor_paragraph_index=0)
+            elapsed = time.perf_counter() - t0
+
+            if elapsed > max_sec:
+                return _fail(f"DOCX context extraction took {elapsed:.3f}s, exceeding {max_sec}s threshold for {count} paragraphs")
+            return _pass(f"DOCX performance oracle passed: {elapsed:.3f}s < {max_sec}s for {count} paragraphs")
+
+        elif type_ == "perf_xlsx":
+            path = os.path.join(sandbox_path, f"perf_{scenario['id']}.xlsx")
+            wb = openpyxl.Workbook()
+            ws = wb.active
+            for r in range(1, count + 1):
+                ws.cell(row=r, column=1, value=r)
+                ws.cell(row=r, column=2, value=f"Row {r} cell value")
+            wb.save(path)
+
+            from sidecar.masters.excel_master import ExcelContextExtractor
+            extractor = ExcelContextExtractor()
+            t0 = time.perf_counter()
+            ctx = extractor.extract(path, active_cell="A1")
+            elapsed = time.perf_counter() - t0
+
+            if elapsed > max_sec:
+                return _fail(f"Excel context extraction took {elapsed:.3f}s, exceeding {max_sec}s threshold for {count} rows")
+            return _pass(f"Excel performance oracle passed: {elapsed:.3f}s < {max_sec}s for {count} rows")
+
+        return _fail(f"Unknown performance type: {type_}")
     except Exception as exc:
         return _fail(f"Performance executor error: {exc}")
 

@@ -469,11 +469,15 @@ class ExcelWriter:
                         
                     elif op_type == "write_range":
                         start_cell_ref = op.get("start_cell", op.get("cell", op.get("range", "A1")))
+                        if ":" in start_cell_ref:
+                            start_cell_ref = start_cell_ref.split(":")[0]
                         start_cell = ws[start_cell_ref]
                         start_row = start_cell.row
                         start_col = start_cell.column
                         
                         values = op.get("values", op.get("data", []))
+                        if not values and "formulas" in op:
+                            values = op["formulas"]
                         for r_offset, row in enumerate(values):
                             for c_offset, value in enumerate(row):
                                 if isinstance(value, str) and value.startswith("="):
