@@ -148,8 +148,10 @@ class TestBestOfNPDFDomain:
         class DocSchema(BaseModel):
             content: str
 
-        # Create a real minimal PDF for scoring — skip entire test if fitz (PyMuPDF) is not installed
-        fitz = pytest.importorskip("fitz")
+        # Create a real minimal PDF for scoring — fitz (PyMuPDF) is a hard dependency.
+        # If PyMuPDF is not installed, this test must FAIL (ImportError), not silently skip.
+        # PyMuPDF>=1.23.0 is in requirements.txt; CI must install it.
+        import fitz  # noqa: PLC0415 — hard dependency; do NOT replace with importorskip
         file_path = str(tmp_path / "test.pdf")
         doc = fitz.open()
         page = doc.new_page()

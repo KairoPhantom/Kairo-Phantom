@@ -45,11 +45,8 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent.resolve()))
 
 # ── Availability sentinels (checked once at import time) ─────────────────────
-try:
-    import fitz as _fitz  # PyMuPDF
-    _FITZ_AVAILABLE = True
-except ImportError:
-    _FITZ_AVAILABLE = False
+import fitz as _fitz  # PyMuPDF (hard dependency)
+_FITZ_AVAILABLE = True
 
 _OPENDATALOADER_AVAILABLE: Optional[bool] = None  # lazily resolved inside tests
 _OLMOCR_AVAILABLE: Optional[bool] = None          # lazily resolved inside tests
@@ -592,7 +589,6 @@ class TestEngineAvailability:
         assert result.confidence == 0.0
         assert result.text == ""
 
-    @pytest.mark.skipif(not _FITZ_AVAILABLE, reason="PyMuPDF (fitz) not installed")
     def test_engine_can_handle_empty_file(self):
         """Extraction engine handles a blank (no text) PDF without raising."""
         pdf_path = _make_empty_pdf()
@@ -614,7 +610,6 @@ class TestEngineAvailability:
 # SECTION 2 — PyMuPDF Tier 1 Tests (10 tests)
 # ═════════════════════════════════════════════════════════════════════════════
 
-@pytest.mark.skipif(not _FITZ_AVAILABLE, reason="PyMuPDF (fitz) not installed")
 class TestPyMuPDFTier1:
     """Section 2: PyMuPDF Tier 1 extraction correctness tests."""
 
@@ -747,25 +742,30 @@ class TestOpenDataLoaderTier2:
         result = _check_opendataloader()
         assert isinstance(result, bool)
 
-    def test_opendataloader_falls_back_if_not_installed(self):
+    def test_opendataloader_falls_back_if_not_installed(self, monkeypatch):
         """When opendataloader is absent, extraction returns a valid ExtractionResult."""
-        if _check_opendataloader():
-            pytest.skip("opendataloader is installed — fallback path not exercised")
+        monkeypatch.setattr("test_domain4_pdf._check_opendataloader", lambda: False)
         # Simulate Tier 2 call path: when ODL not available, fallback returns result
         result = _extract_fallback("hypothetical_layout_doc.pdf")
         assert isinstance(result, ExtractionResult)
         assert result.confidence == 0.0  # fallback confidence
         assert result.text == ""
 
-    @pytest.mark.skipif(not _FITZ_AVAILABLE, reason="PyMuPDF required to create test PDF")
-    def test_opendataloader_extract_returns_result(self):
+    def test_opendataloader_extract_returns_result(self, monkeypatch):
         """Tier 2 path: extraction returns a valid ExtractionResult dict-like object."""
         pdf_path = _make_temp_pdf("Structured layout document for Tier 2 test")
         try:
-            # We test the router; if ODL not installed, router falls back gracefully
-            result = _route_extraction(pdf_path)
-            assert isinstance(result, ExtractionResult)
-            assert result.tier_used is not None
+            # Branch 1: opendataloader not installed
+            monkeypatch.setattr("test_domain4_pdf._check_opendataloader", lambda: False)
+            result_absent = _route_extraction(pdf_path)
+            assert isinstance(result_absent, ExtractionResult)
+            assert result_absent.tier_used != ExtractionTier.OPENDATALOADER
+
+            # Branch 2: opendataloader is installed
+            monkeypatch.setattr("test_domain4_pdf._check_opendataloader", lambda: True)
+            result_present = _route_extraction(pdf_path)
+            assert isinstance(result_present, ExtractionResult)
+            assert result_present.tier_used == ExtractionTier.OPENDATALOADER
         finally:
             os.unlink(pdf_path)
 
@@ -797,9 +797,11 @@ class TestOpenDataLoaderTier2:
         assert isinstance(result.images, list)
         assert len(result.images) == 2
 
-    @pytest.mark.skipif(not _FITZ_AVAILABLE, reason="PyMuPDF required to create test PDF")
-    def test_tier2_fallback_uses_enhanced_pymupdf(self):
+    def test_tier2_fallback_uses_enhanced_pymupdf(self, monkeypatch):
         """When ODL unavailable, router falls through to PyMuPDF Tier 1 gracefully."""
+        monkeypatch.setattr("test_domain4_pdf._check_opendataloader", lambda: False)
+        monkeypatch.setattr("test_domain4_pdf._check_olmocr", lambda: False)
+        monkeypatch.setattr("test_domain4_pdf._check_surya", lambda: False)
         pdf_path = _make_temp_pdf("Fallback to PyMuPDF from Tier 2 test")
         try:
             result = _route_extraction(pdf_path)
@@ -814,7 +816,6 @@ class TestOpenDataLoaderTier2:
         finally:
             os.unlink(pdf_path)
 
-    @pytest.mark.skipif(not _FITZ_AVAILABLE, reason="PyMuPDF required to create test PDF")
     def test_tier2_result_has_correct_tier_used(self):
         """Extraction result always has a non-None tier_used field after routing."""
         pdf_path = _make_temp_pdf("Tier routing correctness test")
@@ -838,25 +839,30 @@ class TestOlmOCRTier3:
         result = _check_olmocr()
         assert isinstance(result, bool)
 
-    def test_olmocr_falls_back_if_not_installed(self):
+    def test_olmocr_falls_back_if_not_installed(self, monkeypatch):
         """When olmOCR is absent, fallback produces a valid ExtractionResult with confidence=0."""
-        if _check_olmocr():
-            pytest.skip("olmocr is installed — pure-fallback path not exercised")
+        monkeypatch.setattr("test_domain4_pdf._check_olmocr", lambda: False)
         result = _extract_fallback("scanned_document_low_yield.pdf")
         assert isinstance(result, ExtractionResult)
         assert result.confidence == 0.0
 
-    @pytest.mark.skipif(not _FITZ_AVAILABLE, reason="PyMuPDF required to create test PDF")
-    def test_olmocr_routes_for_low_text_yield(self):
+    def test_olmocr_routes_for_low_text_yield(self, monkeypatch):
         """Router selects olmOCR (Tier 3) when avg char density < 10 and olmOCR is available."""
         # We can only validate the routing *decision* logic here, not actual OCR output
         # Simulate: density < 10 → olmOCR path chosen in router
         pdf_path = _make_empty_pdf()  # zero chars → avg_density = 0
         try:
-            result = _route_extraction(pdf_path)
-            assert isinstance(result, ExtractionResult)
-            # Router may pick olmOCR or fall further to fitz/fallback
-            assert result.tier_used is not None
+            # Branch 1: olmocr not installed
+            monkeypatch.setattr("test_domain4_pdf._check_olmocr", lambda: False)
+            result_absent = _route_extraction(pdf_path)
+            assert isinstance(result_absent, ExtractionResult)
+            assert result_absent.tier_used != ExtractionTier.OLMOCR
+
+            # Branch 2: olmocr is installed
+            monkeypatch.setattr("test_domain4_pdf._check_olmocr", lambda: True)
+            result_present = _route_extraction(pdf_path)
+            assert isinstance(result_present, ExtractionResult)
+            assert result_present.tier_used == ExtractionTier.OLMOCR
         finally:
             os.unlink(pdf_path)
 
@@ -890,7 +896,6 @@ class TestOlmOCRTier3:
                     f"_extract_fallback raised an exception for path {bad_path!r}: {exc}"
                 )
 
-    @pytest.mark.skipif(not _FITZ_AVAILABLE, reason="PyMuPDF required to create test PDF")
     def test_tier3_not_used_for_born_digital(self):
         """Router should NOT route to olmOCR for a high-density born-digital PDF."""
         # Born-digital PDF with plenty of text → avg_density >> 100
@@ -927,26 +932,32 @@ class TestSuryaTier4:
         result = _check_surya()
         assert isinstance(result, bool)
 
-    def test_surya_falls_back_if_not_installed(self):
+    def test_surya_falls_back_if_not_installed(self, monkeypatch):
         """When Surya is absent, fallback returns a valid ExtractionResult."""
-        if _check_surya():
-            pytest.skip("surya is installed — pure-fallback path not exercised")
+        monkeypatch.setattr("test_domain4_pdf._check_surya", lambda: False)
         result = _extract_fallback("multilingual_cjk_document.pdf")
         assert isinstance(result, ExtractionResult)
 
-    @pytest.mark.skipif(not _FITZ_AVAILABLE, reason="PyMuPDF required to create test PDF")
-    def test_surya_routes_for_cjk_content(self):
+    def test_surya_routes_for_cjk_content(self, monkeypatch):
         """Router detects CJK language and routes to Surya (Tier 4) when available."""
+        # Force language detection to return 'zh' to simulate successful CJK detection
+        monkeypatch.setattr("test_domain4_pdf._detect_language", lambda text: "zh")
         pdf_path = _make_temp_pdf_cjk("这是一个测试文档。包含中文内容。用于验证语言检测路由逻辑。")
         try:
-            result = _route_extraction(pdf_path)
-            assert isinstance(result, ExtractionResult)
-            # If surya not installed, router falls back to available tier — still valid
-            assert result.tier_used is not None
+            # Branch 1: surya not installed
+            monkeypatch.setattr("test_domain4_pdf._check_surya", lambda: False)
+            result_absent = _route_extraction(pdf_path)
+            assert isinstance(result_absent, ExtractionResult)
+            assert result_absent.tier_used != ExtractionTier.SURYA
+
+            # Branch 2: surya is installed
+            monkeypatch.setattr("test_domain4_pdf._check_surya", lambda: True)
+            result_present = _route_extraction(pdf_path)
+            assert isinstance(result_present, ExtractionResult)
+            assert result_present.tier_used == ExtractionTier.SURYA
         finally:
             os.unlink(pdf_path)
 
-    @pytest.mark.skipif(not _FITZ_AVAILABLE, reason="PyMuPDF required to create test PDF")
     def test_surya_routes_for_arabic_content(self):
         """_detect_language correctly identifies Arabic-script text as 'ar'."""
         arabic_text = "هذا مستند اختبار يحتوي على نص عربي لاختبار منطق الكشف عن اللغة"
@@ -986,7 +997,6 @@ class TestSuryaTier4:
 class TestExtractionChain:
     """Section 6: Extraction chain routing, timing, and resilience tests."""
 
-    @pytest.mark.skipif(not _FITZ_AVAILABLE, reason="PyMuPDF required to create test PDF")
     def test_tier1_used_for_high_text_yield(self):
         """High-density born-digital PDF is routed to Tier 1 (PyMuPDF)."""
         high_density_text = (
@@ -1005,7 +1015,6 @@ class TestExtractionChain:
         finally:
             os.unlink(pdf_path)
 
-    @pytest.mark.skipif(not _FITZ_AVAILABLE, reason="PyMuPDF required to create test PDF")
     def test_tier_fallback_chain_complete(self):
         """Router completes without raising even when preferred tiers are unavailable."""
         pdf_path = _make_temp_pdf("Fallback chain robustness test")
@@ -1023,7 +1032,6 @@ class TestExtractionChain:
         assert isinstance(result, ExtractionResult)
         assert result.confidence == 0.0
 
-    @pytest.mark.skipif(not _FITZ_AVAILABLE, reason="PyMuPDF required to create test PDF")
     def test_extraction_time_recorded(self):
         """extraction_time_ms field is positive after a real extraction."""
         pdf_path = _make_temp_pdf("Timing measurement test document content")
@@ -1034,7 +1042,6 @@ class TestExtractionChain:
         finally:
             os.unlink(pdf_path)
 
-    @pytest.mark.skipif(not _FITZ_AVAILABLE, reason="PyMuPDF required to create test PDF")
     def test_confidence_score_range(self):
         """Confidence scores returned by all tiers must be in [0.0, 1.0]."""
         pdf_path = _make_temp_pdf("Confidence score range validation")
@@ -1046,7 +1053,6 @@ class TestExtractionChain:
         finally:
             os.unlink(pdf_path)
 
-    @pytest.mark.skipif(not _FITZ_AVAILABLE, reason="PyMuPDF required to create test PDF")
     def test_extraction_result_never_raises(self):
         """_route_extraction must never propagate an exception to the caller."""
         paths = [
@@ -1114,10 +1120,9 @@ class TestKamiPDFExport:
                 if os.path.exists(p):
                     os.unlink(p)
 
-    def test_kami_export_fallback_without_reportlab(self):
+    def test_kami_export_fallback_without_reportlab(self, monkeypatch):
         """When reportlab is absent, kami_export_pdf writes a .txt fallback file."""
-        if _check_reportlab():
-            pytest.skip("reportlab is installed — testing fallback path requires its absence")
+        monkeypatch.setattr("test_domain4_pdf._check_reportlab", lambda: False)
         content = "Fallback content — no reportlab available."
         fd, out_path = tempfile.mkstemp(suffix=".pdf")
         os.close(fd)
@@ -1229,7 +1234,6 @@ class TestKamiPDFExport:
 class TestMemoryAndStability:
     """Section 8: Integration, memory leak detection, and idempotency tests."""
 
-    @pytest.mark.skipif(not _FITZ_AVAILABLE, reason="PyMuPDF required to create test PDF")
     def test_large_content_extraction_stable(self):
         """Extraction of a 20-page PDF completes without OOM or unhandled exception."""
         large_text = (
@@ -1245,7 +1249,6 @@ class TestMemoryAndStability:
         finally:
             os.unlink(pdf_path)
 
-    @pytest.mark.skipif(not _FITZ_AVAILABLE, reason="PyMuPDF required to create test PDF")
     def test_no_file_handles_leaked(self):
         """Repeated extraction cycles do not accumulate open file handles."""
         # Extract from 10 separate PDFs and verify all can be deleted afterward
@@ -1273,7 +1276,6 @@ class TestMemoryAndStability:
                     except Exception:
                         pass
 
-    @pytest.mark.skipif(not _FITZ_AVAILABLE, reason="PyMuPDF required to create test PDF")
     def test_multiple_extractions_no_memory_growth(self):
         """Repeated extraction of identical PDFs does not cause unbounded memory growth."""
         pdf_path = _make_temp_pdf("Memory stability baseline document content")
@@ -1300,7 +1302,6 @@ class TestMemoryAndStability:
         finally:
             os.unlink(pdf_path)
 
-    @pytest.mark.skipif(not _FITZ_AVAILABLE, reason="PyMuPDF required to create test PDF")
     def test_extraction_idempotent(self):
         """Extracting the same PDF twice produces identical text output."""
         pdf_path = _make_temp_pdf("Idempotency test: extract twice, get same result")

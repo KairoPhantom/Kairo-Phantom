@@ -22,6 +22,9 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
+# Ensure slide image generator returns mock when no ML backend is active
+os.environ["KAIRO_SLIDE_IMAGE_MOCK"] = "1"
+
 # Add sidecar package to path
 sys.path.insert(0, str(Path(__file__).parent.parent.resolve()))
 

@@ -39,11 +39,30 @@ class SlideImageGenerator:
                 return self._generate_gpt_image2(slide_content, style)
             elif backend == ImageBackend.NANO_BANANA and self._nano_banana_available():
                 return self._generate_nano_banana(slide_content, style)
-        except Exception as e:
-            log.warning(f"Image generation with backend {backend} failed: {e}. Using mock fallback.")
+            # No backend was available — fall through to feature-flag guard below
+            raise RuntimeError(
+                f"No image-generation backend available for backend={backend.value!r}. "
+                f"Available: ComfyUI={self._comfyui_available()}, "
+                f"GPT-Image-2={self._gpt_image2_available()}, "
+                f"NanoBanana={self._nano_banana_available()}."
+            )
+        except Exception as exc:
+            # EXPLICIT FEATURE FLAG — must be set deliberately in local dev or tests.
+            # CI and production must NOT set this flag; they should see the real failure.
+            if os.environ.get("KAIRO_SLIDE_IMAGE_MOCK", "0") == "1":
+                log.warning(
+                    f"[KAIRO_SLIDE_IMAGE_MOCK=1] Real image generation failed: {exc}. "
+                    f"Returning mock PNG. This MUST NOT happen in CI or production."
+                )
+                return self._generate_mock_image(slide_content, style)
+            # Hard fail — do not hide the problem with a silent mock.
+            raise RuntimeError(
+                f"slide_image_gen: image generation failed and KAIRO_SLIDE_IMAGE_MOCK "
+                f"is not set. Backend={backend.value!r}. "
+                f"Set KAIRO_SLIDE_IMAGE_MOCK=1 only in local dev/tests. "
+                f"Underlying error: {exc}"
+            ) from exc
 
-        # Fallback: Draw a beautiful mock slide using PIL
-        return self._generate_mock_image(slide_content, style)
 
     def generate_deck_images(self,
                              slide_contents: List[dict],

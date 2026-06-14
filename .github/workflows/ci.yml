@@ -249,7 +249,27 @@ jobs:
 
       - name: Assert Gauntlet Pass Rate
         run: |
-          python -c "import json; data = json.load(open('task_completion_rate.json')); rate = data['pass_rate_active']; assert rate >= 80.0, f'Active pass rate too low: {rate}%'"
+          python -c "
+          import json, sys
+          data = json.load(open('task_completion_rate.json'))
+          rate_all  = data.get('pass_rate_all', 0.0)
+          skipped   = data.get('skipped', -1)
+          total     = data.get('total', 0)
+          passed    = data.get('passed', 0)
+          failed    = data.get('failed', 0)
+          print(f'Gauntlet results: total={total} passed={passed} failed={failed} skipped={skipped}')
+          print(f'pass_rate_all={rate_all}%')
+          errors = []
+          if skipped != 0:
+              errors.append(f'GATE FAIL: {skipped} scenario(s) were skipped — zero skips allowed. All 200 must reach PASS or FAIL.')
+          if rate_all < 80.0:
+              errors.append(f'GATE FAIL: pass_rate_all={rate_all}% is below the 80% floor (all {total} scenarios judged).')
+          if errors:
+              for e in errors:
+                  print(e)
+              sys.exit(1)
+          print(f'GATE PASS: pass_rate_all={rate_all}% >= 80% with 0 skips across all {total} declared scenarios.')
+          "
 
       - name: Run Kairo Facts Verification (Production Gate)
         run: cargo run -p phantom-core --bin kairo-phantom -- verify
