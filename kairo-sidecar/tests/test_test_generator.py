@@ -2,7 +2,7 @@
 Tests for TestGenerator using property-based metamorphic checks.
 """
 import pytest
-from hypothesis import given, strategies as st
+from hypothesis import given, strategies as st, settings, HealthCheck
 from sidecar.test_generator import TestGenerator
 
 # Key nouns mapped to their synonyms in test_generator.py
@@ -14,6 +14,7 @@ KEY_NOUNS = {
     "indemnity": ["indemnity", "liability protection", "compensation", "insurance", "protection"],
     "budget": ["budget", "allowance", "funding", "allocation", "finances"]
 }
+
 
 
 @st.composite
@@ -44,6 +45,7 @@ def scenario_with_keywords(draw):
     return scenario, key_noun
 
 
+@settings(suppress_health_check=[HealthCheck.too_slow])
 @given(st.lists(scenario_with_keywords(), min_size=1, max_size=10))
 def test_metamorphic_invariants(scenario_data):
     """

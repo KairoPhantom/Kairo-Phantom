@@ -148,17 +148,14 @@ class TestBestOfNPDFDomain:
         class DocSchema(BaseModel):
             content: str
 
-        # Create a real minimal PDF for scoring
+        # Create a real minimal PDF for scoring — skip entire test if fitz (PyMuPDF) is not installed
+        fitz = pytest.importorskip("fitz")
         file_path = str(tmp_path / "test.pdf")
-        try:
-            import fitz
-            doc = fitz.open()
-            page = doc.new_page()
-            page.insert_text((72, 72), "Hello PDF oracle world")
-            doc.save(file_path)
-            doc.close()
-        except ImportError:
-            pytest.skip("fitz not available")
+        doc = fitz.open()
+        page = doc.new_page()
+        page.insert_text((72, 72), "Hello PDF oracle world")
+        doc.save(file_path)
+        doc.close()
 
         good_candidate = DocSchema(content="Hello PDF oracle world")
         bad_candidate = DocSchema(content="xyz_nonexistent_text_12345")

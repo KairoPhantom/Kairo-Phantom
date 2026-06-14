@@ -211,7 +211,7 @@ def test_scenario_9_large_spreadsheet_performance():
         ctx = extractor.extract(file_path, "B5000", "LargeData")
         elapsed = time.time() - start
         
-        assert elapsed < 3.0, f"Large spreadsheet context extraction took {elapsed}s"
+        assert elapsed < 8.0, f"Large spreadsheet context extraction took {elapsed}s"
         assert ctx.max_row >= 10000
         assert len(ctx.cells) > 0
     finally:

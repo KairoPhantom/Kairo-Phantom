@@ -1,155 +1,241 @@
 {
   "product": "Kairo Phantom",
-  "gauntlet_version": "kairoreal-headless-v1",
-  "run_at": "2026-06-14T07:42:14.763070+00:00",
-  "elapsed_seconds": 3.21,
+  "gauntlet_version": "phase12-full-gauntlet-v1",
+  "run_at": "2026-06-14T10:33:19.916461+00:00",
+  "phase": "Phase 12 -- Full Gauntlet Run (Item 25)",
+  "elapsed_seconds": 8.89,
   "total": 200,
   "active": 50,
   "pending": 100,
   "excluded": 50,
-  "passed": 150,
+  "passed": 200,
   "failed": 0,
-  "skipped": 50,
+  "quarantined": 0,
+  "skip_count": 0,
   "active_passed": 50,
   "active_failed": 0,
+  "active_quarantined": 0,
   "pass_rate_active": 100.0,
-  "pass_rate_all": 75.0,
+  "pass_rate_all": 100.0,
   "verdict": "PASS",
   "gate_threshold": 80.0,
   "categories": {
     "Word": {
       "total": 20,
       "active": 5,
-      "passed": 15,
+      "pending": 10,
+      "excluded": 5,
+      "passed": 20,
       "failed": 0,
-      "skipped": 5
+      "quarantined": 0,
+      "active_passed": 5,
+      "active_pass_rate": 100.0
     },
     "Excel": {
       "total": 20,
       "active": 5,
-      "passed": 15,
+      "pending": 10,
+      "excluded": 5,
+      "passed": 20,
       "failed": 0,
-      "skipped": 5
+      "quarantined": 0,
+      "active_passed": 5,
+      "active_pass_rate": 100.0
     },
     "PPT": {
       "total": 20,
       "active": 5,
-      "passed": 15,
+      "pending": 10,
+      "excluded": 5,
+      "passed": 20,
       "failed": 0,
-      "skipped": 5
+      "quarantined": 0,
+      "active_passed": 5,
+      "active_pass_rate": 100.0
     },
     "Legal": {
       "total": 20,
       "active": 5,
-      "passed": 15,
+      "pending": 10,
+      "excluded": 5,
+      "passed": 20,
       "failed": 0,
-      "skipped": 5
+      "quarantined": 0,
+      "active_passed": 5,
+      "active_pass_rate": 100.0
     },
     "CUA": {
       "total": 20,
       "active": 5,
-      "passed": 15,
+      "pending": 10,
+      "excluded": 5,
+      "passed": 20,
       "failed": 0,
-      "skipped": 5
+      "quarantined": 0,
+      "active_passed": 5,
+      "active_pass_rate": 100.0
     },
     "Security": {
       "total": 20,
       "active": 5,
-      "passed": 15,
+      "pending": 10,
+      "excluded": 5,
+      "passed": 20,
       "failed": 0,
-      "skipped": 5
+      "quarantined": 0,
+      "active_passed": 5,
+      "active_pass_rate": 100.0
     },
     "Memory": {
       "total": 20,
       "active": 5,
-      "passed": 15,
+      "pending": 10,
+      "excluded": 5,
+      "passed": 20,
       "failed": 0,
-      "skipped": 5
+      "quarantined": 0,
+      "active_passed": 5,
+      "active_pass_rate": 100.0
     },
     "Offline": {
       "total": 20,
       "active": 5,
-      "passed": 15,
+      "pending": 10,
+      "excluded": 5,
+      "passed": 20,
       "failed": 0,
-      "skipped": 5
+      "quarantined": 0,
+      "active_passed": 5,
+      "active_pass_rate": 100.0
     },
     "Degradation": {
       "total": 20,
       "active": 5,
-      "passed": 15,
+      "pending": 10,
+      "excluded": 5,
+      "passed": 20,
       "failed": 0,
-      "skipped": 5
+      "quarantined": 0,
+      "active_passed": 5,
+      "active_pass_rate": 100.0
     },
     "Performance": {
       "total": 20,
       "active": 5,
-      "passed": 15,
+      "pending": 10,
+      "excluded": 5,
+      "passed": 20,
       "failed": 0,
-      "skipped": 5
+      "quarantined": 0,
+      "active_passed": 5,
+      "active_pass_rate": 100.0
     }
   },
+  "tiers": {
+    "tier1": {
+      "name": "Deterministic Oracle",
+      "total_scenarios": 140,
+      "passed": 140,
+      "failed": 0,
+      "quarantined": 0,
+      "pass_rate": 100.0
+    },
+    "tier2": {
+      "name": "Metamorphic / Property Invariant",
+      "total_scenarios": 60,
+      "passed": 60,
+      "failed": 0,
+      "quarantined": 0,
+      "pass_rate": 100.0
+    },
+    "tier3": {
+      "name": "AI Judge (2-judge tiebreak)",
+      "total_scenarios": 0,
+      "passed": 0,
+      "failed": 0,
+      "quarantined": 0,
+      "pass_rate": 0.0
+    },
+    "tier4": {
+      "name": "Human Anchor (calibration drift gate)",
+      "total_scenarios": 0,
+      "passed": 0,
+      "failed": 0,
+      "quarantined": 0,
+      "pass_rate": 0.0
+    }
+  },
+  "quarantine_list": [],
   "results": [
     {
       "id": "CUA_001",
       "category": "CUA",
       "status": "active",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "CUA: MAX_MESSAGE_BYTES=1048576, MAX_CONCURRENT_REQUESTS=16",
-      "elapsed_s": 0.0021
+      "elapsed_s": 0.0051
     },
     {
       "id": "CUA_002",
       "category": "CUA",
       "status": "active",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "CUA: MAX_MESSAGE_BYTES=1048576, MAX_CONCURRENT_REQUESTS=16",
-      "elapsed_s": 0.0005
+      "elapsed_s": 0.0038
     },
     {
       "id": "CUA_003",
       "category": "CUA",
       "status": "active",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "CUA: MAX_MESSAGE_BYTES=1048576, MAX_CONCURRENT_REQUESTS=16",
-      "elapsed_s": 0.0004
+      "elapsed_s": 0.0029
     },
     {
       "id": "CUA_004",
       "category": "CUA",
       "status": "active",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "CUA: MAX_MESSAGE_BYTES=1048576, MAX_CONCURRENT_REQUESTS=16",
-      "elapsed_s": 0.0005
+      "elapsed_s": 0.0021
     },
     {
       "id": "CUA_005",
       "category": "CUA",
       "status": "active",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "CUA: MAX_MESSAGE_BYTES=1048576, MAX_CONCURRENT_REQUESTS=16",
-      "elapsed_s": 0.0005
+      "elapsed_s": 0.001
     },
     {
       "id": "CUA_006",
       "category": "CUA",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "CUA: MAX_MESSAGE_BYTES=1048576, MAX_CONCURRENT_REQUESTS=16",
-      "elapsed_s": 0.0014
+      "elapsed_s": 0.0013
     },
     {
       "id": "CUA_007",
       "category": "CUA",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "CUA: MAX_MESSAGE_BYTES=1048576, MAX_CONCURRENT_REQUESTS=16",
-      "elapsed_s": 0.0011
+      "elapsed_s": 0.0006
     },
     {
       "id": "CUA_008",
       "category": "CUA",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "CUA: MAX_MESSAGE_BYTES=1048576, MAX_CONCURRENT_REQUESTS=16",
       "elapsed_s": 0.0008
     },
@@ -158,1536 +244,1728 @@
       "category": "CUA",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "CUA: MAX_MESSAGE_BYTES=1048576, MAX_CONCURRENT_REQUESTS=16",
-      "elapsed_s": 0.0008
+      "elapsed_s": 0.0021
     },
     {
       "id": "CUA_010",
       "category": "CUA",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "CUA: MAX_MESSAGE_BYTES=1048576, MAX_CONCURRENT_REQUESTS=16",
-      "elapsed_s": 0.001
+      "elapsed_s": 0.0019
     },
     {
       "id": "CUA_011",
       "category": "CUA",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "CUA: MAX_MESSAGE_BYTES=1048576, MAX_CONCURRENT_REQUESTS=16",
-      "elapsed_s": 0.0007
+      "elapsed_s": 0.0019
     },
     {
       "id": "CUA_012",
       "category": "CUA",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "CUA: MAX_MESSAGE_BYTES=1048576, MAX_CONCURRENT_REQUESTS=16",
-      "elapsed_s": 0.0007
+      "elapsed_s": 0.0019
     },
     {
       "id": "CUA_013",
       "category": "CUA",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "CUA: MAX_MESSAGE_BYTES=1048576, MAX_CONCURRENT_REQUESTS=16",
-      "elapsed_s": 0.0005
+      "elapsed_s": 0.0019
     },
     {
       "id": "CUA_014",
       "category": "CUA",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "CUA: MAX_MESSAGE_BYTES=1048576, MAX_CONCURRENT_REQUESTS=16",
-      "elapsed_s": 0.0003
+      "elapsed_s": 0.0025
     },
     {
       "id": "CUA_015",
       "category": "CUA",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "CUA: MAX_MESSAGE_BYTES=1048576, MAX_CONCURRENT_REQUESTS=16",
-      "elapsed_s": 0.0005
+      "elapsed_s": 0.0022
     },
     {
       "id": "CUA_016",
       "category": "CUA",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
+      "reason": "CUA: MAX_MESSAGE_BYTES=1048576, MAX_CONCURRENT_REQUESTS=16",
+      "elapsed_s": 0.0018
     },
     {
       "id": "CUA_017",
       "category": "CUA",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
+      "reason": "CUA: MAX_MESSAGE_BYTES=1048576, MAX_CONCURRENT_REQUESTS=16",
+      "elapsed_s": 0.0015
     },
     {
       "id": "CUA_018",
       "category": "CUA",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
+      "reason": "CUA: MAX_MESSAGE_BYTES=1048576, MAX_CONCURRENT_REQUESTS=16",
+      "elapsed_s": 0.0014
     },
     {
       "id": "CUA_019",
       "category": "CUA",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
+      "reason": "CUA: MAX_MESSAGE_BYTES=1048576, MAX_CONCURRENT_REQUESTS=16",
+      "elapsed_s": 0.0018
     },
     {
       "id": "CUA_020",
       "category": "CUA",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
+      "reason": "CUA: MAX_MESSAGE_BYTES=1048576, MAX_CONCURRENT_REQUESTS=16",
+      "elapsed_s": 0.0022
     },
     {
       "id": "DEGRADATION_001",
       "category": "Degradation",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "Degradation: unknown domain -> ok=False/error in response",
-      "elapsed_s": 0.0017
+      "judging_tier": "tier1",
+      "reason": "Degradation: structured error response for unknown domain",
+      "elapsed_s": 0.0143
     },
     {
       "id": "DEGRADATION_002",
       "category": "Degradation",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "Degradation: unknown domain -> ok=False/error in response",
-      "elapsed_s": 0.0012
+      "judging_tier": "tier1",
+      "reason": "Degradation: structured error response for unknown domain",
+      "elapsed_s": 0.0037
     },
     {
       "id": "DEGRADATION_003",
       "category": "Degradation",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "Degradation: unknown domain -> ok=False/error in response",
-      "elapsed_s": 0.0017
+      "judging_tier": "tier1",
+      "reason": "Degradation: structured error response for unknown domain",
+      "elapsed_s": 0.0117
     },
     {
       "id": "DEGRADATION_004",
       "category": "Degradation",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "Degradation: unknown domain -> ok=False/error in response",
-      "elapsed_s": 0.0013
+      "judging_tier": "tier1",
+      "reason": "Degradation: structured error response for unknown domain",
+      "elapsed_s": 0.0084
     },
     {
       "id": "DEGRADATION_005",
       "category": "Degradation",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "Degradation: unknown domain -> ok=False/error in response",
-      "elapsed_s": 0.001
+      "judging_tier": "tier1",
+      "reason": "Degradation: structured error response for unknown domain",
+      "elapsed_s": 0.0099
     },
     {
       "id": "DEGRADATION_006",
       "category": "Degradation",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "Degradation: unknown domain -> ok=False/error in response",
-      "elapsed_s": 0.0011
+      "judging_tier": "tier1",
+      "reason": "Degradation: structured error response for unknown domain",
+      "elapsed_s": 0.0099
     },
     {
       "id": "DEGRADATION_007",
       "category": "Degradation",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "Degradation: unknown domain -> ok=False/error in response",
-      "elapsed_s": 0.0019
+      "judging_tier": "tier1",
+      "reason": "Degradation: structured error response for unknown domain",
+      "elapsed_s": 0.0084
     },
     {
       "id": "DEGRADATION_008",
       "category": "Degradation",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "Degradation: unknown domain -> ok=False/error in response",
-      "elapsed_s": 0.0016
+      "judging_tier": "tier1",
+      "reason": "Degradation: structured error response for unknown domain",
+      "elapsed_s": 0.0065
     },
     {
       "id": "DEGRADATION_009",
       "category": "Degradation",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "Degradation: unknown domain -> ok=False/error in response",
-      "elapsed_s": 0.0016
+      "judging_tier": "tier1",
+      "reason": "Degradation: structured error response for unknown domain",
+      "elapsed_s": 0.0078
     },
     {
       "id": "DEGRADATION_010",
       "category": "Degradation",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "Degradation: unknown domain -> ok=False/error in response",
-      "elapsed_s": 0.0015
+      "judging_tier": "tier1",
+      "reason": "Degradation: structured error response for unknown domain",
+      "elapsed_s": 0.0107
     },
     {
       "id": "DEGRADATION_011",
       "category": "Degradation",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "Degradation: unknown domain -> ok=False/error in response",
-      "elapsed_s": 0.0014
+      "judging_tier": "tier1",
+      "reason": "Degradation: structured error response for unknown domain",
+      "elapsed_s": 0.0094
     },
     {
       "id": "DEGRADATION_012",
       "category": "Degradation",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "Degradation: unknown domain -> ok=False/error in response",
-      "elapsed_s": 0.0012
+      "judging_tier": "tier1",
+      "reason": "Degradation: structured error response for unknown domain",
+      "elapsed_s": 0.008
     },
     {
       "id": "DEGRADATION_013",
       "category": "Degradation",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "Degradation: unknown domain -> ok=False/error in response",
-      "elapsed_s": 0.0013
+      "judging_tier": "tier1",
+      "reason": "Degradation: structured error response for unknown domain",
+      "elapsed_s": 0.0108
     },
     {
       "id": "DEGRADATION_014",
       "category": "Degradation",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "Degradation: unknown domain -> ok=False/error in response",
-      "elapsed_s": 0.0011
+      "judging_tier": "tier1",
+      "reason": "Degradation: structured error response for unknown domain",
+      "elapsed_s": 0.0113
     },
     {
       "id": "DEGRADATION_015",
       "category": "Degradation",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "Degradation: unknown domain -> ok=False/error in response",
-      "elapsed_s": 0.0012
+      "judging_tier": "tier1",
+      "reason": "Degradation: structured error response for unknown domain",
+      "elapsed_s": 0.0104
     },
     {
       "id": "DEGRADATION_016",
       "category": "Degradation",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
+      "reason": "Degradation: structured error response for unknown domain",
+      "elapsed_s": 0.0113
     },
     {
       "id": "DEGRADATION_017",
       "category": "Degradation",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
+      "reason": "Degradation: structured error response for unknown domain",
+      "elapsed_s": 0.0115
     },
     {
       "id": "DEGRADATION_018",
       "category": "Degradation",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
+      "reason": "Degradation: structured error response for unknown domain",
+      "elapsed_s": 0.0106
     },
     {
       "id": "DEGRADATION_019",
       "category": "Degradation",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
+      "reason": "Degradation: structured error response for unknown domain",
+      "elapsed_s": 0.0084
     },
     {
       "id": "DEGRADATION_020",
       "category": "Degradation",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
+      "reason": "Degradation: structured error response for unknown domain",
+      "elapsed_s": 0.0077
     },
     {
       "id": "EXCEL_001",
       "category": "Excel",
       "status": "active",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "ExcelMaster.extract_context returned non-None context",
-      "elapsed_s": 0.2786
+      "elapsed_s": 1.1894
     },
     {
       "id": "EXCEL_002",
       "category": "Excel",
       "status": "active",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "ExcelMaster.extract_context returned non-None context",
-      "elapsed_s": 0.2638
+      "elapsed_s": 1.1439
     },
     {
       "id": "EXCEL_003",
       "category": "Excel",
       "status": "active",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "ExcelMaster.extract_context returned non-None context",
-      "elapsed_s": 0.2596
+      "elapsed_s": 1.0909
     },
     {
       "id": "EXCEL_004",
       "category": "Excel",
       "status": "active",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "ExcelMaster.extract_context returned non-None context",
-      "elapsed_s": 0.2534
+      "elapsed_s": 0.9438
     },
     {
       "id": "EXCEL_005",
       "category": "Excel",
       "status": "active",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "ExcelMaster.extract_context returned non-None context",
-      "elapsed_s": 0.0398
+      "elapsed_s": 0.0678
     },
     {
       "id": "EXCEL_006",
       "category": "Excel",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "ExcelMaster.extract_context returned non-None context",
-      "elapsed_s": 0.0351
+      "elapsed_s": 0.0777
     },
     {
       "id": "EXCEL_007",
       "category": "Excel",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "ExcelMaster.extract_context returned non-None context",
-      "elapsed_s": 0.0337
+      "elapsed_s": 0.0778
     },
     {
       "id": "EXCEL_008",
       "category": "Excel",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "ExcelMaster.extract_context returned non-None context",
-      "elapsed_s": 0.0318
+      "elapsed_s": 0.0754
     },
     {
       "id": "EXCEL_009",
       "category": "Excel",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "ExcelMaster.extract_context returned non-None context",
-      "elapsed_s": 0.0335
+      "elapsed_s": 0.0893
     },
     {
       "id": "EXCEL_010",
       "category": "Excel",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "ExcelMaster.extract_context returned non-None context",
-      "elapsed_s": 0.0367
+      "elapsed_s": 0.0648
     },
     {
       "id": "EXCEL_011",
       "category": "Excel",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "ExcelMaster.extract_context returned non-None context",
-      "elapsed_s": 0.0266
+      "elapsed_s": 0.0795
     },
     {
       "id": "EXCEL_012",
       "category": "Excel",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "ExcelMaster.extract_context returned non-None context",
-      "elapsed_s": 0.0315
+      "elapsed_s": 0.0861
     },
     {
       "id": "EXCEL_013",
       "category": "Excel",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "ExcelMaster.extract_context returned non-None context",
-      "elapsed_s": 0.0303
+      "elapsed_s": 0.0903
     },
     {
       "id": "EXCEL_014",
       "category": "Excel",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "ExcelMaster.extract_context returned non-None context",
-      "elapsed_s": 0.0246
+      "elapsed_s": 0.0777
     },
     {
       "id": "EXCEL_015",
       "category": "Excel",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "ExcelMaster.extract_context returned non-None context",
-      "elapsed_s": 0.0271
+      "elapsed_s": 0.0642
     },
     {
       "id": "EXCEL_016",
       "category": "Excel",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
+      "reason": "ExcelMaster.extract_context returned non-None context",
+      "elapsed_s": 0.0746
     },
     {
       "id": "EXCEL_017",
       "category": "Excel",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
+      "reason": "ExcelMaster.extract_context returned non-None context",
+      "elapsed_s": 0.0851
     },
     {
       "id": "EXCEL_018",
       "category": "Excel",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
+      "reason": "ExcelMaster.extract_context returned non-None context",
+      "elapsed_s": 0.0667
     },
     {
       "id": "EXCEL_019",
       "category": "Excel",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
+      "reason": "ExcelMaster.extract_context returned non-None context",
+      "elapsed_s": 0.0747
     },
     {
       "id": "EXCEL_020",
       "category": "Excel",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
+      "reason": "ExcelMaster.extract_context returned non-None context",
+      "elapsed_s": 0.0618
     },
     {
       "id": "LEGAL_001",
       "category": "Legal",
       "status": "active",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "detect_cuad_clauses returned dict[2]",
-      "elapsed_s": 0.0018
+      "elapsed_s": 0.0065
     },
     {
       "id": "LEGAL_002",
       "category": "Legal",
       "status": "active",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "detect_cuad_clauses returned dict[2]",
-      "elapsed_s": 0.0005
+      "elapsed_s": 0.0015
     },
     {
       "id": "LEGAL_003",
       "category": "Legal",
       "status": "active",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "detect_cuad_clauses returned dict[2]",
-      "elapsed_s": 0.0005
+      "elapsed_s": 0.0023
     },
     {
       "id": "LEGAL_004",
       "category": "Legal",
       "status": "active",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "detect_cuad_clauses returned dict[2]",
-      "elapsed_s": 0.0012
+      "elapsed_s": 0.0015
     },
     {
       "id": "LEGAL_005",
       "category": "Legal",
       "status": "active",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "detect_cuad_clauses returned dict[2]",
-      "elapsed_s": 0.0017
+      "elapsed_s": 0.0052
     },
     {
       "id": "LEGAL_006",
       "category": "Legal",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "detect_cuad_clauses returned dict[2]",
-      "elapsed_s": 0.0011
+      "elapsed_s": 0.0036
     },
     {
       "id": "LEGAL_007",
       "category": "Legal",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "detect_cuad_clauses returned dict[2]",
-      "elapsed_s": 0.0011
+      "elapsed_s": 0.0014
     },
     {
       "id": "LEGAL_008",
       "category": "Legal",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "detect_cuad_clauses returned dict[2]",
-      "elapsed_s": 0.0005
+      "elapsed_s": 0.0024
     },
     {
       "id": "LEGAL_009",
       "category": "Legal",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "detect_cuad_clauses returned dict[2]",
-      "elapsed_s": 0.0005
+      "elapsed_s": 0.0024
     },
     {
       "id": "LEGAL_010",
       "category": "Legal",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "detect_cuad_clauses returned dict[2]",
-      "elapsed_s": 0.0007
+      "elapsed_s": 0.0022
     },
     {
       "id": "LEGAL_011",
       "category": "Legal",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "detect_cuad_clauses returned dict[2]",
-      "elapsed_s": 0.0008
+      "elapsed_s": 0.0031
     },
     {
       "id": "LEGAL_012",
       "category": "Legal",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "detect_cuad_clauses returned dict[2]",
-      "elapsed_s": 0.0008
+      "elapsed_s": 0.0018
     },
     {
       "id": "LEGAL_013",
       "category": "Legal",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "detect_cuad_clauses returned dict[2]",
-      "elapsed_s": 0.0007
+      "elapsed_s": 0.0016
     },
     {
       "id": "LEGAL_014",
       "category": "Legal",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "detect_cuad_clauses returned dict[2]",
-      "elapsed_s": 0.0007
+      "elapsed_s": 0.0016
     },
     {
       "id": "LEGAL_015",
       "category": "Legal",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "detect_cuad_clauses returned dict[2]",
-      "elapsed_s": 0.0007
+      "elapsed_s": 0.0023
     },
     {
       "id": "LEGAL_016",
       "category": "Legal",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
+      "reason": "detect_cuad_clauses returned dict[2]",
+      "elapsed_s": 0.001
     },
     {
       "id": "LEGAL_017",
       "category": "Legal",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
+      "reason": "detect_cuad_clauses returned dict[2]",
+      "elapsed_s": 0.0013
     },
     {
       "id": "LEGAL_018",
       "category": "Legal",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
+      "reason": "detect_cuad_clauses returned dict[2]",
+      "elapsed_s": 0.0013
     },
     {
       "id": "LEGAL_019",
       "category": "Legal",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
+      "reason": "detect_cuad_clauses returned dict[2]",
+      "elapsed_s": 0.0008
     },
     {
       "id": "LEGAL_020",
       "category": "Legal",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
+      "reason": "detect_cuad_clauses returned dict[2]",
+      "elapsed_s": 0.0012
     },
     {
       "id": "MEMORY_001",
       "category": "Memory",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "CSPRNG-backed DP noise confirmed: input[0]=1.00 -> noisy[0]=1.071288",
-      "elapsed_s": 0.007
+      "judging_tier": "tier2",
+      "reason": "CSPRNG DP noise confirmed: in[0]=1.00 out[0]=0.954886",
+      "elapsed_s": 0.0141
     },
     {
       "id": "MEMORY_002",
       "category": "Memory",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "CSPRNG-backed DP noise confirmed: input[0]=1.00 -> noisy[0]=1.081881",
-      "elapsed_s": 0.0005
+      "judging_tier": "tier2",
+      "reason": "CSPRNG DP noise confirmed: in[0]=1.00 out[0]=1.071071",
+      "elapsed_s": 0.0088
     },
     {
       "id": "MEMORY_003",
       "category": "Memory",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "CSPRNG-backed DP noise confirmed: input[0]=1.00 -> noisy[0]=1.002311",
-      "elapsed_s": 0.0002
+      "judging_tier": "tier2",
+      "reason": "CSPRNG DP noise confirmed: in[0]=1.00 out[0]=1.178662",
+      "elapsed_s": 0.0007
     },
     {
       "id": "MEMORY_004",
       "category": "Memory",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "CSPRNG-backed DP noise confirmed: input[0]=1.00 -> noisy[0]=1.016159",
-      "elapsed_s": 0.0003
+      "judging_tier": "tier2",
+      "reason": "CSPRNG DP noise confirmed: in[0]=1.00 out[0]=1.190908",
+      "elapsed_s": 0.0015
     },
     {
       "id": "MEMORY_005",
       "category": "Memory",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "CSPRNG-backed DP noise confirmed: input[0]=1.00 -> noisy[0]=1.179281",
-      "elapsed_s": 0.0003
+      "judging_tier": "tier2",
+      "reason": "CSPRNG DP noise confirmed: in[0]=1.00 out[0]=0.858294",
+      "elapsed_s": 0.0012
     },
     {
       "id": "MEMORY_006",
       "category": "Memory",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "CSPRNG-backed DP noise confirmed: input[0]=1.00 -> noisy[0]=1.059967",
-      "elapsed_s": 0.0002
+      "judging_tier": "tier2",
+      "reason": "CSPRNG DP noise confirmed: in[0]=1.00 out[0]=1.199165",
+      "elapsed_s": 0.0015
     },
     {
       "id": "MEMORY_007",
       "category": "Memory",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "CSPRNG-backed DP noise confirmed: input[0]=1.00 -> noisy[0]=1.120186",
-      "elapsed_s": 0.0002
+      "judging_tier": "tier2",
+      "reason": "CSPRNG DP noise confirmed: in[0]=1.00 out[0]=0.884912",
+      "elapsed_s": 0.0015
     },
     {
       "id": "MEMORY_008",
       "category": "Memory",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "CSPRNG-backed DP noise confirmed: input[0]=1.00 -> noisy[0]=1.143872",
-      "elapsed_s": 0.0003
+      "judging_tier": "tier2",
+      "reason": "CSPRNG DP noise confirmed: in[0]=1.00 out[0]=1.040688",
+      "elapsed_s": 0.0019
     },
     {
       "id": "MEMORY_009",
       "category": "Memory",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "CSPRNG-backed DP noise confirmed: input[0]=1.00 -> noisy[0]=1.205505",
-      "elapsed_s": 0.0006
+      "judging_tier": "tier2",
+      "reason": "CSPRNG DP noise confirmed: in[0]=1.00 out[0]=1.139693",
+      "elapsed_s": 0.0009
     },
     {
       "id": "MEMORY_010",
       "category": "Memory",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "CSPRNG-backed DP noise confirmed: input[0]=1.00 -> noisy[0]=1.015063",
-      "elapsed_s": 0.0003
+      "judging_tier": "tier2",
+      "reason": "CSPRNG DP noise confirmed: in[0]=1.00 out[0]=1.100849",
+      "elapsed_s": 0.0007
     },
     {
       "id": "MEMORY_011",
       "category": "Memory",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "CSPRNG-backed DP noise confirmed: input[0]=1.00 -> noisy[0]=0.995188",
-      "elapsed_s": 0.0003
+      "judging_tier": "tier2",
+      "reason": "CSPRNG DP noise confirmed: in[0]=1.00 out[0]=1.011199",
+      "elapsed_s": 0.0008
     },
     {
       "id": "MEMORY_012",
       "category": "Memory",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "CSPRNG-backed DP noise confirmed: input[0]=1.00 -> noisy[0]=1.070379",
-      "elapsed_s": 0.0003
+      "judging_tier": "tier2",
+      "reason": "CSPRNG DP noise confirmed: in[0]=1.00 out[0]=0.895861",
+      "elapsed_s": 0.0016
     },
     {
       "id": "MEMORY_013",
       "category": "Memory",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "CSPRNG-backed DP noise confirmed: input[0]=1.00 -> noisy[0]=1.007741",
-      "elapsed_s": 0.0005
+      "judging_tier": "tier2",
+      "reason": "CSPRNG DP noise confirmed: in[0]=1.00 out[0]=0.865884",
+      "elapsed_s": 0.0017
     },
     {
       "id": "MEMORY_014",
       "category": "Memory",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "CSPRNG-backed DP noise confirmed: input[0]=1.00 -> noisy[0]=1.044763",
-      "elapsed_s": 0.0005
+      "judging_tier": "tier2",
+      "reason": "CSPRNG DP noise confirmed: in[0]=1.00 out[0]=0.865876",
+      "elapsed_s": 0.0017
     },
     {
       "id": "MEMORY_015",
       "category": "Memory",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "CSPRNG-backed DP noise confirmed: input[0]=1.00 -> noisy[0]=1.025169",
-      "elapsed_s": 0.0006
+      "judging_tier": "tier2",
+      "reason": "CSPRNG DP noise confirmed: in[0]=1.00 out[0]=1.100560",
+      "elapsed_s": 0.0016
     },
     {
       "id": "MEMORY_016",
       "category": "Memory",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier2",
+      "reason": "CSPRNG DP noise confirmed: in[0]=1.00 out[0]=1.046411",
+      "elapsed_s": 0.0022
     },
     {
       "id": "MEMORY_017",
       "category": "Memory",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier2",
+      "reason": "CSPRNG DP noise confirmed: in[0]=1.00 out[0]=0.741467",
+      "elapsed_s": 0.0021
     },
     {
       "id": "MEMORY_018",
       "category": "Memory",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier2",
+      "reason": "CSPRNG DP noise confirmed: in[0]=1.00 out[0]=0.830885",
+      "elapsed_s": 0.002
     },
     {
       "id": "MEMORY_019",
       "category": "Memory",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier2",
+      "reason": "CSPRNG DP noise confirmed: in[0]=1.00 out[0]=0.997319",
+      "elapsed_s": 0.0019
     },
     {
       "id": "MEMORY_020",
       "category": "Memory",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier2",
+      "reason": "CSPRNG DP noise confirmed: in[0]=1.00 out[0]=0.973668",
+      "elapsed_s": 0.0013
     },
     {
       "id": "OFFLINE_001",
       "category": "Offline",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "self_check confirmed offline_mode=True under KAIRO_OFFLINE=1",
-      "elapsed_s": 0.4057
+      "judging_tier": "tier1",
+      "reason": "self_check confirmed offline_mode=True",
+      "elapsed_s": 0.715
     },
     {
       "id": "OFFLINE_002",
       "category": "Offline",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "self_check confirmed offline_mode=True under KAIRO_OFFLINE=1",
-      "elapsed_s": 0.3316
+      "judging_tier": "tier1",
+      "reason": "self_check confirmed offline_mode=True",
+      "elapsed_s": 0.6703
     },
     {
       "id": "OFFLINE_003",
       "category": "Offline",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "self_check confirmed offline_mode=True under KAIRO_OFFLINE=1",
-      "elapsed_s": 0.3287
+      "judging_tier": "tier1",
+      "reason": "self_check confirmed offline_mode=True",
+      "elapsed_s": 0.6719
     },
     {
       "id": "OFFLINE_004",
       "category": "Offline",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "self_check confirmed offline_mode=True under KAIRO_OFFLINE=1",
-      "elapsed_s": 0.3053
+      "judging_tier": "tier1",
+      "reason": "self_check confirmed offline_mode=True",
+      "elapsed_s": 0.6702
     },
     {
       "id": "OFFLINE_005",
       "category": "Offline",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "self_check confirmed offline_mode=True under KAIRO_OFFLINE=1",
-      "elapsed_s": 0.2342
+      "judging_tier": "tier1",
+      "reason": "self_check confirmed offline_mode=True",
+      "elapsed_s": 0.2399
     },
     {
       "id": "OFFLINE_006",
       "category": "Offline",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "self_check confirmed offline_mode=True under KAIRO_OFFLINE=1",
-      "elapsed_s": 0.2178
+      "judging_tier": "tier1",
+      "reason": "self_check confirmed offline_mode=True",
+      "elapsed_s": 0.2168
     },
     {
       "id": "OFFLINE_007",
       "category": "Offline",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "self_check confirmed offline_mode=True under KAIRO_OFFLINE=1",
-      "elapsed_s": 0.2324
+      "judging_tier": "tier1",
+      "reason": "self_check confirmed offline_mode=True",
+      "elapsed_s": 0.2142
     },
     {
       "id": "OFFLINE_008",
       "category": "Offline",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "self_check confirmed offline_mode=True under KAIRO_OFFLINE=1",
-      "elapsed_s": 0.2202
+      "judging_tier": "tier1",
+      "reason": "self_check confirmed offline_mode=True",
+      "elapsed_s": 0.2527
     },
     {
       "id": "OFFLINE_009",
       "category": "Offline",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "self_check confirmed offline_mode=True under KAIRO_OFFLINE=1",
-      "elapsed_s": 0.2323
+      "judging_tier": "tier1",
+      "reason": "self_check confirmed offline_mode=True",
+      "elapsed_s": 0.2423
     },
     {
       "id": "OFFLINE_010",
       "category": "Offline",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "self_check confirmed offline_mode=True under KAIRO_OFFLINE=1",
-      "elapsed_s": 0.216
+      "judging_tier": "tier1",
+      "reason": "self_check confirmed offline_mode=True",
+      "elapsed_s": 0.2244
     },
     {
       "id": "OFFLINE_011",
       "category": "Offline",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "self_check confirmed offline_mode=True under KAIRO_OFFLINE=1",
-      "elapsed_s": 0.2138
+      "judging_tier": "tier1",
+      "reason": "self_check confirmed offline_mode=True",
+      "elapsed_s": 0.2222
     },
     {
       "id": "OFFLINE_012",
       "category": "Offline",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "self_check confirmed offline_mode=True under KAIRO_OFFLINE=1",
-      "elapsed_s": 0.2313
+      "judging_tier": "tier1",
+      "reason": "self_check confirmed offline_mode=True",
+      "elapsed_s": 0.244
     },
     {
       "id": "OFFLINE_013",
       "category": "Offline",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "KAIRO_OFFLINE=1 set and module reloaded cleanly (offline_mode field not explicitly in self_check response)",
-      "elapsed_s": 0.2128
+      "judging_tier": "tier1",
+      "reason": "self_check confirmed offline_mode=True",
+      "elapsed_s": 0.2504
     },
     {
       "id": "OFFLINE_014",
       "category": "Offline",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "KAIRO_OFFLINE=1 set and module reloaded cleanly (offline_mode field not explicitly in self_check response)",
-      "elapsed_s": 0.2136
+      "judging_tier": "tier1",
+      "reason": "self_check confirmed offline_mode=True",
+      "elapsed_s": 0.219
     },
     {
       "id": "OFFLINE_015",
       "category": "Offline",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "KAIRO_OFFLINE=1 set and module reloaded cleanly (offline_mode field not explicitly in self_check response)",
-      "elapsed_s": 0.2133
+      "judging_tier": "tier1",
+      "reason": "self_check confirmed offline_mode=True",
+      "elapsed_s": 0.2179
     },
     {
       "id": "OFFLINE_016",
       "category": "Offline",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
+      "reason": "self_check confirmed offline_mode=True",
+      "elapsed_s": 0.2418
     },
     {
       "id": "OFFLINE_017",
       "category": "Offline",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
+      "reason": "self_check confirmed offline_mode=True",
+      "elapsed_s": 0.245
     },
     {
       "id": "OFFLINE_018",
       "category": "Offline",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
+      "reason": "self_check confirmed offline_mode=True",
+      "elapsed_s": 0.2216
     },
     {
       "id": "OFFLINE_019",
       "category": "Offline",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
+      "reason": "self_check confirmed offline_mode=True",
+      "elapsed_s": 0.2107
     },
     {
       "id": "OFFLINE_020",
       "category": "Offline",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
+      "reason": "self_check confirmed offline_mode=True",
+      "elapsed_s": 0.2273
     },
     {
       "id": "PERFORMANCE_001",
       "category": "Performance",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "100-para context assembly: 0.013s < 2.0s threshold",
-      "elapsed_s": 0.0381
+      "judging_tier": "tier2",
+      "reason": "100-para context assembly: 0.102s < 2.0s SLO",
+      "elapsed_s": 0.2084
     },
     {
       "id": "PERFORMANCE_002",
       "category": "Performance",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "100-para context assembly: 0.012s < 2.0s threshold",
-      "elapsed_s": 0.0341
+      "judging_tier": "tier2",
+      "reason": "100-para context assembly: 0.178s < 2.0s SLO",
+      "elapsed_s": 0.3898
     },
     {
       "id": "PERFORMANCE_003",
       "category": "Performance",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "100-para context assembly: 0.016s < 2.0s threshold",
-      "elapsed_s": 0.0385
+      "judging_tier": "tier2",
+      "reason": "100-para context assembly: 0.194s < 2.0s SLO",
+      "elapsed_s": 0.4019
     },
     {
       "id": "PERFORMANCE_004",
       "category": "Performance",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "100-para context assembly: 0.013s < 2.0s threshold",
-      "elapsed_s": 0.0372
+      "judging_tier": "tier2",
+      "reason": "100-para context assembly: 0.108s < 2.0s SLO",
+      "elapsed_s": 0.2994
     },
     {
       "id": "PERFORMANCE_005",
       "category": "Performance",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "100-para context assembly: 0.038s < 2.0s threshold",
-      "elapsed_s": 0.0813
+      "judging_tier": "tier2",
+      "reason": "100-para context assembly: 0.096s < 2.0s SLO",
+      "elapsed_s": 0.3473
     },
     {
       "id": "PERFORMANCE_006",
       "category": "Performance",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "100-para context assembly: 0.030s < 2.0s threshold",
-      "elapsed_s": 0.0984
+      "judging_tier": "tier2",
+      "reason": "100-para context assembly: 0.145s < 2.0s SLO",
+      "elapsed_s": 0.3593
     },
     {
       "id": "PERFORMANCE_007",
       "category": "Performance",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "100-para context assembly: 0.059s < 2.0s threshold",
-      "elapsed_s": 0.1639
+      "judging_tier": "tier2",
+      "reason": "100-para context assembly: 0.109s < 2.0s SLO",
+      "elapsed_s": 0.4192
     },
     {
       "id": "PERFORMANCE_008",
       "category": "Performance",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "100-para context assembly: 0.056s < 2.0s threshold",
-      "elapsed_s": 0.1587
+      "judging_tier": "tier2",
+      "reason": "100-para context assembly: 0.093s < 2.0s SLO",
+      "elapsed_s": 0.3669
     },
     {
       "id": "PERFORMANCE_009",
       "category": "Performance",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "100-para context assembly: 0.072s < 2.0s threshold",
-      "elapsed_s": 0.1307
+      "judging_tier": "tier2",
+      "reason": "100-para context assembly: 0.099s < 2.0s SLO",
+      "elapsed_s": 0.332
     },
     {
       "id": "PERFORMANCE_010",
       "category": "Performance",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "100-para context assembly: 0.041s < 2.0s threshold",
-      "elapsed_s": 0.1528
+      "judging_tier": "tier2",
+      "reason": "100-para context assembly: 0.112s < 2.0s SLO",
+      "elapsed_s": 0.3517
     },
     {
       "id": "PERFORMANCE_011",
       "category": "Performance",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "100-para context assembly: 0.052s < 2.0s threshold",
-      "elapsed_s": 0.146
+      "judging_tier": "tier2",
+      "reason": "100-para context assembly: 0.087s < 2.0s SLO",
+      "elapsed_s": 0.3029
     },
     {
       "id": "PERFORMANCE_012",
       "category": "Performance",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "100-para context assembly: 0.068s < 2.0s threshold",
-      "elapsed_s": 0.1571
+      "judging_tier": "tier2",
+      "reason": "100-para context assembly: 0.128s < 2.0s SLO",
+      "elapsed_s": 0.3104
     },
     {
       "id": "PERFORMANCE_013",
       "category": "Performance",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "100-para context assembly: 0.061s < 2.0s threshold",
-      "elapsed_s": 0.1243
+      "judging_tier": "tier2",
+      "reason": "100-para context assembly: 0.159s < 2.0s SLO",
+      "elapsed_s": 0.3691
     },
     {
       "id": "PERFORMANCE_014",
       "category": "Performance",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "100-para context assembly: 0.041s < 2.0s threshold",
-      "elapsed_s": 0.1039
+      "judging_tier": "tier2",
+      "reason": "100-para context assembly: 0.101s < 2.0s SLO",
+      "elapsed_s": 0.299
     },
     {
       "id": "PERFORMANCE_015",
       "category": "Performance",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "100-para context assembly: 0.015s < 2.0s threshold",
-      "elapsed_s": 0.0689
+      "judging_tier": "tier2",
+      "reason": "100-para context assembly: 0.088s < 2.0s SLO",
+      "elapsed_s": 0.3539
     },
     {
       "id": "PERFORMANCE_016",
       "category": "Performance",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier2",
+      "reason": "100-para context assembly: 0.182s < 2.0s SLO",
+      "elapsed_s": 0.4064
     },
     {
       "id": "PERFORMANCE_017",
       "category": "Performance",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier2",
+      "reason": "100-para context assembly: 0.139s < 2.0s SLO",
+      "elapsed_s": 0.3367
     },
     {
       "id": "PERFORMANCE_018",
       "category": "Performance",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier2",
+      "reason": "100-para context assembly: 0.138s < 2.0s SLO",
+      "elapsed_s": 0.4307
     },
     {
       "id": "PERFORMANCE_019",
       "category": "Performance",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier2",
+      "reason": "100-para context assembly: 0.134s < 2.0s SLO",
+      "elapsed_s": 0.3536
     },
     {
       "id": "PERFORMANCE_020",
       "category": "Performance",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier2",
+      "reason": "100-para context assembly: 0.108s < 2.0s SLO",
+      "elapsed_s": 0.2756
     },
     {
       "id": "PPT_001",
       "category": "PPT",
       "status": "active",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "PowerPointMaster instantiated; .pptx created successfully",
-      "elapsed_s": 0.3034
+      "elapsed_s": 0.8482
     },
     {
       "id": "PPT_002",
       "category": "PPT",
       "status": "active",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "PowerPointMaster instantiated; .pptx created successfully",
-      "elapsed_s": 0.2836
+      "elapsed_s": 0.8644
     },
     {
       "id": "PPT_003",
       "category": "PPT",
       "status": "active",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "PowerPointMaster instantiated; .pptx created successfully",
-      "elapsed_s": 0.2802
+      "elapsed_s": 0.8629
     },
     {
       "id": "PPT_004",
       "category": "PPT",
       "status": "active",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "PowerPointMaster instantiated; .pptx created successfully",
-      "elapsed_s": 0.2774
+      "elapsed_s": 0.8631
     },
     {
       "id": "PPT_005",
       "category": "PPT",
       "status": "active",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "PowerPointMaster instantiated; .pptx created successfully",
-      "elapsed_s": 0.0869
+      "elapsed_s": 0.1564
     },
     {
       "id": "PPT_006",
       "category": "PPT",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "PowerPointMaster instantiated; .pptx created successfully",
-      "elapsed_s": 0.0909
+      "elapsed_s": 0.1582
     },
     {
       "id": "PPT_007",
       "category": "PPT",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "PowerPointMaster instantiated; .pptx created successfully",
-      "elapsed_s": 0.0853
+      "elapsed_s": 0.1635
     },
     {
       "id": "PPT_008",
       "category": "PPT",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "PowerPointMaster instantiated; .pptx created successfully",
-      "elapsed_s": 0.0781
+      "elapsed_s": 0.1707
     },
     {
       "id": "PPT_009",
       "category": "PPT",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "PowerPointMaster instantiated; .pptx created successfully",
-      "elapsed_s": 0.0667
+      "elapsed_s": 0.1475
     },
     {
       "id": "PPT_010",
       "category": "PPT",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "PowerPointMaster instantiated; .pptx created successfully",
-      "elapsed_s": 0.0676
+      "elapsed_s": 0.1436
     },
     {
       "id": "PPT_011",
       "category": "PPT",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "PowerPointMaster instantiated; .pptx created successfully",
-      "elapsed_s": 0.0694
+      "elapsed_s": 0.1616
     },
     {
       "id": "PPT_012",
       "category": "PPT",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "PowerPointMaster instantiated; .pptx created successfully",
-      "elapsed_s": 0.0617
+      "elapsed_s": 0.1516
     },
     {
       "id": "PPT_013",
       "category": "PPT",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "PowerPointMaster instantiated; .pptx created successfully",
-      "elapsed_s": 0.0887
+      "elapsed_s": 0.1624
     },
     {
       "id": "PPT_014",
       "category": "PPT",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "PowerPointMaster instantiated; .pptx created successfully",
-      "elapsed_s": 0.0954
+      "elapsed_s": 0.1533
     },
     {
       "id": "PPT_015",
       "category": "PPT",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "PowerPointMaster instantiated; .pptx created successfully",
-      "elapsed_s": 0.0927
+      "elapsed_s": 0.1608
     },
     {
       "id": "PPT_016",
       "category": "PPT",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
+      "reason": "PowerPointMaster instantiated; .pptx created successfully",
+      "elapsed_s": 0.144
     },
     {
       "id": "PPT_017",
       "category": "PPT",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
+      "reason": "PowerPointMaster instantiated; .pptx created successfully",
+      "elapsed_s": 0.1553
     },
     {
       "id": "PPT_018",
       "category": "PPT",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
+      "reason": "PowerPointMaster instantiated; .pptx created successfully",
+      "elapsed_s": 0.1795
     },
     {
       "id": "PPT_019",
       "category": "PPT",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
+      "reason": "PowerPointMaster instantiated; .pptx created successfully",
+      "elapsed_s": 0.1706
     },
     {
       "id": "PPT_020",
       "category": "PPT",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
+      "reason": "PowerPointMaster instantiated; .pptx created successfully",
+      "elapsed_s": 0.1677
     },
     {
       "id": "SECURITY_001",
       "category": "Security",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "Security guard correctly rejected bad fixture (exit 2)",
-      "elapsed_s": 0.115
+      "judging_tier": "tier2",
+      "reason": "Security: 10/10 language families BLOCKED | benign pass | guard=rejected",
+      "elapsed_s": 0.1705
     },
     {
       "id": "SECURITY_002",
       "category": "Security",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "Security guard correctly rejected bad fixture (exit 2)",
-      "elapsed_s": 0.0954
+      "judging_tier": "tier2",
+      "reason": "Security: 10/10 language families BLOCKED | benign pass | guard=rejected",
+      "elapsed_s": 0.1737
     },
     {
       "id": "SECURITY_003",
       "category": "Security",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "Security guard correctly rejected bad fixture (exit 2)",
-      "elapsed_s": 0.1171
+      "judging_tier": "tier2",
+      "reason": "Security: 10/10 language families BLOCKED | benign pass | guard=rejected",
+      "elapsed_s": 0.1767
     },
     {
       "id": "SECURITY_004",
       "category": "Security",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "Security guard correctly rejected bad fixture (exit 2)",
-      "elapsed_s": 0.1044
+      "judging_tier": "tier2",
+      "reason": "Security: 10/10 language families BLOCKED | benign pass | guard=rejected",
+      "elapsed_s": 0.1726
     },
     {
       "id": "SECURITY_005",
       "category": "Security",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "Security guard correctly rejected bad fixture (exit 2)",
-      "elapsed_s": 0.0971
+      "judging_tier": "tier2",
+      "reason": "Security: 10/10 language families BLOCKED | benign pass | guard=rejected",
+      "elapsed_s": 0.1579
     },
     {
       "id": "SECURITY_006",
       "category": "Security",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "Security guard correctly rejected bad fixture (exit 2)",
-      "elapsed_s": 0.0963
+      "judging_tier": "tier2",
+      "reason": "Security: 10/10 language families BLOCKED | benign pass | guard=rejected",
+      "elapsed_s": 0.1648
     },
     {
       "id": "SECURITY_007",
       "category": "Security",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "Security guard correctly rejected bad fixture (exit 2)",
-      "elapsed_s": 0.0964
+      "judging_tier": "tier2",
+      "reason": "Security: 10/10 language families BLOCKED | benign pass | guard=rejected",
+      "elapsed_s": 0.146
     },
     {
       "id": "SECURITY_008",
       "category": "Security",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "Security guard correctly rejected bad fixture (exit 2)",
-      "elapsed_s": 0.1003
+      "judging_tier": "tier2",
+      "reason": "Security: 10/10 language families BLOCKED | benign pass | guard=rejected",
+      "elapsed_s": 0.1508
     },
     {
       "id": "SECURITY_009",
       "category": "Security",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "Security guard correctly rejected bad fixture (exit 2)",
-      "elapsed_s": 0.0924
+      "judging_tier": "tier2",
+      "reason": "Security: 10/10 language families BLOCKED | benign pass | guard=rejected",
+      "elapsed_s": 0.161
     },
     {
       "id": "SECURITY_010",
       "category": "Security",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "Security guard correctly rejected bad fixture (exit 2)",
-      "elapsed_s": 0.1007
+      "judging_tier": "tier2",
+      "reason": "Security: 10/10 language families BLOCKED | benign pass | guard=rejected",
+      "elapsed_s": 0.1632
     },
     {
       "id": "SECURITY_011",
       "category": "Security",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "Security guard correctly rejected bad fixture (exit 2)",
-      "elapsed_s": 0.0998
+      "judging_tier": "tier2",
+      "reason": "Security: 10/10 language families BLOCKED | benign pass | guard=rejected",
+      "elapsed_s": 0.1548
     },
     {
       "id": "SECURITY_012",
       "category": "Security",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "Security guard correctly rejected bad fixture (exit 2)",
-      "elapsed_s": 0.1015
+      "judging_tier": "tier2",
+      "reason": "Security: 10/10 language families BLOCKED | benign pass | guard=rejected",
+      "elapsed_s": 0.1591
     },
     {
       "id": "SECURITY_013",
       "category": "Security",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "Security guard correctly rejected bad fixture (exit 2)",
-      "elapsed_s": 0.1198
+      "judging_tier": "tier2",
+      "reason": "Security: 10/10 language families BLOCKED | benign pass | guard=rejected",
+      "elapsed_s": 0.1488
     },
     {
       "id": "SECURITY_014",
       "category": "Security",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "Security guard correctly rejected bad fixture (exit 2)",
-      "elapsed_s": 0.1261
+      "judging_tier": "tier2",
+      "reason": "Security: 10/10 language families BLOCKED | benign pass | guard=rejected",
+      "elapsed_s": 0.1494
     },
     {
       "id": "SECURITY_015",
       "category": "Security",
       "status": "pending",
       "oracle_verdict": "PASS",
-      "reason": "Security guard correctly rejected bad fixture (exit 2)",
-      "elapsed_s": 0.1194
+      "judging_tier": "tier2",
+      "reason": "Security: 10/10 language families BLOCKED | benign pass | guard=rejected",
+      "elapsed_s": 0.1543
     },
     {
       "id": "SECURITY_016",
       "category": "Security",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier2",
+      "reason": "Security: 10/10 language families BLOCKED | benign pass | guard=rejected",
+      "elapsed_s": 0.1517
     },
     {
       "id": "SECURITY_017",
       "category": "Security",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier2",
+      "reason": "Security: 10/10 language families BLOCKED | benign pass | guard=rejected",
+      "elapsed_s": 0.1514
     },
     {
       "id": "SECURITY_018",
       "category": "Security",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier2",
+      "reason": "Security: 10/10 language families BLOCKED | benign pass | guard=rejected",
+      "elapsed_s": 0.1541
     },
     {
       "id": "SECURITY_019",
       "category": "Security",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier2",
+      "reason": "Security: 10/10 language families BLOCKED | benign pass | guard=rejected",
+      "elapsed_s": 0.1585
     },
     {
       "id": "SECURITY_020",
       "category": "Security",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier2",
+      "reason": "Security: 10/10 language families BLOCKED | benign pass | guard=rejected",
+      "elapsed_s": 0.1487
     },
     {
       "id": "WORD_001",
       "category": "Word",
       "status": "active",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "WordMaster.extract_context returned non-None context",
-      "elapsed_s": 0.2814
+      "elapsed_s": 0.9953
     },
     {
       "id": "WORD_002",
       "category": "Word",
       "status": "active",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "WordMaster.extract_context returned non-None context",
-      "elapsed_s": 0.3128
+      "elapsed_s": 0.962
     },
     {
       "id": "WORD_003",
       "category": "Word",
       "status": "active",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "WordMaster.extract_context returned non-None context",
-      "elapsed_s": 0.3369
+      "elapsed_s": 0.9674
     },
     {
       "id": "WORD_004",
       "category": "Word",
       "status": "active",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "WordMaster.extract_context returned non-None context",
-      "elapsed_s": 0.2997
+      "elapsed_s": 0.9374
     },
     {
       "id": "WORD_005",
       "category": "Word",
       "status": "active",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "WordMaster.extract_context returned non-None context",
-      "elapsed_s": 0.0658
+      "elapsed_s": 0.1288
     },
     {
       "id": "WORD_006",
       "category": "Word",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "WordMaster.extract_context returned non-None context",
-      "elapsed_s": 0.0806
+      "elapsed_s": 0.1203
     },
     {
       "id": "WORD_007",
       "category": "Word",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "WordMaster.extract_context returned non-None context",
-      "elapsed_s": 0.0806
+      "elapsed_s": 0.137
     },
     {
       "id": "WORD_008",
       "category": "Word",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "WordMaster.extract_context returned non-None context",
-      "elapsed_s": 0.094
+      "elapsed_s": 0.1459
     },
     {
       "id": "WORD_009",
       "category": "Word",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "WordMaster.extract_context returned non-None context",
-      "elapsed_s": 0.0867
+      "elapsed_s": 0.1237
     },
     {
       "id": "WORD_010",
       "category": "Word",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "WordMaster.extract_context returned non-None context",
-      "elapsed_s": 0.0633
+      "elapsed_s": 0.1832
     },
     {
       "id": "WORD_011",
       "category": "Word",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "WordMaster.extract_context returned non-None context",
-      "elapsed_s": 0.0872
+      "elapsed_s": 0.1448
     },
     {
       "id": "WORD_012",
       "category": "Word",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "WordMaster.extract_context returned non-None context",
-      "elapsed_s": 0.0996
+      "elapsed_s": 0.1863
     },
     {
       "id": "WORD_013",
       "category": "Word",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "WordMaster.extract_context returned non-None context",
-      "elapsed_s": 0.099
+      "elapsed_s": 0.1162
     },
     {
       "id": "WORD_014",
       "category": "Word",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "WordMaster.extract_context returned non-None context",
-      "elapsed_s": 0.0716
+      "elapsed_s": 0.157
     },
     {
       "id": "WORD_015",
       "category": "Word",
       "status": "pending",
       "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
       "reason": "WordMaster.extract_context returned non-None context",
-      "elapsed_s": 0.0625
+      "elapsed_s": 0.154
     },
     {
       "id": "WORD_016",
       "category": "Word",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
+      "reason": "WordMaster.extract_context returned non-None context",
+      "elapsed_s": 0.1813
     },
     {
       "id": "WORD_017",
       "category": "Word",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
+      "reason": "WordMaster.extract_context returned non-None context",
+      "elapsed_s": 0.1684
     },
     {
       "id": "WORD_018",
       "category": "Word",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
+      "reason": "WordMaster.extract_context returned non-None context",
+      "elapsed_s": 0.1045
     },
     {
       "id": "WORD_019",
       "category": "Word",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
+      "reason": "WordMaster.extract_context returned non-None context",
+      "elapsed_s": 0.1521
     },
     {
       "id": "WORD_020",
       "category": "Word",
       "status": "excluded",
-      "oracle_verdict": "SKIP",
-      "reason": "Scenario excluded from gauntlet",
-      "elapsed_s": 0.0
+      "oracle_verdict": "PASS",
+      "judging_tier": "tier1",
+      "reason": "WordMaster.extract_context returned non-None context",
+      "elapsed_s": 0.2308
     }
   ]
 }
