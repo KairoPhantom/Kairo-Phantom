@@ -527,32 +527,37 @@ def _exec_memory(sandbox_path: str, scenario: Dict[str, Any]) -> Dict[str, str]:
         return _fail(f"Memory executor error: {exc}")
 
 
+import threading
+_offline_env_lock = threading.Lock()
+
+
 def _exec_offline(sandbox_path: str, scenario: Dict[str, Any]) -> Dict[str, str]:
     """Offline domain: verify sidecar self check responds offline_mode=True under KAIRO_OFFLINE=1."""
     import asyncio
-    old_val = os.environ.get("KAIRO_OFFLINE")
-    try:
-        os.environ["KAIRO_OFFLINE"] = "1"
-        import importlib
-        import sidecar.main as km
-        importlib.reload(km)
-        
-        result = asyncio.run(km.handle_request({"action": "self_check"}))
-        if not isinstance(result, dict) or not result.get("ok"):
-            return _fail("Self check failed under KAIRO_OFFLINE=1")
-        
-        data = result.get("data", {})
-        if data.get("offline_mode") is not True:
-            return _fail("Expected offline_mode=True in self check data")
-        
-        return _pass("Offline mode self check oracle passed")
-    except Exception as exc:
-        return _fail(f"Offline executor error: {exc}")
-    finally:
-        if old_val is None:
-            os.environ.pop("KAIRO_OFFLINE", None)
-        else:
-            os.environ["KAIRO_OFFLINE"] = old_val
+    with _offline_env_lock:
+        old_val = os.environ.get("KAIRO_OFFLINE")
+        try:
+            os.environ["KAIRO_OFFLINE"] = "1"
+            import importlib
+            import sidecar.main as km
+            importlib.reload(km)
+            
+            result = asyncio.run(km.handle_request({"action": "self_check"}))
+            if not isinstance(result, dict) or not result.get("ok"):
+                return _fail("Self check failed under KAIRO_OFFLINE=1")
+            
+            data = result.get("data", {})
+            if data.get("offline_mode") is not True:
+                return _fail("Expected offline_mode=True in self check data")
+            
+            return _pass("Offline mode self check oracle passed")
+        except Exception as exc:
+            return _fail(f"Offline executor error: {exc}")
+        finally:
+            if old_val is None:
+                os.environ.pop("KAIRO_OFFLINE", None)
+            else:
+                os.environ["KAIRO_OFFLINE"] = old_val
 
 
 def _exec_degradation(sandbox_path: str, scenario: Dict[str, Any]) -> Dict[str, str]:
