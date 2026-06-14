@@ -1,0 +1,116 @@
+@implemented: UIA-based persistent and diffed world model per active application window
+command: cargo test --test e2e_memory_gauntlet
+
+@implemented: Confidence scoring threshold calibrated against real click success rates
+command: cargo test --test layer2_property_tests
+
+@implemented: Automated user action and routine recording to local TOML templates
+command: cargo test --test layer4_e2e_tests
+
+@implemented: App-aware nested keyboard shortcut templates for Microsoft Office suite
+command: cargo test --test e2e_win_t1
+
+@implemented: Low-level WH_KEYBOARD_LL keyboard hooks to intercept CUA hotkey collisions
+command: cargo test --test layer1_unit_tests
+
+@implemented: Security gate to block CUA execution on disallowed window titles
+command: cargo test --test test_prompt_injection
+
+@implemented: Local MemMachine vectors storing privacy-preserving user style centroids
+command: python -m pytest kairo-sidecar/tests/test_mem_machine.py
+
+@implemented: Strict data provenance validation preventing adapter SFT on unauthorized data
+command: python -m pytest kairo-sidecar/tests/test_production_gates_v2.py -k test_gate01
+
+@implemented: Suffix automaton matching to protect against copyright verbatim text regurgitation
+command: python -m pytest kairo-sidecar/tests/test_bmc_gate.py
+
+@implemented: Multi-platform build and target configurations for Windows, macOS, and Linux
+command: cargo test --test test_cross_platform
+
+@implemented: Multi-app sequence planning for Excel chart export to PowerPoint slide deck
+command: cargo test --test layer5_sim_tests
+
+@implemented: Low-level UI automation input debouncing to prevent recursive trigger loops
+command: cargo test --test layer2_property_tests
+
+@implemented: Human-like mouse movement and keyboard emulation timing delay variances
+command: cargo test --test layer4_e2e_tests
+
+@implemented: Background LiteLLM model warming at boot time to eliminate first-use cold-start
+command: python -m pytest kairo-sidecar/tests/test_passive_preloader.py
+
+@implemented: Automated cache invalidation in World Model on step verification failures
+command: cargo test --test layer5_sim_tests
+
+@implemented: Interactive desktop tray application presenting real-time CUA health metrics
+command: cargo test --test test_domain7_kami
+
+@implemented: Offline-first architecture design allowing fully local CUA execution
+command: cargo test --test test_offline_mode
+
+@implemented: Unicode character mapping support for international keyboard layout configurations
+command: cargo test --test layer1_unit_tests
+
+@implemented: Dynamic coordinate DPI scaling based on physical monitor scale factors
+command: cargo test --test layer1_unit_tests
+
+@implemented: Sliding-window rate limiter enforcing maximum 10 CUA actions per 60 seconds
+command: cargo test --test test_prompt_injection
+
+@implemented: Double-pass visual verification combining UIA checks with local VLM validation
+command: cargo test --test layer5_sim_tests
+
+@implemented: Safe system dialog handling preventing lockups on file save actions
+command: cargo test --test test_domain7_kami
+
+@implemented: Headless environment test execution fallback for local CI gauntlet runs
+command: cargo test --test gauntlet
+
+@implemented: System-level password entry blocking to prevent PII exposure in trace logs
+command: cargo test --test test_prompt_injection
+
+@implemented: Automated schema validation on community shortcut registry file updates
+command: cargo test --test test_domain7_kami
+
+@implemented: Real-time CUA execution progress updates mapped to GRP overlay window
+command: cargo test --test test_domain7_kami
+
+@implemented: Local database storage for user profiles and style preferences
+command: python -m pytest kairo-sidecar/tests/test_mem_machine.py
+
+@implemented: Robust mock-based integration test suite for cross-platform validation
+command: cargo test --test test_cross_platform
+
+@implemented: Standard CLI command interfaces for local facts verification
+command: cargo test --test test_domain7_kami
+
+@implemented: 6-layer prompt injection firewall protecting against prompt override and system probe attacks
+command: cargo test --test test_prompt_injection
+
+@implemented: PII redaction engine sanitizing email, SSN, credit cards, and API keys before logging
+command: cargo test -p phantom-core --lib pii_guard
+
+@implemented: Response validator hard blocking low lexical overlap or hallucinated turns
+command: cargo test -p phantom-core --lib response_validator
+
+@implemented: Tamper-evident append-only JSONL audit log using SHA-256 block-hash chaining
+command: cargo test --test test_prompt_injection
+
+@implemented: Wasmtime sandboxed plugin system enforcing mandatory Ed25519 signatures and TTL tokens
+command: cargo test --test test_wasm_sandbox
+
+@implemented: UIA-based element text extraction with clipboard fallback
+command: cargo test --test test_cross_platform
+
+@implemented: Fail-closed CUA execution behavior when post-action verification is unavailable
+command: cargo test --test test_prompt_injection
+
+@implemented: Strict KAIRO_OFFLINE mode preventing all outbound model-pull or telemetry connections
+command: cargo test --test test_offline_mode
+
+@spec: Cross-app orchestration supporting Outlook attachments extraction
+@spec: Custom plugin system allowing developer extensions for CUA
+@spec: Multi-monitor workspace coordinate mapping optimization
+@draft: Automated regression testing suite against cloud copilot benchmarks
+@draft: Shared community template gallery integration in local tray UI

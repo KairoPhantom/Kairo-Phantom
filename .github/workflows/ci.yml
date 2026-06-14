@@ -168,7 +168,35 @@ jobs:
         working-directory: phantom-core
         run: cargo build --release
 
-  # ── Job 4: Production Gate (Main Branch Only) ─────────────────────────────
+  # ── Job 4: Headless KairoReal Gauntlet ────────────────────────────────────
+  kairoreal-gauntlet:
+    name: Headless KairoReal Gauntlet
+    runs-on: ubuntu-latest
+    needs: headless-checks
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r kairo-sidecar/requirements.txt pytest
+
+      - name: Run Headless KairoReal Gauntlet
+        run: python scripts/run_kairoreal_gauntlet.py --output task_completion_rate.json
+
+      - name: Upload Gauntlet Report Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gauntlet-report
+          path: task_completion_rate.json
+          retention-days: 30
+
+  # ── Job 5: Production Gate (Main Branch Only) ─────────────────────────────
   production-gate:
     name: Production Gate (Main Branch Only)
     runs-on: ubuntu-latest
@@ -176,6 +204,7 @@ jobs:
       - headless-checks
       - gui-checks
       - cross-platform-build-check
+      - kairoreal-gauntlet
     if: github.ref == 'refs/heads/master'
     steps:
       - uses: actions/checkout@v4
@@ -212,6 +241,15 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r kairo-sidecar/requirements.txt pytest
+
+      - name: Download Gauntlet Report
+        uses: actions/download-artifact@v4
+        with:
+          name: gauntlet-report
+
+      - name: Assert Gauntlet Pass Rate
+        run: |
+          python -c "import json; data = json.load(open('task_completion_rate.json')); rate = data['pass_rate_active']; assert rate >= 80.0, f'Active pass rate too low: {rate}%'"
 
       - name: Run Kairo Facts Verification (Production Gate)
         run: cargo run -p phantom-core --bin kairo-phantom -- verify

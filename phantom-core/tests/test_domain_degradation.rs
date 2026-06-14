@@ -24,13 +24,16 @@ fn test_orchestrator_domain_capabilities() {
 
 #[tokio::test]
 async fn test_pro_stubs_fail() {
-    use phantom_core::pro::{KairoPro, TeamMemoryVault, AuditExport};
+    use phantom_core::pro::{KairoPro, TeamMemoryVault, AuditExport, TEAM_MEMORY_VAULT_ERR, AUDIT_EXPORT_ERR};
     let pro = KairoPro::new();
     let res = TeamMemoryVault::sync_to_s3(&pro).await;
     assert!(res.is_err());
-    assert_eq!(res.unwrap_err().to_string(), "Pro sync not yet available");
+    let err_msg = res.unwrap_err().to_string();
+    assert_eq!(err_msg, TEAM_MEMORY_VAULT_ERR);
     
     let res2 = AuditExport::export_csv(&pro, "user", "app", "agent", "hash", "outcome", 100);
     assert!(res2.is_err());
-    assert_eq!(res2.unwrap_err().to_string(), "Audit export not yet available");
+    let err_msg2 = res2.unwrap_err().to_string();
+    assert_eq!(err_msg2, AUDIT_EXPORT_ERR);
 }
+

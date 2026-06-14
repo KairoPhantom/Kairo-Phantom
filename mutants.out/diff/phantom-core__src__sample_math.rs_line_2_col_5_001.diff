@@ -1,0 +1,14 @@
+--- phantom-core/src/sample_math.rs
++++ replace add -> i32 with 1
+@@ -1,10 +1,10 @@
+ pub fn add(a: i32, b: i32) -> i32 {
+-    a + b
++    1 /* ~ changed by cargo-mutants ~ */
+ }
+ 
+ pub fn multiply(a: i32, b: i32) -> i32 {
+     a * b
+ }
+ 
+ #[cfg(test)]
+ mod tests {

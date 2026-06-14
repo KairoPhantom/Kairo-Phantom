@@ -120,6 +120,104 @@ class KairoResponse:
     reasoning: Optional[str] = None
 
 
+def _get_doc_len(doc_context: Any) -> int:
+    if doc_context is None:
+        return 0
+        
+    if isinstance(doc_context, dict):
+        for key in ["full_text", "extracted_content", "slide_text", "page_content_truncated"]:
+            val = doc_context.get(key)
+            if val is not None:
+                return len(str(val))
+        
+        # Word paragraphs checking in dict
+        if "paragraphs" in doc_context:
+            paras = doc_context["paragraphs"]
+            if isinstance(paras, (list, tuple)):
+                total_len = 0
+                for p in paras:
+                    if isinstance(p, dict):
+                        txt = p.get("text")
+                    else:
+                        txt = getattr(p, "text", None)
+                    if txt is not None:
+                        total_len += len(str(txt))
+                return total_len
+
+        # Excel cells checking in dict
+        if "cells" in doc_context:
+            cells = doc_context["cells"]
+            if isinstance(cells, (list, tuple)):
+                total_len = 0
+                for c in cells:
+                    if isinstance(c, dict):
+                        val = c.get("value")
+                    else:
+                        val = getattr(c, "value", None)
+                    if val is not None:
+                        total_len += len(str(val))
+                return total_len
+                
+    else:
+        # Check dataclass / object attributes
+        for attr in ["full_text", "extracted_content", "slide_text", "page_content_truncated"]:
+            val = getattr(doc_context, attr, None)
+            if val is not None:
+                return len(str(val))
+                
+        # Word paragraphs checking in object
+        paras = getattr(doc_context, "paragraphs", None)
+        if paras is not None and isinstance(paras, (list, tuple)):
+            total_len = 0
+            for p in paras:
+                if isinstance(p, dict):
+                    txt = p.get("text")
+                else:
+                    txt = getattr(p, "text", None)
+                if txt is not None:
+                    total_len += len(str(txt))
+            return total_len
+
+        # Excel cells checking in object
+        cells = getattr(doc_context, "cells", None)
+        if cells is not None and isinstance(cells, (list, tuple)):
+            total_len = 0
+            for c in cells:
+                if isinstance(c, dict):
+                    val = c.get("value")
+                else:
+                    val = getattr(c, "value", None)
+                if val is not None:
+                    total_len += len(str(val))
+            return total_len
+            
+    return 0
+
+
+def _get_page_count(doc_context: Any) -> int:
+    if doc_context is None:
+        return 0
+        
+    if isinstance(doc_context, dict):
+        for key in ["page_count", "total_slides", "slide_count"]:
+            val = doc_context.get(key)
+            if val is not None:
+                try:
+                    return int(val)
+                except (ValueError, TypeError):
+                    pass
+    else:
+        for attr in ["page_count", "total_slides", "slide_count"]:
+            val = getattr(doc_context, attr, None)
+            if val is not None:
+                try:
+                    return int(val)
+                except (ValueError, TypeError):
+                    pass
+                    
+    return 0
+
+
 # ---------------------------------------------------------------------------
 # ReasoningStep — orchestrator / classifier
 # ---------------------------------------------------------------------------
@@ -601,13 +699,15 @@ class DomainMasterRouter:
             from sidecar.adaptive_compute import estimate_difficulty, get_compute_budget
             from sidecar.best_of_n import run_best_of_n
             
-            doc_len = len(doc_context.full_text) if hasattr(doc_context, "full_text") else 0
+            doc_len = _get_doc_len(doc_context)
+            page_count = _get_page_count(doc_context)
             waza_agent_str = getattr(classification, "waza_agent", "general")
             difficulty = estimate_difficulty(
                 request.user_prompt,
                 domain,
                 waza_agent=waza_agent_str,
-                document_length=doc_len
+                document_length=doc_len,
+                document_page_count=page_count,
             )
             budget = get_compute_budget(difficulty)
             

@@ -9,8 +9,8 @@ GA Hardening integrates robust calibration (uncertainty thresholds, responses co
 ## Milestones
 | # | Name | Scope | Dependencies | Status |
 |---|------|-------|-------------|--------|
-| 1 | Calibration & Trust (Sprint 4) | Confidence Unification, E2E Measurement CI Job, Response Validator Hard Block, Calibrated Uncertainty, Document Constitution, Verifiable-Work Receipts | None | PLANNED |
-| 2 | Hardening & Release Readiness (Sprint 5) | Signed Updates, Remove pro.rs Stub, Thin Domain Capabilities, Best-of-N Oracle Selection, Adaptive Compute | M1 | PLANNED |
+| 1 | Calibration & Trust (Sprint 4) | Confidence Unification, E2E Measurement CI Job, Response Validator Hard Block, Calibrated Uncertainty, Document Constitution, Verifiable-Work Receipts | None | DONE |
+| 2 | Hardening & Release Readiness (Sprint 5) | Signed Updates, Remove pro.rs Stub, Thin Domain Capabilities, Best-of-N Oracle Selection, Adaptive Compute | M1 | IN_PROGRESS |
 | 3 | Production-Ops & Autonomous Gauntlet (Sprint 5.5 - 7) | Auto-Update Rollback, Crash Reporting, Observability, SBOM/cargo-audit/Gitleaks Gates, Sandbox & Parallel Runner, Test-Fix-Test Loop, No-Skip Gates, Verified Outcome Store, Synthetic Personas, Drift Alarm | M2 | PLANNED |
 
 ## Interface Contracts

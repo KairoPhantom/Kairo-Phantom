@@ -4,7 +4,7 @@
 
 name = "dev"
 version = "1.0.0"
-description = "Developer & Engineer specialist — code, docs, commits, architecture"
+description = "[Prompt-Only / Scoped-Out] Software developer assistant — git commit templates, README scaffolding, and code commenting guidelines."
 author = "Kairo Phantom"
 
 [[fingerprinters]]

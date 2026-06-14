@@ -177,7 +177,8 @@ async fn main() {
             feedback_history.push(s.clone());
         }
         let _confidence =
-            ConfidenceEngine::calculate_confidence(app, &ai_output, &feedback_history);
+            ConfidenceEngine::unified_confidence(app, &ai_output, &feedback_history, 0, "", 0.5, false);
+
 
         // ── 7. Store ground-truth episode (Upgrade 1) ─────────────────────────
         // Content is the user's final version (with bullet keywords so the

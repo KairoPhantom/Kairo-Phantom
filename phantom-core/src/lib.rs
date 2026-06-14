@@ -64,7 +64,6 @@ pub mod memory_vault;
 pub mod tolaria_bridge;
 pub mod collaborative;
 pub mod pro;
-pub mod sample_math;
 
 
 

@@ -1,0 +1,31 @@
+name: Eval Integrity Guard
+
+# Blocks any change that lets evaluation scripts fabricate metrics (random.*)
+# or intercept the model call with canned responses. Required check on master.
+
+on:
+  pull_request:
+    paths:
+      - "scripts/**"
+      - "phantom-core/**/eval*"
+      - ".github/workflows/eval-integrity.yml"
+  push:
+    branches: [master]
+
+jobs:
+  eval-integrity:
+    name: eval-integrity (blocking)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Show files in scope
+        run: python scripts/ci/eval_integrity_guard.py --list
+
+      - name: Run eval integrity guard
+        # No '|| true' - this step MUST be able to fail the job.
+        run: python scripts/ci/eval_integrity_guard.py

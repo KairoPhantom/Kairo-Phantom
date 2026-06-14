@@ -344,3 +344,20 @@ def test_cryptographic_signature_protection(temp_dir):
         assert "Signature verification failed" in str(excinfo.value)
 
     loop.verify_oracles_signature()
+
+
+def test_verify_screenshot_diff_modes(temp_dir):
+    path_a = os.path.join(temp_dir, "mode_a.png")
+    path_b = os.path.join(temp_dir, "mode_b.png")
+
+    # Save a as grayscale ("L")
+    img_a = Image.new("L", (100, 100), color=255)
+    img_a.save(path_a)
+
+    # Save b as RGB
+    img_b = Image.new("RGB", (100, 100), color="white")
+    img_b.save(path_b)
+
+    # Verification should pass as both are converted to RGB internally
+    assert verify_screenshot_diff(path_a, path_b)
+

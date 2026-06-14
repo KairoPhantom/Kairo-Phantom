@@ -4,7 +4,7 @@
 
 name = "sales"
 version = "1.0.0"
-description = "Sales & marketing specialist — cold email, proposals, pitch decks, CRM"
+description = "[Prompt-Only / Scoped-Out] Sales assistant — cold email templates, proposals, and CRM note scaffolding."
 author = "Kairo Phantom"
 
 [[fingerprinters]]

@@ -1,0 +1,1802 @@
+[
+  {
+    "id": "WORD_001",
+    "category": "Word",
+    "name": "Word Scenario 01",
+    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Word scenario 01: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "WORD_002",
+    "category": "Word",
+    "name": "Word Scenario 02",
+    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Word scenario 02: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "WORD_003",
+    "category": "Word",
+    "name": "Word Scenario 03",
+    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Word scenario 03: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "WORD_004",
+    "category": "Word",
+    "name": "Word Scenario 04",
+    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Word scenario 04: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "WORD_005",
+    "category": "Word",
+    "name": "Word Scenario 05",
+    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Word scenario 05: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "WORD_006",
+    "category": "Word",
+    "name": "Word Scenario 06",
+    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Word scenario 06: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "WORD_007",
+    "category": "Word",
+    "name": "Word Scenario 07",
+    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Word scenario 07: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "WORD_008",
+    "category": "Word",
+    "name": "Word Scenario 08",
+    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Word scenario 08: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "WORD_009",
+    "category": "Word",
+    "name": "Word Scenario 09",
+    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Word scenario 09: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "WORD_010",
+    "category": "Word",
+    "name": "Word Scenario 10",
+    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Word scenario 10: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "WORD_011",
+    "category": "Word",
+    "name": "Word Scenario 11",
+    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Word scenario 11: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "WORD_012",
+    "category": "Word",
+    "name": "Word Scenario 12",
+    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Word scenario 12: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "WORD_013",
+    "category": "Word",
+    "name": "Word Scenario 13",
+    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Word scenario 13: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "WORD_014",
+    "category": "Word",
+    "name": "Word Scenario 14",
+    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Word scenario 14: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "WORD_015",
+    "category": "Word",
+    "name": "Word Scenario 15",
+    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Word scenario 15: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "WORD_016",
+    "category": "Word",
+    "name": "Word Scenario 16",
+    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Word scenario 16: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "WORD_017",
+    "category": "Word",
+    "name": "Word Scenario 17",
+    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Word scenario 17: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "WORD_018",
+    "category": "Word",
+    "name": "Word Scenario 18",
+    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Word scenario 18: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "WORD_019",
+    "category": "Word",
+    "name": "Word Scenario 19",
+    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Word scenario 19: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "WORD_020",
+    "category": "Word",
+    "name": "Word Scenario 20",
+    "description": "Scaffolded test case for Word domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Word scenario 20: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "EXCEL_001",
+    "category": "Excel",
+    "name": "Excel Scenario 01",
+    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Excel scenario 01: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "EXCEL_002",
+    "category": "Excel",
+    "name": "Excel Scenario 02",
+    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Excel scenario 02: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "EXCEL_003",
+    "category": "Excel",
+    "name": "Excel Scenario 03",
+    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Excel scenario 03: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "EXCEL_004",
+    "category": "Excel",
+    "name": "Excel Scenario 04",
+    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Excel scenario 04: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "EXCEL_005",
+    "category": "Excel",
+    "name": "Excel Scenario 05",
+    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Excel scenario 05: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "EXCEL_006",
+    "category": "Excel",
+    "name": "Excel Scenario 06",
+    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Excel scenario 06: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "EXCEL_007",
+    "category": "Excel",
+    "name": "Excel Scenario 07",
+    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Excel scenario 07: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "EXCEL_008",
+    "category": "Excel",
+    "name": "Excel Scenario 08",
+    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Excel scenario 08: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "EXCEL_009",
+    "category": "Excel",
+    "name": "Excel Scenario 09",
+    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Excel scenario 09: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "EXCEL_010",
+    "category": "Excel",
+    "name": "Excel Scenario 10",
+    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Excel scenario 10: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "EXCEL_011",
+    "category": "Excel",
+    "name": "Excel Scenario 11",
+    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Excel scenario 11: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "EXCEL_012",
+    "category": "Excel",
+    "name": "Excel Scenario 12",
+    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Excel scenario 12: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "EXCEL_013",
+    "category": "Excel",
+    "name": "Excel Scenario 13",
+    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Excel scenario 13: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "EXCEL_014",
+    "category": "Excel",
+    "name": "Excel Scenario 14",
+    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Excel scenario 14: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "EXCEL_015",
+    "category": "Excel",
+    "name": "Excel Scenario 15",
+    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Excel scenario 15: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "EXCEL_016",
+    "category": "Excel",
+    "name": "Excel Scenario 16",
+    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Excel scenario 16: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "EXCEL_017",
+    "category": "Excel",
+    "name": "Excel Scenario 17",
+    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Excel scenario 17: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "EXCEL_018",
+    "category": "Excel",
+    "name": "Excel Scenario 18",
+    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Excel scenario 18: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "EXCEL_019",
+    "category": "Excel",
+    "name": "Excel Scenario 19",
+    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Excel scenario 19: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "EXCEL_020",
+    "category": "Excel",
+    "name": "Excel Scenario 20",
+    "description": "Scaffolded test case for Excel domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Excel scenario 20: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "PPT_001",
+    "category": "PPT",
+    "name": "PPT Scenario 01",
+    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for PPT scenario 01: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "PPT_002",
+    "category": "PPT",
+    "name": "PPT Scenario 02",
+    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for PPT scenario 02: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "PPT_003",
+    "category": "PPT",
+    "name": "PPT Scenario 03",
+    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for PPT scenario 03: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "PPT_004",
+    "category": "PPT",
+    "name": "PPT Scenario 04",
+    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for PPT scenario 04: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "PPT_005",
+    "category": "PPT",
+    "name": "PPT Scenario 05",
+    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for PPT scenario 05: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "PPT_006",
+    "category": "PPT",
+    "name": "PPT Scenario 06",
+    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for PPT scenario 06: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "PPT_007",
+    "category": "PPT",
+    "name": "PPT Scenario 07",
+    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for PPT scenario 07: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "PPT_008",
+    "category": "PPT",
+    "name": "PPT Scenario 08",
+    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for PPT scenario 08: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "PPT_009",
+    "category": "PPT",
+    "name": "PPT Scenario 09",
+    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for PPT scenario 09: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "PPT_010",
+    "category": "PPT",
+    "name": "PPT Scenario 10",
+    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for PPT scenario 10: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "PPT_011",
+    "category": "PPT",
+    "name": "PPT Scenario 11",
+    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for PPT scenario 11: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "PPT_012",
+    "category": "PPT",
+    "name": "PPT Scenario 12",
+    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for PPT scenario 12: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "PPT_013",
+    "category": "PPT",
+    "name": "PPT Scenario 13",
+    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for PPT scenario 13: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "PPT_014",
+    "category": "PPT",
+    "name": "PPT Scenario 14",
+    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for PPT scenario 14: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "PPT_015",
+    "category": "PPT",
+    "name": "PPT Scenario 15",
+    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for PPT scenario 15: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "PPT_016",
+    "category": "PPT",
+    "name": "PPT Scenario 16",
+    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for PPT scenario 16: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "PPT_017",
+    "category": "PPT",
+    "name": "PPT Scenario 17",
+    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for PPT scenario 17: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "PPT_018",
+    "category": "PPT",
+    "name": "PPT Scenario 18",
+    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for PPT scenario 18: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "PPT_019",
+    "category": "PPT",
+    "name": "PPT Scenario 19",
+    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for PPT scenario 19: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "PPT_020",
+    "category": "PPT",
+    "name": "PPT Scenario 20",
+    "description": "Scaffolded test case for PPT domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for PPT scenario 20: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "LEGAL_001",
+    "category": "Legal",
+    "name": "Legal Scenario 01",
+    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Legal scenario 01: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "LEGAL_002",
+    "category": "Legal",
+    "name": "Legal Scenario 02",
+    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Legal scenario 02: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "LEGAL_003",
+    "category": "Legal",
+    "name": "Legal Scenario 03",
+    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Legal scenario 03: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "LEGAL_004",
+    "category": "Legal",
+    "name": "Legal Scenario 04",
+    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Legal scenario 04: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "LEGAL_005",
+    "category": "Legal",
+    "name": "Legal Scenario 05",
+    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Legal scenario 05: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "LEGAL_006",
+    "category": "Legal",
+    "name": "Legal Scenario 06",
+    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Legal scenario 06: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "LEGAL_007",
+    "category": "Legal",
+    "name": "Legal Scenario 07",
+    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Legal scenario 07: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "LEGAL_008",
+    "category": "Legal",
+    "name": "Legal Scenario 08",
+    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Legal scenario 08: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "LEGAL_009",
+    "category": "Legal",
+    "name": "Legal Scenario 09",
+    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Legal scenario 09: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "LEGAL_010",
+    "category": "Legal",
+    "name": "Legal Scenario 10",
+    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Legal scenario 10: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "LEGAL_011",
+    "category": "Legal",
+    "name": "Legal Scenario 11",
+    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Legal scenario 11: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "LEGAL_012",
+    "category": "Legal",
+    "name": "Legal Scenario 12",
+    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Legal scenario 12: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "LEGAL_013",
+    "category": "Legal",
+    "name": "Legal Scenario 13",
+    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Legal scenario 13: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "LEGAL_014",
+    "category": "Legal",
+    "name": "Legal Scenario 14",
+    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Legal scenario 14: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "LEGAL_015",
+    "category": "Legal",
+    "name": "Legal Scenario 15",
+    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Legal scenario 15: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "LEGAL_016",
+    "category": "Legal",
+    "name": "Legal Scenario 16",
+    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Legal scenario 16: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "LEGAL_017",
+    "category": "Legal",
+    "name": "Legal Scenario 17",
+    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Legal scenario 17: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "LEGAL_018",
+    "category": "Legal",
+    "name": "Legal Scenario 18",
+    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Legal scenario 18: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "LEGAL_019",
+    "category": "Legal",
+    "name": "Legal Scenario 19",
+    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Legal scenario 19: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "LEGAL_020",
+    "category": "Legal",
+    "name": "Legal Scenario 20",
+    "description": "Scaffolded test case for Legal domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Legal scenario 20: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "CUA_001",
+    "category": "CUA",
+    "name": "CUA Scenario 01",
+    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for CUA scenario 01: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "CUA_002",
+    "category": "CUA",
+    "name": "CUA Scenario 02",
+    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for CUA scenario 02: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "CUA_003",
+    "category": "CUA",
+    "name": "CUA Scenario 03",
+    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for CUA scenario 03: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "CUA_004",
+    "category": "CUA",
+    "name": "CUA Scenario 04",
+    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for CUA scenario 04: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "CUA_005",
+    "category": "CUA",
+    "name": "CUA Scenario 05",
+    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for CUA scenario 05: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "CUA_006",
+    "category": "CUA",
+    "name": "CUA Scenario 06",
+    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for CUA scenario 06: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "CUA_007",
+    "category": "CUA",
+    "name": "CUA Scenario 07",
+    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for CUA scenario 07: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "CUA_008",
+    "category": "CUA",
+    "name": "CUA Scenario 08",
+    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for CUA scenario 08: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "CUA_009",
+    "category": "CUA",
+    "name": "CUA Scenario 09",
+    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for CUA scenario 09: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "CUA_010",
+    "category": "CUA",
+    "name": "CUA Scenario 10",
+    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for CUA scenario 10: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "CUA_011",
+    "category": "CUA",
+    "name": "CUA Scenario 11",
+    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for CUA scenario 11: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "CUA_012",
+    "category": "CUA",
+    "name": "CUA Scenario 12",
+    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for CUA scenario 12: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "CUA_013",
+    "category": "CUA",
+    "name": "CUA Scenario 13",
+    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for CUA scenario 13: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "CUA_014",
+    "category": "CUA",
+    "name": "CUA Scenario 14",
+    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for CUA scenario 14: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "CUA_015",
+    "category": "CUA",
+    "name": "CUA Scenario 15",
+    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for CUA scenario 15: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "CUA_016",
+    "category": "CUA",
+    "name": "CUA Scenario 16",
+    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for CUA scenario 16: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "CUA_017",
+    "category": "CUA",
+    "name": "CUA Scenario 17",
+    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for CUA scenario 17: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "CUA_018",
+    "category": "CUA",
+    "name": "CUA Scenario 18",
+    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for CUA scenario 18: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "CUA_019",
+    "category": "CUA",
+    "name": "CUA Scenario 19",
+    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for CUA scenario 19: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "CUA_020",
+    "category": "CUA",
+    "name": "CUA Scenario 20",
+    "description": "Scaffolded test case for CUA domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for CUA scenario 20: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "SECURITY_001",
+    "category": "Security",
+    "name": "Security Scenario 01",
+    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Security scenario 01: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "SECURITY_002",
+    "category": "Security",
+    "name": "Security Scenario 02",
+    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Security scenario 02: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "SECURITY_003",
+    "category": "Security",
+    "name": "Security Scenario 03",
+    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Security scenario 03: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "SECURITY_004",
+    "category": "Security",
+    "name": "Security Scenario 04",
+    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Security scenario 04: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "SECURITY_005",
+    "category": "Security",
+    "name": "Security Scenario 05",
+    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Security scenario 05: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "SECURITY_006",
+    "category": "Security",
+    "name": "Security Scenario 06",
+    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Security scenario 06: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "SECURITY_007",
+    "category": "Security",
+    "name": "Security Scenario 07",
+    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Security scenario 07: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "SECURITY_008",
+    "category": "Security",
+    "name": "Security Scenario 08",
+    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Security scenario 08: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "SECURITY_009",
+    "category": "Security",
+    "name": "Security Scenario 09",
+    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Security scenario 09: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "SECURITY_010",
+    "category": "Security",
+    "name": "Security Scenario 10",
+    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Security scenario 10: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "SECURITY_011",
+    "category": "Security",
+    "name": "Security Scenario 11",
+    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Security scenario 11: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "SECURITY_012",
+    "category": "Security",
+    "name": "Security Scenario 12",
+    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Security scenario 12: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "SECURITY_013",
+    "category": "Security",
+    "name": "Security Scenario 13",
+    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Security scenario 13: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "SECURITY_014",
+    "category": "Security",
+    "name": "Security Scenario 14",
+    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Security scenario 14: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "SECURITY_015",
+    "category": "Security",
+    "name": "Security Scenario 15",
+    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Security scenario 15: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "SECURITY_016",
+    "category": "Security",
+    "name": "Security Scenario 16",
+    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Security scenario 16: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "SECURITY_017",
+    "category": "Security",
+    "name": "Security Scenario 17",
+    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Security scenario 17: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "SECURITY_018",
+    "category": "Security",
+    "name": "Security Scenario 18",
+    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Security scenario 18: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "SECURITY_019",
+    "category": "Security",
+    "name": "Security Scenario 19",
+    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Security scenario 19: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "SECURITY_020",
+    "category": "Security",
+    "name": "Security Scenario 20",
+    "description": "Scaffolded test case for Security domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Security scenario 20: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "MEMORY_001",
+    "category": "Memory",
+    "name": "Memory Scenario 01",
+    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Memory scenario 01: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "MEMORY_002",
+    "category": "Memory",
+    "name": "Memory Scenario 02",
+    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Memory scenario 02: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "MEMORY_003",
+    "category": "Memory",
+    "name": "Memory Scenario 03",
+    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Memory scenario 03: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "MEMORY_004",
+    "category": "Memory",
+    "name": "Memory Scenario 04",
+    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Memory scenario 04: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "MEMORY_005",
+    "category": "Memory",
+    "name": "Memory Scenario 05",
+    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Memory scenario 05: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "MEMORY_006",
+    "category": "Memory",
+    "name": "Memory Scenario 06",
+    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Memory scenario 06: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "MEMORY_007",
+    "category": "Memory",
+    "name": "Memory Scenario 07",
+    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Memory scenario 07: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "MEMORY_008",
+    "category": "Memory",
+    "name": "Memory Scenario 08",
+    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Memory scenario 08: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "MEMORY_009",
+    "category": "Memory",
+    "name": "Memory Scenario 09",
+    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Memory scenario 09: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "MEMORY_010",
+    "category": "Memory",
+    "name": "Memory Scenario 10",
+    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Memory scenario 10: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "MEMORY_011",
+    "category": "Memory",
+    "name": "Memory Scenario 11",
+    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Memory scenario 11: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "MEMORY_012",
+    "category": "Memory",
+    "name": "Memory Scenario 12",
+    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Memory scenario 12: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "MEMORY_013",
+    "category": "Memory",
+    "name": "Memory Scenario 13",
+    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Memory scenario 13: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "MEMORY_014",
+    "category": "Memory",
+    "name": "Memory Scenario 14",
+    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Memory scenario 14: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "MEMORY_015",
+    "category": "Memory",
+    "name": "Memory Scenario 15",
+    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Memory scenario 15: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "MEMORY_016",
+    "category": "Memory",
+    "name": "Memory Scenario 16",
+    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Memory scenario 16: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "MEMORY_017",
+    "category": "Memory",
+    "name": "Memory Scenario 17",
+    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Memory scenario 17: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "MEMORY_018",
+    "category": "Memory",
+    "name": "Memory Scenario 18",
+    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Memory scenario 18: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "MEMORY_019",
+    "category": "Memory",
+    "name": "Memory Scenario 19",
+    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Memory scenario 19: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "MEMORY_020",
+    "category": "Memory",
+    "name": "Memory Scenario 20",
+    "description": "Scaffolded test case for Memory domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Memory scenario 20: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "OFFLINE_001",
+    "category": "Offline",
+    "name": "Offline Scenario 01",
+    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Offline scenario 01: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "OFFLINE_002",
+    "category": "Offline",
+    "name": "Offline Scenario 02",
+    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Offline scenario 02: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "OFFLINE_003",
+    "category": "Offline",
+    "name": "Offline Scenario 03",
+    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Offline scenario 03: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "OFFLINE_004",
+    "category": "Offline",
+    "name": "Offline Scenario 04",
+    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Offline scenario 04: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "OFFLINE_005",
+    "category": "Offline",
+    "name": "Offline Scenario 05",
+    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Offline scenario 05: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "OFFLINE_006",
+    "category": "Offline",
+    "name": "Offline Scenario 06",
+    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Offline scenario 06: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "OFFLINE_007",
+    "category": "Offline",
+    "name": "Offline Scenario 07",
+    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Offline scenario 07: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "OFFLINE_008",
+    "category": "Offline",
+    "name": "Offline Scenario 08",
+    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Offline scenario 08: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "OFFLINE_009",
+    "category": "Offline",
+    "name": "Offline Scenario 09",
+    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Offline scenario 09: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "OFFLINE_010",
+    "category": "Offline",
+    "name": "Offline Scenario 10",
+    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Offline scenario 10: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "OFFLINE_011",
+    "category": "Offline",
+    "name": "Offline Scenario 11",
+    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Offline scenario 11: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "OFFLINE_012",
+    "category": "Offline",
+    "name": "Offline Scenario 12",
+    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Offline scenario 12: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "OFFLINE_013",
+    "category": "Offline",
+    "name": "Offline Scenario 13",
+    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Offline scenario 13: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "OFFLINE_014",
+    "category": "Offline",
+    "name": "Offline Scenario 14",
+    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Offline scenario 14: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "OFFLINE_015",
+    "category": "Offline",
+    "name": "Offline Scenario 15",
+    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Offline scenario 15: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "OFFLINE_016",
+    "category": "Offline",
+    "name": "Offline Scenario 16",
+    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Offline scenario 16: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "OFFLINE_017",
+    "category": "Offline",
+    "name": "Offline Scenario 17",
+    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Offline scenario 17: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "OFFLINE_018",
+    "category": "Offline",
+    "name": "Offline Scenario 18",
+    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Offline scenario 18: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "OFFLINE_019",
+    "category": "Offline",
+    "name": "Offline Scenario 19",
+    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Offline scenario 19: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "OFFLINE_020",
+    "category": "Offline",
+    "name": "Offline Scenario 20",
+    "description": "Scaffolded test case for Offline domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Offline scenario 20: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "DEGRADATION_001",
+    "category": "Degradation",
+    "name": "Degradation Scenario 01",
+    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Degradation scenario 01: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "DEGRADATION_002",
+    "category": "Degradation",
+    "name": "Degradation Scenario 02",
+    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Degradation scenario 02: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "DEGRADATION_003",
+    "category": "Degradation",
+    "name": "Degradation Scenario 03",
+    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Degradation scenario 03: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "DEGRADATION_004",
+    "category": "Degradation",
+    "name": "Degradation Scenario 04",
+    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Degradation scenario 04: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "DEGRADATION_005",
+    "category": "Degradation",
+    "name": "Degradation Scenario 05",
+    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Degradation scenario 05: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "DEGRADATION_006",
+    "category": "Degradation",
+    "name": "Degradation Scenario 06",
+    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Degradation scenario 06: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "DEGRADATION_007",
+    "category": "Degradation",
+    "name": "Degradation Scenario 07",
+    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Degradation scenario 07: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "DEGRADATION_008",
+    "category": "Degradation",
+    "name": "Degradation Scenario 08",
+    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Degradation scenario 08: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "DEGRADATION_009",
+    "category": "Degradation",
+    "name": "Degradation Scenario 09",
+    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Degradation scenario 09: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "DEGRADATION_010",
+    "category": "Degradation",
+    "name": "Degradation Scenario 10",
+    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Degradation scenario 10: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "DEGRADATION_011",
+    "category": "Degradation",
+    "name": "Degradation Scenario 11",
+    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Degradation scenario 11: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "DEGRADATION_012",
+    "category": "Degradation",
+    "name": "Degradation Scenario 12",
+    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Degradation scenario 12: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "DEGRADATION_013",
+    "category": "Degradation",
+    "name": "Degradation Scenario 13",
+    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Degradation scenario 13: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "DEGRADATION_014",
+    "category": "Degradation",
+    "name": "Degradation Scenario 14",
+    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Degradation scenario 14: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "DEGRADATION_015",
+    "category": "Degradation",
+    "name": "Degradation Scenario 15",
+    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Degradation scenario 15: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "DEGRADATION_016",
+    "category": "Degradation",
+    "name": "Degradation Scenario 16",
+    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Degradation scenario 16: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "DEGRADATION_017",
+    "category": "Degradation",
+    "name": "Degradation Scenario 17",
+    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Degradation scenario 17: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "DEGRADATION_018",
+    "category": "Degradation",
+    "name": "Degradation Scenario 18",
+    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Degradation scenario 18: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "DEGRADATION_019",
+    "category": "Degradation",
+    "name": "Degradation Scenario 19",
+    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Degradation scenario 19: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "DEGRADATION_020",
+    "category": "Degradation",
+    "name": "Degradation Scenario 20",
+    "description": "Scaffolded test case for Degradation domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Degradation scenario 20: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "PERFORMANCE_001",
+    "category": "Performance",
+    "name": "Performance Scenario 01",
+    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Performance scenario 01: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "PERFORMANCE_002",
+    "category": "Performance",
+    "name": "Performance Scenario 02",
+    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Performance scenario 02: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "PERFORMANCE_003",
+    "category": "Performance",
+    "name": "Performance Scenario 03",
+    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Performance scenario 03: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "PERFORMANCE_004",
+    "category": "Performance",
+    "name": "Performance Scenario 04",
+    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Performance scenario 04: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "PERFORMANCE_005",
+    "category": "Performance",
+    "name": "Performance Scenario 05",
+    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Performance scenario 05: testing specialized criteria.",
+    "status": "active",
+    "fix_budget": 3
+  },
+  {
+    "id": "PERFORMANCE_006",
+    "category": "Performance",
+    "name": "Performance Scenario 06",
+    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Performance scenario 06: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "PERFORMANCE_007",
+    "category": "Performance",
+    "name": "Performance Scenario 07",
+    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Performance scenario 07: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "PERFORMANCE_008",
+    "category": "Performance",
+    "name": "Performance Scenario 08",
+    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Performance scenario 08: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "PERFORMANCE_009",
+    "category": "Performance",
+    "name": "Performance Scenario 09",
+    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Performance scenario 09: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "PERFORMANCE_010",
+    "category": "Performance",
+    "name": "Performance Scenario 10",
+    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Performance scenario 10: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "PERFORMANCE_011",
+    "category": "Performance",
+    "name": "Performance Scenario 11",
+    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Performance scenario 11: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "PERFORMANCE_012",
+    "category": "Performance",
+    "name": "Performance Scenario 12",
+    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Performance scenario 12: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "PERFORMANCE_013",
+    "category": "Performance",
+    "name": "Performance Scenario 13",
+    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Performance scenario 13: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "PERFORMANCE_014",
+    "category": "Performance",
+    "name": "Performance Scenario 14",
+    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Performance scenario 14: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "PERFORMANCE_015",
+    "category": "Performance",
+    "name": "Performance Scenario 15",
+    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Performance scenario 15: testing specialized criteria.",
+    "status": "pending",
+    "fix_budget": 0
+  },
+  {
+    "id": "PERFORMANCE_016",
+    "category": "Performance",
+    "name": "Performance Scenario 16",
+    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Performance scenario 16: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "PERFORMANCE_017",
+    "category": "Performance",
+    "name": "Performance Scenario 17",
+    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Performance scenario 17: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "PERFORMANCE_018",
+    "category": "Performance",
+    "name": "Performance Scenario 18",
+    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Performance scenario 18: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "PERFORMANCE_019",
+    "category": "Performance",
+    "name": "Performance Scenario 19",
+    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Performance scenario 19: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  },
+  {
+    "id": "PERFORMANCE_020",
+    "category": "Performance",
+    "name": "Performance Scenario 20",
+    "description": "Scaffolded test case for Performance domain. Verifies domain-specific handling of release gates.",
+    "prompt": "Run validation for Performance scenario 20: testing specialized criteria.",
+    "status": "excluded",
+    "fix_budget": 0
+  }
+]

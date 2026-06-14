@@ -109,22 +109,22 @@ def verify_xlsx(path: str, cell_values: Optional[Dict[str, Any]] = None, cell_fo
                     raise AssertionError(f"Expected formula in {cell_ref} but found value: {val}")
                 if normalize_text(val).upper() != normalize_text(expected_formula).upper():
                     raise AssertionError(f"Formula mismatch in {cell_ref}: expected '{expected_formula}', found '{val}'")
+
+        if cell_values:
+            # Load workbook again with data_only=True to read evaluated values
+            wb_val = openpyxl.load_workbook(path, data_only=True)
+            try:
+                sheet_val = wb_val.active
+                for cell_ref, expected_val in cell_values.items():
+                    val = sheet_val[cell_ref].value
+                    normalized_actual = normalize_xlsx_value(val)
+                    normalized_expected = normalize_xlsx_value(expected_val)
+                    if normalized_actual != normalized_expected:
+                        raise AssertionError(f"Value mismatch in {cell_ref}: expected '{expected_val}', found '{val}'")
+            finally:
+                wb_val.close()
     finally:
         wb.close()
-
-    if cell_values:
-        # Load workbook again with data_only=True to read evaluated values
-        wb_val = openpyxl.load_workbook(path, data_only=True)
-        try:
-            sheet_val = wb_val.active
-            for cell_ref, expected_val in cell_values.items():
-                val = sheet_val[cell_ref].value
-                normalized_actual = normalize_xlsx_value(val)
-                normalized_expected = normalize_xlsx_value(expected_val)
-                if normalized_actual != normalized_expected:
-                    raise AssertionError(f"Value mismatch in {cell_ref}: expected '{expected_val}', found '{val}'")
-        finally:
-            wb_val.close()
 
     return True
 
@@ -141,13 +141,11 @@ def verify_pptx(path: str, expected_slide_count: Optional[int] = None, check_pla
 
     all_slide_texts = []
     for i, slide in enumerate(prs.slides):
-        # Sort all slide shapes visually (top-to-bottom, then left-to-right)
+        # Sort all slide shapes visually (top-to-bottom, then left-to-right) with binning to prevent float flakiness
         def shape_sort_key(s):
             try:
-                # Round/bin y-coordinates to nearest 5 units
-                top_binned = int(round(s.top / 5.0) * 5)
-                return (top_binned, s.left)
-            except (AttributeError, TypeError):
+                return (round(s.top / 5) * 5, s.left)
+            except AttributeError:
                 return (0, 0)
         sorted_shapes = sorted(slide.shapes, key=shape_sort_key)
 
@@ -167,17 +165,17 @@ def verify_pptx(path: str, expected_slide_count: Optional[int] = None, check_pla
                             if pl in raw_text.lower():
                                 raise AssertionError(f"Placeholder slop found on slide {i}: '{raw_text}'")
                     
-                    # Calibrate bullet check for first-level bullet points (level == 0) inside BODY (2) and OBJECT (7) placeholders
+                    # Check word limit on bullet points (including level 0 bullets in BODY/OBJECT placeholders)
                     is_bullet = False
                     if raw_text.startswith("-") or paragraph.level > 0:
                         is_bullet = True
-                    elif paragraph.level == 0 and getattr(shape, "is_placeholder", False):
+                    else:
                         try:
                             ph_type = shape.placeholder_format.type
                             from pptx.enum.shapes import PP_PLACEHOLDER
                             if ph_type in (PP_PLACEHOLDER.BODY, PP_PLACEHOLDER.OBJECT):
                                 is_bullet = True
-                        except (AttributeError, ImportError):
+                        except (AttributeError, ImportError, ValueError):
                             pass
 
                     if is_bullet:
@@ -204,7 +202,7 @@ def verify_pdf(path: str, expected_substrings: Optional[List[str]] = None) -> bo
     with fitz.open(path) as doc:
         for page in doc:
             blocks = page.get_text("blocks")
-            sorted_blocks = sorted(blocks, key=lambda b: (int(round(b[1] / 5.0) * 5), b[0]))
+            sorted_blocks = sorted(blocks, key=lambda b: (round(b[1] / 5) * 5, b[0]))
             for b in sorted_blocks:
                 extracted_fitz.append(b[4])
     combined_fitz = "\n".join(extracted_fitz)
@@ -406,9 +404,7 @@ def verify_screenshot_diff(path_a: str, path_b: str, max_hash_diff: int = 2) -> 
     from PIL import ImageStat
     
     with Image.open(path_a) as raw_a, Image.open(path_b) as raw_b:
-        img_a = raw_a.convert("RGB")
-        img_b = raw_b.convert("RGB")
-        try:
+        with raw_a.convert("RGB") as img_a, raw_b.convert("RGB") as img_b:
             if img_a.size != img_b.size:
                 raise AssertionError(f"Image dimensions mismatch: {img_a.size} vs {img_b.size}")
                 
@@ -426,9 +422,6 @@ def verify_screenshot_diff(path_a: str, path_b: str, max_hash_diff: int = 2) -> 
                 
             if diff > max_hash_diff:
                 raise AssertionError(f"Visual diff failed: hash difference {diff} > {max_hash_diff}")
-        finally:
-            img_a.close()
-            img_b.close()
             
     return True
 

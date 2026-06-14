@@ -31,7 +31,7 @@ except Exception:
     pass
 
 # ── Fix Unicode on Windows cp1252 console ────────────────────────────────────
-if sys.platform == "win32":
+if sys.platform == "win32" and __name__ == "__main__":
     import io
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
@@ -68,6 +68,49 @@ logger.addHandler(ch)
 MAX_RETRIES   = 3
 RETRY_DELAY   = 5   # seconds between retries
 
+# ── Pending Scenarios ─────────────────────────────────────────────────────────
+PENDING_SCENARIOS = {
+    # Microsoft Word (W31 - W50)
+    "W31", "W32", "W33", "W34", "W35", "W36", "W37", "W38", "W39", "W40",
+    "W41", "W42", "W43", "W44", "W45", "W46", "W47", "W48", "W49", "W50",
+    
+    # PowerPoint (P21 - P35)
+    "P21", "P22", "P23", "P24", "P25", "P26", "P27", "P28", "P29", "P30",
+    "P31", "P32", "P33", "P34", "P35",
+    
+    # Excel (E8 - E30)
+    "E8", "E9", "E10", "E11", "E12", "E13", "E14", "E15", "E16", "E17",
+    "E18", "E19", "E20", "E21", "E22", "E23", "E24", "E25", "E26", "E27",
+    "E28", "E29", "E30",
+    
+    # Windows Terminal (T6 - T15)
+    "T6", "T7", "T8", "T9", "T10", "T11", "T12", "T13", "T14", "T15",
+    
+    # Notepad (N5 - N10)
+    "N5", "N6", "N7", "N8", "N9", "N10",
+    
+    # VS Code (V7 - V15)
+    "V7", "V8", "V9", "V10", "V11", "V12", "V13", "V14", "V15",
+    
+    # Browser / Google Docs (B7 - B15)
+    "B7", "B8", "B9", "B10", "B11", "B12", "B13", "B14", "B15",
+    
+    # Obsidian (OB6 - OB10)
+    "OB6", "OB7", "OB8", "OB9", "OB10",
+    
+    # Notion (NO5 - NO10)
+    "NO5", "NO6", "NO7", "NO8", "NO9", "NO10",
+    
+    # Figma (F6 - F10)
+    "F6", "F7", "F8", "F9", "F10",
+    
+    # Slack / Email (SL6 - SL10)
+    "SL6", "SL7", "SL8", "SL9", "SL10",
+    
+    # PDF Documents (PDF6 - PDF10)
+    "PDF6", "PDF7", "PDF8", "PDF9", "PDF10"
+}
+
 # ── Agent/scenario ordering ───────────────────────────────────────────────────
 DOCUMENT_QUEUE = [
     {
@@ -82,6 +125,11 @@ DOCUMENT_QUEUE = [
             "W16", "W17", "W18", "W19", "W20",
             "W21", "W22", "W23", "W24", "W25",
             "W26", "W27", "W28", "W29", "W30",
+            # Expand to W50
+            "W31", "W32", "W33", "W34", "W35",
+            "W36", "W37", "W38", "W39", "W40",
+            "W41", "W42", "W43", "W44", "W45",
+            "W46", "W47", "W48", "W49", "W50",
         ],
         "module":    "scenario_word",
         "fn":        "run_word_scenario",
@@ -96,6 +144,10 @@ DOCUMENT_QUEUE = [
             "P8",  "P9",  "P10", "P11", "P12",
             "P13", "P14", "P15", "P16", "P17",
             "P18", "P19", "P20",
+            # Expand to P35
+            "P21", "P22", "P23", "P24", "P25",
+            "P26", "P27", "P28", "P29", "P30",
+            "P31", "P32", "P33", "P34", "P35",
         ],
         "module":    "scenario_pptx",
         "fn":        "run_pptx_scenario",
@@ -103,70 +155,105 @@ DOCUMENT_QUEUE = [
     {
         "agent_id":  "agent_excel",
         "label":     "Excel",
-        "scenarios": ["E1", "E2", "E3", "E4", "E5", "E6", "E7"],
+        "scenarios": [
+            "E1", "E2", "E3", "E4", "E5", "E6", "E7",
+            "E8", "E9", "E10", "E11", "E12", "E13", "E14", "E15",
+            "E16", "E17", "E18", "E19", "E20", "E21", "E22", "E23",
+            "E24", "E25", "E26", "E27", "E28", "E29", "E30",
+        ],
         "module":    "scenario_excel",
         "fn":        "run_excel_scenario",
     },
     {
         "agent_id":  "agent_terminal",
         "label":     "Windows Terminal",
-        "scenarios": ["T1", "T2", "T3", "T4", "T5"],
+        "scenarios": [
+            "T1", "T2", "T3", "T4", "T5",
+            "T6", "T7", "T8", "T9", "T10",
+            "T11", "T12", "T13", "T14", "T15",
+        ],
         "module":    "scenario_terminal",
         "fn":        "run_terminal_scenario",
     },
     {
         "agent_id":  "agent_notepad",
         "label":     "Notepad",
-        "scenarios": ["N1", "N2", "N3", "N4"],
+        "scenarios": [
+            "N1", "N2", "N3", "N4",
+            "N5", "N6", "N7", "N8", "N9", "N10",
+        ],
         "module":    "scenario_notepad",
         "fn":        "run_notepad_scenario",
     },
     {
         "agent_id":  "agent_vscode",
         "label":     "VS Code",
-        "scenarios": ["V1", "V2", "V3", "V4", "V5", "V6"],
+        "scenarios": [
+            "V1", "V2", "V3", "V4", "V5", "V6",
+            "V7", "V8", "V9", "V10", "V11", "V12",
+            "V13", "V14", "V15",
+        ],
         "module":    "scenario_vscode",
         "fn":        "run_vscode_scenario",
     },
     {
         "agent_id":  "agent_browser",
         "label":     "Browser / Google Docs",
-        "scenarios": ["B1", "B2", "B3", "B4", "B5", "B6"],
+        "scenarios": [
+            "B1", "B2", "B3", "B4", "B5", "B6",
+            "B7", "B8", "B9", "B10", "B11", "B12",
+            "B13", "B14", "B15",
+        ],
         "module":    "scenario_browser",
         "fn":        "run_browser_scenario",
     },
     {
         "agent_id":  "agent_obsidian",
         "label":     "Obsidian",
-        "scenarios": ["OB1", "OB2", "OB3", "OB4", "OB5"],
+        "scenarios": [
+            "OB1", "OB2", "OB3", "OB4", "OB5",
+            "OB6", "OB7", "OB8", "OB9", "OB10",
+        ],
         "module":    "scenario_obsidian",
         "fn":        "run_obsidian_scenario",
     },
     {
         "agent_id":  "agent_notion",
         "label":     "Notion",
-        "scenarios": ["NO1", "NO2", "NO3", "NO4"],
+        "scenarios": [
+            "NO1", "NO2", "NO3", "NO4",
+            "NO5", "NO6", "NO7", "NO8", "NO9", "NO10",
+        ],
         "module":    "scenario_notion_figma_slack_pdf",
         "fn":        "run_notion_scenario",
     },
     {
         "agent_id":  "agent_figma",
         "label":     "Figma",
-        "scenarios": ["F1", "F2", "F3", "F4", "F5"],
+        "scenarios": [
+            "F1", "F2", "F3", "F4", "F5",
+            "F6", "F7", "F8", "F9", "F10",
+        ],
         "module":    "scenario_notion_figma_slack_pdf",
         "fn":        "run_figma_scenario",
     },
     {
         "agent_id":  "agent_slack",
         "label":     "Slack / Email",
-        "scenarios": ["SL1", "SL2", "SL3", "SL4", "SL5"],
+        "scenarios": [
+            "SL1", "SL2", "SL3", "SL4", "SL5",
+            "SL6", "SL7", "SL8", "SL9", "SL10",
+        ],
         "module":    "scenario_notion_figma_slack_pdf",
         "fn":        "run_slack_scenario",
     },
     {
         "agent_id":  "agent_pdf",
         "label":     "PDF Documents",
-        "scenarios": ["PDF1", "PDF2", "PDF3", "PDF4", "PDF5"],
+        "scenarios": [
+            "PDF1", "PDF2", "PDF3", "PDF4", "PDF5",
+            "PDF6", "PDF7", "PDF8", "PDF9", "PDF10",
+        ],
         "module":    "scenario_notion_figma_slack_pdf",
         "fn":        "run_pdf_scenario",
     },
@@ -248,6 +335,11 @@ def run_doc_block(doc_cfg: dict, start_from: str = None) -> dict:
 
     for scen_id in scens:
         logger.info(f"\n  -- Scenario {scen_id} --")
+        if scen_id in PENDING_SCENARIOS:
+            logger.info(f"  [PENDING] {scen_id}: Skipped")
+            passed_list.append({"id": scen_id, "message": "Pending - Skipped"})
+            continue
+
         scen_passed = False
         last_msg    = ""
 

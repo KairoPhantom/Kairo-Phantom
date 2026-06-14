@@ -103,6 +103,23 @@ impl AgentRegistry {
             .max_by_key(|a| a.match_score(doc_ctx))
             .cloned()
     }
+
+    /// Returns only agents with `Real` (non-PromptOnly) capabilities.
+    /// Use this for public-facing capability listings to avoid advertising thin expert domains.
+    pub fn public_agents(&self) -> Vec<Arc<dyn SwarmAgent>> {
+        self.agents.iter()
+            .filter(|a| a.capability() == DomainCapability::Real)
+            .cloned()
+            .collect()
+    }
+
+    /// Returns a map of agent id → capability for all registered agents.
+    /// PromptOnly agents are included but clearly marked so callers can strip them.
+    pub fn capability_map(&self) -> Vec<(String, DomainCapability)> {
+        self.agents.iter()
+            .map(|a| (a.id().to_string(), a.capability()))
+            .collect()
+    }
 }
 
 /// Dynamic fingerprinter loaded from TOML.

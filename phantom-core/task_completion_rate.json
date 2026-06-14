@@ -1,0 +1,21 @@
+{
+  "completion_rate": 1.0,
+  "failed": 0,
+  "gate_passed": true,
+  "generated_at": 1781431099,
+  "min_required": 0.8,
+  "passed": 10,
+  "results": {
+    "audit_chain_clean": true,
+    "clean_response_passes": true,
+    "confidence_abstain": true,
+    "confidence_high_signal": true,
+    "constitution_violation": true,
+    "hallucination_block": true,
+    "irrelevance_block": true,
+    "receipt_chain_valid": true,
+    "receipt_tamper_detected": true,
+    "truncation_block": true
+  },
+  "total_scenarios": 10
+}

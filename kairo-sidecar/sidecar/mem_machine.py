@@ -322,3 +322,49 @@ class MemorySeeder:
             style_vector=style_vector,
         )
 
+
+class MemSyncManager:
+    """
+    Exposes MemSyncManager in sidecar wrapping MemMachineClient's record_interaction and query.
+    Used for federated DP sync and interaction recall.
+    """
+    def __init__(self, db_path: Optional[str] = None):
+        self.client = MemMachineClient(db_path=db_path)
+
+    def record_interaction(
+        self,
+        domain: str,
+        task_type: str,
+        user_prompt: str,
+        output_preview: str = "",
+        confidence: float = 1.0,
+        user_id: str = "local",
+        style_notes: str = "",
+        style_vector: Optional[List[float]] = None,
+    ) -> bool:
+        return self.client.record_interaction(
+            domain=domain,
+            task_type=task_type,
+            user_prompt=user_prompt,
+            output_preview=output_preview,
+            confidence=confidence,
+            user_id=user_id,
+            style_notes=style_notes,
+            style_vector=style_vector,
+        )
+
+    def query(
+        self,
+        user_id: str = "local",
+        domain: str = "",
+        task_type: str = "",
+        limit: int = 5,
+    ) -> str:
+        return self.client.query(
+            user_id=user_id,
+            domain=domain,
+            task_type=task_type,
+            limit=limit,
+        )
+
+

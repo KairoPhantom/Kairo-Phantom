@@ -76,3 +76,49 @@ def test_crash_handler_writes_file(tmp_path, capsys):
     captured = capsys.readouterr()
     assert "Kairo Phantom" in captured.err
     assert "github.com" in captured.err
+
+
+def test_scrub_pii_user_directory():
+    raw_path_win = "Error in file C:\\Users\\john_doe\\app\\main.py at line 12"
+    scrubbed_win = crash_module.scrub_pii(raw_path_win)
+    assert scrubbed_win == "Error in file C:\\Users\\[USER]\\app\\main.py at line 12"
+
+    raw_path_unix = "Error in file /Users/john_doe/app/main.py at line 12"
+    scrubbed_unix = crash_module.scrub_pii(raw_path_unix)
+    assert scrubbed_unix == "Error in file /Users/[USER]/app/main.py at line 12"
+
+    raw_path_lower = "Error in /users/alice_smith/project"
+    scrubbed_lower = crash_module.scrub_pii(raw_path_lower)
+    assert scrubbed_lower == "Error in /users/[USER]/project"
+
+
+def test_crash_reporter_offline_mode(tmp_path):
+    with patch.object(crash_module, "CRASH_DIR", tmp_path):
+        with patch.dict(os.environ, {"KAIRO_OFFLINE": "1"}):
+            try:
+                raise ValueError("offline error")
+            except ValueError:
+                exc_type, exc_value, exc_tb = sys.exc_info()
+                crash_file = _write_crash_report(exc_type, exc_value, exc_tb)
+            assert crash_file is None
+            
+            manual_file = write_manual_crash("manual offline error")
+            assert manual_file is None
+            
+            files = list(tmp_path.glob("crash_*.json"))
+            assert len(files) == 0
+
+
+def test_crash_reporter_source_map_hashes():
+    try:
+        raise ValueError("test source map")
+    except ValueError:
+        exc_type, exc_value, exc_tb = sys.exc_info()
+        frames = crash_module._build_source_map(exc_tb)
+    
+    assert len(frames) > 0
+    test_frame = frames[-1]
+    assert test_frame["file"].endswith("test_crash_reporter.py")
+    assert test_frame["file_hash"] is not None
+    assert len(test_frame["file_hash"]) == 16
+    assert len(test_frame["context"]) > 0

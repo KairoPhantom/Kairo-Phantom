@@ -1,0 +1,67 @@
+{
+  "abstention_threshold": 0.6,
+  "bins": [
+    {
+      "calibration_error": 0.008400008082389832,
+      "empirical_accuracy": 0.1666666716337204,
+      "mean_confidence": 0.15826666355133057,
+      "sample_count": 6
+    },
+    {
+      "calibration_error": 0.03714287281036377,
+      "empirical_accuracy": 0.2857142984867096,
+      "mean_confidence": 0.24857142567634583,
+      "sample_count": 7
+    },
+    {
+      "calibration_error": 0.15663999319076538,
+      "empirical_accuracy": 0.5,
+      "mean_confidence": 0.3433600068092346,
+      "sample_count": 10
+    },
+    {
+      "calibration_error": 0.16248002648353577,
+      "empirical_accuracy": 0.6000000238418579,
+      "mean_confidence": 0.43751999735832214,
+      "sample_count": 10
+    },
+    {
+      "calibration_error": 0.3261866569519043,
+      "empirical_accuracy": 0.8666666746139526,
+      "mean_confidence": 0.5404800176620483,
+      "sample_count": 15
+    },
+    {
+      "calibration_error": 0.1815333366394043,
+      "empirical_accuracy": 0.8333333134651184,
+      "mean_confidence": 0.6517999768257141,
+      "sample_count": 12
+    },
+    {
+      "calibration_error": 0.06445002555847168,
+      "empirical_accuracy": 0.8125,
+      "mean_confidence": 0.7480499744415283,
+      "sample_count": 16
+    },
+    {
+      "calibration_error": 0.09675788879394531,
+      "empirical_accuracy": 0.9473684430122375,
+      "mean_confidence": 0.8506105542182922,
+      "sample_count": 19
+    },
+    {
+      "calibration_error": 0.08287996053695679,
+      "empirical_accuracy": 1.0,
+      "mean_confidence": 0.9171200394630432,
+      "sample_count": 5
+    }
+  ],
+  "calibration_method": "platt_scaling",
+  "coefficients": {
+    "intercept": 0.06,
+    "slope": 0.88
+  },
+  "expected_calibration_error": 0.13856801390647888,
+  "generated_at": 1781431099,
+  "total_samples": 100
+}

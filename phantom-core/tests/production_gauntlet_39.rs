@@ -308,10 +308,11 @@ fn mem_003_confidence_engine_reduces_for_bullet_in_word() {
     let signals = FeedbackClassifier::classify(
         "- Point one\n- Point two", "Point one. Point two."
     );
-    let confidence = ConfidenceEngine::calculate_confidence(
-        "Microsoft Word", "- new bullet response", &signals
+    let confidence_score = ConfidenceEngine::unified_confidence(
+        "Microsoft Word", "- new bullet response", &signals, 0, "", 0.5, false
     );
-    assert!(confidence < 0.95, "Confidence must decrease after format_changed feedback");
+    assert!(confidence_score.calibrated_score < 0.95, "Confidence must decrease after format_changed feedback");
+
 }
 
 // ── MEM-004: Rejection learning (Esc path) ────────────────────
@@ -419,11 +420,11 @@ fn invariants_1000_step_random_walk() {
         let app = ["Microsoft Word", "Excel", "Unknown"][step % 3];
         let band = ConfidenceBand::compute(prompt, app);
 
-        // INVARIANT 2: confidence always in [0.1, 1.0]
+        // INVARIANT 2: confidence always in [0.0, 1.0]
         let response = if step % 2 == 0 { "- bullet" } else { "prose text here" };
-        let confidence = ConfidenceEngine::calculate_confidence(app, response, &history);
-        assert!((0.1f64..=1.0).contains(&confidence),
-            "step {}: confidence {} out of range", step, confidence);
+        let confidence_score = ConfidenceEngine::unified_confidence(app, response, &history, 0, prompt, 0.5, false);
+        assert!((0.0f32..=1.0).contains(&confidence_score.calibrated_score),
+            "step {}: calibrated confidence {} out of range", step, confidence_score.calibrated_score);
 
         // INVARIANT 3: CommandMode always parses without panic
         let (mode, _) = CommandMode::from_prompt(prompt);

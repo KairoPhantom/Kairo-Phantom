@@ -349,12 +349,224 @@ impl TamperEvidentAuditLog {
     }
 }
 
+// ─── F3+: Verifiable Provenance Receipts (Item 29) ────────────────────────────
+//
+// Every action taken by Kairo emits a signed, hash-chained receipt.
+// Receipts are appended to `~/.kairo-phantom/receipts.jsonl`.
+// Each receipt includes the SHA-256 of the previous receipt (`prev_hash`)
+// to guarantee tamper-proof ordering.
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProvenanceReceipt {
+    /// Monotonically increasing index within this receipts.jsonl file.
+    pub seq: u64,
+    /// Unix epoch seconds.
+    pub timestamp: u64,
+    /// Agent public-key hex — who performed the action.
+    pub agent_id: String,
+    /// Human-readable action description (e.g. "generate_response", "apply_edit").
+    pub action: String,
+    /// Arbitrary context payload (document path, model, etc.).
+    pub context: String,
+    /// Outcome of the action (e.g. "ok", "rejected", "abstained").
+    pub outcome: String,
+    /// SHA-256 of previous receipt's canonical JSON, or "genesis" for first receipt.
+    pub prev_hash: String,
+    /// SHA-256 of this receipt's canonical JSON (fields above, self_hash="").
+    pub self_hash: String,
+    /// Ed25519 signature (hex) over `self_hash` bytes, signed with `agent_id`'s key.
+    pub signature: String,
+}
+
+impl ProvenanceReceipt {
+    fn new(
+        seq: u64,
+        agent_id: &str,
+        action: &str,
+        context: &str,
+        outcome: &str,
+        prev_hash: &str,
+    ) -> Self {
+        let timestamp = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs();
+
+        let mut r = Self {
+            seq,
+            timestamp,
+            agent_id: agent_id.to_string(),
+            action: action.to_string(),
+            context: context.to_string(),
+            outcome: outcome.to_string(),
+            prev_hash: prev_hash.to_string(),
+            self_hash: String::new(),
+            signature: String::new(),
+        };
+        // Compute self_hash over all fields except self_hash and signature
+        let canonical = serde_json::to_string(&r).unwrap_or_default();
+        r.self_hash = sha256_hex(canonical.as_bytes());
+        r
+    }
+}
+
+/// Append-only, hash-chained receipt store.
+pub struct ReceiptLog {
+    path: std::path::PathBuf,
+    last_hash: std::sync::Mutex<String>,
+    next_seq: std::sync::Mutex<u64>,
+}
+
+impl ReceiptLog {
+    /// Open (or create) the receipts log at `path`.
+    pub fn new(path: std::path::PathBuf) -> Self {
+        let (last_hash, next_seq) = Self::read_tail(&path);
+        info!(
+            "[ReceiptLog] Opened {:?} — seq={}, tail_hash={}...",
+            path, next_seq, &last_hash[..8.min(last_hash.len())]
+        );
+        Self {
+            path,
+            last_hash: std::sync::Mutex::new(last_hash),
+            next_seq: std::sync::Mutex::new(next_seq),
+        }
+    }
+
+    /// Default path: `~/.kairo-phantom/receipts.jsonl`
+    pub fn default_path() -> std::path::PathBuf {
+        dirs::home_dir()
+            .unwrap_or_else(|| std::path::PathBuf::from("."))
+            .join(".kairo-phantom")
+            .join("receipts.jsonl")
+    }
+
+    fn read_tail(path: &std::path::Path) -> (String, u64) {
+        if !path.exists() {
+            return ("genesis".to_string(), 0);
+        }
+        let contents = std::fs::read_to_string(path).unwrap_or_default();
+        let mut last_hash = "genesis".to_string();
+        let mut seq: u64 = 0;
+        for line in contents.lines() {
+            if line.trim().is_empty() { continue; }
+            if let Ok(r) = serde_json::from_str::<ProvenanceReceipt>(line) {
+                last_hash = r.self_hash.clone();
+                seq = r.seq + 1;
+            }
+        }
+        (last_hash, seq)
+    }
+
+    /// Emit a receipt for one action and append it to the JSONL log.
+    pub fn emit(
+        &self,
+        identity: &AgentIdentity,
+        action: &str,
+        context: &str,
+        outcome: &str,
+    ) -> ProvenanceReceipt {
+        let mut last = self.last_hash.lock().unwrap();
+        let mut seq_guard = self.next_seq.lock().unwrap();
+
+        let mut receipt = ProvenanceReceipt::new(
+            *seq_guard,
+            &identity.agent_id,
+            action,
+            context,
+            outcome,
+            &last,
+        );
+        receipt.signature = identity.sign(receipt.self_hash.as_bytes()).unwrap_or_default();
+
+        *last = receipt.self_hash.clone();
+        *seq_guard += 1;
+
+        let line = serde_json::to_string(&receipt).unwrap_or_default();
+        if let Some(parent) = self.path.parent() {
+            let _ = std::fs::create_dir_all(parent);
+        }
+        use std::io::Write;
+        if let Ok(mut file) = std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&self.path)
+        {
+            let _ = writeln!(file, "{}", line);
+        }
+        tracing::debug!(
+            "[ReceiptLog] Emitted seq={} action={} outcome={} hash={}...",
+            receipt.seq, receipt.action, receipt.outcome, &receipt.self_hash[..8]
+        );
+        receipt
+    }
+
+    /// Verify the entire receipts chain. Returns number of violations found.
+    pub fn verify_chain(&self) -> usize {
+        if !self.path.exists() { return 0; }
+        let contents = std::fs::read_to_string(&self.path).unwrap_or_default();
+        let mut prev_hash = "genesis".to_string();
+        let mut violations = 0;
+        let mut expected_seq: u64 = 0;
+
+        for (i, line) in contents.lines().enumerate() {
+            if line.trim().is_empty() { continue; }
+            match serde_json::from_str::<ProvenanceReceipt>(line) {
+                Ok(r) => {
+                    // 1. Check prev_hash continuity
+                    if r.prev_hash != prev_hash {
+                        warn!("[ReceiptLog] Chain break at line {}: prev_hash mismatch", i + 1);
+                        violations += 1;
+                    }
+                    // 2. Check sequence
+                    if r.seq != expected_seq {
+                        warn!("[ReceiptLog] Seq gap at line {}: expected {}, got {}", i + 1, expected_seq, r.seq);
+                        violations += 1;
+                    }
+                    // 3. Re-compute self_hash
+                    let mut temp = r.clone();
+                    temp.self_hash = String::new();
+                    temp.signature = String::new();
+                    let canonical = serde_json::to_string(&temp).unwrap_or_default();
+                    let computed = sha256_hex(canonical.as_bytes());
+                    if computed != r.self_hash {
+                        warn!("[ReceiptLog] Self-hash mismatch at line {}", i + 1);
+                        violations += 1;
+                    }
+                    // 4. Verify signature
+                    if !TamperEvidentAuditLog::verify_signature(
+                        &r.agent_id,
+                        r.self_hash.as_bytes(),
+                        &r.signature,
+                    ) {
+                        warn!("[ReceiptLog] Invalid signature at line {}", i + 1);
+                        violations += 1;
+                    }
+
+                    prev_hash = r.self_hash;
+                    expected_seq = r.seq + 1;
+                }
+                Err(_) => {
+                    warn!("[ReceiptLog] Unparseable entry at line {}", i + 1);
+                    violations += 1;
+                }
+            }
+        }
+
+        if violations == 0 {
+            info!("[ReceiptLog] Chain verified OK — {} receipts, no tampering", expected_seq);
+        }
+        violations
+    }
+}
+
 // ─── Identity Manager ─────────────────────────────────────────────────────────
 
 pub struct IdentityManager {
     pub identity: AgentIdentity,
     pub rbac: RbacTable,
     pub audit_log: Option<TamperEvidentAuditLog>,
+    /// Hash-chained provenance receipt log (Item 29).
+    pub receipt_log: Option<ReceiptLog>,
 }
 
 impl IdentityManager {
@@ -365,7 +577,10 @@ impl IdentityManager {
         let audit_path = config_dir.join("audit_chain.jsonl");
         let audit_log = Some(TamperEvidentAuditLog::new(audit_path));
 
-        Self { identity, rbac: RbacTable::new(), audit_log }
+        let receipts_path = ReceiptLog::default_path();
+        let receipt_log = Some(ReceiptLog::new(receipts_path));
+
+        Self { identity, rbac: RbacTable::new(), audit_log, receipt_log }
     }
 
     pub fn check_permission(&self, agent_id: &str, file_path: &str) -> bool {
@@ -374,6 +589,9 @@ impl IdentityManager {
             tracing::warn!("[RBAC] Agent '{}' denied: '{}'", agent_id, file_path);
             if let Some(log) = &self.audit_log {
                 log.append(&self.identity, "system", "rbac_denied", file_path, "denied");
+            }
+            if let Some(rlog) = &self.receipt_log {
+                rlog.emit(&self.identity, "rbac_denied", file_path, "denied");
             }
         }
         allowed
@@ -387,6 +605,10 @@ impl IdentityManager {
         if let Some(log) = &self.audit_log {
             let user = std::env::var("USERNAME").or_else(|_| std::env::var("USER")).unwrap_or_else(|_| "local".into());
             log.append(&self.identity, &user, action, doc_path, result);
+        }
+        // Also emit a provenance receipt for every logged action
+        if let Some(rlog) = &self.receipt_log {
+            rlog.emit(&self.identity, action, doc_path, result);
         }
     }
 }

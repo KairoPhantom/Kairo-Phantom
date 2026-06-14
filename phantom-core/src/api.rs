@@ -262,6 +262,26 @@ async fn get_app(State(state): State<ApiState>) -> Json<AppResponse> {
     })
 }
 
+#[derive(Serialize)]
+pub struct CapabilityInfo {
+    pub id: String,
+    pub name: String,
+    pub capability: crate::plugin::DomainCapability,
+}
+
+/// GET /capabilities
+pub async fn get_capabilities(State(state): State<ApiState>) -> Json<Vec<CapabilityInfo>> {
+    let public_agents = state.swarm_engine.registry.public_agents();
+    let capabilities = public_agents.iter().map(|agent| {
+        CapabilityInfo {
+            id: agent.id().to_string(),
+            name: agent.name().to_string(),
+            capability: agent.capability(),
+        }
+    }).collect();
+    Json(capabilities)
+}
+
 /// POST /agent — MCP Tool: switch agent
 async fn set_agent(State(state): State<ApiState>, Json(req): Json<AgentRequest>) -> Json<()> {
     let mut lock = state.mcp_agent_override.lock().unwrap();
@@ -406,6 +426,7 @@ pub async fn start_api_server(state: ApiState) {
         .route("/generate_image", post(generate_image))
         .route("/kami/export", post(kami_export))
         .route("/mobile/sync", post(mobile_sync_post))
+        .route("/capabilities", get(get_capabilities))
         .with_state(state);
 
     let addr = format!("127.0.0.1:{}", PORT);

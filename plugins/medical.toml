@@ -4,7 +4,7 @@
 
 name = "medical"
 version = "1.0.0"
-description = "Medical documentation specialist — SOAP notes, clinical summaries, ICD-10"
+description = "[Prompt-Only / Scoped-Out] Medical documentation helper — SOAP notes template support and reference guidelines."
 author = "Kairo Phantom"
 
 [[fingerprinters]]

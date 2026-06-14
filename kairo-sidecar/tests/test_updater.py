@@ -9,7 +9,7 @@ from urllib import error
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from sidecar.updater import check_for_update, _is_newer, check_for_update_async, CURRENT_VERSION, verify_checksum, verify_signature, apply_update
+from sidecar.updater import check_for_update, _is_newer, check_for_update_async, CURRENT_VERSION, verify_checksum, verify_signature, apply_update, verify_installer_signature
 
 
 def test_is_newer_true():
@@ -212,4 +212,53 @@ def test_apply_update_failed_health_check_rollback(tmpdir):
     assert os.path.exists(os.path.join(target_dir, "original.txt"))
     assert not os.path.exists(os.path.join(target_dir, "dummy.txt"))
     assert not os.path.exists(target_dir + "_backup")
+
+
+def test_verify_installer_signature_non_windows():
+    """On non-Windows platforms, verify_installer_signature returns True."""
+    with patch("sidecar.updater.sys.platform", "linux"):
+        assert verify_installer_signature("any_file.exe") is True
+
+
+def test_verify_installer_signature_missing_file():
+    """If the installer file does not exist, return False."""
+    with patch("sidecar.updater.sys.platform", "win32"):
+        assert verify_installer_signature("nonexistent_file.exe") is False
+
+
+def test_verify_installer_signature_valid():
+    """If the signature check returns Valid, return True."""
+    mock_run = MagicMock()
+    mock_run.return_value.stdout = "Valid\n"
+    
+    with patch("sidecar.updater.sys.platform", "win32"), \
+         patch("os.path.exists", return_value=True), \
+         patch("sidecar.updater.subprocess.run", mock_run):
+        assert verify_installer_signature("dummy_installer.exe") is True
+        mock_run.assert_called_once()
+        cmd = mock_run.call_args[0][0]
+        assert "Get-AuthenticodeSignature" in cmd[-1]
+
+
+def test_verify_installer_signature_invalid():
+    """If the signature check returns a non-Valid status, return False."""
+    mock_run = MagicMock()
+    mock_run.return_value.stdout = "NotSigned\n"
+    
+    with patch("sidecar.updater.sys.platform", "win32"), \
+         patch("os.path.exists", return_value=True), \
+         patch("sidecar.updater.subprocess.run", mock_run):
+        assert verify_installer_signature("dummy_installer.exe") is False
+
+
+def test_verify_installer_signature_command_failure():
+    """If subprocess.run raises an error, return False."""
+    import subprocess
+    mock_run = MagicMock(side_effect=subprocess.SubprocessError("PowerShell failed"))
+    
+    with patch("sidecar.updater.sys.platform", "win32"), \
+         patch("os.path.exists", return_value=True), \
+         patch("sidecar.updater.subprocess.run", mock_run):
+        assert verify_installer_signature("dummy_installer.exe") is False
+
 

@@ -7,6 +7,8 @@ import json
 import threading
 import logging
 import os
+import sys
+import subprocess
 import shutil
 import zipfile
 import hashlib
@@ -101,6 +103,51 @@ def verify_signature(file_path: str, signature_hex: str, public_key_hex: str) ->
         return True
     except Exception as e:
         log.error(f"[Updater] Signature verification failed: {e}")
+        return False
+
+
+def verify_installer_signature(file_path: str) -> bool:
+    """
+    Verify that the Windows installer has a valid Authenticode signature.
+    Uses PowerShell's Get-AuthenticodeSignature on Windows.
+    Returns True on non-Windows/mocked setups.
+    """
+    if sys.platform != "win32":
+        return True
+
+    if not os.path.exists(file_path):
+        log.error(f"[Updater] Installer file not found: {file_path}")
+        return False
+
+    try:
+        cmd = [
+            "powershell.exe",
+            "-NoProfile",
+            "-NonInteractive",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-Command",
+            f"(Get-AuthenticodeSignature -LiteralPath '{file_path}').Status"
+        ]
+        result = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=True
+        )
+        status = result.stdout.strip()
+        if status == "Valid":
+            log.info(f"[Updater] Installer signature is valid: {file_path}")
+            return True
+        else:
+            log.error(f"[Updater] Installer signature is invalid ({status}): {file_path}")
+            return False
+    except subprocess.SubprocessError as e:
+        log.error(f"[Updater] Failed to run Get-AuthenticodeSignature: {e}")
+        return False
+    except Exception as e:
+        log.error(f"[Updater] Unexpected error during signature verification: {e}")
         return False
 
 

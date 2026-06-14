@@ -2235,13 +2235,20 @@ async fn async_main() -> Result<()> {
                 let history = mem_machine.get_feedback_history(&app_label).unwrap_or_default();
                 if !history.is_empty() {
                     let preview_hint = format!("{} {}", clean_prompt_for_llm, app_label);
-                    let pahf_confidence = crate::memory::feedback::ConfidenceEngine::calculate_confidence(
+                    let pahf_confidence = crate::memory::feedback::ConfidenceEngine::unified_confidence(
                         &app_label,
                         &preview_hint,
                         &history,
+                        0,
+                        &clean_prompt_for_llm,
+                        0.5,
+                        false,
                     );
                     // Log only — never skip generation based on this score
-                    info!("📊 PAHF confidence: {:.2} (informational only — always generating)", pahf_confidence);
+                    info!(
+                        "📊 PAHF confidence: raw={:.2} calibrated={:.2} abstain={} (informational only — always generating)",
+                        pahf_confidence.score, pahf_confidence.calibrated_score, pahf_confidence.should_abstain
+                    );
                 }
 
                 // F. Phase 3: Create Ghost Session with CancellationToken

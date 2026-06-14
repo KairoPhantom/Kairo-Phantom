@@ -1,0 +1,322 @@
+[
+  {
+    "diff": "--- phantom-core/src/sample_math.rs\n+++ replace add -> i32 with 0\n@@ -1,10 +1,10 @@\n pub fn add(a: i32, b: i32) -> i32 {\n-    a + b\n+    0 /* ~ changed by cargo-mutants ~ */\n }\n \n pub fn multiply(a: i32, b: i32) -> i32 {\n     a * b\n }\n \n #[cfg(test)]\n mod tests {\n",
+    "file": "phantom-core/src/sample_math.rs",
+    "function": {
+      "function_name": "add",
+      "return_type": "-> i32",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 3
+        },
+        "start": {
+          "column": 1,
+          "line": 1
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "phantom-core/src/sample_math.rs:2:5: replace add -> i32 with 0",
+    "package": "phantom-core",
+    "replacement": "0",
+    "span": {
+      "end": {
+        "column": 10,
+        "line": 2
+      },
+      "start": {
+        "column": 5,
+        "line": 2
+      }
+    }
+  },
+  {
+    "diff": "--- phantom-core/src/sample_math.rs\n+++ replace add -> i32 with 1\n@@ -1,10 +1,10 @@\n pub fn add(a: i32, b: i32) -> i32 {\n-    a + b\n+    1 /* ~ changed by cargo-mutants ~ */\n }\n \n pub fn multiply(a: i32, b: i32) -> i32 {\n     a * b\n }\n \n #[cfg(test)]\n mod tests {\n",
+    "file": "phantom-core/src/sample_math.rs",
+    "function": {
+      "function_name": "add",
+      "return_type": "-> i32",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 3
+        },
+        "start": {
+          "column": 1,
+          "line": 1
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "phantom-core/src/sample_math.rs:2:5: replace add -> i32 with 1",
+    "package": "phantom-core",
+    "replacement": "1",
+    "span": {
+      "end": {
+        "column": 10,
+        "line": 2
+      },
+      "start": {
+        "column": 5,
+        "line": 2
+      }
+    }
+  },
+  {
+    "diff": "--- phantom-core/src/sample_math.rs\n+++ replace add -> i32 with -1\n@@ -1,10 +1,10 @@\n pub fn add(a: i32, b: i32) -> i32 {\n-    a + b\n+    -1 /* ~ changed by cargo-mutants ~ */\n }\n \n pub fn multiply(a: i32, b: i32) -> i32 {\n     a * b\n }\n \n #[cfg(test)]\n mod tests {\n",
+    "file": "phantom-core/src/sample_math.rs",
+    "function": {
+      "function_name": "add",
+      "return_type": "-> i32",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 3
+        },
+        "start": {
+          "column": 1,
+          "line": 1
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "phantom-core/src/sample_math.rs:2:5: replace add -> i32 with -1",
+    "package": "phantom-core",
+    "replacement": "-1",
+    "span": {
+      "end": {
+        "column": 10,
+        "line": 2
+      },
+      "start": {
+        "column": 5,
+        "line": 2
+      }
+    }
+  },
+  {
+    "diff": "--- phantom-core/src/sample_math.rs\n+++ replace + with - in add\n@@ -1,10 +1,10 @@\n pub fn add(a: i32, b: i32) -> i32 {\n-    a + b\n+    a - /* ~ changed by cargo-mutants ~ */ b\n }\n \n pub fn multiply(a: i32, b: i32) -> i32 {\n     a * b\n }\n \n #[cfg(test)]\n mod tests {\n",
+    "file": "phantom-core/src/sample_math.rs",
+    "function": {
+      "function_name": "add",
+      "return_type": "-> i32",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 3
+        },
+        "start": {
+          "column": 1,
+          "line": 1
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "phantom-core/src/sample_math.rs:2:7: replace + with - in add",
+    "package": "phantom-core",
+    "replacement": "-",
+    "span": {
+      "end": {
+        "column": 8,
+        "line": 2
+      },
+      "start": {
+        "column": 7,
+        "line": 2
+      }
+    }
+  },
+  {
+    "diff": "--- phantom-core/src/sample_math.rs\n+++ replace + with * in add\n@@ -1,10 +1,10 @@\n pub fn add(a: i32, b: i32) -> i32 {\n-    a + b\n+    a * /* ~ changed by cargo-mutants ~ */ b\n }\n \n pub fn multiply(a: i32, b: i32) -> i32 {\n     a * b\n }\n \n #[cfg(test)]\n mod tests {\n",
+    "file": "phantom-core/src/sample_math.rs",
+    "function": {
+      "function_name": "add",
+      "return_type": "-> i32",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 3
+        },
+        "start": {
+          "column": 1,
+          "line": 1
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "phantom-core/src/sample_math.rs:2:7: replace + with * in add",
+    "package": "phantom-core",
+    "replacement": "*",
+    "span": {
+      "end": {
+        "column": 8,
+        "line": 2
+      },
+      "start": {
+        "column": 7,
+        "line": 2
+      }
+    }
+  },
+  {
+    "diff": "--- phantom-core/src/sample_math.rs\n+++ replace multiply -> i32 with 0\n@@ -1,14 +1,14 @@\n pub fn add(a: i32, b: i32) -> i32 {\n     a + b\n }\n \n pub fn multiply(a: i32, b: i32) -> i32 {\n-    a * b\n+    0 /* ~ changed by cargo-mutants ~ */\n }\n \n #[cfg(test)]\n mod tests {\n     use super::*;\n \n     #[test]\n     fn test_add() {\n",
+    "file": "phantom-core/src/sample_math.rs",
+    "function": {
+      "function_name": "multiply",
+      "return_type": "-> i32",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 7
+        },
+        "start": {
+          "column": 1,
+          "line": 5
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "phantom-core/src/sample_math.rs:6:5: replace multiply -> i32 with 0",
+    "package": "phantom-core",
+    "replacement": "0",
+    "span": {
+      "end": {
+        "column": 10,
+        "line": 6
+      },
+      "start": {
+        "column": 5,
+        "line": 6
+      }
+    }
+  },
+  {
+    "diff": "--- phantom-core/src/sample_math.rs\n+++ replace multiply -> i32 with 1\n@@ -1,14 +1,14 @@\n pub fn add(a: i32, b: i32) -> i32 {\n     a + b\n }\n \n pub fn multiply(a: i32, b: i32) -> i32 {\n-    a * b\n+    1 /* ~ changed by cargo-mutants ~ */\n }\n \n #[cfg(test)]\n mod tests {\n     use super::*;\n \n     #[test]\n     fn test_add() {\n",
+    "file": "phantom-core/src/sample_math.rs",
+    "function": {
+      "function_name": "multiply",
+      "return_type": "-> i32",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 7
+        },
+        "start": {
+          "column": 1,
+          "line": 5
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "phantom-core/src/sample_math.rs:6:5: replace multiply -> i32 with 1",
+    "package": "phantom-core",
+    "replacement": "1",
+    "span": {
+      "end": {
+        "column": 10,
+        "line": 6
+      },
+      "start": {
+        "column": 5,
+        "line": 6
+      }
+    }
+  },
+  {
+    "diff": "--- phantom-core/src/sample_math.rs\n+++ replace multiply -> i32 with -1\n@@ -1,14 +1,14 @@\n pub fn add(a: i32, b: i32) -> i32 {\n     a + b\n }\n \n pub fn multiply(a: i32, b: i32) -> i32 {\n-    a * b\n+    -1 /* ~ changed by cargo-mutants ~ */\n }\n \n #[cfg(test)]\n mod tests {\n     use super::*;\n \n     #[test]\n     fn test_add() {\n",
+    "file": "phantom-core/src/sample_math.rs",
+    "function": {
+      "function_name": "multiply",
+      "return_type": "-> i32",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 7
+        },
+        "start": {
+          "column": 1,
+          "line": 5
+        }
+      }
+    },
+    "genre": "FnValue",
+    "name": "phantom-core/src/sample_math.rs:6:5: replace multiply -> i32 with -1",
+    "package": "phantom-core",
+    "replacement": "-1",
+    "span": {
+      "end": {
+        "column": 10,
+        "line": 6
+      },
+      "start": {
+        "column": 5,
+        "line": 6
+      }
+    }
+  },
+  {
+    "diff": "--- phantom-core/src/sample_math.rs\n+++ replace * with + in multiply\n@@ -1,14 +1,14 @@\n pub fn add(a: i32, b: i32) -> i32 {\n     a + b\n }\n \n pub fn multiply(a: i32, b: i32) -> i32 {\n-    a * b\n+    a + /* ~ changed by cargo-mutants ~ */ b\n }\n \n #[cfg(test)]\n mod tests {\n     use super::*;\n \n     #[test]\n     fn test_add() {\n",
+    "file": "phantom-core/src/sample_math.rs",
+    "function": {
+      "function_name": "multiply",
+      "return_type": "-> i32",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 7
+        },
+        "start": {
+          "column": 1,
+          "line": 5
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "phantom-core/src/sample_math.rs:6:7: replace * with + in multiply",
+    "package": "phantom-core",
+    "replacement": "+",
+    "span": {
+      "end": {
+        "column": 8,
+        "line": 6
+      },
+      "start": {
+        "column": 7,
+        "line": 6
+      }
+    }
+  },
+  {
+    "diff": "--- phantom-core/src/sample_math.rs\n+++ replace * with / in multiply\n@@ -1,14 +1,14 @@\n pub fn add(a: i32, b: i32) -> i32 {\n     a + b\n }\n \n pub fn multiply(a: i32, b: i32) -> i32 {\n-    a * b\n+    a / /* ~ changed by cargo-mutants ~ */ b\n }\n \n #[cfg(test)]\n mod tests {\n     use super::*;\n \n     #[test]\n     fn test_add() {\n",
+    "file": "phantom-core/src/sample_math.rs",
+    "function": {
+      "function_name": "multiply",
+      "return_type": "-> i32",
+      "span": {
+        "end": {
+          "column": 2,
+          "line": 7
+        },
+        "start": {
+          "column": 1,
+          "line": 5
+        }
+      }
+    },
+    "genre": "BinaryOperator",
+    "name": "phantom-core/src/sample_math.rs:6:7: replace * with / in multiply",
+    "package": "phantom-core",
+    "replacement": "/",
+    "span": {
+      "end": {
+        "column": 8,
+        "line": 6
+      },
+      "start": {
+        "column": 7,
+        "line": 6
+      }
+    }
+  }
+]
