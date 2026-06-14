@@ -2,24 +2,36 @@
 
 Interfaces with the infinite whiteboard canvas (tldraw/mcp-app).
 Supports coordinate mapping, shape structure creation/updating/deletion, and automated flowchart layouts.
+
+The in-process mock shape store (_mock_shapes) is gated behind the
+``KAIRO_ENABLE_MOCK_CANVAS`` environment variable.  It MUST NOT be used in
+production.  Set the flag only in local development or CI sandboxes.
 """
 
 import logging
+import os
 from typing import Any, Dict, List, Optional
 
 log = logging.getLogger("kairo-sidecar.tldraw_bridge")
 
+# Feature flag — must be explicit opt-in; never enabled in production.
+_MOCK_CANVAS_ENABLED = os.getenv("KAIRO_ENABLE_MOCK_CANVAS", "0") == "1"
+
 class TldrawBridge:
     """Bridges Kairo to tldraw infinite whiteboard canvas."""
 
-    def __init__(self, host: str = "127.0.0.1", port: int = 8082, offline_mode: bool = True):
+    def __init__(self, host: str = "127.0.0.1", port: int = 8082, offline_mode: bool = False):
         self.host = host
         self.port = port
+        # offline_mode can be overridden per-instance; production callers leave it False.
         self.offline_mode = offline_mode
-        self._mock_shapes: Dict[str, Dict[str, Any]] = {}
         self._next_id = 1
-        
-        self._reset_mock_canvas()
+
+        if _MOCK_CANVAS_ENABLED:
+            self._mock_shapes: Dict[str, Dict[str, Any]] = {}
+            self._reset_mock_canvas()
+        else:
+            self._mock_shapes = {}  # empty — never written in production
 
     def _reset_mock_canvas(self):
         """Pre-populate flowchart blocks in local mock state."""
@@ -193,8 +205,9 @@ class TldrawBridge:
             "props": props
         }
         
-        self._mock_shapes[shape_id] = shape
-        log.info(f"tldraw Shape created: {shape_id} of type '{shape_type}' at ({x}, {y})")
+        if _MOCK_CANVAS_ENABLED:
+            self._mock_shapes[shape_id] = shape
+        log.info(f"tldraw Shape created: {shape_id} of type '{shape_type}' at ({x}, {y}) [mock={'ON' if _MOCK_CANVAS_ENABLED else 'OFF'}]")
         return {"ok": True, "shape_id": shape_id, "shape": shape}
 
     def update_shape(self, shape_id: str, x: Optional[float] = None, y: Optional[float] = None, props: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -209,9 +222,11 @@ class TldrawBridge:
                 }]
             })
 
+        if not _MOCK_CANVAS_ENABLED:
+            return {"ok": False, "error": "Mock canvas disabled. Set KAIRO_ENABLE_MOCK_CANVAS=1 to use offline state."}
         if shape_id not in self._mock_shapes:
             return {"ok": False, "error": f"Shape not found: {shape_id}"}
-            
+
         shape = self._mock_shapes[shape_id]
         if x is not None:
             shape["x"] = x
@@ -219,7 +234,7 @@ class TldrawBridge:
             shape["y"] = y
         if props is not None:
             shape.setdefault("props", {}).update(props)
-            
+
         log.info(f"tldraw Shape updated: {shape_id}")
         return {"ok": True, "shape_id": shape_id, "shape": shape}
 
@@ -230,15 +245,19 @@ class TldrawBridge:
                 "shape_ids": [shape_id]
             })
 
+        if not _MOCK_CANVAS_ENABLED:
+            return {"ok": False, "error": "Mock canvas disabled. Set KAIRO_ENABLE_MOCK_CANVAS=1 to use offline state."}
         if shape_id not in self._mock_shapes:
             return {"ok": False, "error": f"Shape not found: {shape_id}"}
-            
+
         del self._mock_shapes[shape_id]
         log.info(f"tldraw Shape deleted: {shape_id}")
         return {"ok": True, "shape_id": shape_id}
 
     def get_canvas_shapes(self) -> List[Dict[str, Any]]:
         """Retrieve all active shapes from the canvas."""
+        if not _MOCK_CANVAS_ENABLED:
+            return []
         return list(self._mock_shapes.values())
 
     def draw_flowchart(self, nodes: List[Dict[str, Any]], edges: List[Dict[str, Any]]) -> Dict[str, Any]:
