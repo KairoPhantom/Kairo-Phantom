@@ -1,0 +1,32 @@
+--- phantom-core/src/governance/tool_gate.rs
++++ replace ToolGate::validate_file_access -> bool with false
+@@ -27,28 +27,17 @@
+     }
+ 
+     pub fn add_allowed_path(&mut self, path: String) {
+         self.allowed_paths.insert(path);
+     }
+ 
+     pub fn validate_file_access(&self, path: &str) -> bool {
+         // Enforce: Never write to C:\Windows or /etc
+-        if path.to_lowercase().starts_with("c:\\windows") || path.starts_with("/etc") {
+-            warn!("🚨 ToolGate: Blocked LLM attempt to access system directory: {}", path);
+-            return false;
+-        }
+-
+-        // Must be in allowed paths
+-        let is_allowed = self.allowed_paths.iter().any(|allowed| path.starts_with(allowed));
+-        if !is_allowed {
+-            warn!("🚨 ToolGate: Blocked access to unapproved path: {}", path);
+-            return false;
+-        }
+-        true
++        false /* ~ changed by cargo-mutants ~ */
+     }
+ 
+     pub fn validate_token_usage(&self, tokens_requested: usize) -> bool {
+         if tokens_requested > self.token_cap {
+             warn!("🚨 ToolGate: Token cap exceeded ({} > {})", tokens_requested, self.token_cap);
+             return false;
+         }
+         true

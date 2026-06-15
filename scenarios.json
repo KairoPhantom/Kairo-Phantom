@@ -3,8 +3,8 @@
     "id": "WORD_001",
     "category": "Word",
     "name": "Word Scenario 01",
-    "description": "Validate Word master/writer on prompt: Insert paragraph 'Kickoff Meeting Minutes' after paragraph 0",
-    "prompt": "Insert paragraph 'Kickoff Meeting Minutes' after paragraph 0",
+    "description": "Validate Word master/writer on prompt: Insert paragraph 'Kickoff Meeting Minutes' with style 'Heading 1' after paragraph 0",
+    "prompt": "Insert paragraph 'Kickoff Meeting Minutes' with style 'Heading 1' after paragraph 0",
     "status": "active",
     "expected_outcome": {
       "action": "insert_paragraph",
@@ -17,8 +17,8 @@
     "id": "WORD_002",
     "category": "Word",
     "name": "Word Scenario 02",
-    "description": "Validate Word master/writer on prompt: Insert paragraph 'Action Items:' after paragraph 1",
-    "prompt": "Insert paragraph 'Action Items:' after paragraph 1",
+    "description": "Validate Word master/writer on prompt: Insert paragraph 'Action Items:' with style 'Heading 2' after paragraph 1",
+    "prompt": "Insert paragraph 'Action Items:' with style 'Heading 2' after paragraph 1",
     "status": "active",
     "expected_outcome": {
       "action": "insert_paragraph",
@@ -31,13 +31,13 @@
     "id": "WORD_003",
     "category": "Word",
     "name": "Word Scenario 03",
-    "description": "Validate Word master/writer on prompt: Replace paragraph 1 text with 'Revised Budget: $150,000'",
-    "prompt": "Replace paragraph 1 text with 'Revised Budget: $150,000'",
+    "description": "Validate Word master/writer on prompt: Insert paragraph 'Key Decisions Made' with style 'Normal' after paragraph 2",
+    "prompt": "Insert paragraph 'Key Decisions Made' with style 'Normal' after paragraph 2",
     "status": "active",
     "expected_outcome": {
-      "action": "replace_paragraph",
-      "paragraph_index": 1,
-      "text": "Revised Budget: $150,000",
+      "action": "insert_paragraph",
+      "after_paragraph_index": 2,
+      "text": "Key Decisions Made",
       "style": "Normal"
     }
   },
@@ -45,89 +45,50 @@
     "id": "WORD_004",
     "category": "Word",
     "name": "Word Scenario 04",
-    "description": "Validate Word master/writer on prompt: Delete paragraph 2",
-    "prompt": "Delete paragraph 2",
+    "description": "Validate Word master/writer on prompt: Replace paragraph 0 text with 'New Heading'",
+    "prompt": "Replace paragraph 0 text with 'New Heading'",
     "status": "active",
     "expected_outcome": {
-      "action": "delete_paragraph",
-      "paragraph_index": 2
+      "action": "replace_paragraph",
+      "paragraph_index": 0,
+      "text": "New Heading",
+      "style": "Normal"
     }
   },
   {
     "id": "WORD_005",
     "category": "Word",
     "name": "Word Scenario 05",
-    "description": "Validate Word master/writer on prompt: Append ' (Reviewed)' to paragraph 1",
-    "prompt": "Append ' (Reviewed)' to paragraph 1",
+    "description": "Validate Word master/writer on prompt: Replace paragraph 1 text with 'Updated text block'",
+    "prompt": "Replace paragraph 1 text with 'Updated text block'",
     "status": "active",
     "expected_outcome": {
-      "action": "append_to_run",
+      "action": "replace_paragraph",
       "paragraph_index": 1,
-      "text": " (Reviewed)"
+      "text": "Updated text block",
+      "style": "Normal"
     }
   },
   {
     "id": "WORD_006",
     "category": "Word",
     "name": "Word Scenario 06",
-    "description": "Validate Word master/writer on prompt: Insert table with 2 rows and 3 columns after paragraph 2",
-    "prompt": "Insert table with 2 rows and 3 columns after paragraph 2",
+    "description": "Validate Word master/writer on prompt: Replace paragraph 2 text with 'Final remarks'",
+    "prompt": "Replace paragraph 2 text with 'Final remarks'",
     "status": "active",
     "expected_outcome": {
-      "action": "insert_table",
+      "action": "replace_paragraph",
       "paragraph_index": 2,
-      "rows": 2,
-      "cols": 3
+      "text": "Final remarks",
+      "style": "Normal"
     }
   },
   {
     "id": "WORD_007",
     "category": "Word",
     "name": "Word Scenario 07",
-    "description": "Validate Word master/writer on prompt: Insert paragraph 'Project Scope' at the end of the document",
-    "prompt": "Insert paragraph 'Project Scope' at the end of the document",
-    "status": "active",
-    "expected_outcome": {
-      "action": "insert_paragraph",
-      "after_paragraph_index": -1,
-      "text": "Project Scope",
-      "style": "Heading 1"
-    }
-  },
-  {
-    "id": "WORD_008",
-    "category": "Word",
-    "name": "Word Scenario 08",
-    "description": "Validate Word master/writer on prompt: Insert list bullet paragraph 'Buy milk' after paragraph 1",
-    "prompt": "Insert list bullet paragraph 'Buy milk' after paragraph 1",
-    "status": "active",
-    "expected_outcome": {
-      "action": "insert_paragraph",
-      "after_paragraph_index": 1,
-      "text": "Buy milk",
-      "style": "List Bullet"
-    }
-  },
-  {
-    "id": "WORD_009",
-    "category": "Word",
-    "name": "Word Scenario 09",
-    "description": "Validate Word master/writer on prompt: Insert heading 3 paragraph 'Detailed Analysis' after paragraph 2",
-    "prompt": "Insert heading 3 paragraph 'Detailed Analysis' after paragraph 2",
-    "status": "active",
-    "expected_outcome": {
-      "action": "insert_paragraph",
-      "after_paragraph_index": 2,
-      "text": "Detailed Analysis",
-      "style": "Heading 3"
-    }
-  },
-  {
-    "id": "WORD_010",
-    "category": "Word",
-    "name": "Word Scenario 10",
-    "description": "Validate Word master/writer on prompt: Delete paragraph 0 (Title)",
-    "prompt": "Delete paragraph 0 (Title)",
+    "description": "Validate Word master/writer on prompt: Delete paragraph 0",
+    "prompt": "Delete paragraph 0",
     "status": "active",
     "expected_outcome": {
       "action": "delete_paragraph",
@@ -135,92 +96,9 @@
     }
   },
   {
-    "id": "WORD_011",
+    "id": "WORD_008",
     "category": "Word",
-    "name": "Word Scenario 11",
-    "description": "Validate Word master/writer on prompt: Replace paragraph 0 text with 'Project Plan v2'",
-    "prompt": "Replace paragraph 0 text with 'Project Plan v2'",
-    "status": "active",
-    "expected_outcome": {
-      "action": "replace_paragraph",
-      "paragraph_index": 0,
-      "text": "Project Plan v2",
-      "style": "Heading 1"
-    }
-  },
-  {
-    "id": "WORD_012",
-    "category": "Word",
-    "name": "Word Scenario 12",
-    "description": "Validate Word master/writer on prompt: Append ' - Draft 1' to paragraph 0",
-    "prompt": "Append ' - Draft 1' to paragraph 0",
-    "status": "active",
-    "expected_outcome": {
-      "action": "append_to_run",
-      "paragraph_index": 0,
-      "text": " - Draft 1"
-    }
-  },
-  {
-    "id": "WORD_013",
-    "category": "Word",
-    "name": "Word Scenario 13",
-    "description": "Validate Word master/writer on prompt: Insert table with 3 rows and 2 columns after paragraph 1",
-    "prompt": "Insert table with 3 rows and 2 columns after paragraph 1",
-    "status": "active",
-    "expected_outcome": {
-      "action": "insert_table",
-      "paragraph_index": 1,
-      "rows": 3,
-      "cols": 2
-    }
-  },
-  {
-    "id": "WORD_014",
-    "category": "Word",
-    "name": "Word Scenario 14",
-    "description": "Validate Word master/writer on prompt: Insert list bullet paragraph 'Verify tests' after paragraph 2",
-    "prompt": "Insert list bullet paragraph 'Verify tests' after paragraph 2",
-    "status": "active",
-    "expected_outcome": {
-      "action": "insert_paragraph",
-      "after_paragraph_index": 2,
-      "text": "Verify tests",
-      "style": "List Bullet"
-    }
-  },
-  {
-    "id": "WORD_015",
-    "category": "Word",
-    "name": "Word Scenario 15",
-    "description": "Validate Word master/writer on prompt: Insert heading 2 paragraph 'Conclusion' after paragraph -1",
-    "prompt": "Insert heading 2 paragraph 'Conclusion' after paragraph -1",
-    "status": "active",
-    "expected_outcome": {
-      "action": "insert_paragraph",
-      "after_paragraph_index": -1,
-      "text": "Conclusion",
-      "style": "Heading 2"
-    }
-  },
-  {
-    "id": "WORD_016",
-    "category": "Word",
-    "name": "Word Scenario 16",
-    "description": "Validate Word master/writer on prompt: Replace paragraph 2 text with 'All tests passed.'",
-    "prompt": "Replace paragraph 2 text with 'All tests passed.'",
-    "status": "active",
-    "expected_outcome": {
-      "action": "replace_paragraph",
-      "paragraph_index": 2,
-      "text": "All tests passed.",
-      "style": "Normal"
-    }
-  },
-  {
-    "id": "WORD_017",
-    "category": "Word",
-    "name": "Word Scenario 17",
+    "name": "Word Scenario 08",
     "description": "Validate Word master/writer on prompt: Delete paragraph 1",
     "prompt": "Delete paragraph 1",
     "status": "active",
@@ -230,52 +108,104 @@
     }
   },
   {
-    "id": "WORD_018",
+    "id": "WORD_009",
     "category": "Word",
-    "name": "Word Scenario 18",
-    "description": "Validate Word master/writer on prompt: Append ' (Final)' to paragraph 2",
-    "prompt": "Append ' (Final)' to paragraph 2",
+    "name": "Word Scenario 09",
+    "description": "Validate Word master/writer on prompt: Delete paragraph 2",
+    "prompt": "Delete paragraph 2",
+    "status": "active",
+    "expected_outcome": {
+      "action": "delete_paragraph",
+      "paragraph_index": 2
+    }
+  },
+  {
+    "id": "WORD_010",
+    "category": "Word",
+    "name": "Word Scenario 10",
+    "description": "Validate Word master/writer on prompt: Append ' (revised)' to paragraph 0",
+    "prompt": "Append ' (revised)' to paragraph 0",
+    "status": "active",
+    "expected_outcome": {
+      "action": "append_to_run",
+      "paragraph_index": 0,
+      "text": " (revised)"
+    }
+  },
+  {
+    "id": "WORD_011",
+    "category": "Word",
+    "name": "Word Scenario 11",
+    "description": "Validate Word master/writer on prompt: Append ' (draft)' to paragraph 1",
+    "prompt": "Append ' (draft)' to paragraph 1",
+    "status": "active",
+    "expected_outcome": {
+      "action": "append_to_run",
+      "paragraph_index": 1,
+      "text": " (draft)"
+    }
+  },
+  {
+    "id": "WORD_012",
+    "category": "Word",
+    "name": "Word Scenario 12",
+    "description": "Validate Word master/writer on prompt: Append ' (final)' to paragraph 2",
+    "prompt": "Append ' (final)' to paragraph 2",
     "status": "active",
     "expected_outcome": {
       "action": "append_to_run",
       "paragraph_index": 2,
-      "text": " (Final)"
+      "text": " (final)"
     }
   },
   {
-    "id": "WORD_019",
+    "id": "WORD_013",
     "category": "Word",
-    "name": "Word Scenario 19",
-    "description": "Validate Word master/writer on prompt: Insert paragraph 'References' after paragraph 2",
-    "prompt": "Insert paragraph 'References' after paragraph 2",
+    "name": "Word Scenario 13",
+    "description": "Validate Word master/writer on prompt: Insert a table with 2 rows and 3 columns after paragraph 0",
+    "prompt": "Insert a table with 2 rows and 3 columns after paragraph 0",
     "status": "active",
     "expected_outcome": {
-      "action": "insert_paragraph",
-      "after_paragraph_index": 2,
-      "text": "References",
-      "style": "Heading 2"
+      "action": "insert_table",
+      "paragraph_index": 0,
+      "rows": 2,
+      "cols": 3
     }
   },
   {
-    "id": "WORD_020",
+    "id": "WORD_014",
     "category": "Word",
-    "name": "Word Scenario 20",
-    "description": "Validate Word master/writer on prompt: Insert list bullet paragraph 'Clean up files' after paragraph 0",
-    "prompt": "Insert list bullet paragraph 'Clean up files' after paragraph 0",
+    "name": "Word Scenario 14",
+    "description": "Validate Word master/writer on prompt: Insert a table with 3 rows and 2 columns after paragraph 1",
+    "prompt": "Insert a table with 3 rows and 2 columns after paragraph 1",
     "status": "active",
     "expected_outcome": {
-      "action": "insert_paragraph",
-      "after_paragraph_index": 0,
-      "text": "Clean up files",
-      "style": "List Bullet"
+      "action": "insert_table",
+      "paragraph_index": 1,
+      "rows": 3,
+      "cols": 2
+    }
+  },
+  {
+    "id": "WORD_015",
+    "category": "Word",
+    "name": "Word Scenario 15",
+    "description": "Validate Word master/writer on prompt: Insert a table with 4 rows and 4 columns after paragraph 2",
+    "prompt": "Insert a table with 4 rows and 4 columns after paragraph 2",
+    "status": "active",
+    "expected_outcome": {
+      "action": "insert_table",
+      "paragraph_index": 2,
+      "rows": 4,
+      "cols": 4
     }
   },
   {
     "id": "EXCEL_001",
     "category": "Excel",
     "name": "Excel Scenario 01",
-    "description": "Validate Excel master/writer on prompt: Validate the Excel formula =SUM(A1:A10)",
-    "prompt": "Validate the Excel formula =SUM(A1:A10)",
+    "description": "Validate Excel master/writer on prompt: Validate if the Excel formula '=SUM(A1:A10)' is valid",
+    "prompt": "Validate if the Excel formula '=SUM(A1:A10)' is valid",
     "status": "active",
     "expected_outcome": {
       "action": "validate_formula",
@@ -287,278 +217,208 @@
     "id": "EXCEL_002",
     "category": "Excel",
     "name": "Excel Scenario 02",
-    "description": "Validate Excel master/writer on prompt: Validate the invalid Excel formula =SUM(A1:A10",
-    "prompt": "Validate the invalid Excel formula =SUM(A1:A10",
+    "description": "Validate Excel master/writer on prompt: Validate if the Excel formula '=AVERAGE(B1:B20)' is valid",
+    "prompt": "Validate if the Excel formula '=AVERAGE(B1:B20)' is valid",
     "status": "active",
     "expected_outcome": {
       "action": "validate_formula",
-      "formula": "=SUM(A1:A10",
-      "expected_valid": false
+      "formula": "=AVERAGE(B1:B20)",
+      "expected_valid": true
     }
   },
   {
     "id": "EXCEL_003",
     "category": "Excel",
     "name": "Excel Scenario 03",
-    "description": "Validate Excel master/writer on prompt: Explain the Excel formula =SUM(A1:A10)",
-    "prompt": "Explain the Excel formula =SUM(A1:A10)",
+    "description": "Validate Excel master/writer on prompt: Validate if the Excel formula '=IF(A1>0,1,0)' is valid",
+    "prompt": "Validate if the Excel formula '=IF(A1>0,1,0)' is valid",
     "status": "active",
     "expected_outcome": {
-      "action": "explain_formula",
-      "formula": "=SUM(A1:A10)",
-      "contains": "sum"
+      "action": "validate_formula",
+      "formula": "=IF(A1>0,1,0)",
+      "expected_valid": true
     }
   },
   {
     "id": "EXCEL_004",
     "category": "Excel",
     "name": "Excel Scenario 04",
-    "description": "Validate Excel master/writer on prompt: Explain the Excel formula =AVERAGE(B1:B20)",
-    "prompt": "Explain the Excel formula =AVERAGE(B1:B20)",
+    "description": "Validate Excel master/writer on prompt: Validate if the Excel formula '=VLOOKUP(A1,B1:C10,2,FALSE)' is valid",
+    "prompt": "Validate if the Excel formula '=VLOOKUP(A1,B1:C10,2,FALSE)' is valid",
     "status": "active",
     "expected_outcome": {
-      "action": "explain_formula",
-      "formula": "=AVERAGE(B1:B20)",
-      "contains": "average"
+      "action": "validate_formula",
+      "formula": "=VLOOKUP(A1,B1:C10,2,FALSE)",
+      "expected_valid": true
     }
   },
   {
     "id": "EXCEL_005",
     "category": "Excel",
     "name": "Excel Scenario 05",
-    "description": "Validate Excel master/writer on prompt: Write text 'Kickoff' to cell A1",
-    "prompt": "Write text 'Kickoff' to cell A1",
+    "description": "Validate Excel master/writer on prompt: Explain the Excel formula '=SUM(A1:A10)'",
+    "prompt": "Explain the Excel formula '=SUM(A1:A10)'",
     "status": "active",
     "expected_outcome": {
-      "action": "write_cell",
-      "cell": "A1",
-      "value": "Kickoff"
+      "action": "explain_formula",
+      "formula": "=SUM(A1:A10)",
+      "contains": "sums"
     }
   },
   {
     "id": "EXCEL_006",
     "category": "Excel",
     "name": "Excel Scenario 06",
-    "description": "Validate Excel master/writer on prompt: Write number 42 to cell B2",
-    "prompt": "Write number 42 to cell B2",
+    "description": "Validate Excel master/writer on prompt: Explain the Excel formula '=VLOOKUP(A1,B1:C10,2,FALSE)'",
+    "prompt": "Explain the Excel formula '=VLOOKUP(A1,B1:C10,2,FALSE)'",
     "status": "active",
     "expected_outcome": {
-      "action": "write_cell",
-      "cell": "B2",
-      "value": 42
+      "action": "explain_formula",
+      "formula": "=VLOOKUP(A1,B1:C10,2,FALSE)",
+      "contains": "looks up"
     }
   },
   {
     "id": "EXCEL_007",
     "category": "Excel",
     "name": "Excel Scenario 07",
-    "description": "Validate Excel master/writer on prompt: Write formula =A1 to cell C3",
-    "prompt": "Write formula =A1 to cell C3",
+    "description": "Validate Excel master/writer on prompt: Explain the Excel formula '=IF(A1>0,1,0)'",
+    "prompt": "Explain the Excel formula '=IF(A1>0,1,0)'",
     "status": "active",
     "expected_outcome": {
-      "action": "write_cell",
-      "cell": "C3",
-      "formula": "=A1"
+      "action": "explain_formula",
+      "formula": "=IF(A1>0,1,0)",
+      "contains": "returns"
     }
   },
   {
     "id": "EXCEL_008",
     "category": "Excel",
     "name": "Excel Scenario 08",
-    "description": "Validate Excel master/writer on prompt: Write values [[1, 2], [3, 4]] to range A1:B2",
-    "prompt": "Write values [[1, 2], [3, 4]] to range A1:B2",
+    "description": "Validate Excel master/writer on prompt: Explain the Excel formula '=SUMIFS(A1:A10,B1:B10,\">10\")'",
+    "prompt": "Explain the Excel formula '=SUMIFS(A1:A10,B1:B10,\">10\")'",
     "status": "active",
     "expected_outcome": {
-      "action": "write_range",
-      "range": "A1:B2",
-      "values": [
-        [
-          1,
-          2
-        ],
-        [
-          3,
-          4
-        ]
-      ]
+      "action": "explain_formula",
+      "formula": "=SUMIFS(A1:A10,B1:B10,\">10\")",
+      "contains": "sums values"
     }
   },
   {
     "id": "EXCEL_009",
     "category": "Excel",
     "name": "Excel Scenario 09",
-    "description": "Validate Excel master/writer on prompt: Write formulas [['=SUM(A1:A2)', '=AVERAGE(B1:B2)']] to range C1:D1",
-    "prompt": "Write formulas [['=SUM(A1:A2)', '=AVERAGE(B1:B2)']] to range C1:D1",
+    "description": "Validate Excel master/writer on prompt: Write 'test_val' to cell C1",
+    "prompt": "Write 'test_val' to cell C1",
     "status": "active",
     "expected_outcome": {
-      "action": "write_range",
-      "range": "C1:D1",
-      "formulas": [
-        [
-          "=SUM(A1:A2)",
-          "=AVERAGE(B1:B2)"
-        ]
-      ]
+      "action": "write_cell",
+      "cell": "C1",
+      "value": "test_val"
     }
   },
   {
     "id": "EXCEL_010",
     "category": "Excel",
     "name": "Excel Scenario 10",
-    "description": "Validate Excel master/writer on prompt: Validate the Excel formula =AVERAGE(D1:D100)",
-    "prompt": "Validate the Excel formula =AVERAGE(D1:D100)",
+    "description": "Validate Excel master/writer on prompt: Write '=SUM(A1:B2)' to cell C2",
+    "prompt": "Write '=SUM(A1:B2)' to cell C2",
     "status": "active",
     "expected_outcome": {
-      "action": "validate_formula",
-      "formula": "=AVERAGE(D1:D100)",
-      "expected_valid": true
+      "action": "write_cell",
+      "cell": "C2",
+      "formula": "=SUM(A1:B2)"
     }
   },
   {
     "id": "EXCEL_011",
     "category": "Excel",
     "name": "Excel Scenario 11",
-    "description": "Validate Excel master/writer on prompt: Validate the Excel formula =VLOOKUP(A1, B1:C10, 2, FALSE)",
-    "prompt": "Validate the Excel formula =VLOOKUP(A1, B1:C10, 2, FALSE)",
+    "description": "Validate Excel master/writer on prompt: Write 'another_val' to cell D1",
+    "prompt": "Write 'another_val' to cell D1",
     "status": "active",
     "expected_outcome": {
-      "action": "validate_formula",
-      "formula": "=VLOOKUP(A1, B1:C10, 2, FALSE)",
-      "expected_valid": true
+      "action": "write_cell",
+      "cell": "D1",
+      "value": "another_val"
     }
   },
   {
     "id": "EXCEL_012",
     "category": "Excel",
     "name": "Excel Scenario 12",
-    "description": "Validate Excel master/writer on prompt: Validate the invalid Excel formula =VLOOKUP(A1, B1:C10, 2",
-    "prompt": "Validate the invalid Excel formula =VLOOKUP(A1, B1:C10, 2",
+    "description": "Validate Excel master/writer on prompt: Write '=AVERAGE(A1:B2)' to cell D2",
+    "prompt": "Write '=AVERAGE(A1:B2)' to cell D2",
     "status": "active",
     "expected_outcome": {
-      "action": "validate_formula",
-      "formula": "=VLOOKUP(A1, B1:C10, 2",
-      "expected_valid": false
+      "action": "write_cell",
+      "cell": "D2",
+      "formula": "=AVERAGE(A1:B2)"
     }
   },
   {
     "id": "EXCEL_013",
     "category": "Excel",
     "name": "Excel Scenario 13",
-    "description": "Validate Excel master/writer on prompt: Explain the Excel formula =VLOOKUP(A1, B1:C10, 2, FALSE)",
-    "prompt": "Explain the Excel formula =VLOOKUP(A1, B1:C10, 2, FALSE)",
+    "description": "Validate Excel master/writer on prompt: Write values [['Val1'], ['Val2']] to range C1:C2",
+    "prompt": "Write values [['Val1'], ['Val2']] to range C1:C2",
     "status": "active",
     "expected_outcome": {
-      "action": "explain_formula",
-      "formula": "=VLOOKUP(A1, B1:C10, 2, FALSE)",
-      "contains": "look"
+      "action": "write_range",
+      "range": "C1:C2",
+      "values": [
+        [
+          "Val1"
+        ],
+        [
+          "Val2"
+        ]
+      ]
     }
   },
   {
     "id": "EXCEL_014",
     "category": "Excel",
     "name": "Excel Scenario 14",
-    "description": "Validate Excel master/writer on prompt: Write text 'Summary' to cell E1",
-    "prompt": "Write text 'Summary' to cell E1",
+    "description": "Validate Excel master/writer on prompt: Write values [['Val1']] to range C1",
+    "prompt": "Write values [['Val1']] to range C1",
     "status": "active",
     "expected_outcome": {
-      "action": "write_cell",
-      "cell": "E1",
-      "value": "Summary"
+      "action": "write_range",
+      "range": "C1",
+      "values": [
+        [
+          "Val1"
+        ]
+      ]
     }
   },
   {
     "id": "EXCEL_015",
     "category": "Excel",
     "name": "Excel Scenario 15",
-    "description": "Validate Excel master/writer on prompt: Write number 100 to cell F2",
-    "prompt": "Write number 100 to cell F2",
-    "status": "active",
-    "expected_outcome": {
-      "action": "write_cell",
-      "cell": "F2",
-      "value": 100
-    }
-  },
-  {
-    "id": "EXCEL_016",
-    "category": "Excel",
-    "name": "Excel Scenario 16",
-    "description": "Validate Excel master/writer on prompt: Write formula =SUM(F2:F5) to cell F6",
-    "prompt": "Write formula =SUM(F2:F5) to cell F6",
-    "status": "active",
-    "expected_outcome": {
-      "action": "write_cell",
-      "cell": "F6",
-      "formula": "=SUM(F2:F5)"
-    }
-  },
-  {
-    "id": "EXCEL_017",
-    "category": "Excel",
-    "name": "Excel Scenario 17",
-    "description": "Validate Excel master/writer on prompt: Write values [[10, 20]] to range A5:B5",
-    "prompt": "Write values [[10, 20]] to range A5:B5",
+    "description": "Validate Excel master/writer on prompt: Write values [['Val3'], ['Val4']] to range D1:D2",
+    "prompt": "Write values [['Val3'], ['Val4']] to range D1:D2",
     "status": "active",
     "expected_outcome": {
       "action": "write_range",
-      "range": "A5:B5",
+      "range": "D1:D2",
       "values": [
         [
-          10,
-          20
-        ]
-      ]
-    }
-  },
-  {
-    "id": "EXCEL_018",
-    "category": "Excel",
-    "name": "Excel Scenario 18",
-    "description": "Validate Excel master/writer on prompt: Write formulas [['=A5*B5']] to range C5",
-    "prompt": "Write formulas [['=A5*B5']] to range C5",
-    "status": "active",
-    "expected_outcome": {
-      "action": "write_range",
-      "range": "C5",
-      "formulas": [
+          "Val3"
+        ],
         [
-          "=A5*B5"
+          "Val4"
         ]
       ]
-    }
-  },
-  {
-    "id": "EXCEL_019",
-    "category": "Excel",
-    "name": "Excel Scenario 19",
-    "description": "Validate Excel master/writer on prompt: Validate the Excel formula =IF(A1>0, 1, 0)",
-    "prompt": "Validate the Excel formula =IF(A1>0, 1, 0)",
-    "status": "active",
-    "expected_outcome": {
-      "action": "validate_formula",
-      "formula": "=IF(A1>0, 1, 0)",
-      "expected_valid": true
-    }
-  },
-  {
-    "id": "EXCEL_020",
-    "category": "Excel",
-    "name": "Excel Scenario 20",
-    "description": "Validate Excel master/writer on prompt: Explain the Excel formula =IF(A1>0, 1, 0)",
-    "prompt": "Explain the Excel formula =IF(A1>0, 1, 0)",
-    "status": "active",
-    "expected_outcome": {
-      "action": "explain_formula",
-      "formula": "=IF(A1>0, 1, 0)",
-      "contains": "if"
     }
   },
   {
     "id": "PPT_001",
     "category": "PPT",
-    "name": "PPT Scenario 01",
-    "description": "Validate PPT master/writer on prompt: Create a PowerPoint presentation with 3 slides",
-    "prompt": "Create a PowerPoint presentation with 3 slides",
+    "name": "PowerPoint Scenario 01",
+    "description": "Validate PowerPoint master on prompt: Create a new presentation with 3 slides",
+    "prompt": "Create a new presentation with 3 slides",
     "status": "active",
     "expected_outcome": {
       "action": "create_presentation",
@@ -568,9 +428,9 @@
   {
     "id": "PPT_002",
     "category": "PPT",
-    "name": "PPT Scenario 02",
-    "description": "Validate PPT master/writer on prompt: Create a PowerPoint presentation with 5 slides",
-    "prompt": "Create a PowerPoint presentation with 5 slides",
+    "name": "PowerPoint Scenario 02",
+    "description": "Validate PowerPoint master on prompt: Create a new presentation with 5 slides",
+    "prompt": "Create a new presentation with 5 slides",
     "status": "active",
     "expected_outcome": {
       "action": "create_presentation",
@@ -580,35 +440,110 @@
   {
     "id": "PPT_003",
     "category": "PPT",
-    "name": "PPT Scenario 03",
-    "description": "Validate PPT master/writer on prompt: Extract context from presentation at slide 0 (expected 1 slide total)",
-    "prompt": "Extract context from presentation at slide 0 (expected 1 slide total)",
+    "name": "PowerPoint Scenario 03",
+    "description": "Validate PowerPoint master on prompt: Create a new presentation with 2 slides",
+    "prompt": "Create a new presentation with 2 slides",
     "status": "active",
     "expected_outcome": {
-      "action": "extract_context",
-      "cursor_slide": 0,
-      "expected_slide_count": 1
+      "action": "create_presentation",
+      "slides": 2
     }
   },
   {
     "id": "PPT_004",
     "category": "PPT",
-    "name": "PPT Scenario 04",
-    "description": "Validate PPT master/writer on prompt: Extract context from presentation at slide 1 (expected 2 slides total)",
-    "prompt": "Extract context from presentation at slide 1 (expected 2 slides total)",
+    "name": "PowerPoint Scenario 04",
+    "description": "Validate PowerPoint master on prompt: Create a new presentation with 4 slides",
+    "prompt": "Create a new presentation with 4 slides",
     "status": "active",
     "expected_outcome": {
-      "action": "extract_context",
-      "cursor_slide": 1,
-      "expected_slide_count": 2
+      "action": "create_presentation",
+      "slides": 4
     }
   },
   {
     "id": "PPT_005",
     "category": "PPT",
-    "name": "PPT Scenario 05",
-    "description": "Validate PPT master/writer on prompt: Check slide layout name for slide 0 in Title layout",
-    "prompt": "Check slide layout name for slide 0 in Title layout",
+    "name": "PowerPoint Scenario 05",
+    "description": "Validate PowerPoint master on prompt: Create a new presentation with 6 slides",
+    "prompt": "Create a new presentation with 6 slides",
+    "status": "active",
+    "expected_outcome": {
+      "action": "create_presentation",
+      "slides": 6
+    }
+  },
+  {
+    "id": "PPT_006",
+    "category": "PPT",
+    "name": "PowerPoint Scenario 06",
+    "description": "Validate PowerPoint master on prompt: Extract PPT context from deck with 3 slides at cursor slide 0",
+    "prompt": "Extract PPT context from deck with 3 slides at cursor slide 0",
+    "status": "active",
+    "expected_outcome": {
+      "action": "extract_context",
+      "expected_slide_count": 3,
+      "cursor_slide": 0
+    }
+  },
+  {
+    "id": "PPT_007",
+    "category": "PPT",
+    "name": "PowerPoint Scenario 07",
+    "description": "Validate PowerPoint master on prompt: Extract PPT context from deck with 5 slides at cursor slide 1",
+    "prompt": "Extract PPT context from deck with 5 slides at cursor slide 1",
+    "status": "active",
+    "expected_outcome": {
+      "action": "extract_context",
+      "expected_slide_count": 5,
+      "cursor_slide": 1
+    }
+  },
+  {
+    "id": "PPT_008",
+    "category": "PPT",
+    "name": "PowerPoint Scenario 08",
+    "description": "Validate PowerPoint master on prompt: Extract PPT context from deck with 2 slides at cursor slide 0",
+    "prompt": "Extract PPT context from deck with 2 slides at cursor slide 0",
+    "status": "active",
+    "expected_outcome": {
+      "action": "extract_context",
+      "expected_slide_count": 2,
+      "cursor_slide": 0
+    }
+  },
+  {
+    "id": "PPT_009",
+    "category": "PPT",
+    "name": "PowerPoint Scenario 09",
+    "description": "Validate PowerPoint master on prompt: Extract PPT context from deck with 4 slides at cursor slide 2",
+    "prompt": "Extract PPT context from deck with 4 slides at cursor slide 2",
+    "status": "active",
+    "expected_outcome": {
+      "action": "extract_context",
+      "expected_slide_count": 4,
+      "cursor_slide": 2
+    }
+  },
+  {
+    "id": "PPT_010",
+    "category": "PPT",
+    "name": "PowerPoint Scenario 10",
+    "description": "Validate PowerPoint master on prompt: Extract PPT context from deck with 6 slides at cursor slide 1",
+    "prompt": "Extract PPT context from deck with 6 slides at cursor slide 1",
+    "status": "active",
+    "expected_outcome": {
+      "action": "extract_context",
+      "expected_slide_count": 6,
+      "cursor_slide": 1
+    }
+  },
+  {
+    "id": "PPT_011",
+    "category": "PPT",
+    "name": "PowerPoint Scenario 11",
+    "description": "Validate PowerPoint master on prompt: Verify slide layout at index 0 is 'Title Slide'",
+    "prompt": "Verify slide layout at index 0 is 'Title Slide'",
     "status": "active",
     "expected_outcome": {
       "action": "slide_layout",
@@ -617,11 +552,11 @@
     }
   },
   {
-    "id": "PPT_006",
+    "id": "PPT_012",
     "category": "PPT",
-    "name": "PPT Scenario 06",
-    "description": "Validate PPT master/writer on prompt: Check slide layout name for slide 1 in Title and Content layout",
-    "prompt": "Check slide layout name for slide 1 in Title and Content layout",
+    "name": "PowerPoint Scenario 12",
+    "description": "Validate PowerPoint master on prompt: Verify slide layout at index 1 is 'Title and Content'",
+    "prompt": "Verify slide layout at index 1 is 'Title and Content'",
     "status": "active",
     "expected_outcome": {
       "action": "slide_layout",
@@ -630,61 +565,11 @@
     }
   },
   {
-    "id": "PPT_007",
+    "id": "PPT_013",
     "category": "PPT",
-    "name": "PPT Scenario 07",
-    "description": "Validate PPT master/writer on prompt: Create a PowerPoint presentation with 2 slides",
-    "prompt": "Create a PowerPoint presentation with 2 slides",
-    "status": "active",
-    "expected_outcome": {
-      "action": "create_presentation",
-      "slides": 2
-    }
-  },
-  {
-    "id": "PPT_008",
-    "category": "PPT",
-    "name": "PPT Scenario 08",
-    "description": "Validate PPT master/writer on prompt: Create a PowerPoint presentation with 4 slides",
-    "prompt": "Create a PowerPoint presentation with 4 slides",
-    "status": "active",
-    "expected_outcome": {
-      "action": "create_presentation",
-      "slides": 4
-    }
-  },
-  {
-    "id": "PPT_009",
-    "category": "PPT",
-    "name": "PPT Scenario 09",
-    "description": "Validate PPT master/writer on prompt: Extract context from presentation at slide 2 (expected 3 slides total)",
-    "prompt": "Extract context from presentation at slide 2 (expected 3 slides total)",
-    "status": "active",
-    "expected_outcome": {
-      "action": "extract_context",
-      "cursor_slide": 2,
-      "expected_slide_count": 3
-    }
-  },
-  {
-    "id": "PPT_010",
-    "category": "PPT",
-    "name": "PPT Scenario 10",
-    "description": "Validate PPT master/writer on prompt: Extract context from presentation at slide 0 (expected 4 slides total)",
-    "prompt": "Extract context from presentation at slide 0 (expected 4 slides total)",
-    "status": "active",
-    "expected_outcome": {
-      "action": "extract_context",
-      "cursor_slide": 0,
-      "expected_slide_count": 4
-    }
-  },
-  {
-    "id": "PPT_011",
-    "category": "PPT",
-    "name": "PPT Scenario 11",
-    "description": "Validate PPT master/writer on prompt: Check slide layout name for slide 0 in Blank layout",
-    "prompt": "Check slide layout name for slide 0 in Blank layout",
+    "name": "PowerPoint Scenario 13",
+    "description": "Validate PowerPoint master on prompt: Verify slide layout at index 0 is 'Blank'",
+    "prompt": "Verify slide layout at index 0 is 'Blank'",
     "status": "active",
     "expected_outcome": {
       "action": "slide_layout",
@@ -693,87 +578,24 @@
     }
   },
   {
-    "id": "PPT_012",
+    "id": "PPT_014",
     "category": "PPT",
-    "name": "PPT Scenario 12",
-    "description": "Validate PPT master/writer on prompt: Check slide layout name for slide 2 in Title and Content layout",
-    "prompt": "Check slide layout name for slide 2 in Title and Content layout",
+    "name": "PowerPoint Scenario 14",
+    "description": "Validate PowerPoint master on prompt: Verify slide layout at index 2 is 'Section Header'",
+    "prompt": "Verify slide layout at index 2 is 'Section Header'",
     "status": "active",
     "expected_outcome": {
       "action": "slide_layout",
       "cursor_slide": 2,
-      "expected_layout": "Title and Content"
-    }
-  },
-  {
-    "id": "PPT_013",
-    "category": "PPT",
-    "name": "PPT Scenario 13",
-    "description": "Validate PPT master/writer on prompt: Create a PowerPoint presentation with 1 slide",
-    "prompt": "Create a PowerPoint presentation with 1 slide",
-    "status": "active",
-    "expected_outcome": {
-      "action": "create_presentation",
-      "slides": 1
-    }
-  },
-  {
-    "id": "PPT_014",
-    "category": "PPT",
-    "name": "PPT Scenario 14",
-    "description": "Validate PPT master/writer on prompt: Create a PowerPoint presentation with 6 slides",
-    "prompt": "Create a PowerPoint presentation with 6 slides",
-    "status": "active",
-    "expected_outcome": {
-      "action": "create_presentation",
-      "slides": 6
+      "expected_layout": "Section Header"
     }
   },
   {
     "id": "PPT_015",
     "category": "PPT",
-    "name": "PPT Scenario 15",
-    "description": "Validate PPT master/writer on prompt: Extract context from presentation at slide 0 (expected 6 slides total)",
-    "prompt": "Extract context from presentation at slide 0 (expected 6 slides total)",
-    "status": "active",
-    "expected_outcome": {
-      "action": "extract_context",
-      "cursor_slide": 0,
-      "expected_slide_count": 6
-    }
-  },
-  {
-    "id": "PPT_016",
-    "category": "PPT",
-    "name": "PPT Scenario 16",
-    "description": "Validate PPT master/writer on prompt: Extract context from presentation at slide 5 (expected 6 slides total)",
-    "prompt": "Extract context from presentation at slide 5 (expected 6 slides total)",
-    "status": "active",
-    "expected_outcome": {
-      "action": "extract_context",
-      "cursor_slide": 5,
-      "expected_slide_count": 6
-    }
-  },
-  {
-    "id": "PPT_017",
-    "category": "PPT",
-    "name": "PPT Scenario 17",
-    "description": "Validate PPT master/writer on prompt: Check slide layout name for slide 0 in Section Header layout",
-    "prompt": "Check slide layout name for slide 0 in Section Header layout",
-    "status": "active",
-    "expected_outcome": {
-      "action": "slide_layout",
-      "cursor_slide": 0,
-      "expected_layout": "Section Header"
-    }
-  },
-  {
-    "id": "PPT_018",
-    "category": "PPT",
-    "name": "PPT Scenario 18",
-    "description": "Validate PPT master/writer on prompt: Check slide layout name for slide 1 in Title and Content layout",
-    "prompt": "Check slide layout name for slide 1 in Title and Content layout",
+    "name": "PowerPoint Scenario 15",
+    "description": "Validate PowerPoint master on prompt: Verify slide layout at index 1 is 'Title and Content'",
+    "prompt": "Verify slide layout at index 1 is 'Title and Content'",
     "status": "active",
     "expected_outcome": {
       "action": "slide_layout",
@@ -782,567 +604,1409 @@
     }
   },
   {
-    "id": "PPT_019",
-    "category": "PPT",
-    "name": "PPT Scenario 19",
-    "description": "Validate PPT master/writer on prompt: Create a PowerPoint presentation with 10 slides",
-    "prompt": "Create a PowerPoint presentation with 10 slides",
+    "id": "PDF_001",
+    "category": "PDF",
+    "name": "PDF Scenario 01",
+    "description": "Validate PDFMaster context extraction on prompt: Extract content from PDF with 2 pages and check confidence",
+    "prompt": "Extract content from PDF with 2 pages and check confidence",
     "status": "active",
     "expected_outcome": {
-      "action": "create_presentation",
-      "slides": 10
+      "page_count": 2,
+      "language": "en",
+      "confidence": 0.95
     }
   },
   {
-    "id": "PPT_020",
-    "category": "PPT",
-    "name": "PPT Scenario 20",
-    "description": "Validate PPT master/writer on prompt: Extract context from presentation at slide 9 (expected 10 slides total)",
-    "prompt": "Extract context from presentation at slide 9 (expected 10 slides total)",
+    "id": "PDF_002",
+    "category": "PDF",
+    "name": "PDF Scenario 02",
+    "description": "Validate PDFMaster context extraction on prompt: Extract content from PDF with 3 pages and check confidence",
+    "prompt": "Extract content from PDF with 3 pages and check confidence",
     "status": "active",
     "expected_outcome": {
-      "action": "extract_context",
-      "cursor_slide": 9,
-      "expected_slide_count": 10
+      "page_count": 3,
+      "language": "en",
+      "confidence": 0.95
+    }
+  },
+  {
+    "id": "PDF_003",
+    "category": "PDF",
+    "name": "PDF Scenario 03",
+    "description": "Validate PDFMaster context extraction on prompt: Extract content from PDF with 1 pages and check confidence",
+    "prompt": "Extract content from PDF with 1 pages and check confidence",
+    "status": "active",
+    "expected_outcome": {
+      "page_count": 1,
+      "language": "en",
+      "confidence": 0.95
+    }
+  },
+  {
+    "id": "PDF_004",
+    "category": "PDF",
+    "name": "PDF Scenario 04",
+    "description": "Validate PDFMaster context extraction on prompt: Extract content from PDF with 2 pages and check confidence",
+    "prompt": "Extract content from PDF with 2 pages and check confidence",
+    "status": "active",
+    "expected_outcome": {
+      "page_count": 2,
+      "language": "en",
+      "confidence": 0.95
+    }
+  },
+  {
+    "id": "PDF_005",
+    "category": "PDF",
+    "name": "PDF Scenario 05",
+    "description": "Validate PDFMaster context extraction on prompt: Extract content from PDF with 3 pages and check confidence",
+    "prompt": "Extract content from PDF with 3 pages and check confidence",
+    "status": "active",
+    "expected_outcome": {
+      "page_count": 3,
+      "language": "en",
+      "confidence": 0.95
+    }
+  },
+  {
+    "id": "PDF_006",
+    "category": "PDF",
+    "name": "PDF Scenario 06",
+    "description": "Validate PDFMaster context extraction on prompt: Extract content from PDF with 1 pages and check confidence",
+    "prompt": "Extract content from PDF with 1 pages and check confidence",
+    "status": "active",
+    "expected_outcome": {
+      "page_count": 1,
+      "language": "en",
+      "confidence": 0.95
+    }
+  },
+  {
+    "id": "PDF_007",
+    "category": "PDF",
+    "name": "PDF Scenario 07",
+    "description": "Validate PDFMaster context extraction on prompt: Extract content from PDF with 2 pages and check confidence",
+    "prompt": "Extract content from PDF with 2 pages and check confidence",
+    "status": "active",
+    "expected_outcome": {
+      "page_count": 2,
+      "language": "en",
+      "confidence": 0.95
+    }
+  },
+  {
+    "id": "PDF_008",
+    "category": "PDF",
+    "name": "PDF Scenario 08",
+    "description": "Validate PDFMaster context extraction on prompt: Extract content from PDF with 3 pages and check confidence",
+    "prompt": "Extract content from PDF with 3 pages and check confidence",
+    "status": "active",
+    "expected_outcome": {
+      "page_count": 3,
+      "language": "en",
+      "confidence": 0.95
+    }
+  },
+  {
+    "id": "PDF_009",
+    "category": "PDF",
+    "name": "PDF Scenario 09",
+    "description": "Validate PDFMaster context extraction on prompt: Extract content from PDF with 1 pages and check confidence",
+    "prompt": "Extract content from PDF with 1 pages and check confidence",
+    "status": "active",
+    "expected_outcome": {
+      "page_count": 1,
+      "language": "en",
+      "confidence": 0.95
+    }
+  },
+  {
+    "id": "PDF_010",
+    "category": "PDF",
+    "name": "PDF Scenario 10",
+    "description": "Validate PDFMaster context extraction on prompt: Extract content from PDF with 2 pages and check confidence",
+    "prompt": "Extract content from PDF with 2 pages and check confidence",
+    "status": "active",
+    "expected_outcome": {
+      "page_count": 2,
+      "language": "en",
+      "confidence": 0.95
+    }
+  },
+  {
+    "id": "PDF_011",
+    "category": "PDF",
+    "name": "PDF Scenario 11",
+    "description": "Validate PDFMaster context extraction on prompt: Extract content from PDF with 3 pages and check confidence",
+    "prompt": "Extract content from PDF with 3 pages and check confidence",
+    "status": "active",
+    "expected_outcome": {
+      "page_count": 3,
+      "language": "en",
+      "confidence": 0.95
+    }
+  },
+  {
+    "id": "PDF_012",
+    "category": "PDF",
+    "name": "PDF Scenario 12",
+    "description": "Validate PDFMaster context extraction on prompt: Extract content from PDF with 1 pages and check confidence",
+    "prompt": "Extract content from PDF with 1 pages and check confidence",
+    "status": "active",
+    "expected_outcome": {
+      "page_count": 1,
+      "language": "en",
+      "confidence": 0.95
+    }
+  },
+  {
+    "id": "PDF_013",
+    "category": "PDF",
+    "name": "PDF Scenario 13",
+    "description": "Validate PDFMaster context extraction on prompt: Extract content from PDF with 2 pages and check confidence",
+    "prompt": "Extract content from PDF with 2 pages and check confidence",
+    "status": "active",
+    "expected_outcome": {
+      "page_count": 2,
+      "language": "en",
+      "confidence": 0.95
+    }
+  },
+  {
+    "id": "PDF_014",
+    "category": "PDF",
+    "name": "PDF Scenario 14",
+    "description": "Validate PDFMaster context extraction on prompt: Extract content from PDF with 3 pages and check confidence",
+    "prompt": "Extract content from PDF with 3 pages and check confidence",
+    "status": "active",
+    "expected_outcome": {
+      "page_count": 3,
+      "language": "en",
+      "confidence": 0.95
+    }
+  },
+  {
+    "id": "PDF_015",
+    "category": "PDF",
+    "name": "PDF Scenario 15",
+    "description": "Validate PDFMaster context extraction on prompt: Extract content from PDF with 1 pages and check confidence",
+    "prompt": "Extract content from PDF with 1 pages and check confidence",
+    "status": "active",
+    "expected_outcome": {
+      "page_count": 1,
+      "language": "en",
+      "confidence": 0.95
     }
   },
   {
     "id": "LEGAL_001",
     "category": "Legal",
     "name": "Legal Scenario 01",
-    "description": "Detect legal clause: Governing Law & Jurisdiction",
-    "prompt": "This Agreement shall be governed by and construed in accordance with the laws of the State of California.",
+    "description": "Validate CUAD clause detection on prompt: Analyze contract text containing: 'This agreement has a termination for convenience for both parties.'",
+    "prompt": "Analyze contract text containing: 'This agreement has a termination for convenience for both parties.'",
     "status": "active",
     "expected_outcome": {
-      "clause_id": "governing_law",
-      "label": "Governing Law & Jurisdiction"
+      "clause_id": "termination_for_convenience"
     }
   },
   {
     "id": "LEGAL_002",
     "category": "Legal",
     "name": "Legal Scenario 02",
-    "description": "Detect legal clause: Termination for Convenience",
-    "prompt": "Either party may terminate this Agreement at any time without cause upon 30 days prior written notice.",
+    "description": "Validate CUAD clause detection on prompt: Analyze contract text containing: 'This agreement has a automatically renew for both parties.'",
+    "prompt": "Analyze contract text containing: 'This agreement has a automatically renew for both parties.'",
     "status": "active",
     "expected_outcome": {
-      "clause_id": "termination_for_convenience",
-      "label": "Termination for Convenience"
+      "clause_id": "auto_renewal"
     }
   },
   {
     "id": "LEGAL_003",
     "category": "Legal",
     "name": "Legal Scenario 03",
-    "description": "Detect legal clause: Auto-Renewal",
-    "prompt": "This Agreement shall automatically renew for successive one-year terms unless either party gives notice of non-renewal.",
+    "description": "Validate CUAD clause detection on prompt: Analyze contract text containing: 'This agreement has a non-compete clause for both parties.'",
+    "prompt": "Analyze contract text containing: 'This agreement has a non-compete clause for both parties.'",
     "status": "active",
     "expected_outcome": {
-      "clause_id": "auto_renewal",
-      "label": "Auto-Renewal"
+      "clause_id": "non_compete"
     }
   },
   {
     "id": "LEGAL_004",
     "category": "Legal",
     "name": "Legal Scenario 04",
-    "description": "Detect legal clause: Non-Compete / Non-Solicitation",
-    "prompt": "The Employee agrees not to compete with the Company in competitive activities for a period of two years after termination.",
+    "description": "Validate CUAD clause detection on prompt: Analyze contract text containing: 'This agreement has a limitation of liability for both parties.'",
+    "prompt": "Analyze contract text containing: 'This agreement has a limitation of liability for both parties.'",
     "status": "active",
     "expected_outcome": {
-      "clause_id": "non_compete",
-      "label": "Non-Compete / Non-Solicitation"
+      "clause_id": "liability_cap"
     }
   },
   {
     "id": "LEGAL_005",
     "category": "Legal",
     "name": "Legal Scenario 05",
-    "description": "Detect legal clause: Limitation of Liability",
-    "prompt": "The aggregate liability of either party under this Agreement shall not exceed the fees paid in the previous 12 months.",
+    "description": "Validate CUAD clause detection on prompt: Analyze contract text containing: 'This agreement has a indemnify and hold harmless for both parties.'",
+    "prompt": "Analyze contract text containing: 'This agreement has a indemnify and hold harmless for both parties.'",
     "status": "active",
     "expected_outcome": {
-      "clause_id": "liability_cap",
-      "label": "Limitation of Liability"
+      "clause_id": "indemnification"
     }
   },
   {
     "id": "LEGAL_006",
     "category": "Legal",
     "name": "Legal Scenario 06",
-    "description": "Detect legal clause: Indemnification",
-    "prompt": "Each party shall indemnify, defend, and hold harmless the other party from and against all third-party claims.",
+    "description": "Validate CUAD clause detection on prompt: Analyze contract text containing: 'This agreement has a intellectual property ownership for both parties.'",
+    "prompt": "Analyze contract text containing: 'This agreement has a intellectual property ownership for both parties.'",
     "status": "active",
     "expected_outcome": {
-      "clause_id": "indemnification",
-      "label": "Indemnification"
+      "clause_id": "ip_ownership"
     }
   },
   {
     "id": "LEGAL_007",
     "category": "Legal",
     "name": "Legal Scenario 07",
-    "description": "Detect legal clause: Intellectual Property Ownership",
-    "prompt": "All intellectual property created under this Agreement shall be solely and exclusively owned by the Client.",
+    "description": "Validate CUAD clause detection on prompt: Analyze contract text containing: 'This agreement has a liquidated damages for both parties.'",
+    "prompt": "Analyze contract text containing: 'This agreement has a liquidated damages for both parties.'",
     "status": "active",
     "expected_outcome": {
-      "clause_id": "ip_ownership",
-      "label": "Intellectual Property Ownership"
+      "clause_id": "liquidated_damages"
     }
   },
   {
     "id": "LEGAL_008",
     "category": "Legal",
     "name": "Legal Scenario 08",
-    "description": "Detect legal clause: Liquidated Damages",
-    "prompt": "In the event of a breach of schedule, the Vendor shall pay liquidated damages in the amount of $500 per day.",
+    "description": "Validate CUAD clause detection on prompt: Analyze contract text containing: 'This agreement has a governed by the laws of for both parties.'",
+    "prompt": "Analyze contract text containing: 'This agreement has a governed by the laws of for both parties.'",
     "status": "active",
     "expected_outcome": {
-      "clause_id": "liquidated_damages",
-      "label": "Liquidated Damages"
+      "clause_id": "governing_law"
     }
   },
   {
     "id": "LEGAL_009",
     "category": "Legal",
     "name": "Legal Scenario 09",
-    "description": "Detect legal clause: Force Majeure",
-    "prompt": "Neither party shall be liable for delay or failure in performance due to Force Majeure, including acts of God.",
+    "description": "Validate CUAD clause detection on prompt: Analyze contract text containing: 'This agreement has a force majeure event for both parties.'",
+    "prompt": "Analyze contract text containing: 'This agreement has a force majeure event for both parties.'",
     "status": "active",
     "expected_outcome": {
-      "clause_id": "force_majeure",
-      "label": "Force Majeure"
+      "clause_id": "force_majeure"
     }
   },
   {
     "id": "LEGAL_010",
     "category": "Legal",
     "name": "Legal Scenario 10",
-    "description": "Detect legal clause: Audit Rights",
-    "prompt": "The Client shall have the right to audit the Contractor's financial books and records upon reasonable notice.",
+    "description": "Validate CUAD clause detection on prompt: Analyze contract text containing: 'This agreement has a right to audit for both parties.'",
+    "prompt": "Analyze contract text containing: 'This agreement has a right to audit for both parties.'",
     "status": "active",
     "expected_outcome": {
-      "clause_id": "audit_rights",
-      "label": "Audit Rights"
+      "clause_id": "audit_rights"
     }
   },
   {
     "id": "LEGAL_011",
     "category": "Legal",
     "name": "Legal Scenario 11",
-    "description": "Detect legal clause: Exclusivity",
-    "prompt": "The Supplier shall be the sole and exclusive provider of the products to the Buyer during the term.",
+    "description": "Validate CUAD clause detection on prompt: Analyze contract text containing: 'This agreement has a exclusive provider for both parties.'",
+    "prompt": "Analyze contract text containing: 'This agreement has a exclusive provider for both parties.'",
     "status": "active",
     "expected_outcome": {
-      "clause_id": "exclusivity",
-      "label": "Exclusivity"
+      "clause_id": "exclusivity"
     }
   },
   {
     "id": "LEGAL_012",
     "category": "Legal",
     "name": "Legal Scenario 12",
-    "description": "Detect legal clause: Assignment",
-    "prompt": "Neither party may assign or transfer its rights under this Agreement without the prior written consent of the other party.",
+    "description": "Validate CUAD clause detection on prompt: Analyze contract text containing: 'This agreement has a assignment of rights for both parties.'",
+    "prompt": "Analyze contract text containing: 'This agreement has a assignment of rights for both parties.'",
     "status": "active",
     "expected_outcome": {
-      "clause_id": "assignment",
-      "label": "Assignment"
+      "clause_id": "assignment"
     }
   },
   {
     "id": "LEGAL_013",
     "category": "Legal",
     "name": "Legal Scenario 13",
-    "description": "Detect legal clause: Governing Law & Jurisdiction",
-    "prompt": "The Governing Law of this contract shall be the laws of the State of Delaware.",
+    "description": "Validate CUAD clause detection on prompt: Analyze contract text containing: 'This agreement has a representations and warranties for both parties.'",
+    "prompt": "Analyze contract text containing: 'This agreement has a representations and warranties for both parties.'",
     "status": "active",
     "expected_outcome": {
-      "clause_id": "governing_law",
-      "label": "Governing Law & Jurisdiction"
+      "clause_id": "warranty"
     }
   },
   {
     "id": "LEGAL_014",
     "category": "Legal",
     "name": "Legal Scenario 14",
-    "description": "Detect legal clause: Termination for Convenience",
-    "prompt": "Either party can terminate this contract for convenience at any time without reason.",
+    "description": "Validate CUAD clause detection on prompt: Analyze contract text containing: 'This agreement has a keep confidential for both parties.'",
+    "prompt": "Analyze contract text containing: 'This agreement has a keep confidential for both parties.'",
     "status": "active",
     "expected_outcome": {
-      "clause_id": "termination_for_convenience",
-      "label": "Termination for Convenience"
+      "clause_id": "confidentiality"
     }
   },
   {
-    "id": "LEGAL_015",
-    "category": "Legal",
-    "name": "Legal Scenario 15",
-    "description": "Detect legal clause: Auto-Renewal",
-    "prompt": "This contract automatically renews unless written notice is given 60 days before the renewal date.",
+    "id": "DESIGN_001",
+    "category": "Design",
+    "name": "Design Scenario 01",
+    "description": "Validate DesignMaster context extraction on prompt: Extract design context for active Figma frame",
+    "prompt": "Extract design context for active Figma frame",
     "status": "active",
     "expected_outcome": {
-      "clause_id": "auto_renewal",
-      "label": "Auto-Renewal"
+      "file_path": "my_design_file_on_figma.fig",
+      "design_tool": "Figma",
+      "active_frame_name": "Frame 1",
+      "canvas_dimensions": [
+        1920,
+        1080
+      ],
+      "auto_layout_active": false
     }
   },
   {
-    "id": "LEGAL_016",
-    "category": "Legal",
-    "name": "Legal Scenario 16",
-    "description": "Detect legal clause: Non-Compete / Non-Solicitation",
-    "prompt": "The Contractor agrees not to solicit the Company's clients or employees for 12 months.",
+    "id": "DESIGN_002",
+    "category": "Design",
+    "name": "Design Scenario 02",
+    "description": "Validate DesignMaster context extraction on prompt: Extract design context for active Canva frame",
+    "prompt": "Extract design context for active Canva frame",
     "status": "active",
     "expected_outcome": {
-      "clause_id": "non_compete",
-      "label": "Non-Compete / Non-Solicitation"
+      "file_path": "my_design_file_on_canva.fig",
+      "design_tool": "Canva",
+      "active_frame_name": "Frame 1",
+      "canvas_dimensions": [
+        1920,
+        1080
+      ],
+      "auto_layout_active": false
     }
   },
   {
-    "id": "LEGAL_017",
-    "category": "Legal",
-    "name": "Legal Scenario 17",
-    "description": "Detect legal clause: Limitation of Liability",
-    "prompt": "The Company's maximum liability is limited to the contract value.",
+    "id": "DESIGN_003",
+    "category": "Design",
+    "name": "Design Scenario 03",
+    "description": "Validate DesignMaster context extraction on prompt: Extract design context for active Figma frame",
+    "prompt": "Extract design context for active Figma frame",
     "status": "active",
     "expected_outcome": {
-      "clause_id": "liability_cap",
-      "label": "Limitation of Liability"
+      "file_path": "my_design_file_on_figma.fig",
+      "design_tool": "Figma",
+      "active_frame_name": "Frame 1",
+      "canvas_dimensions": [
+        1920,
+        1080
+      ],
+      "auto_layout_active": false
     }
   },
   {
-    "id": "LEGAL_018",
-    "category": "Legal",
-    "name": "Legal Scenario 18",
-    "description": "Detect legal clause: Indemnification",
-    "prompt": "The Contractor shall indemnify the Company against intellectual property infringement claims.",
+    "id": "DESIGN_004",
+    "category": "Design",
+    "name": "Design Scenario 04",
+    "description": "Validate DesignMaster context extraction on prompt: Extract design context for active Canva frame",
+    "prompt": "Extract design context for active Canva frame",
     "status": "active",
     "expected_outcome": {
-      "clause_id": "indemnification",
-      "label": "Indemnification"
+      "file_path": "my_design_file_on_canva.fig",
+      "design_tool": "Canva",
+      "active_frame_name": "Frame 1",
+      "canvas_dimensions": [
+        1920,
+        1080
+      ],
+      "auto_layout_active": false
     }
   },
   {
-    "id": "LEGAL_019",
-    "category": "Legal",
-    "name": "Legal Scenario 19",
-    "description": "Detect legal clause: Intellectual Property Ownership",
-    "prompt": "All right, title, and interest in the deliverables will vest exclusively in the Company.",
+    "id": "DESIGN_005",
+    "category": "Design",
+    "name": "Design Scenario 05",
+    "description": "Validate DesignMaster context extraction on prompt: Extract design context for active Figma frame",
+    "prompt": "Extract design context for active Figma frame",
     "status": "active",
     "expected_outcome": {
-      "clause_id": "ip_ownership",
-      "label": "Intellectual Property Ownership"
+      "file_path": "my_design_file_on_figma.fig",
+      "design_tool": "Figma",
+      "active_frame_name": "Frame 1",
+      "canvas_dimensions": [
+        1920,
+        1080
+      ],
+      "auto_layout_active": false
     }
   },
   {
-    "id": "LEGAL_020",
-    "category": "Legal",
-    "name": "Legal Scenario 20",
-    "description": "Detect legal clause: Liquidated Damages",
-    "prompt": "The penalty for early termination is agreed as liquidated damages of $5,000.",
+    "id": "DESIGN_006",
+    "category": "Design",
+    "name": "Design Scenario 06",
+    "description": "Validate DesignMaster context extraction on prompt: Extract design context for active Canva frame",
+    "prompt": "Extract design context for active Canva frame",
     "status": "active",
     "expected_outcome": {
-      "clause_id": "liquidated_damages",
-      "label": "Liquidated Damages"
+      "file_path": "my_design_file_on_canva.fig",
+      "design_tool": "Canva",
+      "active_frame_name": "Frame 1",
+      "canvas_dimensions": [
+        1920,
+        1080
+      ],
+      "auto_layout_active": false
     }
   },
   {
-    "id": "CUA_001",
-    "category": "CUA",
-    "name": "CUA Scenario 01",
-    "description": "Verify CUA constant or fallback: max_actions (SAFETY_LIMITS)",
-    "prompt": "Verify CUA safety limit or IPC property: max_actions under SAFETY_LIMITS",
+    "id": "DESIGN_007",
+    "category": "Design",
+    "name": "Design Scenario 07",
+    "description": "Validate DesignMaster context extraction on prompt: Extract design context for active Figma frame",
+    "prompt": "Extract design context for active Figma frame",
     "status": "active",
     "expected_outcome": {
-      "field": "max_actions",
-      "group": "SAFETY_LIMITS",
-      "expected": 5
+      "file_path": "my_design_file_on_figma.fig",
+      "design_tool": "Figma",
+      "active_frame_name": "Frame 1",
+      "canvas_dimensions": [
+        1920,
+        1080
+      ],
+      "auto_layout_active": false
     }
   },
   {
-    "id": "CUA_002",
-    "category": "CUA",
-    "name": "CUA Scenario 02",
-    "description": "Verify CUA constant or fallback: timeout_seconds (SAFETY_LIMITS)",
-    "prompt": "Verify CUA safety limit or IPC property: timeout_seconds under SAFETY_LIMITS",
+    "id": "DESIGN_008",
+    "category": "Design",
+    "name": "Design Scenario 08",
+    "description": "Validate DesignMaster context extraction on prompt: Extract design context for active Canva frame",
+    "prompt": "Extract design context for active Canva frame",
     "status": "active",
     "expected_outcome": {
-      "field": "timeout_seconds",
-      "group": "SAFETY_LIMITS",
-      "expected": 10
+      "file_path": "my_design_file_on_canva.fig",
+      "design_tool": "Canva",
+      "active_frame_name": "Frame 1",
+      "canvas_dimensions": [
+        1920,
+        1080
+      ],
+      "auto_layout_active": false
     }
   },
   {
-    "id": "CUA_003",
-    "category": "CUA",
-    "name": "CUA Scenario 03",
-    "description": "Verify CUA constant or fallback: allowed_element_types (SAFETY_LIMITS)",
-    "prompt": "Verify CUA safety limit or IPC property: allowed_element_types under SAFETY_LIMITS",
+    "id": "DESIGN_009",
+    "category": "Design",
+    "name": "Design Scenario 09",
+    "description": "Validate DesignMaster context extraction on prompt: Extract design context for active Figma frame",
+    "prompt": "Extract design context for active Figma frame",
     "status": "active",
     "expected_outcome": {
-      "field": "allowed_element_types",
-      "group": "SAFETY_LIMITS",
-      "expected": [
-        "text",
-        "contenteditable",
-        "input"
-      ]
+      "file_path": "my_design_file_on_figma.fig",
+      "design_tool": "Figma",
+      "active_frame_name": "Frame 1",
+      "canvas_dimensions": [
+        1920,
+        1080
+      ],
+      "auto_layout_active": false
     }
   },
   {
-    "id": "CUA_004",
-    "category": "CUA",
-    "name": "CUA Scenario 04",
-    "description": "Verify CUA constant or fallback: MAX_MESSAGE_BYTES (IPC_LIMITS)",
-    "prompt": "Verify CUA safety limit or IPC property: MAX_MESSAGE_BYTES under IPC_LIMITS",
+    "id": "DESIGN_010",
+    "category": "Design",
+    "name": "Design Scenario 10",
+    "description": "Validate DesignMaster context extraction on prompt: Extract design context for active Canva frame",
+    "prompt": "Extract design context for active Canva frame",
     "status": "active",
     "expected_outcome": {
-      "field": "MAX_MESSAGE_BYTES",
-      "group": "IPC_LIMITS",
-      "expected": 1048576
+      "file_path": "my_design_file_on_canva.fig",
+      "design_tool": "Canva",
+      "active_frame_name": "Frame 1",
+      "canvas_dimensions": [
+        1920,
+        1080
+      ],
+      "auto_layout_active": false
     }
   },
   {
-    "id": "CUA_005",
-    "category": "CUA",
-    "name": "CUA Scenario 05",
-    "description": "Verify CUA constant or fallback: MAX_CONCURRENT_REQUESTS (IPC_LIMITS)",
-    "prompt": "Verify CUA safety limit or IPC property: MAX_CONCURRENT_REQUESTS under IPC_LIMITS",
+    "id": "DESIGN_011",
+    "category": "Design",
+    "name": "Design Scenario 11",
+    "description": "Validate DesignMaster context extraction on prompt: Extract design context for active Figma frame",
+    "prompt": "Extract design context for active Figma frame",
     "status": "active",
     "expected_outcome": {
-      "field": "MAX_CONCURRENT_REQUESTS",
-      "group": "IPC_LIMITS",
-      "expected": 16
+      "file_path": "my_design_file_on_figma.fig",
+      "design_tool": "Figma",
+      "active_frame_name": "Frame 1",
+      "canvas_dimensions": [
+        1920,
+        1080
+      ],
+      "auto_layout_active": false
     }
   },
   {
-    "id": "CUA_006",
-    "category": "CUA",
-    "name": "CUA Scenario 06",
-    "description": "Verify CUA constant or fallback: clipboard_content (CLIPBOARD_FALLBACK)",
-    "prompt": "Verify CUA safety limit or IPC property: clipboard_content under CLIPBOARD_FALLBACK",
+    "id": "DESIGN_012",
+    "category": "Design",
+    "name": "Design Scenario 12",
+    "description": "Validate DesignMaster context extraction on prompt: Extract design context for active Canva frame",
+    "prompt": "Extract design context for active Canva frame",
     "status": "active",
     "expected_outcome": {
-      "field": "clipboard_content",
-      "group": "CLIPBOARD_FALLBACK",
-      "expected": "CUA fallback clipboard test 006"
+      "file_path": "my_design_file_on_canva.fig",
+      "design_tool": "Canva",
+      "active_frame_name": "Frame 1",
+      "canvas_dimensions": [
+        1920,
+        1080
+      ],
+      "auto_layout_active": false
     }
   },
   {
-    "id": "CUA_007",
-    "category": "CUA",
-    "name": "CUA Scenario 07",
-    "description": "Verify CUA constant or fallback: screenshot_fallback (DRIVER_STATUS)",
-    "prompt": "Verify CUA safety limit or IPC property: screenshot_fallback under DRIVER_STATUS",
+    "id": "DESIGN_013",
+    "category": "Design",
+    "name": "Design Scenario 13",
+    "description": "Validate DesignMaster context extraction on prompt: Extract design context for active Figma frame",
+    "prompt": "Extract design context for active Figma frame",
     "status": "active",
     "expected_outcome": {
-      "field": "screenshot_fallback",
-      "group": "DRIVER_STATUS",
-      "expected": "screenshot"
+      "file_path": "my_design_file_on_figma.fig",
+      "design_tool": "Figma",
+      "active_frame_name": "Frame 1",
+      "canvas_dimensions": [
+        1920,
+        1080
+      ],
+      "auto_layout_active": false
     }
   },
   {
-    "id": "CUA_008",
-    "category": "CUA",
-    "name": "CUA Scenario 08",
-    "description": "Verify CUA constant or fallback: click_fallback (DRIVER_STATUS)",
-    "prompt": "Verify CUA safety limit or IPC property: click_fallback under DRIVER_STATUS",
+    "id": "DESIGN_014",
+    "category": "Design",
+    "name": "Design Scenario 14",
+    "description": "Validate DesignMaster context extraction on prompt: Extract design context for active Canva frame",
+    "prompt": "Extract design context for active Canva frame",
     "status": "active",
     "expected_outcome": {
-      "field": "click_fallback",
-      "group": "DRIVER_STATUS",
-      "expected": "click"
+      "file_path": "my_design_file_on_canva.fig",
+      "design_tool": "Canva",
+      "active_frame_name": "Frame 1",
+      "canvas_dimensions": [
+        1920,
+        1080
+      ],
+      "auto_layout_active": false
     }
   },
   {
-    "id": "CUA_009",
-    "category": "CUA",
-    "name": "CUA Scenario 09",
-    "description": "Verify CUA constant or fallback: type_fallback (DRIVER_STATUS)",
-    "prompt": "Verify CUA safety limit or IPC property: type_fallback under DRIVER_STATUS",
+    "id": "CODE_001",
+    "category": "Code",
+    "name": "Code Scenario 01",
+    "description": "Validate CodeMaster context extraction on prompt: Extract code context from run.py at line 3 for python code",
+    "prompt": "Extract code context from run.py at line 3 for python code",
     "status": "active",
     "expected_outcome": {
-      "field": "type_fallback",
-      "group": "DRIVER_STATUS",
-      "expected": "type"
+      "filename": "run.py",
+      "code_content": "import os\nimport sys\n\ndef run():\n    print('python code')\n",
+      "cursor_line": 3,
+      "language": "python",
+      "indent_style": "spaces",
+      "indent_size": 4,
+      "contains_code": "python code"
     }
   },
   {
-    "id": "CUA_010",
-    "category": "CUA",
-    "name": "CUA Scenario 10",
-    "description": "Verify CUA constant or fallback: max_actions_value (SAFETY_LIMITS)",
-    "prompt": "Verify CUA safety limit or IPC property: max_actions_value under SAFETY_LIMITS",
+    "id": "CODE_002",
+    "category": "Code",
+    "name": "Code Scenario 02",
+    "description": "Validate CodeMaster context extraction on prompt: Extract code context from main.rs at line 3 for rust code",
+    "prompt": "Extract code context from main.rs at line 3 for rust code",
     "status": "active",
     "expected_outcome": {
-      "field": "max_actions_value",
-      "group": "SAFETY_LIMITS",
-      "expected": 5
+      "filename": "main.rs",
+      "code_content": "use std::io;\n\nfn main() {\n\tprintln!(\"rust code\");\n}\n",
+      "cursor_line": 3,
+      "language": "rust",
+      "indent_style": "tabs",
+      "indent_size": 1,
+      "contains_code": "rust code"
     }
   },
   {
-    "id": "CUA_011",
-    "category": "CUA",
-    "name": "CUA Scenario 11",
-    "description": "Verify CUA constant or fallback: timeout_seconds_value (SAFETY_LIMITS)",
-    "prompt": "Verify CUA safety limit or IPC property: timeout_seconds_value under SAFETY_LIMITS",
+    "id": "CODE_003",
+    "category": "Code",
+    "name": "Code Scenario 03",
+    "description": "Validate CodeMaster context extraction on prompt: Extract code context from test.js at line 3 for javascript code",
+    "prompt": "Extract code context from test.js at line 3 for javascript code",
     "status": "active",
     "expected_outcome": {
-      "field": "timeout_seconds_value",
-      "group": "SAFETY_LIMITS",
-      "expected": 10
+      "filename": "test.js",
+      "code_content": "const fs = require('fs');\nfunction test() {\n  console.log('js code');\n}\n",
+      "cursor_line": 3,
+      "language": "javascript",
+      "indent_style": "spaces",
+      "indent_size": 2,
+      "contains_code": "js code"
     }
   },
   {
-    "id": "CUA_012",
-    "category": "CUA",
-    "name": "CUA Scenario 12",
-    "description": "Verify CUA constant or fallback: allowed_element_types_value (SAFETY_LIMITS)",
-    "prompt": "Verify CUA safety limit or IPC property: allowed_element_types_value under SAFETY_LIMITS",
+    "id": "CODE_004",
+    "category": "Code",
+    "name": "Code Scenario 04",
+    "description": "Validate CodeMaster context extraction on prompt: Extract code context from run.py at line 3 for python code",
+    "prompt": "Extract code context from run.py at line 3 for python code",
     "status": "active",
     "expected_outcome": {
-      "field": "allowed_element_types_value",
-      "group": "SAFETY_LIMITS",
-      "expected": [
-        "text",
-        "contenteditable",
-        "input"
-      ]
+      "filename": "run.py",
+      "code_content": "import os\nimport sys\n\ndef run():\n    print('python code')\n",
+      "cursor_line": 3,
+      "language": "python",
+      "indent_style": "spaces",
+      "indent_size": 4,
+      "contains_code": "python code"
     }
   },
   {
-    "id": "CUA_013",
-    "category": "CUA",
-    "name": "CUA Scenario 13",
-    "description": "Verify CUA constant or fallback: MAX_MESSAGE_BYTES_value (IPC_LIMITS)",
-    "prompt": "Verify CUA safety limit or IPC property: MAX_MESSAGE_BYTES_value under IPC_LIMITS",
+    "id": "CODE_005",
+    "category": "Code",
+    "name": "Code Scenario 05",
+    "description": "Validate CodeMaster context extraction on prompt: Extract code context from main.rs at line 3 for rust code",
+    "prompt": "Extract code context from main.rs at line 3 for rust code",
     "status": "active",
     "expected_outcome": {
-      "field": "MAX_MESSAGE_BYTES_value",
-      "group": "IPC_LIMITS",
-      "expected": 1048576
+      "filename": "main.rs",
+      "code_content": "use std::io;\n\nfn main() {\n\tprintln!(\"rust code\");\n}\n",
+      "cursor_line": 3,
+      "language": "rust",
+      "indent_style": "tabs",
+      "indent_size": 1,
+      "contains_code": "rust code"
     }
   },
   {
-    "id": "CUA_014",
-    "category": "CUA",
-    "name": "CUA Scenario 14",
-    "description": "Verify CUA constant or fallback: MAX_CONCURRENT_REQUESTS_value (IPC_LIMITS)",
-    "prompt": "Verify CUA safety limit or IPC property: MAX_CONCURRENT_REQUESTS_value under IPC_LIMITS",
+    "id": "CODE_006",
+    "category": "Code",
+    "name": "Code Scenario 06",
+    "description": "Validate CodeMaster context extraction on prompt: Extract code context from test.js at line 3 for javascript code",
+    "prompt": "Extract code context from test.js at line 3 for javascript code",
     "status": "active",
     "expected_outcome": {
-      "field": "MAX_CONCURRENT_REQUESTS_value",
-      "group": "IPC_LIMITS",
-      "expected": 16
+      "filename": "test.js",
+      "code_content": "const fs = require('fs');\nfunction test() {\n  console.log('js code');\n}\n",
+      "cursor_line": 3,
+      "language": "javascript",
+      "indent_style": "spaces",
+      "indent_size": 2,
+      "contains_code": "js code"
     }
   },
   {
-    "id": "CUA_015",
-    "category": "CUA",
-    "name": "CUA Scenario 15",
-    "description": "Verify CUA constant or fallback: clipboard_content_value (CLIPBOARD_FALLBACK)",
-    "prompt": "Verify CUA safety limit or IPC property: clipboard_content_value under CLIPBOARD_FALLBACK",
+    "id": "CODE_007",
+    "category": "Code",
+    "name": "Code Scenario 07",
+    "description": "Validate CodeMaster context extraction on prompt: Extract code context from run.py at line 3 for python code",
+    "prompt": "Extract code context from run.py at line 3 for python code",
     "status": "active",
     "expected_outcome": {
-      "field": "clipboard_content_value",
-      "group": "CLIPBOARD_FALLBACK",
-      "expected": "CUA fallback clipboard test 015"
+      "filename": "run.py",
+      "code_content": "import os\nimport sys\n\ndef run():\n    print('python code')\n",
+      "cursor_line": 3,
+      "language": "python",
+      "indent_style": "spaces",
+      "indent_size": 4,
+      "contains_code": "python code"
     }
   },
   {
-    "id": "CUA_016",
-    "category": "CUA",
-    "name": "CUA Scenario 16",
-    "description": "Verify CUA constant or fallback: screenshot_fallback_value (DRIVER_STATUS)",
-    "prompt": "Verify CUA safety limit or IPC property: screenshot_fallback_value under DRIVER_STATUS",
+    "id": "CODE_008",
+    "category": "Code",
+    "name": "Code Scenario 08",
+    "description": "Validate CodeMaster context extraction on prompt: Extract code context from main.rs at line 3 for rust code",
+    "prompt": "Extract code context from main.rs at line 3 for rust code",
     "status": "active",
     "expected_outcome": {
-      "field": "screenshot_fallback_value",
-      "group": "DRIVER_STATUS",
-      "expected": "screenshot"
+      "filename": "main.rs",
+      "code_content": "use std::io;\n\nfn main() {\n\tprintln!(\"rust code\");\n}\n",
+      "cursor_line": 3,
+      "language": "rust",
+      "indent_style": "tabs",
+      "indent_size": 1,
+      "contains_code": "rust code"
     }
   },
   {
-    "id": "CUA_017",
-    "category": "CUA",
-    "name": "CUA Scenario 17",
-    "description": "Verify CUA constant or fallback: click_fallback_value (DRIVER_STATUS)",
-    "prompt": "Verify CUA safety limit or IPC property: click_fallback_value under DRIVER_STATUS",
+    "id": "CODE_009",
+    "category": "Code",
+    "name": "Code Scenario 09",
+    "description": "Validate CodeMaster context extraction on prompt: Extract code context from test.js at line 3 for javascript code",
+    "prompt": "Extract code context from test.js at line 3 for javascript code",
     "status": "active",
     "expected_outcome": {
-      "field": "click_fallback_value",
-      "group": "DRIVER_STATUS",
-      "expected": "click"
+      "filename": "test.js",
+      "code_content": "const fs = require('fs');\nfunction test() {\n  console.log('js code');\n}\n",
+      "cursor_line": 3,
+      "language": "javascript",
+      "indent_style": "spaces",
+      "indent_size": 2,
+      "contains_code": "js code"
     }
   },
   {
-    "id": "CUA_018",
-    "category": "CUA",
-    "name": "CUA Scenario 18",
-    "description": "Verify CUA constant or fallback: type_fallback_value (DRIVER_STATUS)",
-    "prompt": "Verify CUA safety limit or IPC property: type_fallback_value under DRIVER_STATUS",
+    "id": "CODE_010",
+    "category": "Code",
+    "name": "Code Scenario 10",
+    "description": "Validate CodeMaster context extraction on prompt: Extract code context from run.py at line 3 for python code",
+    "prompt": "Extract code context from run.py at line 3 for python code",
     "status": "active",
     "expected_outcome": {
-      "field": "type_fallback_value",
-      "group": "DRIVER_STATUS",
-      "expected": "type"
+      "filename": "run.py",
+      "code_content": "import os\nimport sys\n\ndef run():\n    print('python code')\n",
+      "cursor_line": 3,
+      "language": "python",
+      "indent_style": "spaces",
+      "indent_size": 4,
+      "contains_code": "python code"
     }
   },
   {
-    "id": "CUA_019",
-    "category": "CUA",
-    "name": "CUA Scenario 19",
-    "description": "Verify CUA constant or fallback: max_actions_verify (SAFETY_LIMITS)",
-    "prompt": "Verify CUA safety limit or IPC property: max_actions_verify under SAFETY_LIMITS",
+    "id": "CODE_011",
+    "category": "Code",
+    "name": "Code Scenario 11",
+    "description": "Validate CodeMaster context extraction on prompt: Extract code context from main.rs at line 3 for rust code",
+    "prompt": "Extract code context from main.rs at line 3 for rust code",
     "status": "active",
     "expected_outcome": {
-      "field": "max_actions_verify",
-      "group": "SAFETY_LIMITS",
-      "expected": 5
+      "filename": "main.rs",
+      "code_content": "use std::io;\n\nfn main() {\n\tprintln!(\"rust code\");\n}\n",
+      "cursor_line": 3,
+      "language": "rust",
+      "indent_style": "tabs",
+      "indent_size": 1,
+      "contains_code": "rust code"
     }
   },
   {
-    "id": "CUA_020",
-    "category": "CUA",
-    "name": "CUA Scenario 20",
-    "description": "Verify CUA constant or fallback: timeout_seconds_verify (SAFETY_LIMITS)",
-    "prompt": "Verify CUA safety limit or IPC property: timeout_seconds_verify under SAFETY_LIMITS",
+    "id": "CODE_012",
+    "category": "Code",
+    "name": "Code Scenario 12",
+    "description": "Validate CodeMaster context extraction on prompt: Extract code context from test.js at line 3 for javascript code",
+    "prompt": "Extract code context from test.js at line 3 for javascript code",
     "status": "active",
     "expected_outcome": {
-      "field": "timeout_seconds_verify",
-      "group": "SAFETY_LIMITS",
-      "expected": 10
+      "filename": "test.js",
+      "code_content": "const fs = require('fs');\nfunction test() {\n  console.log('js code');\n}\n",
+      "cursor_line": 3,
+      "language": "javascript",
+      "indent_style": "spaces",
+      "indent_size": 2,
+      "contains_code": "js code"
+    }
+  },
+  {
+    "id": "CODE_013",
+    "category": "Code",
+    "name": "Code Scenario 13",
+    "description": "Validate CodeMaster context extraction on prompt: Extract code context from run.py at line 3 for python code",
+    "prompt": "Extract code context from run.py at line 3 for python code",
+    "status": "active",
+    "expected_outcome": {
+      "filename": "run.py",
+      "code_content": "import os\nimport sys\n\ndef run():\n    print('python code')\n",
+      "cursor_line": 3,
+      "language": "python",
+      "indent_style": "spaces",
+      "indent_size": 4,
+      "contains_code": "python code"
+    }
+  },
+  {
+    "id": "CODE_014",
+    "category": "Code",
+    "name": "Code Scenario 14",
+    "description": "Validate CodeMaster context extraction on prompt: Extract code context from main.rs at line 3 for rust code",
+    "prompt": "Extract code context from main.rs at line 3 for rust code",
+    "status": "active",
+    "expected_outcome": {
+      "filename": "main.rs",
+      "code_content": "use std::io;\n\nfn main() {\n\tprintln!(\"rust code\");\n}\n",
+      "cursor_line": 3,
+      "language": "rust",
+      "indent_style": "tabs",
+      "indent_size": 1,
+      "contains_code": "rust code"
+    }
+  },
+  {
+    "id": "TERMINAL_001",
+    "category": "Terminal",
+    "name": "Terminal Scenario 01",
+    "description": "Validate TerminalMaster context extraction on prompt: Generate terminal command option 1",
+    "prompt": "Generate terminal command option 1",
+    "status": "active",
+    "expected_outcome": {
+      "os_type": "Windows",
+      "shell_type": "powershell"
+    }
+  },
+  {
+    "id": "TERMINAL_002",
+    "category": "Terminal",
+    "name": "Terminal Scenario 02",
+    "description": "Validate TerminalMaster context extraction on prompt: Generate terminal command option 2",
+    "prompt": "Generate terminal command option 2",
+    "status": "active",
+    "expected_outcome": {
+      "os_type": "Windows",
+      "shell_type": "powershell"
+    }
+  },
+  {
+    "id": "TERMINAL_003",
+    "category": "Terminal",
+    "name": "Terminal Scenario 03",
+    "description": "Validate TerminalMaster context extraction on prompt: Generate terminal command option 3",
+    "prompt": "Generate terminal command option 3",
+    "status": "active",
+    "expected_outcome": {
+      "os_type": "Windows",
+      "shell_type": "powershell"
+    }
+  },
+  {
+    "id": "TERMINAL_004",
+    "category": "Terminal",
+    "name": "Terminal Scenario 04",
+    "description": "Validate TerminalMaster context extraction on prompt: Generate terminal command option 4",
+    "prompt": "Generate terminal command option 4",
+    "status": "active",
+    "expected_outcome": {
+      "os_type": "Windows",
+      "shell_type": "powershell"
+    }
+  },
+  {
+    "id": "TERMINAL_005",
+    "category": "Terminal",
+    "name": "Terminal Scenario 05",
+    "description": "Validate TerminalMaster context extraction on prompt: Generate terminal command option 5",
+    "prompt": "Generate terminal command option 5",
+    "status": "active",
+    "expected_outcome": {
+      "os_type": "Windows",
+      "shell_type": "powershell"
+    }
+  },
+  {
+    "id": "TERMINAL_006",
+    "category": "Terminal",
+    "name": "Terminal Scenario 06",
+    "description": "Validate TerminalMaster context extraction on prompt: Generate terminal command option 6",
+    "prompt": "Generate terminal command option 6",
+    "status": "active",
+    "expected_outcome": {
+      "os_type": "Windows",
+      "shell_type": "powershell"
+    }
+  },
+  {
+    "id": "TERMINAL_007",
+    "category": "Terminal",
+    "name": "Terminal Scenario 07",
+    "description": "Validate TerminalMaster context extraction on prompt: Generate terminal command option 7",
+    "prompt": "Generate terminal command option 7",
+    "status": "active",
+    "expected_outcome": {
+      "os_type": "Windows",
+      "shell_type": "powershell"
+    }
+  },
+  {
+    "id": "TERMINAL_008",
+    "category": "Terminal",
+    "name": "Terminal Scenario 08",
+    "description": "Validate TerminalMaster context extraction on prompt: Generate terminal command option 8",
+    "prompt": "Generate terminal command option 8",
+    "status": "active",
+    "expected_outcome": {
+      "os_type": "Windows",
+      "shell_type": "powershell"
+    }
+  },
+  {
+    "id": "TERMINAL_009",
+    "category": "Terminal",
+    "name": "Terminal Scenario 09",
+    "description": "Validate TerminalMaster context extraction on prompt: Generate terminal command option 9",
+    "prompt": "Generate terminal command option 9",
+    "status": "active",
+    "expected_outcome": {
+      "os_type": "Windows",
+      "shell_type": "powershell"
+    }
+  },
+  {
+    "id": "TERMINAL_010",
+    "category": "Terminal",
+    "name": "Terminal Scenario 10",
+    "description": "Validate TerminalMaster context extraction on prompt: Generate terminal command option 10",
+    "prompt": "Generate terminal command option 10",
+    "status": "active",
+    "expected_outcome": {
+      "os_type": "Windows",
+      "shell_type": "powershell"
+    }
+  },
+  {
+    "id": "TERMINAL_011",
+    "category": "Terminal",
+    "name": "Terminal Scenario 11",
+    "description": "Validate TerminalMaster context extraction on prompt: Generate terminal command option 11",
+    "prompt": "Generate terminal command option 11",
+    "status": "active",
+    "expected_outcome": {
+      "os_type": "Windows",
+      "shell_type": "powershell"
+    }
+  },
+  {
+    "id": "TERMINAL_012",
+    "category": "Terminal",
+    "name": "Terminal Scenario 12",
+    "description": "Validate TerminalMaster context extraction on prompt: Generate terminal command option 12",
+    "prompt": "Generate terminal command option 12",
+    "status": "active",
+    "expected_outcome": {
+      "os_type": "Windows",
+      "shell_type": "powershell"
+    }
+  },
+  {
+    "id": "TERMINAL_013",
+    "category": "Terminal",
+    "name": "Terminal Scenario 13",
+    "description": "Validate TerminalMaster context extraction on prompt: Generate terminal command option 13",
+    "prompt": "Generate terminal command option 13",
+    "status": "active",
+    "expected_outcome": {
+      "os_type": "Windows",
+      "shell_type": "powershell"
+    }
+  },
+  {
+    "id": "TERMINAL_014",
+    "category": "Terminal",
+    "name": "Terminal Scenario 14",
+    "description": "Validate TerminalMaster context extraction on prompt: Generate terminal command option 14",
+    "prompt": "Generate terminal command option 14",
+    "status": "active",
+    "expected_outcome": {
+      "os_type": "Windows",
+      "shell_type": "powershell"
+    }
+  },
+  {
+    "id": "EMAIL_001",
+    "category": "Email",
+    "name": "Email Scenario 01",
+    "description": "Validate EmailMaster context extraction on prompt: Draft a professional email draft 1",
+    "prompt": "Draft a professional email draft 1",
+    "status": "active",
+    "expected_outcome": {
+      "email_client": "Outlook",
+      "preferred_signoff": "Best regards,"
+    }
+  },
+  {
+    "id": "EMAIL_002",
+    "category": "Email",
+    "name": "Email Scenario 02",
+    "description": "Validate EmailMaster context extraction on prompt: Draft a professional email draft 2",
+    "prompt": "Draft a professional email draft 2",
+    "status": "active",
+    "expected_outcome": {
+      "email_client": "Outlook",
+      "preferred_signoff": "Best regards,"
+    }
+  },
+  {
+    "id": "EMAIL_003",
+    "category": "Email",
+    "name": "Email Scenario 03",
+    "description": "Validate EmailMaster context extraction on prompt: Draft a professional email draft 3",
+    "prompt": "Draft a professional email draft 3",
+    "status": "active",
+    "expected_outcome": {
+      "email_client": "Outlook",
+      "preferred_signoff": "Best regards,"
+    }
+  },
+  {
+    "id": "EMAIL_004",
+    "category": "Email",
+    "name": "Email Scenario 04",
+    "description": "Validate EmailMaster context extraction on prompt: Draft a professional email draft 4",
+    "prompt": "Draft a professional email draft 4",
+    "status": "active",
+    "expected_outcome": {
+      "email_client": "Outlook",
+      "preferred_signoff": "Best regards,"
+    }
+  },
+  {
+    "id": "EMAIL_005",
+    "category": "Email",
+    "name": "Email Scenario 05",
+    "description": "Validate EmailMaster context extraction on prompt: Draft a professional email draft 5",
+    "prompt": "Draft a professional email draft 5",
+    "status": "active",
+    "expected_outcome": {
+      "email_client": "Outlook",
+      "preferred_signoff": "Best regards,"
+    }
+  },
+  {
+    "id": "EMAIL_006",
+    "category": "Email",
+    "name": "Email Scenario 06",
+    "description": "Validate EmailMaster context extraction on prompt: Draft a professional email draft 6",
+    "prompt": "Draft a professional email draft 6",
+    "status": "active",
+    "expected_outcome": {
+      "email_client": "Outlook",
+      "preferred_signoff": "Best regards,"
+    }
+  },
+  {
+    "id": "EMAIL_007",
+    "category": "Email",
+    "name": "Email Scenario 07",
+    "description": "Validate EmailMaster context extraction on prompt: Draft a professional email draft 7",
+    "prompt": "Draft a professional email draft 7",
+    "status": "active",
+    "expected_outcome": {
+      "email_client": "Outlook",
+      "preferred_signoff": "Best regards,"
+    }
+  },
+  {
+    "id": "EMAIL_008",
+    "category": "Email",
+    "name": "Email Scenario 08",
+    "description": "Validate EmailMaster context extraction on prompt: Draft a professional email draft 8",
+    "prompt": "Draft a professional email draft 8",
+    "status": "active",
+    "expected_outcome": {
+      "email_client": "Outlook",
+      "preferred_signoff": "Best regards,"
+    }
+  },
+  {
+    "id": "EMAIL_009",
+    "category": "Email",
+    "name": "Email Scenario 09",
+    "description": "Validate EmailMaster context extraction on prompt: Draft a professional email draft 9",
+    "prompt": "Draft a professional email draft 9",
+    "status": "active",
+    "expected_outcome": {
+      "email_client": "Outlook",
+      "preferred_signoff": "Best regards,"
+    }
+  },
+  {
+    "id": "EMAIL_010",
+    "category": "Email",
+    "name": "Email Scenario 10",
+    "description": "Validate EmailMaster context extraction on prompt: Draft a professional email draft 10",
+    "prompt": "Draft a professional email draft 10",
+    "status": "active",
+    "expected_outcome": {
+      "email_client": "Outlook",
+      "preferred_signoff": "Best regards,"
+    }
+  },
+  {
+    "id": "EMAIL_011",
+    "category": "Email",
+    "name": "Email Scenario 11",
+    "description": "Validate EmailMaster context extraction on prompt: Draft a professional email draft 11",
+    "prompt": "Draft a professional email draft 11",
+    "status": "active",
+    "expected_outcome": {
+      "email_client": "Outlook",
+      "preferred_signoff": "Best regards,"
+    }
+  },
+  {
+    "id": "EMAIL_012",
+    "category": "Email",
+    "name": "Email Scenario 12",
+    "description": "Validate EmailMaster context extraction on prompt: Draft a professional email draft 12",
+    "prompt": "Draft a professional email draft 12",
+    "status": "active",
+    "expected_outcome": {
+      "email_client": "Outlook",
+      "preferred_signoff": "Best regards,"
+    }
+  },
+  {
+    "id": "EMAIL_013",
+    "category": "Email",
+    "name": "Email Scenario 13",
+    "description": "Validate EmailMaster context extraction on prompt: Draft a professional email draft 13",
+    "prompt": "Draft a professional email draft 13",
+    "status": "active",
+    "expected_outcome": {
+      "email_client": "Outlook",
+      "preferred_signoff": "Best regards,"
+    }
+  },
+  {
+    "id": "EMAIL_014",
+    "category": "Email",
+    "name": "Email Scenario 14",
+    "description": "Validate EmailMaster context extraction on prompt: Draft a professional email draft 14",
+    "prompt": "Draft a professional email draft 14",
+    "status": "active",
+    "expected_outcome": {
+      "email_client": "Outlook",
+      "preferred_signoff": "Best regards,"
+    }
+  },
+  {
+    "id": "MEMORY_001",
+    "category": "Memory",
+    "name": "Memory Scenario 01",
+    "description": "Validate Memory DP noise vector validation on prompt: Test Memory DP noise vector validation with vector [1.0, 2.0, 3.0] and std 0.05",
+    "prompt": "Test Memory DP noise vector validation with vector [1.0, 2.0, 3.0] and std 0.05",
+    "status": "active",
+    "expected_outcome": {
+      "vector": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "std_dev": 0.05
+    }
+  },
+  {
+    "id": "MEMORY_002",
+    "category": "Memory",
+    "name": "Memory Scenario 02",
+    "description": "Validate Memory DP noise vector validation on prompt: Test Memory DP noise vector validation with vector [2.0, 4.0, 6.0] and std 0.1",
+    "prompt": "Test Memory DP noise vector validation with vector [2.0, 4.0, 6.0] and std 0.1",
+    "status": "active",
+    "expected_outcome": {
+      "vector": [
+        2.0,
+        4.0,
+        6.0
+      ],
+      "std_dev": 0.1
+    }
+  },
+  {
+    "id": "MEMORY_003",
+    "category": "Memory",
+    "name": "Memory Scenario 03",
+    "description": "Validate Memory DP noise vector validation on prompt: Test Memory DP noise vector validation with vector [3.0, 6.0, 9.0] and std 0.15000000000000002",
+    "prompt": "Test Memory DP noise vector validation with vector [3.0, 6.0, 9.0] and std 0.15000000000000002",
+    "status": "active",
+    "expected_outcome": {
+      "vector": [
+        3.0,
+        6.0,
+        9.0
+      ],
+      "std_dev": 0.15000000000000002
+    }
+  },
+  {
+    "id": "MEMORY_004",
+    "category": "Memory",
+    "name": "Memory Scenario 04",
+    "description": "Validate Memory DP noise vector validation on prompt: Test Memory DP noise vector validation with vector [4.0, 8.0, 12.0] and std 0.2",
+    "prompt": "Test Memory DP noise vector validation with vector [4.0, 8.0, 12.0] and std 0.2",
+    "status": "active",
+    "expected_outcome": {
+      "vector": [
+        4.0,
+        8.0,
+        12.0
+      ],
+      "std_dev": 0.2
+    }
+  },
+  {
+    "id": "MEMORY_005",
+    "category": "Memory",
+    "name": "Memory Scenario 05",
+    "description": "Validate Memory DP noise vector validation on prompt: Test Memory DP noise vector validation with vector [5.0, 10.0, 15.0] and std 0.25",
+    "prompt": "Test Memory DP noise vector validation with vector [5.0, 10.0, 15.0] and std 0.25",
+    "status": "active",
+    "expected_outcome": {
+      "vector": [
+        5.0,
+        10.0,
+        15.0
+      ],
+      "std_dev": 0.25
+    }
+  },
+  {
+    "id": "MEMORY_006",
+    "category": "Memory",
+    "name": "Memory Scenario 06",
+    "description": "Validate Memory DP noise vector validation on prompt: Test Memory DP noise vector validation with vector [6.0, 12.0, 18.0] and std 0.30000000000000004",
+    "prompt": "Test Memory DP noise vector validation with vector [6.0, 12.0, 18.0] and std 0.30000000000000004",
+    "status": "active",
+    "expected_outcome": {
+      "vector": [
+        6.0,
+        12.0,
+        18.0
+      ],
+      "std_dev": 0.30000000000000004
+    }
+  },
+  {
+    "id": "MEMORY_007",
+    "category": "Memory",
+    "name": "Memory Scenario 07",
+    "description": "Validate Memory DP noise vector validation on prompt: Test Memory DP noise vector validation with vector [7.0, 14.0, 21.0] and std 0.35000000000000003",
+    "prompt": "Test Memory DP noise vector validation with vector [7.0, 14.0, 21.0] and std 0.35000000000000003",
+    "status": "active",
+    "expected_outcome": {
+      "vector": [
+        7.0,
+        14.0,
+        21.0
+      ],
+      "std_dev": 0.35000000000000003
+    }
+  },
+  {
+    "id": "MEMORY_008",
+    "category": "Memory",
+    "name": "Memory Scenario 08",
+    "description": "Validate Memory DP noise vector validation on prompt: Test Memory DP noise vector validation with vector [8.0, 16.0, 24.0] and std 0.4",
+    "prompt": "Test Memory DP noise vector validation with vector [8.0, 16.0, 24.0] and std 0.4",
+    "status": "active",
+    "expected_outcome": {
+      "vector": [
+        8.0,
+        16.0,
+        24.0
+      ],
+      "std_dev": 0.4
+    }
+  },
+  {
+    "id": "MEMORY_009",
+    "category": "Memory",
+    "name": "Memory Scenario 09",
+    "description": "Validate Memory DP noise vector validation on prompt: Test Memory DP noise vector validation with vector [9.0, 18.0, 27.0] and std 0.45",
+    "prompt": "Test Memory DP noise vector validation with vector [9.0, 18.0, 27.0] and std 0.45",
+    "status": "active",
+    "expected_outcome": {
+      "vector": [
+        9.0,
+        18.0,
+        27.0
+      ],
+      "std_dev": 0.45
+    }
+  },
+  {
+    "id": "MEMORY_010",
+    "category": "Memory",
+    "name": "Memory Scenario 10",
+    "description": "Validate Memory DP noise vector validation on prompt: Test Memory DP noise vector validation with vector [10.0, 20.0, 30.0] and std 0.5",
+    "prompt": "Test Memory DP noise vector validation with vector [10.0, 20.0, 30.0] and std 0.5",
+    "status": "active",
+    "expected_outcome": {
+      "vector": [
+        10.0,
+        20.0,
+        30.0
+      ],
+      "std_dev": 0.5
+    }
+  },
+  {
+    "id": "MEMORY_011",
+    "category": "Memory",
+    "name": "Memory Scenario 11",
+    "description": "Validate Memory DP noise vector validation on prompt: Test Memory DP noise vector validation with vector [11.0, 22.0, 33.0] and std 0.55",
+    "prompt": "Test Memory DP noise vector validation with vector [11.0, 22.0, 33.0] and std 0.55",
+    "status": "active",
+    "expected_outcome": {
+      "vector": [
+        11.0,
+        22.0,
+        33.0
+      ],
+      "std_dev": 0.55
+    }
+  },
+  {
+    "id": "MEMORY_012",
+    "category": "Memory",
+    "name": "Memory Scenario 12",
+    "description": "Validate Memory DP noise vector validation on prompt: Test Memory DP noise vector validation with vector [12.0, 24.0, 36.0] and std 0.6000000000000001",
+    "prompt": "Test Memory DP noise vector validation with vector [12.0, 24.0, 36.0] and std 0.6000000000000001",
+    "status": "active",
+    "expected_outcome": {
+      "vector": [
+        12.0,
+        24.0,
+        36.0
+      ],
+      "std_dev": 0.6000000000000001
+    }
+  },
+  {
+    "id": "MEMORY_013",
+    "category": "Memory",
+    "name": "Memory Scenario 13",
+    "description": "Validate Memory DP noise vector validation on prompt: Test Memory DP noise vector validation with vector [13.0, 26.0, 39.0] and std 0.65",
+    "prompt": "Test Memory DP noise vector validation with vector [13.0, 26.0, 39.0] and std 0.65",
+    "status": "active",
+    "expected_outcome": {
+      "vector": [
+        13.0,
+        26.0,
+        39.0
+      ],
+      "std_dev": 0.65
+    }
+  },
+  {
+    "id": "MEMORY_014",
+    "category": "Memory",
+    "name": "Memory Scenario 14",
+    "description": "Validate Memory DP noise vector validation on prompt: Test Memory DP noise vector validation with vector [14.0, 28.0, 42.0] and std 0.7000000000000001",
+    "prompt": "Test Memory DP noise vector validation with vector [14.0, 28.0, 42.0] and std 0.7000000000000001",
+    "status": "active",
+    "expected_outcome": {
+      "vector": [
+        14.0,
+        28.0,
+        42.0
+      ],
+      "std_dev": 0.7000000000000001
     }
   },
   {
     "id": "SECURITY_001",
     "category": "Security",
     "name": "Security Scenario 01",
-    "description": "Verify integrity guard rejects scripts/ci/tests/bad_random.py",
-    "prompt": "Security integrity scan for target: scripts/ci/tests/bad_random.py",
-    "status": "active",
-    "expected_outcome": {
-      "target": "scripts/ci/tests/bad_random.py",
-      "expected_rejected": true
-    }
-  },
-  {
-    "id": "SECURITY_002",
-    "category": "Security",
-    "name": "Security Scenario 02",
-    "description": "Verify integrity guard accepts scripts/ci/eval_integrity_guard.py",
-    "prompt": "Security integrity scan for target: scripts/ci/eval_integrity_guard.py",
-    "status": "active",
-    "expected_outcome": {
-      "target": "scripts/ci/eval_integrity_guard.py",
-      "expected_rejected": false
-    }
-  },
-  {
-    "id": "SECURITY_003",
-    "category": "Security",
-    "name": "Security Scenario 03",
-    "description": "Verify integrity guard rejects a file containing password secrets",
+    "description": "Validate security integrity guard on prompt: Security integrity scan for target: secrets_password",
     "prompt": "Security integrity scan for target: secrets_password",
     "status": "active",
     "expected_outcome": {
@@ -1351,10 +2015,10 @@
     }
   },
   {
-    "id": "SECURITY_004",
+    "id": "SECURITY_002",
     "category": "Security",
-    "name": "Security Scenario 04",
-    "description": "Verify integrity guard rejects a file using raw eval statements",
+    "name": "Security Scenario 02",
+    "description": "Validate security integrity guard on prompt: Security integrity scan for target: secrets_eval",
     "prompt": "Security integrity scan for target: secrets_eval",
     "status": "active",
     "expected_outcome": {
@@ -1363,10 +2027,10 @@
     }
   },
   {
-    "id": "SECURITY_005",
+    "id": "SECURITY_003",
     "category": "Security",
-    "name": "Security Scenario 05",
-    "description": "Verify integrity guard rejects a file using shell subprocesses",
+    "name": "Security Scenario 03",
+    "description": "Validate security integrity guard on prompt: Security integrity scan for target: secrets_shell",
     "prompt": "Security integrity scan for target: secrets_shell",
     "status": "active",
     "expected_outcome": {
@@ -1375,10 +2039,10 @@
     }
   },
   {
-    "id": "SECURITY_006",
+    "id": "SECURITY_004",
     "category": "Security",
-    "name": "Security Scenario 06",
-    "description": "Verify integrity guard rejects a file with relative path traversal",
+    "name": "Security Scenario 04",
+    "description": "Validate security integrity guard on prompt: Security integrity scan for target: secrets_traversal",
     "prompt": "Security integrity scan for target: secrets_traversal",
     "status": "active",
     "expected_outcome": {
@@ -1387,34 +2051,10 @@
     }
   },
   {
-    "id": "SECURITY_007",
+    "id": "SECURITY_005",
     "category": "Security",
-    "name": "Security Scenario 07",
-    "description": "Verify integrity guard rejects scripts/ci/tests/bad_random.py again",
-    "prompt": "Security integrity scan for target: scripts/ci/tests/bad_random.py",
-    "status": "active",
-    "expected_outcome": {
-      "target": "scripts/ci/tests/bad_random.py",
-      "expected_rejected": true
-    }
-  },
-  {
-    "id": "SECURITY_008",
-    "category": "Security",
-    "name": "Security Scenario 08",
-    "description": "Verify integrity guard accepts scripts/ci/eval_integrity_guard.py again",
-    "prompt": "Security integrity scan for target: scripts/ci/eval_integrity_guard.py",
-    "status": "active",
-    "expected_outcome": {
-      "target": "scripts/ci/eval_integrity_guard.py",
-      "expected_rejected": false
-    }
-  },
-  {
-    "id": "SECURITY_009",
-    "category": "Security",
-    "name": "Security Scenario 09",
-    "description": "Verify integrity guard rejects a file containing api key secrets",
+    "name": "Security Scenario 05",
+    "description": "Validate security integrity guard on prompt: Security integrity scan for target: secrets_apikey",
     "prompt": "Security integrity scan for target: secrets_apikey",
     "status": "active",
     "expected_outcome": {
@@ -1423,10 +2063,10 @@
     }
   },
   {
-    "id": "SECURITY_010",
+    "id": "SECURITY_006",
     "category": "Security",
-    "name": "Security Scenario 10",
-    "description": "Verify integrity guard rejects a file using exec statements",
+    "name": "Security Scenario 06",
+    "description": "Validate security integrity guard on prompt: Security integrity scan for target: secrets_exec",
     "prompt": "Security integrity scan for target: secrets_exec",
     "status": "active",
     "expected_outcome": {
@@ -1435,10 +2075,10 @@
     }
   },
   {
-    "id": "SECURITY_011",
+    "id": "SECURITY_007",
     "category": "Security",
-    "name": "Security Scenario 11",
-    "description": "Verify integrity guard rejects a file using os.system",
+    "name": "Security Scenario 07",
+    "description": "Validate security integrity guard on prompt: Security integrity scan for target: secrets_os_system",
     "prompt": "Security integrity scan for target: secrets_os_system",
     "status": "active",
     "expected_outcome": {
@@ -1447,10 +2087,10 @@
     }
   },
   {
-    "id": "SECURITY_012",
+    "id": "SECURITY_008",
     "category": "Security",
-    "name": "Security Scenario 12",
-    "description": "Verify integrity guard rejects a file with open/write path traversal",
+    "name": "Security Scenario 08",
+    "description": "Validate security integrity guard on prompt: Security integrity scan for target: secrets_path_traversal",
     "prompt": "Security integrity scan for target: secrets_path_traversal",
     "status": "active",
     "expected_outcome": {
@@ -1459,34 +2099,10 @@
     }
   },
   {
-    "id": "SECURITY_013",
+    "id": "SECURITY_009",
     "category": "Security",
-    "name": "Security Scenario 13",
-    "description": "Verify integrity guard rejects scripts/ci/tests/bad_random.py third time",
-    "prompt": "Security integrity scan for target: scripts/ci/tests/bad_random.py",
-    "status": "active",
-    "expected_outcome": {
-      "target": "scripts/ci/tests/bad_random.py",
-      "expected_rejected": true
-    }
-  },
-  {
-    "id": "SECURITY_014",
-    "category": "Security",
-    "name": "Security Scenario 14",
-    "description": "Verify integrity guard accepts scripts/ci/eval_integrity_guard.py third time",
-    "prompt": "Security integrity scan for target: scripts/ci/eval_integrity_guard.py",
-    "status": "active",
-    "expected_outcome": {
-      "target": "scripts/ci/eval_integrity_guard.py",
-      "expected_rejected": false
-    }
-  },
-  {
-    "id": "SECURITY_015",
-    "category": "Security",
-    "name": "Security Scenario 15",
-    "description": "Verify integrity guard rejects a file containing token secrets",
+    "name": "Security Scenario 09",
+    "description": "Validate security integrity guard on prompt: Security integrity scan for target: secrets_token",
     "prompt": "Security integrity scan for target: secrets_token",
     "status": "active",
     "expected_outcome": {
@@ -1495,10 +2111,10 @@
     }
   },
   {
-    "id": "SECURITY_016",
+    "id": "SECURITY_010",
     "category": "Security",
-    "name": "Security Scenario 16",
-    "description": "Verify integrity guard rejects a file using __import__ dynamically",
+    "name": "Security Scenario 10",
+    "description": "Validate security integrity guard on prompt: Security integrity scan for target: secrets_dynamic_import",
     "prompt": "Security integrity scan for target: secrets_dynamic_import",
     "status": "active",
     "expected_outcome": {
@@ -1507,10 +2123,10 @@
     }
   },
   {
-    "id": "SECURITY_017",
+    "id": "SECURITY_011",
     "category": "Security",
-    "name": "Security Scenario 17",
-    "description": "Verify integrity guard rejects a file using popen",
+    "name": "Security Scenario 11",
+    "description": "Validate security integrity guard on prompt: Security integrity scan for target: secrets_popen",
     "prompt": "Security integrity scan for target: secrets_popen",
     "status": "active",
     "expected_outcome": {
@@ -1519,10 +2135,10 @@
     }
   },
   {
-    "id": "SECURITY_018",
+    "id": "SECURITY_012",
     "category": "Security",
-    "name": "Security Scenario 18",
-    "description": "Verify integrity guard rejects a file attempting absolute path access",
+    "name": "Security Scenario 12",
+    "description": "Validate security integrity guard on prompt: Security integrity scan for target: secrets_abs_path",
     "prompt": "Security integrity scan for target: secrets_abs_path",
     "status": "active",
     "expected_outcome": {
@@ -1531,879 +2147,385 @@
     }
   },
   {
-    "id": "SECURITY_019",
+    "id": "SECURITY_013",
     "category": "Security",
-    "name": "Security Scenario 19",
-    "description": "Verify integrity guard rejects scripts/ci/tests/bad_random.py fourth time",
-    "prompt": "Security integrity scan for target: scripts/ci/tests/bad_random.py",
+    "name": "Security Scenario 13",
+    "description": "Validate security integrity guard on prompt: Security integrity scan for target: safe_code_1",
+    "prompt": "Security integrity scan for target: safe_code_1",
     "status": "active",
     "expected_outcome": {
-      "target": "scripts/ci/tests/bad_random.py",
-      "expected_rejected": true
-    }
-  },
-  {
-    "id": "SECURITY_020",
-    "category": "Security",
-    "name": "Security Scenario 20",
-    "description": "Verify integrity guard accepts scripts/ci/eval_integrity_guard.py fourth time",
-    "prompt": "Security integrity scan for target: scripts/ci/eval_integrity_guard.py",
-    "status": "active",
-    "expected_outcome": {
-      "target": "scripts/ci/eval_integrity_guard.py",
+      "target": "safe_code_1",
       "expected_rejected": false
     }
   },
   {
-    "id": "MEMORY_001",
-    "category": "Memory",
-    "name": "Memory Scenario 01",
-    "description": "Add CSPRNG noise to vector [1.0, 2.0, 3.0] with std_dev 0.1",
-    "prompt": "Add gaussian noise to vector: [1.0, 2.0, 3.0] with std_dev: 0.1",
+    "id": "SECURITY_014",
+    "category": "Security",
+    "name": "Security Scenario 14",
+    "description": "Validate security integrity guard on prompt: Security integrity scan for target: safe_code_2",
+    "prompt": "Security integrity scan for target: safe_code_2",
     "status": "active",
     "expected_outcome": {
-      "vector": [
-        1.0,
-        2.0,
-        3.0
-      ],
-      "std_dev": 0.1
-    }
-  },
-  {
-    "id": "MEMORY_002",
-    "category": "Memory",
-    "name": "Memory Scenario 02",
-    "description": "Add CSPRNG noise to vector [10.0, 20.0, 30.0, 40.0] with std_dev 0.5",
-    "prompt": "Add gaussian noise to vector: [10.0, 20.0, 30.0, 40.0] with std_dev: 0.5",
-    "status": "active",
-    "expected_outcome": {
-      "vector": [
-        10.0,
-        20.0,
-        30.0,
-        40.0
-      ],
-      "std_dev": 0.5
-    }
-  },
-  {
-    "id": "MEMORY_003",
-    "category": "Memory",
-    "name": "Memory Scenario 03",
-    "description": "Add CSPRNG noise to vector [0.0, 0.0, 0.0] with std_dev 0.01",
-    "prompt": "Add gaussian noise to vector: [0.0, 0.0, 0.0] with std_dev: 0.01",
-    "status": "active",
-    "expected_outcome": {
-      "vector": [
-        0.0,
-        0.0,
-        0.0
-      ],
-      "std_dev": 0.01
-    }
-  },
-  {
-    "id": "MEMORY_004",
-    "category": "Memory",
-    "name": "Memory Scenario 04",
-    "description": "Add CSPRNG noise to vector [100.0, 200.0] with std_dev 1.0",
-    "prompt": "Add gaussian noise to vector: [100.0, 200.0] with std_dev: 1.0",
-    "status": "active",
-    "expected_outcome": {
-      "vector": [
-        100.0,
-        200.0
-      ],
-      "std_dev": 1.0
-    }
-  },
-  {
-    "id": "MEMORY_005",
-    "category": "Memory",
-    "name": "Memory Scenario 05",
-    "description": "Add CSPRNG noise to vector [1.0, 2.0, 3.0, 4.0, 5.0] with std_dev 0.2",
-    "prompt": "Add gaussian noise to vector: [1.0, 2.0, 3.0, 4.0, 5.0] with std_dev: 0.2",
-    "status": "active",
-    "expected_outcome": {
-      "vector": [
-        1.0,
-        2.0,
-        3.0,
-        4.0,
-        5.0
-      ],
-      "std_dev": 0.2
-    }
-  },
-  {
-    "id": "MEMORY_006",
-    "category": "Memory",
-    "name": "Memory Scenario 06",
-    "description": "Add CSPRNG noise to vector [1.0, 2.0, 3.0] with std_dev 0.1",
-    "prompt": "Add gaussian noise to vector: [1.0, 2.0, 3.0] with std_dev: 0.1",
-    "status": "active",
-    "expected_outcome": {
-      "vector": [
-        1.0,
-        2.0,
-        3.0
-      ],
-      "std_dev": 0.1
-    }
-  },
-  {
-    "id": "MEMORY_007",
-    "category": "Memory",
-    "name": "Memory Scenario 07",
-    "description": "Add CSPRNG noise to vector [10.0, 20.0, 30.0, 40.0] with std_dev 0.5",
-    "prompt": "Add gaussian noise to vector: [10.0, 20.0, 30.0, 40.0] with std_dev: 0.5",
-    "status": "active",
-    "expected_outcome": {
-      "vector": [
-        10.0,
-        20.0,
-        30.0,
-        40.0
-      ],
-      "std_dev": 0.5
-    }
-  },
-  {
-    "id": "MEMORY_008",
-    "category": "Memory",
-    "name": "Memory Scenario 08",
-    "description": "Add CSPRNG noise to vector [0.0, 0.0, 0.0] with std_dev 0.01",
-    "prompt": "Add gaussian noise to vector: [0.0, 0.0, 0.0] with std_dev: 0.01",
-    "status": "active",
-    "expected_outcome": {
-      "vector": [
-        0.0,
-        0.0,
-        0.0
-      ],
-      "std_dev": 0.01
-    }
-  },
-  {
-    "id": "MEMORY_009",
-    "category": "Memory",
-    "name": "Memory Scenario 09",
-    "description": "Add CSPRNG noise to vector [100.0, 200.0] with std_dev 1.0",
-    "prompt": "Add gaussian noise to vector: [100.0, 200.0] with std_dev: 1.0",
-    "status": "active",
-    "expected_outcome": {
-      "vector": [
-        100.0,
-        200.0
-      ],
-      "std_dev": 1.0
-    }
-  },
-  {
-    "id": "MEMORY_010",
-    "category": "Memory",
-    "name": "Memory Scenario 10",
-    "description": "Add CSPRNG noise to vector [1.0, 2.0, 3.0, 4.0, 5.0] with std_dev 0.2",
-    "prompt": "Add gaussian noise to vector: [1.0, 2.0, 3.0, 4.0, 5.0] with std_dev: 0.2",
-    "status": "active",
-    "expected_outcome": {
-      "vector": [
-        1.0,
-        2.0,
-        3.0,
-        4.0,
-        5.0
-      ],
-      "std_dev": 0.2
-    }
-  },
-  {
-    "id": "MEMORY_011",
-    "category": "Memory",
-    "name": "Memory Scenario 11",
-    "description": "Add CSPRNG noise to vector [1.0, 2.0, 3.0] with std_dev 0.1",
-    "prompt": "Add gaussian noise to vector: [1.0, 2.0, 3.0] with std_dev: 0.1",
-    "status": "active",
-    "expected_outcome": {
-      "vector": [
-        1.0,
-        2.0,
-        3.0
-      ],
-      "std_dev": 0.1
-    }
-  },
-  {
-    "id": "MEMORY_012",
-    "category": "Memory",
-    "name": "Memory Scenario 12",
-    "description": "Add CSPRNG noise to vector [10.0, 20.0, 30.0, 40.0] with std_dev 0.5",
-    "prompt": "Add gaussian noise to vector: [10.0, 20.0, 30.0, 40.0] with std_dev: 0.5",
-    "status": "active",
-    "expected_outcome": {
-      "vector": [
-        10.0,
-        20.0,
-        30.0,
-        40.0
-      ],
-      "std_dev": 0.5
-    }
-  },
-  {
-    "id": "MEMORY_013",
-    "category": "Memory",
-    "name": "Memory Scenario 13",
-    "description": "Add CSPRNG noise to vector [0.0, 0.0, 0.0] with std_dev 0.01",
-    "prompt": "Add gaussian noise to vector: [0.0, 0.0, 0.0] with std_dev: 0.01",
-    "status": "active",
-    "expected_outcome": {
-      "vector": [
-        0.0,
-        0.0,
-        0.0
-      ],
-      "std_dev": 0.01
-    }
-  },
-  {
-    "id": "MEMORY_014",
-    "category": "Memory",
-    "name": "Memory Scenario 14",
-    "description": "Add CSPRNG noise to vector [100.0, 200.0] with std_dev 1.0",
-    "prompt": "Add gaussian noise to vector: [100.0, 200.0] with std_dev: 1.0",
-    "status": "active",
-    "expected_outcome": {
-      "vector": [
-        100.0,
-        200.0
-      ],
-      "std_dev": 1.0
-    }
-  },
-  {
-    "id": "MEMORY_015",
-    "category": "Memory",
-    "name": "Memory Scenario 15",
-    "description": "Add CSPRNG noise to vector [1.0, 2.0, 3.0, 4.0, 5.0] with std_dev 0.2",
-    "prompt": "Add gaussian noise to vector: [1.0, 2.0, 3.0, 4.0, 5.0] with std_dev: 0.2",
-    "status": "active",
-    "expected_outcome": {
-      "vector": [
-        1.0,
-        2.0,
-        3.0,
-        4.0,
-        5.0
-      ],
-      "std_dev": 0.2
-    }
-  },
-  {
-    "id": "MEMORY_016",
-    "category": "Memory",
-    "name": "Memory Scenario 16",
-    "description": "Add CSPRNG noise to vector [1.0, 2.0, 3.0] with std_dev 0.1",
-    "prompt": "Add gaussian noise to vector: [1.0, 2.0, 3.0] with std_dev: 0.1",
-    "status": "active",
-    "expected_outcome": {
-      "vector": [
-        1.0,
-        2.0,
-        3.0
-      ],
-      "std_dev": 0.1
-    }
-  },
-  {
-    "id": "MEMORY_017",
-    "category": "Memory",
-    "name": "Memory Scenario 17",
-    "description": "Add CSPRNG noise to vector [10.0, 20.0, 30.0, 40.0] with std_dev 0.5",
-    "prompt": "Add gaussian noise to vector: [10.0, 20.0, 30.0, 40.0] with std_dev: 0.5",
-    "status": "active",
-    "expected_outcome": {
-      "vector": [
-        10.0,
-        20.0,
-        30.0,
-        40.0
-      ],
-      "std_dev": 0.5
-    }
-  },
-  {
-    "id": "MEMORY_018",
-    "category": "Memory",
-    "name": "Memory Scenario 18",
-    "description": "Add CSPRNG noise to vector [0.0, 0.0, 0.0] with std_dev 0.01",
-    "prompt": "Add gaussian noise to vector: [0.0, 0.0, 0.0] with std_dev: 0.01",
-    "status": "active",
-    "expected_outcome": {
-      "vector": [
-        0.0,
-        0.0,
-        0.0
-      ],
-      "std_dev": 0.01
-    }
-  },
-  {
-    "id": "MEMORY_019",
-    "category": "Memory",
-    "name": "Memory Scenario 19",
-    "description": "Add CSPRNG noise to vector [100.0, 200.0] with std_dev 1.0",
-    "prompt": "Add gaussian noise to vector: [100.0, 200.0] with std_dev: 1.0",
-    "status": "active",
-    "expected_outcome": {
-      "vector": [
-        100.0,
-        200.0
-      ],
-      "std_dev": 1.0
-    }
-  },
-  {
-    "id": "MEMORY_020",
-    "category": "Memory",
-    "name": "Memory Scenario 20",
-    "description": "Add CSPRNG noise to vector [1.0, 2.0, 3.0, 4.0, 5.0] with std_dev 0.2",
-    "prompt": "Add gaussian noise to vector: [1.0, 2.0, 3.0, 4.0, 5.0] with std_dev: 0.2",
-    "status": "active",
-    "expected_outcome": {
-      "vector": [
-        1.0,
-        2.0,
-        3.0,
-        4.0,
-        5.0
-      ],
-      "std_dev": 0.2
+      "target": "safe_code_2",
+      "expected_rejected": false
     }
   },
   {
     "id": "OFFLINE_001",
     "category": "Offline",
     "name": "Offline Scenario 01",
-    "description": "Verify KAIRO_OFFLINE is honored on check 1",
-    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 1)",
+    "description": "Validate offline mode self check on prompt: Test offline self check behavior run 1",
+    "prompt": "Test offline self check behavior run 1",
     "status": "active",
-    "expected_outcome": {
-      "expected_offline": true
-    }
+    "expected_outcome": {}
   },
   {
     "id": "OFFLINE_002",
     "category": "Offline",
     "name": "Offline Scenario 02",
-    "description": "Verify KAIRO_OFFLINE is honored on check 2",
-    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 2)",
+    "description": "Validate offline mode self check on prompt: Test offline self check behavior run 2",
+    "prompt": "Test offline self check behavior run 2",
     "status": "active",
-    "expected_outcome": {
-      "expected_offline": true
-    }
+    "expected_outcome": {}
   },
   {
     "id": "OFFLINE_003",
     "category": "Offline",
     "name": "Offline Scenario 03",
-    "description": "Verify KAIRO_OFFLINE is honored on check 3",
-    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 3)",
+    "description": "Validate offline mode self check on prompt: Test offline self check behavior run 3",
+    "prompt": "Test offline self check behavior run 3",
     "status": "active",
-    "expected_outcome": {
-      "expected_offline": true
-    }
+    "expected_outcome": {}
   },
   {
     "id": "OFFLINE_004",
     "category": "Offline",
     "name": "Offline Scenario 04",
-    "description": "Verify KAIRO_OFFLINE is honored on check 4",
-    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 4)",
+    "description": "Validate offline mode self check on prompt: Test offline self check behavior run 4",
+    "prompt": "Test offline self check behavior run 4",
     "status": "active",
-    "expected_outcome": {
-      "expected_offline": true
-    }
+    "expected_outcome": {}
   },
   {
     "id": "OFFLINE_005",
     "category": "Offline",
     "name": "Offline Scenario 05",
-    "description": "Verify KAIRO_OFFLINE is honored on check 5",
-    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 5)",
+    "description": "Validate offline mode self check on prompt: Test offline self check behavior run 5",
+    "prompt": "Test offline self check behavior run 5",
     "status": "active",
-    "expected_outcome": {
-      "expected_offline": true
-    }
+    "expected_outcome": {}
   },
   {
     "id": "OFFLINE_006",
     "category": "Offline",
     "name": "Offline Scenario 06",
-    "description": "Verify KAIRO_OFFLINE is honored on check 6",
-    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 6)",
+    "description": "Validate offline mode self check on prompt: Test offline self check behavior run 6",
+    "prompt": "Test offline self check behavior run 6",
     "status": "active",
-    "expected_outcome": {
-      "expected_offline": true
-    }
+    "expected_outcome": {}
   },
   {
     "id": "OFFLINE_007",
     "category": "Offline",
     "name": "Offline Scenario 07",
-    "description": "Verify KAIRO_OFFLINE is honored on check 7",
-    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 7)",
+    "description": "Validate offline mode self check on prompt: Test offline self check behavior run 7",
+    "prompt": "Test offline self check behavior run 7",
     "status": "active",
-    "expected_outcome": {
-      "expected_offline": true
-    }
+    "expected_outcome": {}
   },
   {
     "id": "OFFLINE_008",
     "category": "Offline",
     "name": "Offline Scenario 08",
-    "description": "Verify KAIRO_OFFLINE is honored on check 8",
-    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 8)",
+    "description": "Validate offline mode self check on prompt: Test offline self check behavior run 8",
+    "prompt": "Test offline self check behavior run 8",
     "status": "active",
-    "expected_outcome": {
-      "expected_offline": true
-    }
+    "expected_outcome": {}
   },
   {
     "id": "OFFLINE_009",
     "category": "Offline",
     "name": "Offline Scenario 09",
-    "description": "Verify KAIRO_OFFLINE is honored on check 9",
-    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 9)",
+    "description": "Validate offline mode self check on prompt: Test offline self check behavior run 9",
+    "prompt": "Test offline self check behavior run 9",
     "status": "active",
-    "expected_outcome": {
-      "expected_offline": true
-    }
+    "expected_outcome": {}
   },
   {
     "id": "OFFLINE_010",
     "category": "Offline",
     "name": "Offline Scenario 10",
-    "description": "Verify KAIRO_OFFLINE is honored on check 10",
-    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 10)",
+    "description": "Validate offline mode self check on prompt: Test offline self check behavior run 10",
+    "prompt": "Test offline self check behavior run 10",
     "status": "active",
-    "expected_outcome": {
-      "expected_offline": true
-    }
+    "expected_outcome": {}
   },
   {
     "id": "OFFLINE_011",
     "category": "Offline",
     "name": "Offline Scenario 11",
-    "description": "Verify KAIRO_OFFLINE is honored on check 11",
-    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 11)",
+    "description": "Validate offline mode self check on prompt: Test offline self check behavior run 11",
+    "prompt": "Test offline self check behavior run 11",
     "status": "active",
-    "expected_outcome": {
-      "expected_offline": true
-    }
+    "expected_outcome": {}
   },
   {
     "id": "OFFLINE_012",
     "category": "Offline",
     "name": "Offline Scenario 12",
-    "description": "Verify KAIRO_OFFLINE is honored on check 12",
-    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 12)",
+    "description": "Validate offline mode self check on prompt: Test offline self check behavior run 12",
+    "prompt": "Test offline self check behavior run 12",
     "status": "active",
-    "expected_outcome": {
-      "expected_offline": true
-    }
+    "expected_outcome": {}
   },
   {
     "id": "OFFLINE_013",
     "category": "Offline",
     "name": "Offline Scenario 13",
-    "description": "Verify KAIRO_OFFLINE is honored on check 13",
-    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 13)",
+    "description": "Validate offline mode self check on prompt: Test offline self check behavior run 13",
+    "prompt": "Test offline self check behavior run 13",
     "status": "active",
-    "expected_outcome": {
-      "expected_offline": true
-    }
+    "expected_outcome": {}
   },
   {
     "id": "OFFLINE_014",
     "category": "Offline",
     "name": "Offline Scenario 14",
-    "description": "Verify KAIRO_OFFLINE is honored on check 14",
-    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 14)",
+    "description": "Validate offline mode self check on prompt: Test offline self check behavior run 14",
+    "prompt": "Test offline self check behavior run 14",
     "status": "active",
-    "expected_outcome": {
-      "expected_offline": true
-    }
-  },
-  {
-    "id": "OFFLINE_015",
-    "category": "Offline",
-    "name": "Offline Scenario 15",
-    "description": "Verify KAIRO_OFFLINE is honored on check 15",
-    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 15)",
-    "status": "active",
-    "expected_outcome": {
-      "expected_offline": true
-    }
-  },
-  {
-    "id": "OFFLINE_016",
-    "category": "Offline",
-    "name": "Offline Scenario 16",
-    "description": "Verify KAIRO_OFFLINE is honored on check 16",
-    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 16)",
-    "status": "active",
-    "expected_outcome": {
-      "expected_offline": true
-    }
-  },
-  {
-    "id": "OFFLINE_017",
-    "category": "Offline",
-    "name": "Offline Scenario 17",
-    "description": "Verify KAIRO_OFFLINE is honored on check 17",
-    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 17)",
-    "status": "active",
-    "expected_outcome": {
-      "expected_offline": true
-    }
-  },
-  {
-    "id": "OFFLINE_018",
-    "category": "Offline",
-    "name": "Offline Scenario 18",
-    "description": "Verify KAIRO_OFFLINE is honored on check 18",
-    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 18)",
-    "status": "active",
-    "expected_outcome": {
-      "expected_offline": true
-    }
-  },
-  {
-    "id": "OFFLINE_019",
-    "category": "Offline",
-    "name": "Offline Scenario 19",
-    "description": "Verify KAIRO_OFFLINE is honored on check 19",
-    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 19)",
-    "status": "active",
-    "expected_outcome": {
-      "expected_offline": true
-    }
-  },
-  {
-    "id": "OFFLINE_020",
-    "category": "Offline",
-    "name": "Offline Scenario 20",
-    "description": "Verify KAIRO_OFFLINE is honored on check 20",
-    "prompt": "Check offline configuration under KAIRO_OFFLINE=1 (Check 20)",
-    "status": "active",
-    "expected_outcome": {
-      "expected_offline": true
-    }
+    "expected_outcome": {}
   },
   {
     "id": "DEGRADATION_001",
     "category": "Degradation",
     "name": "Degradation Scenario 01",
-    "description": "Graceful rejection of __nonexistent_xyz__ (invalid_domain)",
-    "prompt": "Verify graceful failure for target __nonexistent_xyz__ and action type invalid_domain",
+    "description": "Validate degradation rejection on prompt: Degradation test: request invalid action invalid_action_1",
+    "prompt": "Degradation test: request invalid action invalid_action_1",
     "status": "active",
     "expected_outcome": {
-      "target": "__nonexistent_xyz__",
-      "type": "invalid_domain"
+      "type": "invalid_action",
+      "target": "invalid_action_1"
     }
   },
   {
     "id": "DEGRADATION_002",
     "category": "Degradation",
     "name": "Degradation Scenario 02",
-    "description": "Graceful rejection of __another_nonexistent__ (invalid_domain)",
-    "prompt": "Verify graceful failure for target __another_nonexistent__ and action type invalid_domain",
+    "description": "Validate degradation rejection on prompt: Degradation test: request invalid domain InvalidDomain_2",
+    "prompt": "Degradation test: request invalid domain InvalidDomain_2",
     "status": "active",
     "expected_outcome": {
-      "target": "__another_nonexistent__",
-      "type": "invalid_domain"
+      "type": "invalid_domain",
+      "target": "InvalidDomain_2"
     }
   },
   {
     "id": "DEGRADATION_003",
     "category": "Degradation",
     "name": "Degradation Scenario 03",
-    "description": "Graceful rejection of Word (invalid_action)",
-    "prompt": "Verify graceful failure for target Word and action type invalid_action",
+    "description": "Validate degradation rejection on prompt: Degradation test: request invalid action invalid_action_3",
+    "prompt": "Degradation test: request invalid action invalid_action_3",
     "status": "active",
     "expected_outcome": {
-      "target": "Word",
-      "type": "invalid_action"
+      "type": "invalid_action",
+      "target": "invalid_action_3"
     }
   },
   {
     "id": "DEGRADATION_004",
     "category": "Degradation",
     "name": "Degradation Scenario 04",
-    "description": "Graceful rejection of Excel (invalid_action)",
-    "prompt": "Verify graceful failure for target Excel and action type invalid_action",
+    "description": "Validate degradation rejection on prompt: Degradation test: request invalid domain InvalidDomain_4",
+    "prompt": "Degradation test: request invalid domain InvalidDomain_4",
     "status": "active",
     "expected_outcome": {
-      "target": "Excel",
-      "type": "invalid_action"
+      "type": "invalid_domain",
+      "target": "InvalidDomain_4"
     }
   },
   {
     "id": "DEGRADATION_005",
     "category": "Degradation",
     "name": "Degradation Scenario 05",
-    "description": "Graceful rejection of PPT (invalid_action)",
-    "prompt": "Verify graceful failure for target PPT and action type invalid_action",
+    "description": "Validate degradation rejection on prompt: Degradation test: request invalid action invalid_action_5",
+    "prompt": "Degradation test: request invalid action invalid_action_5",
     "status": "active",
     "expected_outcome": {
-      "target": "PPT",
-      "type": "invalid_action"
+      "type": "invalid_action",
+      "target": "invalid_action_5"
     }
   },
   {
     "id": "DEGRADATION_006",
     "category": "Degradation",
     "name": "Degradation Scenario 06",
-    "description": "Graceful rejection of __nonexistent_xyz__ (invalid_domain)",
-    "prompt": "Verify graceful failure for target __nonexistent_xyz__ and action type invalid_domain",
+    "description": "Validate degradation rejection on prompt: Degradation test: request invalid domain InvalidDomain_6",
+    "prompt": "Degradation test: request invalid domain InvalidDomain_6",
     "status": "active",
     "expected_outcome": {
-      "target": "__nonexistent_xyz__",
-      "type": "invalid_domain"
+      "type": "invalid_domain",
+      "target": "InvalidDomain_6"
     }
   },
   {
     "id": "DEGRADATION_007",
     "category": "Degradation",
     "name": "Degradation Scenario 07",
-    "description": "Graceful rejection of __another_nonexistent__ (invalid_domain)",
-    "prompt": "Verify graceful failure for target __another_nonexistent__ and action type invalid_domain",
+    "description": "Validate degradation rejection on prompt: Degradation test: request invalid action invalid_action_7",
+    "prompt": "Degradation test: request invalid action invalid_action_7",
     "status": "active",
     "expected_outcome": {
-      "target": "__another_nonexistent__",
-      "type": "invalid_domain"
+      "type": "invalid_action",
+      "target": "invalid_action_7"
     }
   },
   {
     "id": "DEGRADATION_008",
     "category": "Degradation",
     "name": "Degradation Scenario 08",
-    "description": "Graceful rejection of Word (invalid_action)",
-    "prompt": "Verify graceful failure for target Word and action type invalid_action",
+    "description": "Validate degradation rejection on prompt: Degradation test: request invalid domain InvalidDomain_8",
+    "prompt": "Degradation test: request invalid domain InvalidDomain_8",
     "status": "active",
     "expected_outcome": {
-      "target": "Word",
-      "type": "invalid_action"
+      "type": "invalid_domain",
+      "target": "InvalidDomain_8"
     }
   },
   {
     "id": "DEGRADATION_009",
     "category": "Degradation",
     "name": "Degradation Scenario 09",
-    "description": "Graceful rejection of Excel (invalid_action)",
-    "prompt": "Verify graceful failure for target Excel and action type invalid_action",
+    "description": "Validate degradation rejection on prompt: Degradation test: request invalid action invalid_action_9",
+    "prompt": "Degradation test: request invalid action invalid_action_9",
     "status": "active",
     "expected_outcome": {
-      "target": "Excel",
-      "type": "invalid_action"
+      "type": "invalid_action",
+      "target": "invalid_action_9"
     }
   },
   {
     "id": "DEGRADATION_010",
     "category": "Degradation",
     "name": "Degradation Scenario 10",
-    "description": "Graceful rejection of PPT (invalid_action)",
-    "prompt": "Verify graceful failure for target PPT and action type invalid_action",
+    "description": "Validate degradation rejection on prompt: Degradation test: request invalid domain InvalidDomain_10",
+    "prompt": "Degradation test: request invalid domain InvalidDomain_10",
     "status": "active",
     "expected_outcome": {
-      "target": "PPT",
-      "type": "invalid_action"
+      "type": "invalid_domain",
+      "target": "InvalidDomain_10"
     }
   },
   {
     "id": "DEGRADATION_011",
     "category": "Degradation",
     "name": "Degradation Scenario 11",
-    "description": "Graceful rejection of __nonexistent_xyz__ (invalid_domain)",
-    "prompt": "Verify graceful failure for target __nonexistent_xyz__ and action type invalid_domain",
+    "description": "Validate degradation rejection on prompt: Degradation test: request invalid action invalid_action_11",
+    "prompt": "Degradation test: request invalid action invalid_action_11",
     "status": "active",
     "expected_outcome": {
-      "target": "__nonexistent_xyz__",
-      "type": "invalid_domain"
+      "type": "invalid_action",
+      "target": "invalid_action_11"
     }
   },
   {
     "id": "DEGRADATION_012",
     "category": "Degradation",
     "name": "Degradation Scenario 12",
-    "description": "Graceful rejection of __another_nonexistent__ (invalid_domain)",
-    "prompt": "Verify graceful failure for target __another_nonexistent__ and action type invalid_domain",
+    "description": "Validate degradation rejection on prompt: Degradation test: request invalid domain InvalidDomain_12",
+    "prompt": "Degradation test: request invalid domain InvalidDomain_12",
     "status": "active",
     "expected_outcome": {
-      "target": "__another_nonexistent__",
-      "type": "invalid_domain"
+      "type": "invalid_domain",
+      "target": "InvalidDomain_12"
     }
   },
   {
     "id": "DEGRADATION_013",
     "category": "Degradation",
     "name": "Degradation Scenario 13",
-    "description": "Graceful rejection of Word (invalid_action)",
-    "prompt": "Verify graceful failure for target Word and action type invalid_action",
+    "description": "Validate degradation rejection on prompt: Degradation test: request invalid action invalid_action_13",
+    "prompt": "Degradation test: request invalid action invalid_action_13",
     "status": "active",
     "expected_outcome": {
-      "target": "Word",
-      "type": "invalid_action"
+      "type": "invalid_action",
+      "target": "invalid_action_13"
     }
   },
   {
     "id": "DEGRADATION_014",
     "category": "Degradation",
     "name": "Degradation Scenario 14",
-    "description": "Graceful rejection of Excel (invalid_action)",
-    "prompt": "Verify graceful failure for target Excel and action type invalid_action",
+    "description": "Validate degradation rejection on prompt: Degradation test: request invalid domain InvalidDomain_14",
+    "prompt": "Degradation test: request invalid domain InvalidDomain_14",
     "status": "active",
     "expected_outcome": {
-      "target": "Excel",
-      "type": "invalid_action"
-    }
-  },
-  {
-    "id": "DEGRADATION_015",
-    "category": "Degradation",
-    "name": "Degradation Scenario 15",
-    "description": "Graceful rejection of PPT (invalid_action)",
-    "prompt": "Verify graceful failure for target PPT and action type invalid_action",
-    "status": "active",
-    "expected_outcome": {
-      "target": "PPT",
-      "type": "invalid_action"
-    }
-  },
-  {
-    "id": "DEGRADATION_016",
-    "category": "Degradation",
-    "name": "Degradation Scenario 16",
-    "description": "Graceful rejection of __nonexistent_xyz__ (invalid_domain)",
-    "prompt": "Verify graceful failure for target __nonexistent_xyz__ and action type invalid_domain",
-    "status": "active",
-    "expected_outcome": {
-      "target": "__nonexistent_xyz__",
-      "type": "invalid_domain"
-    }
-  },
-  {
-    "id": "DEGRADATION_017",
-    "category": "Degradation",
-    "name": "Degradation Scenario 17",
-    "description": "Graceful rejection of __another_nonexistent__ (invalid_domain)",
-    "prompt": "Verify graceful failure for target __another_nonexistent__ and action type invalid_domain",
-    "status": "active",
-    "expected_outcome": {
-      "target": "__another_nonexistent__",
-      "type": "invalid_domain"
-    }
-  },
-  {
-    "id": "DEGRADATION_018",
-    "category": "Degradation",
-    "name": "Degradation Scenario 18",
-    "description": "Graceful rejection of Word (invalid_action)",
-    "prompt": "Verify graceful failure for target Word and action type invalid_action",
-    "status": "active",
-    "expected_outcome": {
-      "target": "Word",
-      "type": "invalid_action"
-    }
-  },
-  {
-    "id": "DEGRADATION_019",
-    "category": "Degradation",
-    "name": "Degradation Scenario 19",
-    "description": "Graceful rejection of Excel (invalid_action)",
-    "prompt": "Verify graceful failure for target Excel and action type invalid_action",
-    "status": "active",
-    "expected_outcome": {
-      "target": "Excel",
-      "type": "invalid_action"
-    }
-  },
-  {
-    "id": "DEGRADATION_020",
-    "category": "Degradation",
-    "name": "Degradation Scenario 20",
-    "description": "Graceful rejection of PPT (invalid_action)",
-    "prompt": "Verify graceful failure for target PPT and action type invalid_action",
-    "status": "active",
-    "expected_outcome": {
-      "target": "PPT",
-      "type": "invalid_action"
+      "type": "invalid_domain",
+      "target": "InvalidDomain_14"
     }
   },
   {
     "id": "PERFORMANCE_001",
     "category": "Performance",
     "name": "Performance Scenario 01",
-    "description": "Measure perf_docx performance for 100 elements",
-    "prompt": "Verify perf_docx speed with 100 paragraphs",
+    "description": "Validate performance extraction bounds on prompt: Verify Excel context extraction latency under 2.5s for 11 rows",
+    "prompt": "Verify Excel context extraction latency under 2.5s for 11 rows",
     "status": "active",
     "expected_outcome": {
-      "type": "perf_docx",
-      "count": 100,
-      "max_seconds": 2.0
+      "type": "perf_xlsx",
+      "count": 11,
+      "max_seconds": 2.5
     }
   },
   {
     "id": "PERFORMANCE_002",
     "category": "Performance",
     "name": "Performance Scenario 02",
-    "description": "Measure perf_docx performance for 200 elements",
-    "prompt": "Verify perf_docx speed with 200 paragraphs",
+    "description": "Validate performance extraction bounds on prompt: Verify DOCX context extraction latency under 2.5s for 12 paragraphs",
+    "prompt": "Verify DOCX context extraction latency under 2.5s for 12 paragraphs",
     "status": "active",
     "expected_outcome": {
       "type": "perf_docx",
-      "count": 200,
-      "max_seconds": 3.0
+      "count": 12,
+      "max_seconds": 2.5
     }
   },
   {
     "id": "PERFORMANCE_003",
     "category": "Performance",
     "name": "Performance Scenario 03",
-    "description": "Measure perf_docx performance for 50 elements",
-    "prompt": "Verify perf_docx speed with 50 paragraphs",
+    "description": "Validate performance extraction bounds on prompt: Verify Excel context extraction latency under 2.5s for 13 rows",
+    "prompt": "Verify Excel context extraction latency under 2.5s for 13 rows",
     "status": "active",
     "expected_outcome": {
-      "type": "perf_docx",
-      "count": 50,
-      "max_seconds": 1.0
+      "type": "perf_xlsx",
+      "count": 13,
+      "max_seconds": 2.5
     }
   },
   {
     "id": "PERFORMANCE_004",
     "category": "Performance",
     "name": "Performance Scenario 04",
-    "description": "Measure perf_docx performance for 300 elements",
-    "prompt": "Verify perf_docx speed with 300 paragraphs",
+    "description": "Validate performance extraction bounds on prompt: Verify DOCX context extraction latency under 2.5s for 14 paragraphs",
+    "prompt": "Verify DOCX context extraction latency under 2.5s for 14 paragraphs",
     "status": "active",
     "expected_outcome": {
       "type": "perf_docx",
-      "count": 300,
-      "max_seconds": 4.0
+      "count": 14,
+      "max_seconds": 2.5
     }
   },
   {
     "id": "PERFORMANCE_005",
     "category": "Performance",
     "name": "Performance Scenario 05",
-    "description": "Measure perf_docx performance for 150 elements",
-    "prompt": "Verify perf_docx speed with 150 paragraphs",
+    "description": "Validate performance extraction bounds on prompt: Verify Excel context extraction latency under 2.5s for 15 rows",
+    "prompt": "Verify Excel context extraction latency under 2.5s for 15 rows",
     "status": "active",
     "expected_outcome": {
-      "type": "perf_docx",
-      "count": 150,
+      "type": "perf_xlsx",
+      "count": 15,
       "max_seconds": 2.5
     }
   },
@@ -2411,64 +2533,64 @@
     "id": "PERFORMANCE_006",
     "category": "Performance",
     "name": "Performance Scenario 06",
-    "description": "Measure perf_docx performance for 100 elements",
-    "prompt": "Verify perf_docx speed with 100 paragraphs",
+    "description": "Validate performance extraction bounds on prompt: Verify DOCX context extraction latency under 2.5s for 16 paragraphs",
+    "prompt": "Verify DOCX context extraction latency under 2.5s for 16 paragraphs",
     "status": "active",
     "expected_outcome": {
       "type": "perf_docx",
-      "count": 100,
-      "max_seconds": 2.0
+      "count": 16,
+      "max_seconds": 2.5
     }
   },
   {
     "id": "PERFORMANCE_007",
     "category": "Performance",
     "name": "Performance Scenario 07",
-    "description": "Measure perf_docx performance for 200 elements",
-    "prompt": "Verify perf_docx speed with 200 paragraphs",
+    "description": "Validate performance extraction bounds on prompt: Verify Excel context extraction latency under 2.5s for 17 rows",
+    "prompt": "Verify Excel context extraction latency under 2.5s for 17 rows",
     "status": "active",
     "expected_outcome": {
-      "type": "perf_docx",
-      "count": 200,
-      "max_seconds": 3.0
+      "type": "perf_xlsx",
+      "count": 17,
+      "max_seconds": 2.5
     }
   },
   {
     "id": "PERFORMANCE_008",
     "category": "Performance",
     "name": "Performance Scenario 08",
-    "description": "Measure perf_docx performance for 50 elements",
-    "prompt": "Verify perf_docx speed with 50 paragraphs",
+    "description": "Validate performance extraction bounds on prompt: Verify DOCX context extraction latency under 2.5s for 18 paragraphs",
+    "prompt": "Verify DOCX context extraction latency under 2.5s for 18 paragraphs",
     "status": "active",
     "expected_outcome": {
       "type": "perf_docx",
-      "count": 50,
-      "max_seconds": 1.0
+      "count": 18,
+      "max_seconds": 2.5
     }
   },
   {
     "id": "PERFORMANCE_009",
     "category": "Performance",
     "name": "Performance Scenario 09",
-    "description": "Measure perf_docx performance for 300 elements",
-    "prompt": "Verify perf_docx speed with 300 paragraphs",
+    "description": "Validate performance extraction bounds on prompt: Verify Excel context extraction latency under 2.5s for 19 rows",
+    "prompt": "Verify Excel context extraction latency under 2.5s for 19 rows",
     "status": "active",
     "expected_outcome": {
-      "type": "perf_docx",
-      "count": 300,
-      "max_seconds": 4.0
+      "type": "perf_xlsx",
+      "count": 19,
+      "max_seconds": 2.5
     }
   },
   {
     "id": "PERFORMANCE_010",
     "category": "Performance",
     "name": "Performance Scenario 10",
-    "description": "Measure perf_docx performance for 150 elements",
-    "prompt": "Verify perf_docx speed with 150 paragraphs",
+    "description": "Validate performance extraction bounds on prompt: Verify DOCX context extraction latency under 2.5s for 20 paragraphs",
+    "prompt": "Verify DOCX context extraction latency under 2.5s for 20 paragraphs",
     "status": "active",
     "expected_outcome": {
       "type": "perf_docx",
-      "count": 150,
+      "count": 20,
       "max_seconds": 2.5
     }
   },
@@ -2476,129 +2598,51 @@
     "id": "PERFORMANCE_011",
     "category": "Performance",
     "name": "Performance Scenario 11",
-    "description": "Measure perf_docx performance for 100 elements",
-    "prompt": "Verify perf_docx speed with 100 paragraphs",
+    "description": "Validate performance extraction bounds on prompt: Verify Excel context extraction latency under 2.5s for 21 rows",
+    "prompt": "Verify Excel context extraction latency under 2.5s for 21 rows",
     "status": "active",
     "expected_outcome": {
-      "type": "perf_docx",
-      "count": 100,
-      "max_seconds": 2.0
+      "type": "perf_xlsx",
+      "count": 21,
+      "max_seconds": 2.5
     }
   },
   {
     "id": "PERFORMANCE_012",
     "category": "Performance",
     "name": "Performance Scenario 12",
-    "description": "Measure perf_docx performance for 200 elements",
-    "prompt": "Verify perf_docx speed with 200 paragraphs",
+    "description": "Validate performance extraction bounds on prompt: Verify DOCX context extraction latency under 2.5s for 22 paragraphs",
+    "prompt": "Verify DOCX context extraction latency under 2.5s for 22 paragraphs",
     "status": "active",
     "expected_outcome": {
       "type": "perf_docx",
-      "count": 200,
-      "max_seconds": 3.0
+      "count": 22,
+      "max_seconds": 2.5
     }
   },
   {
     "id": "PERFORMANCE_013",
     "category": "Performance",
     "name": "Performance Scenario 13",
-    "description": "Measure perf_docx performance for 50 elements",
-    "prompt": "Verify perf_docx speed with 50 paragraphs",
+    "description": "Validate performance extraction bounds on prompt: Verify Excel context extraction latency under 2.5s for 23 rows",
+    "prompt": "Verify Excel context extraction latency under 2.5s for 23 rows",
     "status": "active",
     "expected_outcome": {
-      "type": "perf_docx",
-      "count": 50,
-      "max_seconds": 1.0
+      "type": "perf_xlsx",
+      "count": 23,
+      "max_seconds": 2.5
     }
   },
   {
     "id": "PERFORMANCE_014",
     "category": "Performance",
     "name": "Performance Scenario 14",
-    "description": "Measure perf_docx performance for 300 elements",
-    "prompt": "Verify perf_docx speed with 300 paragraphs",
+    "description": "Validate performance extraction bounds on prompt: Verify DOCX context extraction latency under 2.5s for 24 paragraphs",
+    "prompt": "Verify DOCX context extraction latency under 2.5s for 24 paragraphs",
     "status": "active",
     "expected_outcome": {
       "type": "perf_docx",
-      "count": 300,
-      "max_seconds": 4.0
-    }
-  },
-  {
-    "id": "PERFORMANCE_015",
-    "category": "Performance",
-    "name": "Performance Scenario 15",
-    "description": "Measure perf_docx performance for 150 elements",
-    "prompt": "Verify perf_docx speed with 150 paragraphs",
-    "status": "active",
-    "expected_outcome": {
-      "type": "perf_docx",
-      "count": 150,
-      "max_seconds": 2.5
-    }
-  },
-  {
-    "id": "PERFORMANCE_016",
-    "category": "Performance",
-    "name": "Performance Scenario 16",
-    "description": "Measure perf_docx performance for 100 elements",
-    "prompt": "Verify perf_docx speed with 100 paragraphs",
-    "status": "active",
-    "expected_outcome": {
-      "type": "perf_docx",
-      "count": 100,
-      "max_seconds": 2.0
-    }
-  },
-  {
-    "id": "PERFORMANCE_017",
-    "category": "Performance",
-    "name": "Performance Scenario 17",
-    "description": "Measure perf_docx performance for 200 elements",
-    "prompt": "Verify perf_docx speed with 200 paragraphs",
-    "status": "active",
-    "expected_outcome": {
-      "type": "perf_docx",
-      "count": 200,
-      "max_seconds": 3.0
-    }
-  },
-  {
-    "id": "PERFORMANCE_018",
-    "category": "Performance",
-    "name": "Performance Scenario 18",
-    "description": "Measure perf_docx performance for 50 elements",
-    "prompt": "Verify perf_docx speed with 50 paragraphs",
-    "status": "active",
-    "expected_outcome": {
-      "type": "perf_docx",
-      "count": 50,
-      "max_seconds": 1.0
-    }
-  },
-  {
-    "id": "PERFORMANCE_019",
-    "category": "Performance",
-    "name": "Performance Scenario 19",
-    "description": "Measure perf_docx performance for 300 elements",
-    "prompt": "Verify perf_docx speed with 300 paragraphs",
-    "status": "active",
-    "expected_outcome": {
-      "type": "perf_docx",
-      "count": 300,
-      "max_seconds": 4.0
-    }
-  },
-  {
-    "id": "PERFORMANCE_020",
-    "category": "Performance",
-    "name": "Performance Scenario 20",
-    "description": "Measure perf_docx performance for 150 elements",
-    "prompt": "Verify perf_docx speed with 150 paragraphs",
-    "status": "active",
-    "expected_outcome": {
-      "type": "perf_docx",
-      "count": 150,
+      "count": 24,
       "max_seconds": 2.5
     }
   }

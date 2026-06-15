@@ -1,0 +1,26 @@
+phantom-core/src/governance/tool_gate.rs:30:9: replace ToolGate::add_allowed_path with ()
+phantom-core/src/governance/tool_gate.rs:35:9: replace ToolGate::validate_file_access -> bool with true
+phantom-core/src/governance/tool_gate.rs:35:9: replace ToolGate::validate_file_access -> bool with false
+phantom-core/src/governance/tool_gate.rs:35:59: replace || with && in ToolGate::validate_file_access
+phantom-core/src/governance/tool_gate.rs:42:12: delete ! in ToolGate::validate_file_access
+phantom-core/src/governance/tool_gate.rs:50:9: replace ToolGate::validate_token_usage -> bool with true
+phantom-core/src/governance/tool_gate.rs:50:9: replace ToolGate::validate_token_usage -> bool with false
+phantom-core/src/governance/tool_gate.rs:50:29: replace > with == in ToolGate::validate_token_usage
+phantom-core/src/governance/tool_gate.rs:50:29: replace > with < in ToolGate::validate_token_usage
+phantom-core/src/governance/tool_gate.rs:50:29: replace > with >= in ToolGate::validate_token_usage
+phantom-core/src/governance/tool_gate.rs:58:9: replace ToolGate::authorize_tool_call -> bool with true
+phantom-core/src/governance/tool_gate.rs:58:9: replace ToolGate::authorize_tool_call -> bool with false
+phantom-core/src/governance/tool_gate.rs:59:12: delete ! in ToolGate::authorize_tool_call
+phantom-core/src/governance/tool_gate.rs:30:9: replace ToolGate::add_allowed_path with ()
+phantom-core/src/governance/tool_gate.rs:35:9: replace ToolGate::validate_file_access -> bool with true
+phantom-core/src/governance/tool_gate.rs:35:9: replace ToolGate::validate_file_access -> bool with false
+phantom-core/src/governance/tool_gate.rs:35:59: replace || with && in ToolGate::validate_file_access
+phantom-core/src/governance/tool_gate.rs:42:12: delete ! in ToolGate::validate_file_access
+phantom-core/src/governance/tool_gate.rs:50:9: replace ToolGate::validate_token_usage -> bool with true
+phantom-core/src/governance/tool_gate.rs:50:9: replace ToolGate::validate_token_usage -> bool with false
+phantom-core/src/governance/tool_gate.rs:50:29: replace > with == in ToolGate::validate_token_usage
+phantom-core/src/governance/tool_gate.rs:50:29: replace > with < in ToolGate::validate_token_usage
+phantom-core/src/governance/tool_gate.rs:50:29: replace > with >= in ToolGate::validate_token_usage
+phantom-core/src/governance/tool_gate.rs:58:9: replace ToolGate::authorize_tool_call -> bool with true
+phantom-core/src/governance/tool_gate.rs:58:9: replace ToolGate::authorize_tool_call -> bool with false
+phantom-core/src/governance/tool_gate.rs:59:12: delete ! in ToolGate::authorize_tool_call

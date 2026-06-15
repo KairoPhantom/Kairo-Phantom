@@ -45,8 +45,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent.resolve()))
 
 # ── Availability sentinels (checked once at import time) ─────────────────────
-import fitz as _fitz  # PyMuPDF (hard dependency)
-_FITZ_AVAILABLE = True
+import fitz  # PyMuPDF (hard dependency)
 
 _OPENDATALOADER_AVAILABLE: Optional[bool] = None  # lazily resolved inside tests
 _OLMOCR_AVAILABLE: Optional[bool] = None          # lazily resolved inside tests
@@ -97,11 +96,7 @@ class ExtractionResult:
 
 def _check_pymupdf() -> bool:
     """Return True when PyMuPDF (fitz) is importable."""
-    try:
-        import fitz  # noqa: F401
-        return True
-    except ImportError:
-        return False
+    return True
 
 
 def _check_opendataloader() -> bool:

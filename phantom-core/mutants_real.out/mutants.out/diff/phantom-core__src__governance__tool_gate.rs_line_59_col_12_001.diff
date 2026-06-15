@@ -1,0 +1,19 @@
+--- phantom-core/src/governance/tool_gate.rs
++++ delete ! in ToolGate::authorize_tool_call
+@@ -51,15 +51,15 @@
+             warn!("🚨 ToolGate: Token cap exceeded ({} > {})", tokens_requested, self.token_cap);
+             return false;
+         }
+         true
+     }
+ 
+     pub fn authorize_tool_call(&self, tool_name: &str, agent_allowlist: &[&str]) -> bool {
+         let allowed = agent_allowlist.contains(&tool_name);
+-        if !allowed {
++        if  /* ~ changed by cargo-mutants ~ */allowed {
+             warn!("🚨 ToolGate: Agent attempted to call unauthorized tool: {}", tool_name);
+             return false;
+         }
+         true
+     }
+ }

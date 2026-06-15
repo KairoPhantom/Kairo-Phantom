@@ -1,0 +1,3 @@
+phantom-core/src/governance/tool_gate.rs:31:9: replace ToolGate::validate_file_access -> bool with true
+phantom-core/src/governance/tool_gate.rs:31:9: replace ToolGate::validate_file_access -> bool with false
+phantom-core/src/governance/tool_gate.rs:45:9: replace ToolGate::validate_token_usage -> bool with false

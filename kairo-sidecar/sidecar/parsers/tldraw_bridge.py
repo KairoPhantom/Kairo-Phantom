@@ -20,6 +20,16 @@ _MOCK_CANVAS_ENABLED = os.getenv("KAIRO_ENABLE_MOCK_CANVAS", "0") == "1"
 class TldrawBridge:
     """Bridges Kairo to tldraw infinite whiteboard canvas."""
 
+    def _is_mock_enabled(self) -> bool:
+        global _MOCK_CANVAS_ENABLED
+        return _MOCK_CANVAS_ENABLED or (os.getenv("KAIRO_ENABLE_MOCK_CANVAS", "0") == "1")
+
+    def _handle_fallback(self, method_name: str):
+        if self._is_mock_enabled():
+            log.warning("LOUD WARNING: Figma/tldraw mock canvas is active!")
+        else:
+            raise ConnectionError(f"tldraw service is offline and mock canvas is disabled (method: {method_name}).")
+
     def __init__(self, host: str = "127.0.0.1", port: int = 8082, offline_mode: bool = False):
         self.host = host
         self.port = port
@@ -27,7 +37,8 @@ class TldrawBridge:
         self.offline_mode = offline_mode
         self._next_id = 1
 
-        if _MOCK_CANVAS_ENABLED:
+        if self._is_mock_enabled():
+            log.warning("LOUD WARNING: Figma/tldraw mock canvas is active!")
             self._mock_shapes: Dict[str, Dict[str, Any]] = {}
             self._reset_mock_canvas()
         else:
@@ -168,6 +179,7 @@ class TldrawBridge:
 
     def create_shape(self, shape_type: str, x: float, y: float, props: Dict[str, Any]) -> Dict[str, Any]:
         """Create a new shape (e.g. geo, arrow, text) on the canvas."""
+        is_mock_enabled = self._is_mock_enabled()
         if self.is_available():
             online_res = self._call_online_tool("create_shapes", {
                 "shapes": [{
@@ -191,8 +203,14 @@ class TldrawBridge:
                     "y": y,
                     "props": props
                 }
-                self._mock_shapes[shape_id] = shape
+                if is_mock_enabled:
+                    self._mock_shapes[shape_id] = shape
                 return {"ok": True, "shape_id": shape_id, "shape": shape}
+            else:
+                if not is_mock_enabled:
+                    raise RuntimeError(f"tldraw service returned an error and mock canvas is disabled: {online_res.get('error')}")
+
+        self._handle_fallback("create_shape")
 
         shape_id = f"shape-{self._next_id}"
         self._next_id += 1
@@ -205,15 +223,15 @@ class TldrawBridge:
             "props": props
         }
         
-        if _MOCK_CANVAS_ENABLED:
-            self._mock_shapes[shape_id] = shape
-        log.info(f"tldraw Shape created: {shape_id} of type '{shape_type}' at ({x}, {y}) [mock={'ON' if _MOCK_CANVAS_ENABLED else 'OFF'}]")
+        self._mock_shapes[shape_id] = shape
+        log.info(f"tldraw Shape created: {shape_id} of type '{shape_type}' at ({x}, {y}) [mock={'ON' if is_mock_enabled else 'OFF'}]")
         return {"ok": True, "shape_id": shape_id, "shape": shape}
 
     def update_shape(self, shape_id: str, x: Optional[float] = None, y: Optional[float] = None, props: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Update properties or coordinates of an existing shape."""
+        is_mock_enabled = self._is_mock_enabled()
         if self.is_available():
-            self._call_online_tool("edit_shapes", {
+            online_res = self._call_online_tool("edit_shapes", {
                 "edits": [{
                     "id": shape_id,
                     "x": x,
@@ -221,9 +239,23 @@ class TldrawBridge:
                     "props": props
                 }]
             })
+            if online_res.get("ok"):
+                if is_mock_enabled:
+                    if shape_id in self._mock_shapes:
+                        shape = self._mock_shapes[shape_id]
+                        if x is not None:
+                            shape["x"] = x
+                        if y is not None:
+                            shape["y"] = y
+                        if props is not None:
+                            shape.setdefault("props", {}).update(props)
+                return {"ok": True, "shape_id": shape_id}
+            else:
+                if not is_mock_enabled:
+                    return {"ok": False, "error": "Mock canvas disabled. Set KAIRO_ENABLE_MOCK_CANVAS=1 to use offline state."}
 
-        if not _MOCK_CANVAS_ENABLED:
-            return {"ok": False, "error": "Mock canvas disabled. Set KAIRO_ENABLE_MOCK_CANVAS=1 to use offline state."}
+        self._handle_fallback("update_shape")
+
         if shape_id not in self._mock_shapes:
             return {"ok": False, "error": f"Shape not found: {shape_id}"}
 
@@ -240,13 +272,22 @@ class TldrawBridge:
 
     def delete_shape(self, shape_id: str) -> Dict[str, Any]:
         """Remove a shape from the canvas."""
+        is_mock_enabled = self._is_mock_enabled()
         if self.is_available():
-            self._call_online_tool("delete_shapes", {
+            online_res = self._call_online_tool("delete_shapes", {
                 "shape_ids": [shape_id]
             })
+            if online_res.get("ok"):
+                if is_mock_enabled:
+                    if shape_id in self._mock_shapes:
+                        del self._mock_shapes[shape_id]
+                return {"ok": True, "shape_id": shape_id}
+            else:
+                if not is_mock_enabled:
+                    return {"ok": False, "error": "Mock canvas disabled. Set KAIRO_ENABLE_MOCK_CANVAS=1 to use offline state."}
 
-        if not _MOCK_CANVAS_ENABLED:
-            return {"ok": False, "error": "Mock canvas disabled. Set KAIRO_ENABLE_MOCK_CANVAS=1 to use offline state."}
+        self._handle_fallback("delete_shape")
+
         if shape_id not in self._mock_shapes:
             return {"ok": False, "error": f"Shape not found: {shape_id}"}
 
@@ -256,7 +297,8 @@ class TldrawBridge:
 
     def get_canvas_shapes(self) -> List[Dict[str, Any]]:
         """Retrieve all active shapes from the canvas."""
-        if not _MOCK_CANVAS_ENABLED:
+        is_mock_enabled = self._is_mock_enabled()
+        if not is_mock_enabled:
             return []
         return list(self._mock_shapes.values())
 

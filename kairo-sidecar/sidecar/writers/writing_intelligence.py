@@ -18,7 +18,12 @@ from typing import Optional
 from .voice_adapter import get_voice_adapter, get_voice_store, VoiceFingerprint
 from .memorization_auditor import get_memorization_auditor, AuditResult, MemorizationRisk
 
+import os
+
 logger = logging.getLogger(__name__)
+
+class MemorizationError(RuntimeError):
+    pass
 
 
 class WritingIntelligenceOrchestrator:
@@ -65,6 +70,11 @@ class WritingIntelligenceOrchestrator:
             return generated_text, result
 
         # If flagged or blocked, attempt basic mitigation (paraphrasing/cleanup)
+        is_stub = os.getenv("KAIRO_PARAPHRASE_STUB", "0") == "1"
+        if not is_stub:
+            raise MemorizationError("Paraphrase stub is disabled and real service is unavailable.")
+
+        logger.warning("LOUD WARNING: Paraphrase stub is active!")
         logger.warning(f"Memorization detected (risk={result.risk.value}). Applying sanitization...")
         
         current_text = generated_text
@@ -85,6 +95,8 @@ class WritingIntelligenceOrchestrator:
 
     def _simulate_paraphrase(self, text: str, audit: AuditResult) -> str:
         """Helper to replace/paraphrase verbatim flagged fragments."""
+        if os.getenv("KAIRO_PARAPHRASE_STUB", "0") == "1":
+            logger.warning("LOUD WARNING: Paraphrase stub is active!")
         paraphrased = text
         for finding in audit.findings:
             frag = finding.text_fragment

@@ -3,7 +3,7 @@ import json
 import shutil
 import tempfile
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, mock_open
 from pydantic import BaseModel
 import duckdb
 
@@ -72,17 +72,19 @@ def test_tier3_ai_judge_consensus_and_tiebreak(mock_call):
 def test_tier4_human_anchor():
     judge = GauntletJudge()
     
-    # Verify lookup of scenarios from calibration_set.json
-    matched, verdict = judge._run_tier4_human_anchor("s001", "Response")
-    assert matched is True
-    assert verdict is True
-    
-    matched, verdict = judge._run_tier4_human_anchor("s003", "Response")
-    assert matched is True
-    assert verdict is False
-    
-    matched, verdict = judge._run_tier4_human_anchor("non_existent_id", "Response")
-    assert matched is False
+    mock_data = '{"s001": true, "s003": false}'
+    with patch("builtins.open", mock_open(read_data=mock_data)):
+        # Verify lookup of scenarios from calibration_set.json
+        matched, verdict = judge._run_tier4_human_anchor("s001", "Response")
+        assert matched is True
+        assert verdict is True
+        
+        matched, verdict = judge._run_tier4_human_anchor("s003", "Response")
+        assert matched is True
+        assert verdict is False
+        
+        matched, verdict = judge._run_tier4_human_anchor("non_existent_id", "Response")
+        assert matched is False
 
 
 # Test Drift Alarm persistent freeze state (training_state.json)
@@ -143,7 +145,9 @@ def test_drift_alarm_duckdb_persistence():
     test_db_path = os.path.join(repo_root, "target", "gauntlet_outcomes.duckdb")
     
     # Run check_drift
-    drift = alarm.check_drift(syn_results)
+    mock_data = '{"s001": true, "s002": true}'
+    with patch("builtins.open", mock_open(read_data=mock_data)):
+        drift = alarm.check_drift(syn_results)
     
     # Human label for s001 and s002 in calibration_set.json is True/True, so human_pass_rate = 1.0
     # Synthetic results pass rate = 0.0

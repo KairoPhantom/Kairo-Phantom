@@ -9,11 +9,11 @@ Rebuilding the KairoReal Gauntlet requires a headless runner that executes 200 d
 ## Milestones
 | # | Name | Scope | Dependencies | Status |
 |---|------|-------|-------------|--------|
-| 1 | Scenarios Rebuilding | Replace scenarios.json with 200 distinct real-world scenarios across 10 domains, all active | None | IN_PROGRESS |
-| 2 | Executors & Oracles | Update run_kairoreal_gauntlet.py to use actual sidecar APIs and falsifiable oracles | M1 | PLANNED |
-| 3 | Pytest Integration | Rebuild kairo-sidecar/tests/test_kairoreal_gauntlet.py to verify runner behavior | M2 | PLANNED |
-| 4 | CI Workflow Update | Add kairoreal-gauntlet job to ci.yml and gate the production-gate job on pass rate | M3 | PLANNED |
-| 5 | Validation & Verification | Execute full gauntlet, verify 100% pass/skip correctness, run reviews/audits | M4 | PLANNED |
+| 1 | De-Rig CI Workflows & Production Gate (Phase P0 & P1) | Update CI readiness checks, assert gauntlet pass rate, rename e2e_chaos_gauntlet, fix PDF test skips. | None | DONE |
+| 2 | Rebuild the Headless Gauntlet (Phase P2) | Rebuild scenarios.json and run_kairoreal_gauntlet.py with 200 scenarios across 14 domains. | M1 | DONE |
+| 3 | Gate Production-Path Mocks (Phase P3) | Disable/gate production-path mocks behind explicit env flags. | M2 | DONE |
+| 4 | Expand Coverage & Mutation Testing (Phase P4) | Increase coverage to >= 80%, expand mutation testing scope. | M3 | DONE |
+| 5 | Verification & Integrity Audit (Headless) | Run integrity checks, no_skip_gates, and ensure gauntlet 100% pass. | M4 | DONE |
 
 ## Interface Contracts
 ### Gauntlet Executor ↔ Oracles

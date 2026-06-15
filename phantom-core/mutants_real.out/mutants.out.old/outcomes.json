@@ -1,0 +1,427 @@
+{
+  "outcomes": [
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "phantom-core/src/governance/tool_gate.rs:30:9: replace ToolGate::add_allowed_path with ()",
+          "package": "phantom-core",
+          "file": "phantom-core/src/governance/tool_gate.rs",
+          "function": {
+            "function_name": "ToolGate::add_allowed_path",
+            "return_type": "",
+            "span": {
+              "start": {
+                "line": 29,
+                "column": 5
+              },
+              "end": {
+                "line": 31,
+                "column": 6
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 30,
+              "column": 9
+            },
+            "end": {
+              "line": 30,
+              "column": 41
+            }
+          },
+          "replacement": "()",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/phantom-core__src__governance__tool_gate.rs_line_30_col_9.log",
+      "diff_path": "diff/phantom-core__src__governance__tool_gate.rs_line_30_col_9.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 161.966004,
+          "process_status": "Success",
+          "argv": [
+            "C:\\Users\\praja\\.rustup\\toolchains\\stable-x86_64-pc-windows-gnu\\bin\\cargo.exe",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=phantom-core@0.3.0",
+            "--features=cua"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.2654908,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "C:\\Users\\praja\\.rustup\\toolchains\\stable-x86_64-pc-windows-gnu\\bin\\cargo.exe",
+            "test",
+            "--verbose",
+            "--package=phantom-core@0.3.0",
+            "--features=cua",
+            "--test",
+            "test_governance_gate"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "phantom-core/src/governance/tool_gate.rs:35:9: replace ToolGate::validate_file_access -> bool with true",
+          "package": "phantom-core",
+          "file": "phantom-core/src/governance/tool_gate.rs",
+          "function": {
+            "function_name": "ToolGate::validate_file_access",
+            "return_type": "-> bool",
+            "span": {
+              "start": {
+                "line": 33,
+                "column": 5
+              },
+              "end": {
+                "line": 47,
+                "column": 6
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 35,
+              "column": 9
+            },
+            "end": {
+              "line": 46,
+              "column": 13
+            }
+          },
+          "replacement": "true",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/phantom-core__src__governance__tool_gate.rs_line_35_col_9.log",
+      "diff_path": "diff/phantom-core__src__governance__tool_gate.rs_line_35_col_9.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 54.4231142,
+          "process_status": "Success",
+          "argv": [
+            "C:\\Users\\praja\\.rustup\\toolchains\\stable-x86_64-pc-windows-gnu\\bin\\cargo.exe",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=phantom-core@0.3.0",
+            "--features=cua"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.2122679,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "C:\\Users\\praja\\.rustup\\toolchains\\stable-x86_64-pc-windows-gnu\\bin\\cargo.exe",
+            "test",
+            "--verbose",
+            "--package=phantom-core@0.3.0",
+            "--features=cua",
+            "--test",
+            "test_governance_gate"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "phantom-core/src/governance/tool_gate.rs:35:9: replace ToolGate::validate_file_access -> bool with false",
+          "package": "phantom-core",
+          "file": "phantom-core/src/governance/tool_gate.rs",
+          "function": {
+            "function_name": "ToolGate::validate_file_access",
+            "return_type": "-> bool",
+            "span": {
+              "start": {
+                "line": 33,
+                "column": 5
+              },
+              "end": {
+                "line": 47,
+                "column": 6
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 35,
+              "column": 9
+            },
+            "end": {
+              "line": 46,
+              "column": 13
+            }
+          },
+          "replacement": "false",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/phantom-core__src__governance__tool_gate.rs_line_35_col_9_001.log",
+      "diff_path": "diff/phantom-core__src__governance__tool_gate.rs_line_35_col_9_001.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 54.0883872,
+          "process_status": "Success",
+          "argv": [
+            "C:\\Users\\praja\\.rustup\\toolchains\\stable-x86_64-pc-windows-gnu\\bin\\cargo.exe",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=phantom-core@0.3.0",
+            "--features=cua"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 3.2853654,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "C:\\Users\\praja\\.rustup\\toolchains\\stable-x86_64-pc-windows-gnu\\bin\\cargo.exe",
+            "test",
+            "--verbose",
+            "--package=phantom-core@0.3.0",
+            "--features=cua",
+            "--test",
+            "test_governance_gate"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "phantom-core/src/governance/tool_gate.rs:35:59: replace || with && in ToolGate::validate_file_access",
+          "package": "phantom-core",
+          "file": "phantom-core/src/governance/tool_gate.rs",
+          "function": {
+            "function_name": "ToolGate::validate_file_access",
+            "return_type": "-> bool",
+            "span": {
+              "start": {
+                "line": 33,
+                "column": 5
+              },
+              "end": {
+                "line": 47,
+                "column": 6
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 35,
+              "column": 59
+            },
+            "end": {
+              "line": 35,
+              "column": 61
+            }
+          },
+          "replacement": "&&",
+          "genre": "BinaryOperator"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/phantom-core__src__governance__tool_gate.rs_line_35_col_59.log",
+      "diff_path": "diff/phantom-core__src__governance__tool_gate.rs_line_35_col_59.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 49.1670434,
+          "process_status": "Success",
+          "argv": [
+            "C:\\Users\\praja\\.rustup\\toolchains\\stable-x86_64-pc-windows-gnu\\bin\\cargo.exe",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=phantom-core@0.3.0",
+            "--features=cua"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.1606351,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "C:\\Users\\praja\\.rustup\\toolchains\\stable-x86_64-pc-windows-gnu\\bin\\cargo.exe",
+            "test",
+            "--verbose",
+            "--package=phantom-core@0.3.0",
+            "--features=cua",
+            "--test",
+            "test_governance_gate"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "phantom-core/src/governance/tool_gate.rs:42:12: delete ! in ToolGate::validate_file_access",
+          "package": "phantom-core",
+          "file": "phantom-core/src/governance/tool_gate.rs",
+          "function": {
+            "function_name": "ToolGate::validate_file_access",
+            "return_type": "-> bool",
+            "span": {
+              "start": {
+                "line": 33,
+                "column": 5
+              },
+              "end": {
+                "line": 47,
+                "column": 6
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 42,
+              "column": 12
+            },
+            "end": {
+              "line": 42,
+              "column": 13
+            }
+          },
+          "replacement": "",
+          "genre": "UnaryOperator"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/phantom-core__src__governance__tool_gate.rs_line_42_col_12.log",
+      "diff_path": "diff/phantom-core__src__governance__tool_gate.rs_line_42_col_12.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 64.3914016,
+          "process_status": "Success",
+          "argv": [
+            "C:\\Users\\praja\\.rustup\\toolchains\\stable-x86_64-pc-windows-gnu\\bin\\cargo.exe",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=phantom-core@0.3.0",
+            "--features=cua"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.4667308000000001,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "C:\\Users\\praja\\.rustup\\toolchains\\stable-x86_64-pc-windows-gnu\\bin\\cargo.exe",
+            "test",
+            "--verbose",
+            "--package=phantom-core@0.3.0",
+            "--features=cua",
+            "--test",
+            "test_governance_gate"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "phantom-core/src/governance/tool_gate.rs:50:9: replace ToolGate::validate_token_usage -> bool with true",
+          "package": "phantom-core",
+          "file": "phantom-core/src/governance/tool_gate.rs",
+          "function": {
+            "function_name": "ToolGate::validate_token_usage",
+            "return_type": "-> bool",
+            "span": {
+              "start": {
+                "line": 49,
+                "column": 5
+              },
+              "end": {
+                "line": 55,
+                "column": 6
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 50,
+              "column": 9
+            },
+            "end": {
+              "line": 54,
+              "column": 13
+            }
+          },
+          "replacement": "true",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/phantom-core__src__governance__tool_gate.rs_line_50_col_9.log",
+      "diff_path": "diff/phantom-core__src__governance__tool_gate.rs_line_50_col_9.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 58.3426895,
+          "process_status": "Success",
+          "argv": [
+            "C:\\Users\\praja\\.rustup\\toolchains\\stable-x86_64-pc-windows-gnu\\bin\\cargo.exe",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=phantom-core@0.3.0",
+            "--features=cua"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.3196555,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "C:\\Users\\praja\\.rustup\\toolchains\\stable-x86_64-pc-windows-gnu\\bin\\cargo.exe",
+            "test",
+            "--verbose",
+            "--package=phantom-core@0.3.0",
+            "--features=cua",
+            "--test",
+            "test_governance_gate"
+          ]
+        }
+      ]
+    }
+  ],
+  "total_mutants": 6,
+  "missed": 0,
+  "caught": 6,
+  "timeout": 0,
+  "unviable": 0,
+  "success": 0,
+  "start_time": "2026-06-14T19:30:11.1006979Z",
+  "end_time": null,
+  "cargo_mutants_version": "27.1.0"
+}

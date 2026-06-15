@@ -1,0 +1,21 @@
+--- phantom-core/src/toast_notification.rs
++++ delete field style from struct WNDCLASSW expression in win_balloon::create_hidden_hwnd
+@@ -81,17 +81,17 @@
+         unsafe { DefWindowProcW(hwnd, msg, wparam, lparam) }
+     }
+ 
+     fn create_hidden_hwnd() -> HWND {
+         unsafe {
+             let class_name = encode_wide::<64>("KairoPhantomTrayClass");
+ 
+             let wc = WNDCLASSW {
+-                style: CS_HREDRAW | CS_VREDRAW,
++                 /* ~ changed by cargo-mutants ~ */
+                 lpfnWndProc: Some(wnd_proc),
+                 hInstance: HINSTANCE::default(),
+                 lpszClassName: PCWSTR(class_name.as_ptr()),
+                 ..Default::default()
+             };
+             RegisterClassW(&wc);
+ 
+             CreateWindowExW(

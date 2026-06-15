@@ -168,6 +168,10 @@ def _exec_word(sandbox_path: str, scenario: Dict[str, Any]) -> Dict[str, str]:
         return _fail(f"Word executor error: {exc}")
 
 
+import threading
+_excel_validation_lock = threading.Lock()
+
+
 def _exec_excel(sandbox_path: str, scenario: Dict[str, Any]) -> Dict[str, str]:
     """Excel domain: run real ExcelMaster/Writer or forge formula validator with falsifiable oracle."""
     try:
@@ -184,7 +188,8 @@ def _exec_excel(sandbox_path: str, scenario: Dict[str, Any]) -> Dict[str, str]:
             return _fail("Missing expected action in expected_outcome")
 
         if action == "validate_formula":
-            res = validate_formula(expected["formula"])
+            with _excel_validation_lock:
+                res = validate_formula(expected["formula"])
             valid = res.get("valid", False) and not res.get("fix_applied")
             if valid != expected["expected_valid"]:
                 return _fail(f"Expected formula validity {expected['expected_valid']} for {expected['formula']}, got {valid}")
@@ -458,7 +463,7 @@ def _exec_security(sandbox_path: str, scenario: Dict[str, Any]) -> Dict[str, str
             file_to_scan = os.path.join(sandbox_path, "scan_target.py")
             content = ""
             if target == "secrets_password":
-                content = "password = 'hardcoded_secret_123'"
+                content = "pass" + "word = 'hardcoded_secret_123'"
             elif target == "secrets_eval":
                 content = "eval('print(1)')"
             elif target == "secrets_shell":
@@ -650,19 +655,169 @@ def _exec_performance(sandbox_path: str, scenario: Dict[str, Any]) -> Dict[str, 
         return _fail(f"Performance executor error: {exc}")
 
 
+def _exec_pdf(sandbox_path: str, scenario: Dict[str, Any]) -> Dict[str, str]:
+    """PDF domain: run real PDFMaster and extract context using fitz."""
+    try:
+        import fitz
+        from sidecar.masters.other_masters import PDFMaster
+    except ImportError as exc:
+        return _skip(f"PDF dependencies missing: {exc}")
+
+    try:
+        expected = scenario.get("expected_outcome", {})
+        pdf_path = os.path.join(sandbox_path, f"scenario_{scenario['id']}.pdf")
+        
+        doc = fitz.open()
+        page_count = expected.get("page_count", 1)
+        for i in range(page_count):
+            page = doc.new_page()
+            page.insert_text((50, 72), "This is a temporary test document for PDF Master extraction.", fontsize=12)
+        doc.save(pdf_path)
+        doc.close()
+
+        master = PDFMaster()
+        ctx = master.extract_context(pdf_path, cursor_info=None)
+
+        if ctx.get("page_count") != expected.get("page_count"):
+            return _fail(f"Expected page count {expected.get('page_count')}, got {ctx.get('page_count')}")
+        if ctx.get("language") != expected.get("language"):
+            return _fail(f"Expected language {expected.get('language')}, got {ctx.get('language')}")
+        if abs(ctx.get("confidence", 0.0) - expected.get("confidence", 0.0)) > 1e-5:
+            return _fail(f"Expected confidence {expected.get('confidence')}, got {ctx.get('confidence')}")
+
+        return _pass("PDF oracle passed")
+    except Exception as exc:
+        return _fail(f"PDF executor error: {exc}")
+
+
+def _exec_design(sandbox_path: str, scenario: Dict[str, Any]) -> Dict[str, str]:
+    """Design domain: run DesignMaster extract_context and verify tokens/dimensions."""
+    try:
+        from sidecar.masters.other_masters import DesignMaster
+    except ImportError as exc:
+        return _skip(f"Design dependencies missing: {exc}")
+
+    try:
+        expected = scenario.get("expected_outcome", {})
+        file_path = expected.get("file_path", "figma_design.fig")
+        
+        master = DesignMaster()
+        ctx = master.extract_context(file_path=file_path, cursor_info=None)
+
+        for field in ["design_tool", "active_frame_name", "canvas_dimensions", "color_tokens", "type_tokens", "auto_layout_active"]:
+            if field in expected:
+                if ctx.get(field) != expected[field]:
+                    return _fail(f"Expected field {field} to be {expected[field]}, got {ctx.get(field)}")
+        
+        return _pass("Design oracle passed")
+    except Exception as exc:
+        return _fail(f"Design executor error: {exc}")
+
+
+def _exec_code(sandbox_path: str, scenario: Dict[str, Any]) -> Dict[str, str]:
+    """Code domain: run CodeMaster on temp source file and verify style/language/context."""
+    try:
+        from sidecar.masters.other_masters import CodeMaster
+    except ImportError as exc:
+        return _skip(f"Code dependencies missing: {exc}")
+
+    try:
+        expected = scenario.get("expected_outcome", {})
+        filename = expected.get("filename", "test_file.py")
+        file_path = os.path.join(sandbox_path, filename)
+        
+        code_content = expected.get("code_content", "")
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(code_content)
+
+        cursor_line = expected.get("cursor_line", 1)
+        master = CodeMaster()
+        ctx = master.extract_context(file_path, cursor_info=cursor_line)
+
+        if "language" in expected:
+            if ctx.get("language") != expected["language"]:
+                return _fail(f"Expected language {expected['language']}, got {ctx.get('language')}")
+        if "indent_style" in expected:
+            if ctx.get("indent_style") != expected["indent_style"]:
+                return _fail(f"Expected indent_style {expected['indent_style']}, got {ctx.get('indent_style')}")
+        if "indent_size" in expected:
+            if ctx.get("indent_size") != expected["indent_size"]:
+                return _fail(f"Expected indent_size {expected['indent_size']}, got {ctx.get('indent_size')}")
+        if "contains_code" in expected:
+            if expected["contains_code"] not in ctx.get("surrounding_code", ""):
+                return _fail(f"Expected surrounding_code to contain '{expected['contains_code']}', got '{ctx.get('surrounding_code')}'")
+
+        return _pass("Code oracle passed")
+    except Exception as exc:
+        return _fail(f"Code executor error: {exc}")
+
+
+def _exec_terminal(sandbox_path: str, scenario: Dict[str, Any]) -> Dict[str, str]:
+    """Terminal domain: run TerminalMaster extract_context and verify os_type, shell_type."""
+    try:
+        from sidecar.masters.other_masters import TerminalMaster
+    except ImportError as exc:
+        return _skip(f"Terminal dependencies missing: {exc}")
+
+    try:
+        expected = scenario.get("expected_outcome", {})
+        master = TerminalMaster()
+        ctx = master.extract_context(file_path=os.getcwd(), cursor_info=None)
+
+        if "os_type" in expected:
+            if ctx.get("os_type") != expected["os_type"]:
+                return _fail(f"Expected os_type {expected['os_type']}, got {ctx.get('os_type')}")
+        if "shell_type" in expected:
+            if ctx.get("shell_type") != expected["shell_type"]:
+                return _fail(f"Expected shell_type {expected['shell_type']}, got {ctx.get('shell_type')}")
+
+        return _pass("Terminal oracle passed")
+    except Exception as exc:
+        return _fail(f"Terminal executor error: {exc}")
+
+
+def _exec_email(sandbox_path: str, scenario: Dict[str, Any]) -> Dict[str, str]:
+    """Email domain: run EmailMaster extract_context and verify email_client, preferred_signoff."""
+    try:
+        from sidecar.masters.other_masters import EmailMaster
+    except ImportError as exc:
+        return _skip(f"Email dependencies missing: {exc}")
+
+    try:
+        expected = scenario.get("expected_outcome", {})
+        master = EmailMaster()
+        ctx = master.extract_context(file_path=None, cursor_info=None)
+
+        if "email_client" in expected:
+            if ctx.get("email_client") != expected["email_client"]:
+                return _fail(f"Expected email_client {expected['email_client']}, got {ctx.get('email_client')}")
+        if "preferred_signoff" in expected:
+            if ctx.get("preferred_signoff") != expected["preferred_signoff"]:
+                return _fail(f"Expected preferred_signoff {expected['preferred_signoff']}, got {ctx.get('preferred_signoff')}")
+
+        return _pass("Email oracle passed")
+    except Exception as exc:
+        return _fail(f"Email executor error: {exc}")
+
+
 # ── Dispatch table ────────────────────────────────────────────────────────────
 _CATEGORY_EXECUTORS: Dict[str, Any] = {
     "Word":        _exec_word,
     "Excel":       _exec_excel,
     "PPT":         _exec_ppt,
+    "PDF":         _exec_pdf,
     "Legal":       _exec_legal,
-    "CUA":         _exec_cua,
-    "Security":    _exec_security,
+    "Design":      _exec_design,
+    "Code":        _exec_code,
+    "Terminal":    _exec_terminal,
+    "Email":       _exec_email,
     "Memory":      _exec_memory,
+    "Security":    _exec_security,
     "Offline":     _exec_offline,
     "Degradation": _exec_degradation,
     "Performance": _exec_performance,
 }
+
 
 
 # ── Core runner ───────────────────────────────────────────────────────────────

@@ -206,3 +206,52 @@ Integrity mode: demo
 - [ ] Exits with 0 if and only if `pass_rate_all >= 80%` and `skipped == 0` (or exits 1 if the gate fails).
 - [ ] `pytest kairo-sidecar/tests/test_kairoreal_gauntlet.py` passes successfully.
 
+
+## Follow-up — 2026-06-15T21:12:50+05:30
+
+Implement Phase P0 to P4 of the Kairo Phantom Production-Readiness Roadmap. The goal is to eliminate all rigged/mocked certification gates, build a real and honest headless gauntlet with falsifiable oracles, clean up production-path mocks, and expand testing/coverage controls.
+
+**GUI Sandbox / VNC / Real VM Execution (Phases P5 & P6) is formally BLOCKED and must not be implemented/simulated.** Proceed only with the headless codebase modifications and verification steps.
+
+Working directory: C:\Users\praja\OneDrive\Desktop\test-env\repositories\kairo-phantom
+Integrity mode: development
+
+## Requirements
+
+### R1. De-Rig CI Workflows & Production Gate (Phases P0 & P1)
+- **CI Configuration**: In `.github/workflows/ci.yml`, replace the hardcoded echo claims (e.g., "118 tests", ">=35 @implemented") with actual runtime-measured values or remove them entirely. Ensure the Assert Gauntlet Pass Rate step requires `pass_rate_all >= 80` and `skipped == 0`.
+- **Failure Swallowing**: Audit all workflow files (`ci.yml`, `e2e_chaos_gauntlet.yml`) and scripts for `|| true`, `continue-on-error`, and broad try/except blocks. Remove `continue-on-error: true` from any step whose failure should fail the build.
+- **Labeling Mock AI Workflows**: Rename `e2e_chaos_gauntlet.yml` or add prominent documentation/notices in the workflow description indicating it runs in `--mock-ai` / `KAIRO_CI_STUB_MODE` and does NOT certify actual production readiness.
+- **PDF Skips Revert**: In `kairo-sidecar/tests/test_domain4_pdf.py` (or the corresponding PDF test files), make `fitz` (PyMuPDF) a hard import at the top of the module. Do not skip these tests. For optional heavy ML deps (`opendataloader`, `olmocr`, `surya`), use monkeypatching to test both branches (dependencies present and absent) without skipping.
+
+### R2. Rebuild the Headless Gauntlet (Phase P2)
+- **Real Scenarios**: Delete `scratch/generate_scenarios.py` if present. Replace the boilerplate prompts in `scenarios.json` with 200 distinct, realistic prompts across all domains (Word, Excel, PPT, PDF, Legal, Design, Code, Terminal, Email, Memory, Security, Offline, Degradation, Performance). Each must define a concrete prompt, input fixtures, and specific expected-outcome contracts.
+- **Real Executors & Oracles**: Update `run_kairoreal_gauntlet.py` so that every executor executes the real codebase pipeline (no mock fallbacks) and verifies output with a falsifiable, non-tautological oracle (e.g., verifying specific text/cells/slides, checking specific clauses in Legal, or checking specific typed errors for negative tests).
+
+### R3. Gate Production-Path Mocks (Phase P3)
+- **Feature Flags**: Ensure that all production-path mocks (specifically `figma_design_bridge.py`, `tldraw_bridge.py`, `writing_intelligence.py`, and `slide_image_gen.py`) are disabled by default.
+- **Mock Fallback Handling**: Gate them behind explicit feature flag environment variables (e.g., `KAIRO_ENABLE_MOCK_CANVAS=1`, `KAIRO_PARAPHRASE_STUB=1`) which default to OFF, log a loud WARNING when active, and raise a typed exception (e.g., `MemorizationError` for paraphrasing, or similar API connection errors) when the flag is OFF and the real service is unavailable. Never silently fallback to mocks.
+
+### R4. Expand Coverage & Mutation Testing (Phase P4)
+- **Line & Branch Coverage**: Verify that hot modules (`router.py`, `word_master.py`, `excel_master.py`) genuinely meet the target threshold of `>= 80%` coverage using real tests.
+- **Mutation Testing**: Expand cargo-mutants/mutmut scope to cover `router.py`, the master writers, and the security/governance guards. Write tests to kill surviving mutants.
+- **Calibration Set**: Formally mark the human-labeled calibration set as BLOCKED. Do not fabricate or auto-generate human labels in `calibration_set.json`.
+
+## Acceptance Criteria
+
+### CI and Gates Integrity
+- [ ] `no_skip_gates.py` runs with zero violations repo-wide and exits 0.
+- [ ] `eval_integrity_guard.py` and `anti_cheat_scan.py` pass without errors.
+- [ ] hardcoded echoes/claims are removed from `.github/workflows/ci.yml`.
+- [ ] `test_domain4_pdf.py` executes fitz tests without skipping, exercising both branches.
+
+### Gauntlet and Mocks
+- [ ] `scenarios.json` contains 200 distinct real-world prompts and contracts.
+- [ ] `run_kairoreal_gauntlet.py` executes the real pipeline with falsifiable assertions.
+- [ ] `writing_intelligence.py` gates `_simulate_paraphrase` behind `KAIRO_PARAPHRASE_STUB=1` and defaults to OFF.
+- [ ] Production-path mocks in figma, tldraw, slide_image_gen are disabled by default and raise typed errors.
+
+### Testing and Calibration
+- [ ] Per-module line coverage for router, word_master, excel_master is >= 80%.
+- [ ] Python mutation testing target modules (`router.py`, `word_master.py`, `excel_master.py`) have been run and surviving mutants documented/addressed.
+- [ ] `calibration_set.json` remains un-fabricated (marked BLOCKED).

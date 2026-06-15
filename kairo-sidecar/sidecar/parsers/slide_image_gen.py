@@ -21,6 +21,8 @@ class SlideImageGenerator:
 
     def __init__(self, offline_mode: bool = True):
         self.offline_mode = offline_mode
+        if os.getenv("KAIRO_SLIDE_IMAGE_MOCK", "0") == "1":
+            log.warning("LOUD WARNING: Slide image mock is active!")
 
     def generate_slide_image(self,
                              slide_content: dict,
@@ -49,17 +51,16 @@ class SlideImageGenerator:
         except Exception as exc:
             # EXPLICIT FEATURE FLAG — must be set deliberately in local dev or tests.
             # CI and production must NOT set this flag; they should see the real failure.
-            if os.environ.get("KAIRO_SLIDE_IMAGE_MOCK", "0") == "1":
+            if os.getenv("KAIRO_SLIDE_IMAGE_MOCK", "0") == "1":
                 log.warning(
-                    f"[KAIRO_SLIDE_IMAGE_MOCK=1] Real image generation failed: {exc}. "
-                    f"Returning mock PNG. This MUST NOT happen in CI or production."
+                    f"LOUD WARNING: Slide image mock is active! Real image generation failed: {exc}. "
+                    f"Returning mock PNG."
                 )
                 return self._generate_mock_image(slide_content, style)
             # Hard fail — do not hide the problem with a silent mock.
-            raise RuntimeError(
-                f"slide_image_gen: image generation failed and KAIRO_SLIDE_IMAGE_MOCK "
-                f"is not set. Backend={backend.value!r}. "
-                f"Set KAIRO_SLIDE_IMAGE_MOCK=1 only in local dev/tests. "
+            raise ConnectionError(
+                f"slide_image_gen: Real image generation service is unavailable or failed, "
+                f"and KAIRO_SLIDE_IMAGE_MOCK is disabled. Backend={backend.value!r}. "
                 f"Underlying error: {exc}"
             ) from exc
 

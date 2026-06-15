@@ -378,6 +378,7 @@ class PdfExtractionEngine:
 
         with fitz.open(file_path) as doc:
             metadata = dict(doc.metadata)
+            metadata["pages"] = len(doc)
             for page_num, page in enumerate(doc, start=1):
                 page_text_parts: List[Tuple[float, float, str]] = []
 

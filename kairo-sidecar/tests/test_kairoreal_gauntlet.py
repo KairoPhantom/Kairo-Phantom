@@ -62,10 +62,11 @@ def test_gauntlet_script_importable_and_scenarios_count():
         scenarios = json.load(fh)
     assert len(scenarios) == 200, f"Expected 200 scenarios, got {len(scenarios)}"
 
-    # All 10 categories must have executors
+    # All 14 categories must have executors
     expected_categories = {
-        "Word", "Excel", "PPT", "Legal", "CUA",
-        "Security", "Memory", "Offline", "Degradation", "Performance",
+        "Word", "Excel", "PPT", "PDF", "Legal", "Design",
+        "Code", "Terminal", "Email", "Memory", "Security",
+        "Offline", "Degradation", "Performance",
     }
     missing = expected_categories - set(rkg._CATEGORY_EXECUTORS.keys())
     assert not missing, f"Missing category executors: {missing}"
@@ -175,8 +176,9 @@ def test_task_completion_rate_schema(tmp_path: Path):
 
     # ── Category structure ────────────────────────────────────────────────────
     expected_cats = {
-        "Word", "Excel", "PPT", "Legal", "CUA",
-        "Security", "Memory", "Offline", "Degradation", "Performance",
+        "Word", "Excel", "PPT", "PDF", "Legal", "Design",
+        "Code", "Terminal", "Email", "Memory", "Security",
+        "Offline", "Degradation", "Performance",
     }
     for cat in expected_cats:
         assert cat in data["categories"], f"Category '{cat}' missing from report"

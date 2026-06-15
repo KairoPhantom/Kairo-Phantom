@@ -1,0 +1,6 @@
+phantom-core/src/governance/tool_gate.rs:30:9: replace ToolGate::add_allowed_path with ()
+phantom-core/src/governance/tool_gate.rs:35:9: replace ToolGate::validate_file_access -> bool with true
+phantom-core/src/governance/tool_gate.rs:35:9: replace ToolGate::validate_file_access -> bool with false
+phantom-core/src/governance/tool_gate.rs:35:59: replace || with && in ToolGate::validate_file_access
+phantom-core/src/governance/tool_gate.rs:42:12: delete ! in ToolGate::validate_file_access
+phantom-core/src/governance/tool_gate.rs:50:9: replace ToolGate::validate_token_usage -> bool with true

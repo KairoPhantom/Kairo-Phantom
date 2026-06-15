@@ -22,13 +22,24 @@ _MOCK_CANVAS_ENABLED = os.getenv("KAIRO_ENABLE_MOCK_CANVAS", "0") == "1"
 class FigmaDesignBridge:
     """Bridges Kairo to Figma elements using a WebSocket-based plugin API."""
 
+    def _is_mock_enabled(self) -> bool:
+        global _MOCK_CANVAS_ENABLED
+        return _MOCK_CANVAS_ENABLED or (os.getenv("KAIRO_ENABLE_MOCK_CANVAS", "0") == "1")
+
+    def _handle_fallback(self, method_name: str):
+        if self._is_mock_enabled():
+            log.warning("LOUD WARNING: Figma/tldraw mock canvas is active!")
+        else:
+            raise ConnectionError(f"Figma service is offline and mock canvas is disabled (method: {method_name}).")
+
     def __init__(self, websocket_url: str = "ws://localhost:8081/figma", offline_mode: bool = False):
         self.websocket_url = websocket_url
         # offline_mode can be overridden per-instance; production callers leave it False.
         self.offline_mode = offline_mode
         self._next_id = 1
 
-        if _MOCK_CANVAS_ENABLED:
+        if self._is_mock_enabled():
+            log.warning("LOUD WARNING: Figma/tldraw mock canvas is active!")
             # Only initialise in-memory state when the mock flag is set.
             self._mock_canvas: Dict[str, Dict[str, Any]] = {}
             self._reset_mock_canvas()
@@ -190,6 +201,7 @@ class FigmaDesignBridge:
 
     def create_frame(self, name: str, x: int, y: int, width: int, height: int, parent_id: str = "canvas-root") -> Dict[str, Any]:
         """Create a new Frame node in Figma."""
+        is_mock_enabled = self._is_mock_enabled()
         if self.is_available():
             online_res = self._call_online_tool("create_frame", {
                 "name": name,
@@ -216,10 +228,16 @@ class FigmaDesignBridge:
                     "children": [],
                     "fills": []
                 }
-                self._mock_canvas[node_id] = node
-                if parent_id in self._mock_canvas:
-                    self._mock_canvas[parent_id].setdefault("children", []).append(node_id)
+                if is_mock_enabled:
+                    self._mock_canvas[node_id] = node
+                    if parent_id in self._mock_canvas:
+                        self._mock_canvas[parent_id].setdefault("children", []).append(node_id)
                 return {"ok": True, "node_id": node_id, "node": node}
+            else:
+                if not is_mock_enabled:
+                    raise RuntimeError(f"Figma service returned an error and mock canvas is disabled: {online_res.get('error')}")
+
+        self._handle_fallback("create_frame")
 
         node_id = f"frame-node-{self._next_id}"
         self._next_id += 1
@@ -237,16 +255,16 @@ class FigmaDesignBridge:
             "fills": []
         }
         
-        if _MOCK_CANVAS_ENABLED:
-            self._mock_canvas[node_id] = node
-            if parent_id in self._mock_canvas:
-                self._mock_canvas[parent_id].setdefault("children", []).append(node_id)
+        self._mock_canvas[node_id] = node
+        if parent_id in self._mock_canvas:
+            self._mock_canvas[parent_id].setdefault("children", []).append(node_id)
 
-        log.info(f"Figma Frame created: {node_id} ('{name}') [mock_canvas={'ON' if _MOCK_CANVAS_ENABLED else 'OFF'}]")
+        log.info(f"Figma Frame created: {node_id} ('{name}') [mock_canvas={'ON' if is_mock_enabled else 'OFF'}]")
         return {"ok": True, "node_id": node_id, "node": node}
 
     def create_text_node(self, name: str, characters: str, fontSize: int = 14, parent_id: str = "canvas-root") -> Dict[str, Any]:
         """Create a new Text node in Figma."""
+        is_mock_enabled = self._is_mock_enabled()
         if self.is_available():
             online_res = self._call_online_tool("create_text", {
                 "content": characters,
@@ -268,10 +286,16 @@ class FigmaDesignBridge:
                     "fontName": {"family": "Inter", "style": "Regular"},
                     "fills": [{"type": "SOLID", "color": {"r": 0, "g": 0, "b": 0, "a": 1}}]
                 }
-                self._mock_canvas[node_id] = node
-                if parent_id in self._mock_canvas:
-                    self._mock_canvas[parent_id].setdefault("children", []).append(node_id)
+                if is_mock_enabled:
+                    self._mock_canvas[node_id] = node
+                    if parent_id in self._mock_canvas:
+                        self._mock_canvas[parent_id].setdefault("children", []).append(node_id)
                 return {"ok": True, "node_id": node_id, "node": node}
+            else:
+                if not is_mock_enabled:
+                    raise RuntimeError(f"Figma service returned an error and mock canvas is disabled: {online_res.get('error')}")
+
+        self._handle_fallback("create_text_node")
 
         node_id = f"text-node-{self._next_id}"
         self._next_id += 1
@@ -287,16 +311,16 @@ class FigmaDesignBridge:
             "fills": [{"type": "SOLID", "color": {"r": 0, "g": 0, "b": 0, "a": 1}}]
         }
         
-        if _MOCK_CANVAS_ENABLED:
-            self._mock_canvas[node_id] = node
-            if parent_id in self._mock_canvas:
-                self._mock_canvas[parent_id].setdefault("children", []).append(node_id)
+        self._mock_canvas[node_id] = node
+        if parent_id in self._mock_canvas:
+            self._mock_canvas[parent_id].setdefault("children", []).append(node_id)
             
         log.info(f"Figma Text Node created: {node_id} ('{name}') -> '{characters[:20]}...'")
         return {"ok": True, "node_id": node_id, "node": node}
 
     def create_rectangle(self, name: str, x: int, y: int, width: int, height: int, parent_id: str = "canvas-root") -> Dict[str, Any]:
         """Create a new Rectangle node in Figma."""
+        is_mock_enabled = self._is_mock_enabled()
         if self.is_available():
             online_res = self._call_online_tool("create_rectangle", {
                 "name": name,
@@ -322,11 +346,16 @@ class FigmaDesignBridge:
                     "height": height,
                     "fills": []
                 }
-                if _MOCK_CANVAS_ENABLED:
+                if is_mock_enabled:
                     self._mock_canvas[node_id] = node
                     if parent_id in self._mock_canvas:
                         self._mock_canvas[parent_id].setdefault("children", []).append(node_id)
                 return {"ok": True, "node_id": node_id, "node": node}
+            else:
+                if not is_mock_enabled:
+                    raise RuntimeError(f"Figma service returned an error and mock canvas is disabled: {online_res.get('error')}")
+
+        self._handle_fallback("create_rectangle")
 
         node_id = f"rect-node-{self._next_id}"
         self._next_id += 1
@@ -343,16 +372,16 @@ class FigmaDesignBridge:
             "fills": []
         }
         
-        if _MOCK_CANVAS_ENABLED:
-            self._mock_canvas[node_id] = node
-            if parent_id in self._mock_canvas:
-                self._mock_canvas[parent_id].setdefault("children", []).append(node_id)
+        self._mock_canvas[node_id] = node
+        if parent_id in self._mock_canvas:
+            self._mock_canvas[parent_id].setdefault("children", []).append(node_id)
 
         log.info(f"Figma Rectangle created: {node_id} ('{name}')")
         return {"ok": True, "node_id": node_id, "node": node}
 
     def create_component(self, name: str, parent_id: str = "canvas-root") -> Dict[str, Any]:
         """Create a reusable component in Figma."""
+        is_mock_enabled = self._is_mock_enabled()
         if self.is_available():
             online_res = self._call_online_tool("create_component", {
                 "name": name,
@@ -371,11 +400,16 @@ class FigmaDesignBridge:
                     "children": [],
                     "fills": []
                 }
-                if _MOCK_CANVAS_ENABLED:
+                if is_mock_enabled:
                     self._mock_canvas[node_id] = node
                     if parent_id in self._mock_canvas:
                         self._mock_canvas[parent_id].setdefault("children", []).append(node_id)
                 return {"ok": True, "node_id": node_id, "node": node}
+            else:
+                if not is_mock_enabled:
+                    raise RuntimeError(f"Figma service returned an error and mock canvas is disabled: {online_res.get('error')}")
+
+        self._handle_fallback("create_component")
 
         node_id = f"component-node-{self._next_id}"
         self._next_id += 1
@@ -389,16 +423,16 @@ class FigmaDesignBridge:
             "fills": []
         }
         
-        if _MOCK_CANVAS_ENABLED:
-            self._mock_canvas[node_id] = node
-            if parent_id in self._mock_canvas:
-                self._mock_canvas[parent_id].setdefault("children", []).append(node_id)
+        self._mock_canvas[node_id] = node
+        if parent_id in self._mock_canvas:
+            self._mock_canvas[parent_id].setdefault("children", []).append(node_id)
 
         log.info(f"Figma Component created: {node_id} ('{name}')")
         return {"ok": True, "node_id": node_id, "node": node}
 
     def create_section(self, name: str, parent_id: str = "canvas-root") -> Dict[str, Any]:
         """Create a new grouping Section node."""
+        is_mock_enabled = self._is_mock_enabled()
         if self.is_available():
             online_res = self._call_online_tool("create_section", {
                 "name": name,
@@ -417,11 +451,16 @@ class FigmaDesignBridge:
                     "children": [],
                     "fills": []
                 }
-                if _MOCK_CANVAS_ENABLED:
+                if is_mock_enabled:
                     self._mock_canvas[node_id] = node
                     if parent_id in self._mock_canvas:
                         self._mock_canvas[parent_id].setdefault("children", []).append(node_id)
                 return {"ok": True, "node_id": node_id, "node": node}
+            else:
+                if not is_mock_enabled:
+                    raise RuntimeError(f"Figma service returned an error and mock canvas is disabled: {online_res.get('error')}")
+
+        self._handle_fallback("create_section")
 
         node_id = f"section-node-{self._next_id}"
         self._next_id += 1
@@ -435,24 +474,40 @@ class FigmaDesignBridge:
             "fills": []
         }
         
-        if _MOCK_CANVAS_ENABLED:
-            self._mock_canvas[node_id] = node
-            if parent_id in self._mock_canvas:
-                self._mock_canvas[parent_id].setdefault("children", []).append(node_id)
+        self._mock_canvas[node_id] = node
+        if parent_id in self._mock_canvas:
+            self._mock_canvas[parent_id].setdefault("children", []).append(node_id)
 
         log.info(f"Figma Section created: {node_id} ('{name}')")
         return {"ok": True, "node_id": node_id, "node": node}
 
     def set_fills(self, node_id: str, color_hex: str) -> Dict[str, Any]:
         """Set solid fills on a Figma node using a hex color value."""
+        is_mock_enabled = self._is_mock_enabled()
         if self.is_available():
-            self._call_online_tool("set_fills", {
+            online_res = self._call_online_tool("set_fills", {
                 "node_id": node_id,
                 "color": color_hex
             })
+            if online_res.get("ok"):
+                if is_mock_enabled:
+                    if node_id in self._mock_canvas:
+                        hex_val = color_hex.lstrip("#")
+                        try:
+                            r = int(hex_val[0:2], 16) / 255.0
+                            g = int(hex_val[2:4], 16) / 255.0
+                            b = int(hex_val[4:6], 16) / 255.0
+                        except ValueError:
+                            r, g, b = 0.5, 0.5, 0.5
+                        fills = [{"type": "SOLID", "color": {"r": r, "g": g, "b": b, "a": 1}}]
+                        self._mock_canvas[node_id]["fills"] = fills
+                return {"ok": True, "node_id": node_id}
+            else:
+                if not is_mock_enabled:
+                    return {"ok": False, "error": "Mock canvas disabled. Set KAIRO_ENABLE_MOCK_CANVAS=1 to use offline state."}
 
-        if not _MOCK_CANVAS_ENABLED:
-            return {"ok": False, "error": "Mock canvas disabled. Set KAIRO_ENABLE_MOCK_CANVAS=1 to use offline state."}
+        self._handle_fallback("set_fills")
+
         if node_id not in self._mock_canvas:
             return {"ok": False, "error": f"Node not found: {node_id}"}
 
@@ -474,16 +529,32 @@ class FigmaDesignBridge:
     def set_auto_layout(self, node_id: str, layout_mode: str, spacing: int = 10, 
                         padding_tb: int = 0, padding_lr: int = 0) -> Dict[str, Any]:
         """Apply Figma Auto Layout settings to a Frame/Component."""
+        is_mock_enabled = self._is_mock_enabled()
         if self.is_available():
-            self._call_online_tool("set_auto_layout", {
+            online_res = self._call_online_tool("set_auto_layout", {
                 "node_id": node_id,
                 "direction": layout_mode.upper(),
                 "gap": spacing,
                 "padding": padding_tb
             })
+            if online_res.get("ok"):
+                if is_mock_enabled:
+                    if node_id in self._mock_canvas:
+                        node = self._mock_canvas[node_id]
+                        if node["type"] in ("FRAME", "COMPONENT"):
+                            node["layoutMode"] = layout_mode.upper()
+                            node["itemSpacing"] = spacing
+                            node["paddingTop"] = padding_tb
+                            node["paddingBottom"] = padding_tb
+                            node["paddingLeft"] = padding_lr
+                            node["paddingRight"] = padding_lr
+                return {"ok": True, "node_id": node_id}
+            else:
+                if not is_mock_enabled:
+                    return {"ok": False, "error": "Mock canvas disabled. Set KAIRO_ENABLE_MOCK_CANVAS=1 to use offline state."}
 
-        if not _MOCK_CANVAS_ENABLED:
-            return {"ok": False, "error": "Mock canvas disabled. Set KAIRO_ENABLE_MOCK_CANVAS=1 to use offline state."}
+        self._handle_fallback("set_auto_layout")
+
         if node_id not in self._mock_canvas:
             return {"ok": False, "error": f"Node not found: {node_id}"}
 
@@ -510,7 +581,8 @@ class FigmaDesignBridge:
 
     def read_node_tree(self, root_id: str = "canvas-root") -> Dict[str, Any]:
         """Recursively retrieve and compile the design node tree."""
-        if not _MOCK_CANVAS_ENABLED:
+        is_mock_enabled = self._is_mock_enabled()
+        if not is_mock_enabled:
             return {"error": "Mock canvas disabled. Set KAIRO_ENABLE_MOCK_CANVAS=1 to use offline state."}
         if root_id not in self._mock_canvas:
             return {"error": f"Root node {root_id} not found."}

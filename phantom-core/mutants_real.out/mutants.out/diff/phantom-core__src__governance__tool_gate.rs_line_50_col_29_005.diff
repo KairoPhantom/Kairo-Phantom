@@ -1,0 +1,21 @@
+--- phantom-core/src/governance/tool_gate.rs
++++ replace > with >= in ToolGate::validate_token_usage
+@@ -42,17 +42,17 @@
+         if !is_allowed {
+             warn!("🚨 ToolGate: Blocked access to unapproved path: {}", path);
+             return false;
+         }
+         true
+     }
+ 
+     pub fn validate_token_usage(&self, tokens_requested: usize) -> bool {
+-        if tokens_requested > self.token_cap {
++        if tokens_requested >= /* ~ changed by cargo-mutants ~ */ self.token_cap {
+             warn!("🚨 ToolGate: Token cap exceeded ({} > {})", tokens_requested, self.token_cap);
+             return false;
+         }
+         true
+     }
+ 
+     pub fn authorize_tool_call(&self, tool_name: &str, agent_allowlist: &[&str]) -> bool {
+         let allowed = agent_allowlist.contains(&tool_name);
