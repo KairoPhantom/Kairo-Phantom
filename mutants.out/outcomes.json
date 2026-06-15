@@ -8,7 +8,7 @@
       "phase_results": [
         {
           "phase": "Build",
-          "duration": 176.4266906,
+          "duration": 346.4243204,
           "process_status": "Success",
           "argv": [
             "C:\\Users\\praja\\.rustup\\toolchains\\stable-x86_64-pc-windows-gnu\\bin\\cargo.exe",
@@ -20,7 +20,7 @@
         },
         {
           "phase": "Test",
-          "duration": 59.0751439,
+          "duration": 143.3742644,
           "process_status": "Success",
           "argv": [
             "C:\\Users\\praja\\.rustup\\toolchains\\stable-x86_64-pc-windows-gnu\\bin\\cargo.exe",
@@ -34,44 +34,44 @@
     {
       "scenario": {
         "Mutant": {
-          "name": "phantom-core/src/sample_math.rs:2:5: replace add -> i32 with 0",
+          "name": "phantom-core/src/toast_notification.rs:89:17: delete field style from struct WNDCLASSW expression in win_balloon::create_hidden_hwnd",
           "package": "phantom-core",
-          "file": "phantom-core/src/sample_math.rs",
+          "file": "phantom-core/src/toast_notification.rs",
           "function": {
-            "function_name": "add",
-            "return_type": "-> i32",
+            "function_name": "win_balloon::create_hidden_hwnd",
+            "return_type": "-> HWND",
             "span": {
               "start": {
-                "line": 1,
-                "column": 1
+                "line": 84,
+                "column": 5
               },
               "end": {
-                "line": 3,
-                "column": 2
+                "line": 112,
+                "column": 6
               }
             }
           },
           "span": {
             "start": {
-              "line": 2,
-              "column": 5
+              "line": 89,
+              "column": 17
             },
             "end": {
-              "line": 2,
-              "column": 10
+              "line": 89,
+              "column": 48
             }
           },
-          "replacement": "0",
-          "genre": "FnValue"
+          "replacement": "",
+          "genre": "StructField"
         }
       },
-      "summary": "CaughtMutant",
-      "log_path": "log/phantom-core__src__sample_math.rs_line_2_col_5.log",
-      "diff_path": "diff/phantom-core__src__sample_math.rs_line_2_col_5.diff",
+      "summary": "MissedMutant",
+      "log_path": "log/phantom-core__src__toast_notification.rs_line_89_col_17.log",
+      "diff_path": "diff/phantom-core__src__toast_notification.rs_line_89_col_17.diff",
       "phase_results": [
         {
           "phase": "Build",
-          "duration": 39.9429893,
+          "duration": 80.3150045,
           "process_status": "Success",
           "argv": [
             "C:\\Users\\praja\\.rustup\\toolchains\\stable-x86_64-pc-windows-gnu\\bin\\cargo.exe",
@@ -83,10 +83,8 @@
         },
         {
           "phase": "Test",
-          "duration": 6.3550681,
-          "process_status": {
-            "Failure": 101
-          },
+          "duration": 136.3547829,
+          "process_status": "Success",
           "argv": [
             "C:\\Users\\praja\\.rustup\\toolchains\\stable-x86_64-pc-windows-gnu\\bin\\cargo.exe",
             "test",
@@ -99,44 +97,44 @@
     {
       "scenario": {
         "Mutant": {
-          "name": "phantom-core/src/sample_math.rs:2:5: replace add -> i32 with 1",
+          "name": "phantom-core/src/toast_notification.rs:90:17: delete field lpfnWndProc from struct WNDCLASSW expression in win_balloon::create_hidden_hwnd",
           "package": "phantom-core",
-          "file": "phantom-core/src/sample_math.rs",
+          "file": "phantom-core/src/toast_notification.rs",
           "function": {
-            "function_name": "add",
-            "return_type": "-> i32",
+            "function_name": "win_balloon::create_hidden_hwnd",
+            "return_type": "-> HWND",
             "span": {
               "start": {
-                "line": 1,
-                "column": 1
+                "line": 84,
+                "column": 5
               },
               "end": {
-                "line": 3,
-                "column": 2
+                "line": 112,
+                "column": 6
               }
             }
           },
           "span": {
             "start": {
-              "line": 2,
-              "column": 5
+              "line": 90,
+              "column": 17
             },
             "end": {
-              "line": 2,
-              "column": 10
+              "line": 90,
+              "column": 45
             }
           },
-          "replacement": "1",
-          "genre": "FnValue"
+          "replacement": "",
+          "genre": "StructField"
         }
       },
-      "summary": "CaughtMutant",
-      "log_path": "log/phantom-core__src__sample_math.rs_line_2_col_5_001.log",
-      "diff_path": "diff/phantom-core__src__sample_math.rs_line_2_col_5_001.diff",
+      "summary": "MissedMutant",
+      "log_path": "log/phantom-core__src__toast_notification.rs_line_90_col_17.log",
+      "diff_path": "diff/phantom-core__src__toast_notification.rs_line_90_col_17.diff",
       "phase_results": [
         {
           "phase": "Build",
-          "duration": 45.3443191,
+          "duration": 92.8679908,
           "process_status": "Success",
           "argv": [
             "C:\\Users\\praja\\.rustup\\toolchains\\stable-x86_64-pc-windows-gnu\\bin\\cargo.exe",
@@ -148,10 +146,8 @@
         },
         {
           "phase": "Test",
-          "duration": 4.2864535,
-          "process_status": {
-            "Failure": 101
-          },
+          "duration": 707.7569059,
+          "process_status": "Success",
           "argv": [
             "C:\\Users\\praja\\.rustup\\toolchains\\stable-x86_64-pc-windows-gnu\\bin\\cargo.exe",
             "test",
@@ -164,44 +160,44 @@
     {
       "scenario": {
         "Mutant": {
-          "name": "phantom-core/src/sample_math.rs:2:5: replace add -> i32 with -1",
+          "name": "phantom-core/src/toast_notification.rs:91:17: delete field hInstance from struct WNDCLASSW expression in win_balloon::create_hidden_hwnd",
           "package": "phantom-core",
-          "file": "phantom-core/src/sample_math.rs",
+          "file": "phantom-core/src/toast_notification.rs",
           "function": {
-            "function_name": "add",
-            "return_type": "-> i32",
+            "function_name": "win_balloon::create_hidden_hwnd",
+            "return_type": "-> HWND",
             "span": {
               "start": {
-                "line": 1,
-                "column": 1
+                "line": 84,
+                "column": 5
               },
               "end": {
-                "line": 3,
-                "column": 2
+                "line": 112,
+                "column": 6
               }
             }
           },
           "span": {
             "start": {
-              "line": 2,
-              "column": 5
+              "line": 91,
+              "column": 17
             },
             "end": {
-              "line": 2,
-              "column": 10
+              "line": 91,
+              "column": 49
             }
           },
-          "replacement": "-1",
-          "genre": "FnValue"
+          "replacement": "",
+          "genre": "StructField"
         }
       },
-      "summary": "CaughtMutant",
-      "log_path": "log/phantom-core__src__sample_math.rs_line_2_col_5_002.log",
-      "diff_path": "diff/phantom-core__src__sample_math.rs_line_2_col_5_002.diff",
+      "summary": "MissedMutant",
+      "log_path": "log/phantom-core__src__toast_notification.rs_line_91_col_17.log",
+      "diff_path": "diff/phantom-core__src__toast_notification.rs_line_91_col_17.diff",
       "phase_results": [
         {
           "phase": "Build",
-          "duration": 40.2795866,
+          "duration": 40.8179972,
           "process_status": "Success",
           "argv": [
             "C:\\Users\\praja\\.rustup\\toolchains\\stable-x86_64-pc-windows-gnu\\bin\\cargo.exe",
@@ -213,10 +209,8 @@
         },
         {
           "phase": "Test",
-          "duration": 4.0910469,
-          "process_status": {
-            "Failure": 101
-          },
+          "duration": 42.8262072,
+          "process_status": "Success",
           "argv": [
             "C:\\Users\\praja\\.rustup\\toolchains\\stable-x86_64-pc-windows-gnu\\bin\\cargo.exe",
             "test",
@@ -229,44 +223,44 @@
     {
       "scenario": {
         "Mutant": {
-          "name": "phantom-core/src/sample_math.rs:2:7: replace + with - in add",
+          "name": "phantom-core/src/toast_notification.rs:92:17: delete field lpszClassName from struct WNDCLASSW expression in win_balloon::create_hidden_hwnd",
           "package": "phantom-core",
-          "file": "phantom-core/src/sample_math.rs",
+          "file": "phantom-core/src/toast_notification.rs",
           "function": {
-            "function_name": "add",
-            "return_type": "-> i32",
+            "function_name": "win_balloon::create_hidden_hwnd",
+            "return_type": "-> HWND",
             "span": {
               "start": {
-                "line": 1,
-                "column": 1
+                "line": 84,
+                "column": 5
               },
               "end": {
-                "line": 3,
-                "column": 2
+                "line": 112,
+                "column": 6
               }
             }
           },
           "span": {
             "start": {
-              "line": 2,
-              "column": 7
+              "line": 92,
+              "column": 17
             },
             "end": {
-              "line": 2,
-              "column": 8
+              "line": 92,
+              "column": 60
             }
           },
-          "replacement": "-",
-          "genre": "BinaryOperator"
+          "replacement": "",
+          "genre": "StructField"
         }
       },
-      "summary": "CaughtMutant",
-      "log_path": "log/phantom-core__src__sample_math.rs_line_2_col_7.log",
-      "diff_path": "diff/phantom-core__src__sample_math.rs_line_2_col_7.diff",
+      "summary": "MissedMutant",
+      "log_path": "log/phantom-core__src__toast_notification.rs_line_92_col_17.log",
+      "diff_path": "diff/phantom-core__src__toast_notification.rs_line_92_col_17.diff",
       "phase_results": [
         {
           "phase": "Build",
-          "duration": 48.2853267,
+          "duration": 33.6629889,
           "process_status": "Success",
           "argv": [
             "C:\\Users\\praja\\.rustup\\toolchains\\stable-x86_64-pc-windows-gnu\\bin\\cargo.exe",
@@ -278,10 +272,8 @@
         },
         {
           "phase": "Test",
-          "duration": 4.3481469,
-          "process_status": {
-            "Failure": 101
-          },
+          "duration": 57.7952054,
+          "process_status": "Success",
           "argv": [
             "C:\\Users\\praja\\.rustup\\toolchains\\stable-x86_64-pc-windows-gnu\\bin\\cargo.exe",
             "test",
@@ -294,44 +286,44 @@
     {
       "scenario": {
         "Mutant": {
-          "name": "phantom-core/src/sample_math.rs:2:7: replace + with * in add",
+          "name": "phantom-core/src/toast_notification.rs:130:17: delete field cbSize from struct NOTIFYICONDATAW expression in win_balloon::show_balloon",
           "package": "phantom-core",
-          "file": "phantom-core/src/sample_math.rs",
+          "file": "phantom-core/src/toast_notification.rs",
           "function": {
-            "function_name": "add",
-            "return_type": "-> i32",
+            "function_name": "win_balloon::show_balloon",
+            "return_type": "",
             "span": {
               "start": {
-                "line": 1,
-                "column": 1
+                "line": 114,
+                "column": 5
               },
               "end": {
-                "line": 3,
-                "column": 2
+                "line": 151,
+                "column": 6
               }
             }
           },
           "span": {
             "start": {
-              "line": 2,
-              "column": 7
+              "line": 130,
+              "column": 17
             },
             "end": {
-              "line": 2,
-              "column": 8
+              "line": 130,
+              "column": 71
             }
           },
-          "replacement": "*",
-          "genre": "BinaryOperator"
+          "replacement": "",
+          "genre": "StructField"
         }
       },
-      "summary": "CaughtMutant",
-      "log_path": "log/phantom-core__src__sample_math.rs_line_2_col_7_001.log",
-      "diff_path": "diff/phantom-core__src__sample_math.rs_line_2_col_7_001.diff",
+      "summary": "MissedMutant",
+      "log_path": "log/phantom-core__src__toast_notification.rs_line_130_col_17.log",
+      "diff_path": "diff/phantom-core__src__toast_notification.rs_line_130_col_17.diff",
       "phase_results": [
         {
           "phase": "Build",
-          "duration": 38.3587545,
+          "duration": 40.0841819,
           "process_status": "Success",
           "argv": [
             "C:\\Users\\praja\\.rustup\\toolchains\\stable-x86_64-pc-windows-gnu\\bin\\cargo.exe",
@@ -343,335 +335,8 @@
         },
         {
           "phase": "Test",
-          "duration": 3.8815972,
-          "process_status": {
-            "Failure": 101
-          },
-          "argv": [
-            "C:\\Users\\praja\\.rustup\\toolchains\\stable-x86_64-pc-windows-gnu\\bin\\cargo.exe",
-            "test",
-            "--verbose",
-            "--package=phantom-core@0.3.0"
-          ]
-        }
-      ]
-    },
-    {
-      "scenario": {
-        "Mutant": {
-          "name": "phantom-core/src/sample_math.rs:6:5: replace multiply -> i32 with 0",
-          "package": "phantom-core",
-          "file": "phantom-core/src/sample_math.rs",
-          "function": {
-            "function_name": "multiply",
-            "return_type": "-> i32",
-            "span": {
-              "start": {
-                "line": 5,
-                "column": 1
-              },
-              "end": {
-                "line": 7,
-                "column": 2
-              }
-            }
-          },
-          "span": {
-            "start": {
-              "line": 6,
-              "column": 5
-            },
-            "end": {
-              "line": 6,
-              "column": 10
-            }
-          },
-          "replacement": "0",
-          "genre": "FnValue"
-        }
-      },
-      "summary": "CaughtMutant",
-      "log_path": "log/phantom-core__src__sample_math.rs_line_6_col_5.log",
-      "diff_path": "diff/phantom-core__src__sample_math.rs_line_6_col_5.diff",
-      "phase_results": [
-        {
-          "phase": "Build",
-          "duration": 48.9600762,
+          "duration": 65.4552696,
           "process_status": "Success",
-          "argv": [
-            "C:\\Users\\praja\\.rustup\\toolchains\\stable-x86_64-pc-windows-gnu\\bin\\cargo.exe",
-            "test",
-            "--no-run",
-            "--verbose",
-            "--package=phantom-core@0.3.0"
-          ]
-        },
-        {
-          "phase": "Test",
-          "duration": 4.5922189,
-          "process_status": {
-            "Failure": 101
-          },
-          "argv": [
-            "C:\\Users\\praja\\.rustup\\toolchains\\stable-x86_64-pc-windows-gnu\\bin\\cargo.exe",
-            "test",
-            "--verbose",
-            "--package=phantom-core@0.3.0"
-          ]
-        }
-      ]
-    },
-    {
-      "scenario": {
-        "Mutant": {
-          "name": "phantom-core/src/sample_math.rs:6:5: replace multiply -> i32 with 1",
-          "package": "phantom-core",
-          "file": "phantom-core/src/sample_math.rs",
-          "function": {
-            "function_name": "multiply",
-            "return_type": "-> i32",
-            "span": {
-              "start": {
-                "line": 5,
-                "column": 1
-              },
-              "end": {
-                "line": 7,
-                "column": 2
-              }
-            }
-          },
-          "span": {
-            "start": {
-              "line": 6,
-              "column": 5
-            },
-            "end": {
-              "line": 6,
-              "column": 10
-            }
-          },
-          "replacement": "1",
-          "genre": "FnValue"
-        }
-      },
-      "summary": "CaughtMutant",
-      "log_path": "log/phantom-core__src__sample_math.rs_line_6_col_5_001.log",
-      "diff_path": "diff/phantom-core__src__sample_math.rs_line_6_col_5_001.diff",
-      "phase_results": [
-        {
-          "phase": "Build",
-          "duration": 46.9414113,
-          "process_status": "Success",
-          "argv": [
-            "C:\\Users\\praja\\.rustup\\toolchains\\stable-x86_64-pc-windows-gnu\\bin\\cargo.exe",
-            "test",
-            "--no-run",
-            "--verbose",
-            "--package=phantom-core@0.3.0"
-          ]
-        },
-        {
-          "phase": "Test",
-          "duration": 4.3432421,
-          "process_status": {
-            "Failure": 101
-          },
-          "argv": [
-            "C:\\Users\\praja\\.rustup\\toolchains\\stable-x86_64-pc-windows-gnu\\bin\\cargo.exe",
-            "test",
-            "--verbose",
-            "--package=phantom-core@0.3.0"
-          ]
-        }
-      ]
-    },
-    {
-      "scenario": {
-        "Mutant": {
-          "name": "phantom-core/src/sample_math.rs:6:5: replace multiply -> i32 with -1",
-          "package": "phantom-core",
-          "file": "phantom-core/src/sample_math.rs",
-          "function": {
-            "function_name": "multiply",
-            "return_type": "-> i32",
-            "span": {
-              "start": {
-                "line": 5,
-                "column": 1
-              },
-              "end": {
-                "line": 7,
-                "column": 2
-              }
-            }
-          },
-          "span": {
-            "start": {
-              "line": 6,
-              "column": 5
-            },
-            "end": {
-              "line": 6,
-              "column": 10
-            }
-          },
-          "replacement": "-1",
-          "genre": "FnValue"
-        }
-      },
-      "summary": "CaughtMutant",
-      "log_path": "log/phantom-core__src__sample_math.rs_line_6_col_5_002.log",
-      "diff_path": "diff/phantom-core__src__sample_math.rs_line_6_col_5_002.diff",
-      "phase_results": [
-        {
-          "phase": "Build",
-          "duration": 39.2693937,
-          "process_status": "Success",
-          "argv": [
-            "C:\\Users\\praja\\.rustup\\toolchains\\stable-x86_64-pc-windows-gnu\\bin\\cargo.exe",
-            "test",
-            "--no-run",
-            "--verbose",
-            "--package=phantom-core@0.3.0"
-          ]
-        },
-        {
-          "phase": "Test",
-          "duration": 3.8945299,
-          "process_status": {
-            "Failure": 101
-          },
-          "argv": [
-            "C:\\Users\\praja\\.rustup\\toolchains\\stable-x86_64-pc-windows-gnu\\bin\\cargo.exe",
-            "test",
-            "--verbose",
-            "--package=phantom-core@0.3.0"
-          ]
-        }
-      ]
-    },
-    {
-      "scenario": {
-        "Mutant": {
-          "name": "phantom-core/src/sample_math.rs:6:7: replace * with + in multiply",
-          "package": "phantom-core",
-          "file": "phantom-core/src/sample_math.rs",
-          "function": {
-            "function_name": "multiply",
-            "return_type": "-> i32",
-            "span": {
-              "start": {
-                "line": 5,
-                "column": 1
-              },
-              "end": {
-                "line": 7,
-                "column": 2
-              }
-            }
-          },
-          "span": {
-            "start": {
-              "line": 6,
-              "column": 7
-            },
-            "end": {
-              "line": 6,
-              "column": 8
-            }
-          },
-          "replacement": "+",
-          "genre": "BinaryOperator"
-        }
-      },
-      "summary": "CaughtMutant",
-      "log_path": "log/phantom-core__src__sample_math.rs_line_6_col_7.log",
-      "diff_path": "diff/phantom-core__src__sample_math.rs_line_6_col_7.diff",
-      "phase_results": [
-        {
-          "phase": "Build",
-          "duration": 58.2832398,
-          "process_status": "Success",
-          "argv": [
-            "C:\\Users\\praja\\.rustup\\toolchains\\stable-x86_64-pc-windows-gnu\\bin\\cargo.exe",
-            "test",
-            "--no-run",
-            "--verbose",
-            "--package=phantom-core@0.3.0"
-          ]
-        },
-        {
-          "phase": "Test",
-          "duration": 12.808080499999999,
-          "process_status": {
-            "Failure": 101
-          },
-          "argv": [
-            "C:\\Users\\praja\\.rustup\\toolchains\\stable-x86_64-pc-windows-gnu\\bin\\cargo.exe",
-            "test",
-            "--verbose",
-            "--package=phantom-core@0.3.0"
-          ]
-        }
-      ]
-    },
-    {
-      "scenario": {
-        "Mutant": {
-          "name": "phantom-core/src/sample_math.rs:6:7: replace * with / in multiply",
-          "package": "phantom-core",
-          "file": "phantom-core/src/sample_math.rs",
-          "function": {
-            "function_name": "multiply",
-            "return_type": "-> i32",
-            "span": {
-              "start": {
-                "line": 5,
-                "column": 1
-              },
-              "end": {
-                "line": 7,
-                "column": 2
-              }
-            }
-          },
-          "span": {
-            "start": {
-              "line": 6,
-              "column": 7
-            },
-            "end": {
-              "line": 6,
-              "column": 8
-            }
-          },
-          "replacement": "/",
-          "genre": "BinaryOperator"
-        }
-      },
-      "summary": "CaughtMutant",
-      "log_path": "log/phantom-core__src__sample_math.rs_line_6_col_7_001.log",
-      "diff_path": "diff/phantom-core__src__sample_math.rs_line_6_col_7_001.diff",
-      "phase_results": [
-        {
-          "phase": "Build",
-          "duration": 52.7566595,
-          "process_status": "Success",
-          "argv": [
-            "C:\\Users\\praja\\.rustup\\toolchains\\stable-x86_64-pc-windows-gnu\\bin\\cargo.exe",
-            "test",
-            "--no-run",
-            "--verbose",
-            "--package=phantom-core@0.3.0"
-          ]
-        },
-        {
-          "phase": "Test",
-          "duration": 5.2569466,
-          "process_status": {
-            "Failure": 101
-          },
           "argv": [
             "C:\\Users\\praja\\.rustup\\toolchains\\stable-x86_64-pc-windows-gnu\\bin\\cargo.exe",
             "test",
@@ -682,13 +347,13 @@
       ]
     }
   ],
-  "total_mutants": 10,
-  "missed": 0,
-  "caught": 10,
+  "total_mutants": 5,
+  "missed": 5,
+  "caught": 0,
   "timeout": 0,
   "unviable": 0,
   "success": 0,
-  "start_time": "2026-06-13T16:07:36.6151854Z",
-  "end_time": "2026-06-13T16:20:22.0414049Z",
+  "start_time": "2026-06-14T16:41:53.9922276Z",
+  "end_time": null,
   "cargo_mutants_version": "27.1.0"
 }

@@ -143,3 +143,20 @@ fn test_gate_22_blocked_unix_sensitive() {
     let gate = ToolGate::default();
     assert!(!gate.validate_file_access("/etc/shadow"));
 }
+
+#[test]
+fn test_gate_23_system_directory_is_blocked_even_if_allowed() {
+    let mut gate = ToolGate::default();
+    gate.add_allowed_path("/etc".to_string());
+    gate.add_allowed_path("c:\\windows".to_string());
+    gate.add_allowed_path("/my_allowed_dir".to_string());
+    
+    // System directories must be blocked
+    assert!(!gate.validate_file_access("/etc/passwd"));
+    assert!(!gate.validate_file_access("c:\\windows\\system32\\cmd.exe"));
+    
+    // Non-system allowed directory must be allowed
+    assert!(gate.validate_file_access("/my_allowed_dir/file.txt"));
+}
+
+

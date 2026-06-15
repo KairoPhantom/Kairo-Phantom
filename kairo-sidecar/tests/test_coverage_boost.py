@@ -1368,18 +1368,26 @@ class TestRouterExtraCoverage:
                 assert res is None
 
     def test_dispatch_create_from_scratch_exception(self):
+        """Test that _dispatch_create_from_scratch falls back to default doc on LLM failure."""
         from sidecar.router import DomainMasterRouter
         router = DomainMasterRouter()
-        
-        with patch("urllib.request.urlopen", side_effect=Exception("Connection refused")):
+
+        fake_docx = "/tmp/kairo_test.docx"
+        fake_pptx = "/tmp/kairo_test.pptx"
+        fake_xlsx = "/tmp/kairo_test.xlsx"
+
+        with patch("urllib.request.urlopen", side_effect=Exception("Connection refused")), \
+             patch("sidecar.creators.docx_creator.DocxCreator.create_and_open", return_value=fake_docx), \
+             patch("sidecar.creators.pptx_creator.PptxCreator.create_and_open", return_value=fake_pptx), \
+             patch("sidecar.creators.xlsx_creator.XlsxCreator.create_and_open", return_value=fake_xlsx):
             res = router._dispatch_create_from_scratch("word", "Create document")
             assert isinstance(res, str)
             assert res.endswith(".docx")
-            
+
             res_ppt = router._dispatch_create_from_scratch("powerpoint", "Create ppt")
             assert isinstance(res_ppt, str)
             assert res_ppt.endswith(".pptx")
-            
+
             res_xls = router._dispatch_create_from_scratch("excel", "Create xls")
             assert isinstance(res_xls, str)
             assert res_xls.endswith(".xlsx")

@@ -26,6 +26,10 @@ impl ToolGate {
         }
     }
 
+    pub fn add_allowed_path(&mut self, path: String) {
+        self.allowed_paths.insert(path);
+    }
+
     pub fn validate_file_access(&self, path: &str) -> bool {
         // Enforce: Never write to C:\Windows or /etc
         if path.to_lowercase().starts_with("c:\\windows") || path.starts_with("/etc") {
@@ -37,8 +41,9 @@ impl ToolGate {
         let is_allowed = self.allowed_paths.iter().any(|allowed| path.starts_with(allowed));
         if !is_allowed {
             warn!("🚨 ToolGate: Blocked access to unapproved path: {}", path);
+            return false;
         }
-        is_allowed
+        true
     }
 
     pub fn validate_token_usage(&self, tokens_requested: usize) -> bool {
@@ -53,7 +58,8 @@ impl ToolGate {
         let allowed = agent_allowlist.contains(&tool_name);
         if !allowed {
             warn!("🚨 ToolGate: Agent attempted to call unauthorized tool: {}", tool_name);
+            return false;
         }
-        allowed
+        true
     }
 }
