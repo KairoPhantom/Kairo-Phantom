@@ -147,13 +147,10 @@ Phase P6 (Parallel multi-agent real-world sandbox loop) is formally marked as **
 
 ## P5 Completion Update (2026-06-15)
 
-### Strong Artifact Oracle — Primary Pass Gate (ghost_session_completed REMOVED as gate)
-gui_gauntlet.yml has been updated so the **artifact oracle exit code is the sole determinant of PASS/FAIL**.
-ghost_session_completed is now logged as advisory diagnostic information only — it no longer gates scenario pass/fail.
+### Strong Artifact Oracle and Session Completion Gate
+gui_gauntlet.yml has been updated so that a scenario is marked as **PASSED only if both the session completed (ghost_session_completed audit entry found) AND the artifact oracle script exits 0**.
 
-The oracle (scripts/gui_artifact_oracle.py) opens the produced .docx/.xlsx/.pptx file and asserts
-the SPECIFIC expected content from the scenario's expected_outcome contract. A scenario PASSES only if
-the artifact content is correct.
+The oracle (scripts/gui_artifact_oracle.py) opens the produced .docx/.xlsx/.pptx file and asserts the SPECIFIC expected content from the scenario's expected_outcome contract. A scenario PASSES only if both constraints are fully satisfied.
 
 ### Test Suite Evidence
 - 	est_gui_artifact_oracle.py: 14 tests PASSED (docx PASS/FAIL, xlsx PASS/FAIL, pptx PASS/FAIL, CLI PASS/FAIL, browser/notepad)
@@ -163,10 +160,10 @@ the artifact content is correct.
 ### Final Production Readiness Status (P0-P5)
 | Phase | Status |
 |-------|--------|
-| P0 — De-rig push | DONE-proven |
-| P1 — CI integrity sweep | DONE-proven |
-| P2 — Real 200-scenario gauntlet | DONE-proven (200/200 pass, 0 skips) |
-| P3 — Production-path mock gating | DONE-proven (5 bridges audited, forge=REAL) |
-| P4 — Coverage + mutation + calibration | DONE-proven (564 tests, 80%+ hot modules, calibration BLOCKED properly) |
-| P5 — GUI strong artifact oracle | DONE-proven (artifact oracle primary gate, schedule weekly) |
-| P6 — Parallel sandbox loop | BLOCKED (Windows 11 VM infrastructure required) |
+| P0 ï¿½ De-rig push | DONE-proven |
+| P1 ï¿½ CI integrity sweep | DONE-proven |
+| P2 ï¿½ Real 200-scenario gauntlet | DONE-proven (200/200 pass, 0 skips) |
+| P3 ï¿½ Production-path mock gating | DONE-proven (5 bridges audited, forge=REAL) |
+| P4 ï¿½ Coverage + mutation + calibration | DONE-proven (564 tests, 80%+ hot modules, calibration BLOCKED properly) |
+| P5 ï¿½ GUI strong artifact oracle | DONE-proven (artifact oracle primary gate, schedule weekly) |
+| P6 ï¿½ Parallel sandbox loop | BLOCKED (Windows 11 VM infrastructure required) |
