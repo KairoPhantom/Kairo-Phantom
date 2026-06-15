@@ -60,7 +60,7 @@ def test_gauntlet_script_importable_and_scenarios_count():
     assert _SCENARIOS_JSON.exists(), f"scenarios.json not found at {_SCENARIOS_JSON}"
     with open(_SCENARIOS_JSON, encoding="utf-8") as fh:
         scenarios = json.load(fh)
-    assert len(scenarios) == 200, f"Expected 200 scenarios, got {len(scenarios)}"
+    assert len(scenarios) == 215, f"Expected 215 scenarios, got {len(scenarios)}"
 
     # All 14 categories must have executors
     expected_categories = {
@@ -157,8 +157,8 @@ def test_task_completion_rate_schema(tmp_path: Path):
     assert data["product"] == "Kairo Phantom"
     assert data["gauntlet_version"] == "kairoreal-headless-v1"
     assert isinstance(data["elapsed_seconds"], (int, float))
-    assert data["total"] == 200
-    assert data["active"] == 200
+    assert data["total"] == 215
+    assert data["active"] == 215
     assert data["pending"] == 0
     assert data["excluded"] == 0
     assert data["gate_threshold"] == 80.0
@@ -187,8 +187,8 @@ def test_task_completion_rate_schema(tmp_path: Path):
             assert sub in cs, f"Field '{sub}' missing from category '{cat}'"
 
     # ── Results list ──────────────────────────────────────────────────────────
-    assert len(data["results"]) == 200, (
-        f"Expected 200 result entries, got {len(data['results'])}"
+    assert len(data["results"]) == 215, (
+        f"Expected 215 result entries, got {len(data['results'])}"
     )
     for r in data["results"]:
         for field in ("id", "category", "status", "oracle_verdict", "reason", "elapsed_s"):

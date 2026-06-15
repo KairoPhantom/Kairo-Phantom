@@ -2645,5 +2645,207 @@
       "count": 24,
       "max_seconds": 2.5
     }
+  },
+  {
+    "id": "WORD_016",
+    "category": "Word",
+    "name": "Word Scenario 16: Insert End Paragraph",
+    "description": "Validate Word master/writer on prompt: Insert paragraph 'Conclusion and Next Steps' with style 'Heading 1' after paragraph 2",
+    "prompt": "Insert paragraph 'Conclusion and Next Steps' with style 'Heading 1' after paragraph 2",
+    "status": "active",
+    "expected_outcome": {
+      "action": "insert_paragraph",
+      "after_paragraph_index": 2,
+      "text": "Conclusion and Next Steps",
+      "style": "Heading 1"
+    }
+  },
+  {
+    "id": "WORD_017",
+    "category": "Word",
+    "name": "Word Scenario 17: Append Board Approval",
+    "description": "Validate Word master/writer on prompt: Append ' (approved by board)' to paragraph 2",
+    "prompt": "Append ' (approved by board)' to paragraph 2",
+    "status": "active",
+    "expected_outcome": {
+      "action": "append_to_run",
+      "paragraph_index": 2,
+      "text": " (approved by board)"
+    }
+  },
+  {
+    "id": "WORD_018",
+    "category": "Word",
+    "name": "Word Scenario 18: Insert 5x2 Table",
+    "description": "Validate Word master/writer on prompt: Insert a table with 5 rows and 2 columns after paragraph 1",
+    "prompt": "Insert a table with 5 rows and 2 columns after paragraph 1",
+    "status": "active",
+    "expected_outcome": {
+      "action": "insert_table",
+      "paragraph_index": 1,
+      "rows": 5,
+      "cols": 2
+    }
+  },
+  {
+    "id": "EXCEL_016",
+    "category": "Excel",
+    "name": "Excel Scenario 16: Write Status Cell",
+    "description": "Validate Excel master/writer on prompt: Write 'Status' to cell E1",
+    "prompt": "Write 'Status' to cell E1",
+    "status": "active",
+    "expected_outcome": {
+      "action": "write_cell",
+      "cell": "E1",
+      "value": "Status"
+    }
+  },
+  {
+    "id": "EXCEL_017",
+    "category": "Excel",
+    "name": "Excel Scenario 17: Write Sum Formula",
+    "description": "Validate Excel master/writer on prompt: Write '=SUM(A1:D1)' to cell E2",
+    "prompt": "Write '=SUM(A1:D1)' to cell E2",
+    "status": "active",
+    "expected_outcome": {
+      "action": "write_cell",
+      "cell": "E2",
+      "formula": "=SUM(A1:D1)"
+    }
+  },
+  {
+    "id": "EXCEL_018",
+    "category": "Excel",
+    "name": "Excel Scenario 18: Write Range Matrix",
+    "description": "Validate Excel master/writer on prompt: Write values [['Q1', 'Q2'], [100, 200]] to range A1:B2",
+    "prompt": "Write values [['Q1', 'Q2'], [100, 200]] to range A1:B2",
+    "status": "active",
+    "expected_outcome": {
+      "action": "write_range",
+      "range": "A1:B2",
+      "values": [
+        [
+          "Q1",
+          "Q2"
+        ],
+        [
+          100,
+          200
+        ]
+      ]
+    }
+  },
+  {
+    "id": "PPT_016",
+    "category": "PPT",
+    "name": "PowerPoint Scenario 16: Multi-Slide Presentation",
+    "description": "Validate PowerPoint master on prompt: Create a new presentation with 8 slides",
+    "prompt": "Create a new presentation with 8 slides",
+    "status": "active",
+    "expected_outcome": {
+      "action": "create_presentation",
+      "slides": 8
+    }
+  },
+  {
+    "id": "PPT_017",
+    "category": "PPT",
+    "name": "PowerPoint Scenario 17: Change Slide Layout",
+    "description": "Validate PowerPoint master on prompt: Set slide 2 layout to Title Slide",
+    "prompt": "Set slide 2 layout to Title Slide",
+    "status": "active",
+    "expected_outcome": {
+      "action": "slide_layout",
+      "cursor_slide": 2,
+      "expected_layout": "Title Slide"
+    }
+  },
+  {
+    "id": "PPT_018",
+    "category": "PPT",
+    "name": "PowerPoint Scenario 18: Context Slide Extraction",
+    "description": "Validate PowerPoint master on prompt: Extract context from presentation with 7 slides and cursor at slide 3",
+    "prompt": "Extract context from presentation with 7 slides and cursor at slide 3",
+    "status": "active",
+    "expected_outcome": {
+      "action": "extract_context",
+      "expected_slide_count": 7,
+      "cursor_slide": 3
+    }
+  },
+  {
+    "id": "NOTEPAD_001",
+    "category": "Notepad",
+    "name": "Notepad Scenario 01: Write Todo List",
+    "description": "Validate Notepad plain text on prompt: Write a plain text todo list with tasks: Buy milk, Write code, Run tests",
+    "prompt": "Write a plain text todo list with tasks: Buy milk, Write code, Run tests",
+    "status": "active",
+    "expected_outcome": {
+      "action": "write_text",
+      "contains": "Buy milk"
+    }
+  },
+  {
+    "id": "NOTEPAD_002",
+    "category": "Notepad",
+    "name": "Notepad Scenario 02: Append System Status",
+    "description": "Validate Notepad plain text on prompt: Append 'System status: OK' to the document",
+    "prompt": "Append 'System status: OK' to the document",
+    "status": "active",
+    "expected_outcome": {
+      "action": "append_text",
+      "contains": "System status: OK"
+    }
+  },
+  {
+    "id": "NOTEPAD_003",
+    "category": "Notepad",
+    "name": "Notepad Scenario 03: Windows CRLF Formatting",
+    "description": "Validate Notepad plain text on prompt: Format document with Windows CRLF line endings",
+    "prompt": "Format document with Windows CRLF line endings",
+    "status": "active",
+    "expected_outcome": {
+      "action": "format_text",
+      "crlf": true
+    }
+  },
+  {
+    "id": "BROWSER_001",
+    "category": "Browser",
+    "name": "Browser Scenario 01: Join Yjs Peer Session",
+    "description": "Validate Browser Yjs editor on prompt: Join the Yjs collaboration session as a peer helper",
+    "prompt": "Join the Yjs collaboration session as a peer helper",
+    "status": "gui_only",
+    "expected_outcome": {
+      "action": "collaborative_peer",
+      "clientid_prefix": "kairo-ai-"
+    },
+    "gui_only": true
+  },
+  {
+    "id": "BROWSER_002",
+    "category": "Browser",
+    "name": "Browser Scenario 02: Verify Awareness Marker",
+    "description": "Validate Browser Yjs editor on prompt: Verify that collaborators can see the AI awareness marker on the page",
+    "prompt": "Verify that collaborators can see the AI awareness marker on the page",
+    "status": "gui_only",
+    "expected_outcome": {
+      "action": "awareness_marker",
+      "awareness_marker_visible": true
+    },
+    "gui_only": true
+  },
+  {
+    "id": "BROWSER_003",
+    "category": "Browser",
+    "name": "Browser Scenario 03: Verify Active DOM Injection",
+    "description": "Validate Browser Yjs editor on prompt: Generate the paragraph 'Welcome to the Team' in the collaborative editor",
+    "prompt": "Generate the paragraph 'Welcome to the Team' in the collaborative editor",
+    "status": "gui_only",
+    "expected_outcome": {
+      "action": "verify_dom_text",
+      "contains": "Welcome to the Team"
+    },
+    "gui_only": true
   }
 ]

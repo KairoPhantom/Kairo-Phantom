@@ -275,8 +275,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\praja\\OneDrive\\Desktop\\test-env\\repositories\\kairo-phantom\\kairo-sidecar\\sidecar\\parsers\\forge_bridge.py": {
-    "mtime": 1781278841.9358122,
-    "ast_hash": "7f334951d5cb2ec2bbdcedc4e119adeb",
+    "mtime": 1781549037.384542,
+    "ast_hash": "e5f24cfb885c60105e267487ef7636db",
     "semantic_hash": ""
   },
   "C:\\Users\\praja\\OneDrive\\Desktop\\test-env\\repositories\\kairo-phantom\\kairo-sidecar\\sidecar\\parsers\\legal_redline.py": {
@@ -1725,8 +1725,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\praja\\OneDrive\\Desktop\\test-env\\repositories\\kairo-phantom\\.github\\workflows\\gui_gauntlet.yml": {
-    "mtime": 1781287436.2281694,
-    "ast_hash": "177ca9149931ec5a4ccafdc6f6608052",
+    "mtime": 1781549679.4621708,
+    "ast_hash": "4f82b0644bde35ca8fd40844d047459e",
     "semantic_hash": ""
   },
   "C:\\Users\\praja\\OneDrive\\Desktop\\test-env\\repositories\\kairo-phantom\\.github\\workflows\\release-mac.yml": {
@@ -4680,8 +4680,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\praja\\OneDrive\\Desktop\\test-env\\repositories\\kairo-phantom\\PROJECT.md": {
-    "mtime": 1781538700.4091213,
-    "ast_hash": "7958bcb6796d64383f4d897485d303dc",
+    "mtime": 1781545859.973724,
+    "ast_hash": "d7335953a9b50b15cf494036661683ae",
     "semantic_hash": ""
   },
   "C:\\Users\\praja\\OneDrive\\Desktop\\test-env\\repositories\\kairo-phantom\\.agents\\original_prompt.md": {
@@ -6995,13 +6995,13 @@
     "semantic_hash": ""
   },
   "C:\\Users\\praja\\OneDrive\\Desktop\\test-env\\repositories\\kairo-phantom\\phantom-core\\calibration_data.json": {
-    "mtime": 1781454745.584279,
-    "ast_hash": "5496236372bb7a5415d0b7260d8aa75a",
+    "mtime": 1781546437.028567,
+    "ast_hash": "c24836267eeaa1512a99496023f43520",
     "semantic_hash": ""
   },
   "C:\\Users\\praja\\OneDrive\\Desktop\\test-env\\repositories\\kairo-phantom\\phantom-core\\task_completion_rate.json": {
-    "mtime": 1781454746.7576716,
-    "ast_hash": "ebf62fa84874e63ba554ac225465335a",
+    "mtime": 1781546437.5537863,
+    "ast_hash": "2e06669db12e0c4607f6b5e8d16d1bd0",
     "semantic_hash": ""
   },
   "C:\\Users\\praja\\OneDrive\\Desktop\\test-env\\repositories\\kairo-phantom\\phantom-core\\tests\\test_calibration_reliability.rs": {
@@ -7015,7 +7015,7 @@
     "semantic_hash": ""
   },
   "C:\\Users\\praja\\OneDrive\\Desktop\\test-env\\repositories\\kairo-phantom\\phantom-core\\reliability_report.md": {
-    "mtime": 1781454745.5855005,
+    "mtime": 1781546437.0300605,
     "ast_hash": "60d73f6af568320d58c990e26122be26",
     "semantic_hash": ""
   },
@@ -7035,8 +7035,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\praja\\OneDrive\\Desktop\\test-env\\repositories\\kairo-phantom\\scenarios.json": {
-    "mtime": 1781539182.8509245,
-    "ast_hash": "f9e83e5c1e00216b33cd5a608cf16ad6",
+    "mtime": 1781549109.5605707,
+    "ast_hash": "beefe79a8111df0d8fdbba44f14ab2cd",
     "semantic_hash": ""
   },
   "C:\\Users\\praja\\OneDrive\\Desktop\\test-env\\repositories\\kairo-phantom\\kairo-sidecar\\tests\\test_air_gap_validation.py": {
@@ -7075,8 +7075,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\praja\\OneDrive\\Desktop\\test-env\\repositories\\kairo-phantom\\task_completion_rate.json": {
-    "mtime": 1781539467.1179907,
-    "ast_hash": "645e3ca09960fd75101d54ff41dea773",
+    "mtime": 1781549821.324134,
+    "ast_hash": "7f5848bab450e285cd387699ecbc540a",
     "semantic_hash": ""
   },
   "C:\\Users\\praja\\OneDrive\\Desktop\\test-env\\repositories\\kairo-phantom\\test_run_report.json": {
@@ -7090,13 +7090,13 @@
     "semantic_hash": ""
   },
   "C:\\Users\\praja\\OneDrive\\Desktop\\test-env\\repositories\\kairo-phantom\\kairo-sidecar\\tests\\test_kairoreal_gauntlet.py": {
-    "mtime": 1781539303.601602,
-    "ast_hash": "d4f19037042b196ca64f0fcea2bf6c04",
+    "mtime": 1781549429.9826822,
+    "ast_hash": "d33fb00ffb8595353352f491cc4c349b",
     "semantic_hash": ""
   },
   "C:\\Users\\praja\\OneDrive\\Desktop\\test-env\\repositories\\kairo-phantom\\scripts\\run_kairoreal_gauntlet.py": {
-    "mtime": 1781539457.040296,
-    "ast_hash": "bb59f6e110263f21b65227d51c0885ea",
+    "mtime": 1781543761.1803317,
+    "ast_hash": "e8278ed1393834150864b07f3a254498",
     "semantic_hash": ""
   },
   "C:\\Users\\praja\\OneDrive\\Desktop\\test-env\\repositories\\kairo-phantom\\.agents\\explorer_investigate_gauntlet\\BRIEFING.md": {
@@ -7220,18 +7220,18 @@
     "semantic_hash": ""
   },
   "C:\\Users\\praja\\OneDrive\\Desktop\\test-env\\repositories\\kairo-phantom\\kairo-sidecar\\calibration_set.json": {
-    "mtime": 1781430094.6060917,
-    "ast_hash": "18ed7b5891aa18757fc7b09b0d39f12a",
+    "mtime": 1781541074.6057346,
+    "ast_hash": "830556d0834dd168241a46572e842dcc",
     "semantic_hash": ""
   },
   "C:\\Users\\praja\\OneDrive\\Desktop\\test-env\\repositories\\kairo-phantom\\kairo-sidecar\\training_state.json": {
-    "mtime": 1781540595.0875053,
+    "mtime": 1781549955.210417,
     "ast_hash": "3ef74ca14ca3cd922f65864eacc5886d",
     "semantic_hash": ""
   },
   "C:\\Users\\praja\\OneDrive\\Desktop\\test-env\\repositories\\kairo-phantom\\kairo-sidecar\\tests\\test_sm3_sm4.py": {
-    "mtime": 1781430208.8168883,
-    "ast_hash": "81c4e189a1d125a45ef429b990816174",
+    "mtime": 1781541232.2407222,
+    "ast_hash": "135db7090046864cd99c121f0c6724a7",
     "semantic_hash": ""
   },
   "C:\\Users\\praja\\OneDrive\\Desktop\\test-env\\repositories\\kairo-phantom\\kairo-sidecar\\tests\\test_test_generator.py": {
@@ -7255,8 +7255,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\praja\\OneDrive\\Desktop\\test-env\\repositories\\kairo-phantom\\PRODUCTION_READINESS_REPORT.md": {
-    "mtime": 1781449950.759082,
-    "ast_hash": "f6655ea9faac5ec6bad5e9acee809f16",
+    "mtime": 1781549703.4061913,
+    "ast_hash": "81fd621132adc6332fa9b31bccb7c4b3",
     "semantic_hash": ""
   },
   "C:\\Users\\praja\\OneDrive\\Desktop\\test-env\\repositories\\kairo-phantom\\.agents\\orchestrator_v6\\BRIEFING.md": {
@@ -7452,6 +7452,26 @@
   "C:\\Users\\praja\\OneDrive\\Desktop\\test-env\\repositories\\kairo-phantom\\phantom-core\\mutants_real.out\\mutants.out.old\\unviable.txt": {
     "mtime": 1781465411.0993252,
     "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\praja\\OneDrive\\Desktop\\test-env\\repositories\\kairo-phantom\\kairo-sidecar\\tests\\test_gui_artifact_oracle.py": {
+    "mtime": 1781549619.8221476,
+    "ast_hash": "8ef95956871257c43ec3976d425005b5",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\praja\\OneDrive\\Desktop\\test-env\\repositories\\kairo-phantom\\kairo-sidecar\\tests\\test_gui_gauntlet_report_merger.py": {
+    "mtime": 1781549497.1746328,
+    "ast_hash": "84d4881f89e7bf293dac34a9bfc73ab9",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\praja\\OneDrive\\Desktop\\test-env\\repositories\\kairo-phantom\\scripts\\gui_artifact_oracle.py": {
+    "mtime": 1781549641.61971,
+    "ast_hash": "4c718b810007191cc76e8dbce80e5094",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\praja\\OneDrive\\Desktop\\test-env\\repositories\\kairo-phantom\\scripts\\gui_gauntlet_report_merger.py": {
+    "mtime": 1781549487.788393,
+    "ast_hash": "16df687a9fab6ffef1fc8a1031718e01",
     "semantic_hash": ""
   }
 }

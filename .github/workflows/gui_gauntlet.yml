@@ -21,6 +21,8 @@
 name: GUI Gauntlet (Windows 11 Real Apps)
 
 on:
+  schedule:
+    - cron: '0 2 * * 1'
   workflow_dispatch:
     inputs:
       scenarios:
@@ -76,6 +78,17 @@ jobs:
         with:
           workspaces: "phantom-core"
           key: gui-gauntlet-${{ matrix.scenario_group }}
+
+      # ── Python Setup ────────────────────────────────────────────────────────
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install sidecar requirements
+        shell: pwsh
+        run: |
+          pip install -r kairo-sidecar/requirements.txt
 
       # ── Office installation ─────────────────────────────────────────────────
       - name: Install Microsoft Office (Word + Excel + PowerPoint)
@@ -155,13 +168,13 @@ jobs:
           $screenshotDir = "gui-screenshots\$group"
           New-Item -ItemType Directory -Force -Path $screenshotDir | Out-Null
 
-          # Map scenario group to test IDs from kairo_gauntlet_graph.json
+          # Map scenario group to test IDs from scenarios.json
           $scenarioMap = @{
-            word        = @("WORD-001","WORD-002","WORD-003","WORD-004","WORD-005","WORD-006","WORD-007")
-            excel       = @("EXCEL-001","EXCEL-002","EXCEL-003")
-            powerpoint  = @("PPT-001","PPT-002","PPT-003")
-            notepad     = @("NOTEPAD-001","NOTEPAD-002")
-            browser     = @("BROWSER-001")
+            word        = @("WORD_001","WORD_002","WORD_003","WORD_004","WORD_005","WORD_006","WORD_007","WORD_008","WORD_009","WORD_010","WORD_011","WORD_012","WORD_013")
+            excel       = @("EXCEL_001","EXCEL_002","EXCEL_003","EXCEL_004","EXCEL_005","EXCEL_006","EXCEL_007","EXCEL_008","EXCEL_009","EXCEL_010")
+            powerpoint  = @("PPT_001","PPT_002","PPT_003","PPT_004","PPT_005","PPT_006","PPT_007","PPT_008")
+            notepad     = @("NOTEPAD_001","NOTEPAD_002","NOTEPAD_003")
+            browser     = @("BROWSER_001","BROWSER_002","BROWSER_003")
           }
 
           $scenarios = $scenarioMap[$group]
@@ -171,12 +184,12 @@ jobs:
             Write-Host "  ▶ Scenario: $scenarioId" -ForegroundColor Cyan
             $start = Get-Date
 
-            # Read scenario definition from gauntlet graph
-            $graph = Get-Content "roadmaptoshow\output\kairo_gauntlet_graph.json" | ConvertFrom-Json
-            $scenario = $graph.scenarios | Where-Object { $_.id -eq $scenarioId }
+            # Read scenario definition from scenarios.json
+            $scenariosData = Get-Content "scenarios.json" -Raw | ConvertFrom-Json
+            $scenario = $scenariosData | Where-Object { $_.id -eq $scenarioId }
 
             if (-not $scenario) {
-              Write-Warning "  ⚠️  Scenario $scenarioId not found in gauntlet graph — skipping"
+              Write-Warning "  ⚠️  Scenario $scenarioId not found in scenarios database — skipping"
               continue
             }
 
@@ -192,7 +205,21 @@ jobs:
               error   = ""
             }
 
+            $tempDir = [System.IO.Path]::GetTempPath()
+            $artifactPath = ""
+            switch -Regex ($appName) {
+              "Word"       { $artifactPath = Join-Path $tempDir "kairo_temp_$scenarioId.docx" }
+              "Excel"      { $artifactPath = Join-Path $tempDir "kairo_temp_$scenarioId.xlsx" }
+              "PowerPoint" { $artifactPath = Join-Path $tempDir "kairo_temp_$scenarioId.pptx" }
+              "Notepad"    { $artifactPath = Join-Path $tempDir "kairo_temp_$scenarioId.txt" }
+              default      { $artifactPath = Join-Path $tempDir "kairo_temp_$scenarioId.txt" }
+            }
+
             try {
+              if (Test-Path $artifactPath) {
+                Remove-Item $artifactPath -Force -ErrorAction SilentlyContinue
+              }
+
               # Open app via PowerShell
               switch -Regex ($appName) {
                 "Word"       { Start-Process WINWORD.EXE  -WindowStyle Normal }
@@ -215,6 +242,45 @@ jobs:
               $timeout = [int]$env:KAIRO_TEST_TIMEOUT / 1000
               Start-Sleep -Seconds $timeout
 
+              # COM Automation Saving
+              Write-Host "    Saving active document to $artifactPath via COM..."
+              switch -Regex ($appName) {
+                "Word" {
+                  $wordApp = [System.Runtime.InteropServices.Marshal]::GetActiveObject("Word.Application")
+                  $activeDoc = $wordApp.ActiveDocument
+                  $tempDoc = $wordApp.Documents.Add()
+                  $activeDoc.Content.Copy()
+                  $tempDoc.Content.Paste()
+                  $tempDoc.SaveAs($artifactPath)
+                  $tempDoc.Close(0)
+                }
+                "Excel" {
+                  $excelApp = [System.Runtime.InteropServices.Marshal]::GetActiveObject("Excel.Application")
+                  $activeWorkbook = $excelApp.ActiveWorkbook
+                  $activeWorkbook.SaveCopyAs($artifactPath)
+                }
+                "PowerPoint" {
+                  $pptApp = [System.Runtime.InteropServices.Marshal]::GetActiveObject("PowerPoint.Application")
+                  $activePres = $pptApp.ActivePresentation
+                  $activePres.SaveCopyAs($artifactPath)
+                }
+                "Notepad" {
+                  $wshell = New-Object -ComObject wscript.shell
+                  $wshell.AppActivate("Notepad")
+                  Start-Sleep -Milliseconds 500
+                  $wshell.SendKeys("^s")  # Ctrl+S opens Save dialog
+                  Start-Sleep -Seconds 1
+                  $wshell.SendKeys($artifactPath)
+                  Start-Sleep -Milliseconds 500
+                  $wshell.SendKeys("{ENTER}")
+                  Start-Sleep -Seconds 1
+                }
+                default {
+                  # For Browser or other, create dummy file
+                  New-Item -ItemType File -Path $artifactPath -Force | Out-Null
+                }
+              }
+
               # Take screenshot for artefact
               $screenshotPath = "$screenshotDir\${scenarioId}.png"
               Add-Type -AssemblyName System.Windows.Forms
@@ -226,16 +292,43 @@ jobs:
               $graphics.Dispose()
               $bitmap.Dispose()
 
-              # Verify audit log contains the scenario completion
-              $auditLog = Get-Content "$env:USERPROFILE\.kairo-phantom\audit.jsonl" -ErrorAction SilentlyContinue | Select-Object -Last 10
-              $found = $auditLog | Where-Object { $_ -match "ghost_session_completed" }
-              
-              if ($found) {
-                $result.status = "PASSED"
-                Write-Host "    ✅ PASSED" -ForegroundColor Green
+              # Run the strong artifact-level oracle (P5 — primary pass criterion)
+              # The oracle opens the produced artifact and asserts specific expected content.
+              # A scenario PASSES only if the artifact content is correct (oracle exit 0).
+              Write-Host "    Running gui_artifact_oracle.py (strong artifact oracle)..."
+              python scripts/gui_artifact_oracle.py --scenario-id $scenarioId --artifact-path $artifactPath --scenarios-json scenarios.json
+              $oracleExitCode = $LASTEXITCODE
+              Write-Host "    Oracle exit code: $oracleExitCode"
+
+              # Check audit log to ensure the session completed
+              $auditLog = Get-Content "$env:USERPROFILE\.kairo-phantom\audit.jsonl" -ErrorAction SilentlyContinue
+              $sessionFound = $auditLog | Where-Object { $_ -match "ghost_session_completed" }
+
+              if ($sessionFound) {
+                Write-Host "    ℹ️  Audit log: ghost_session_completed entry found" -ForegroundColor Cyan
               } else {
-                $result.status = "NO_AUDIT_ENTRY"
-                Write-Host "    ⚠️  No audit entry found — injection may have failed" -ForegroundColor Yellow
+                Write-Host "    ⚠️  Audit log: ghost_session_completed entry NOT found" -ForegroundColor Yellow
+              }
+
+              # PRIMARY GATE: both session completed AND artifact oracle verified correct content
+              if ($sessionFound -and ($oracleExitCode -eq 0)) {
+                $result.status = "PASSED"
+                Write-Host "    ✅ PASSED (session completed and artifact oracle verified correct content)" -ForegroundColor Green
+              } else {
+                if (-not $sessionFound) {
+                  $result.status = "SESSION_INCOMPLETE"
+                  $result.error = "Audit log check failed — ghost_session_completed entry not found"
+                  Write-Host "    ❌ SESSION_INCOMPLETE — session did not complete" -ForegroundColor Red
+                } else {
+                  $result.status = "ORACLE_FAILED"
+                  $result.error = "Artifact oracle failed — produced content does not match expected_outcome contract"
+                  Write-Host "    ❌ ORACLE_FAILED — artifact content check failed" -ForegroundColor Red
+                }
+              }
+
+              # Clean up temp artifact
+              if (Test-Path $artifactPath) {
+                Remove-Item $artifactPath -Force -ErrorAction SilentlyContinue
               }
 
               # Close the app
@@ -252,6 +345,21 @@ jobs:
               $result.status = "ERROR"
               $result.error  = $_.Exception.Message
               Write-Host "    ❌ ERROR: $($_.Exception.Message)" -ForegroundColor Red
+
+              # Clean up temp artifact on error
+              if (Test-Path $artifactPath) {
+                Remove-Item $artifactPath -Force -ErrorAction SilentlyContinue
+              }
+
+              # Close the app on error
+              switch -Regex ($appName) {
+                "Word"       { Get-Process WINWORD  -ErrorAction SilentlyContinue | Stop-Process -Force }
+                "Excel"      { Get-Process EXCEL    -ErrorAction SilentlyContinue | Stop-Process -Force }
+                "PowerPoint" { Get-Process POWERPNT -ErrorAction SilentlyContinue | Stop-Process -Force }
+                "Notepad"    { Get-Process notepad  -ErrorAction SilentlyContinue | Stop-Process -Force }
+                "Chrome"     { Get-Process chrome   -ErrorAction SilentlyContinue | Stop-Process -Force }
+              }
+              Start-Sleep -Seconds 1
             }
 
             $result.elapsed = [int]((Get-Date) - $start).TotalMilliseconds
@@ -302,6 +410,9 @@ jobs:
     if: always()
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Download all gauntlet artefacts
         uses: actions/download-artifact@v4
         with:
@@ -309,35 +420,16 @@ jobs:
           merge-multiple: true
           path: all-results/
 
-      - name: Build consolidated report
+      - name: Run GUI Gauntlet Report Merger
         shell: bash
         run: |
-          echo "{ \"run\": ${{ github.run_number }}, \"groups\": [" > report.json
-          first=true
-          for f in all-results/*/results.json; do
-            if [ "$first" = false ]; then echo "," >> report.json; fi
-            cat "$f" >> report.json
-            first=false
-          done
-          echo "]}" >> report.json
-          
-          echo "════ GUI GAUNTLET FINAL REPORT ════"
-          cat report.json | python3 -c "
-          import json, sys
-          data = json.load(sys.stdin)
-          results = data.get('groups', [])
-          if isinstance(results, list):
-              flat = [r for group in results for r in (group if isinstance(group, list) else [group])]
-              passed = sum(1 for r in flat if r.get('status') == 'PASSED')
-              total  = len(flat)
-              print(f'Total: {passed}/{total} passed ({100*passed//total if total else 0}%)')
-          "
+          python3 scripts/gui_gauntlet_report_merger.py --dir all-results/ --gate-threshold 80.0
 
       - name: Upload consolidated report
         uses: actions/upload-artifact@v4
         with:
           name: gui-gauntlet-report-${{ github.run_number }}
-          path: report.json
+          path: gui_gauntlet_report.json
 
       - name: Aggregate E2E Task Completion Rates
         shell: bash

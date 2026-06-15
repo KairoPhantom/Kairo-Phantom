@@ -1,3 +1,12 @@
+# ==============================================================================
+# DISPOSITION: REAL (No Mock Patterns)
+# ------------------------------------------------------------------------------
+# This module implements the Excel formula syntax validation and auto-correction.
+# It functions entirely deterministically using pure Python regex parsing, token
+# inspection, and argument validation lookup tables. It does NOT utilize mock
+# stubs, simulated outputs, or external LLM connections to achieve its outcomes.
+# ==============================================================================
+
 """
 Forge Validator — Pure-Python deterministic Excel formula validation for Kairo Phantom.
 ======================================================================================

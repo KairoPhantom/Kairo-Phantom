@@ -1,40 +1,40 @@
 {
   "product": "Kairo Phantom",
   "gauntlet_version": "kairoreal-headless-v1",
-  "run_at": "2026-06-15T17:50:46.636596+00:00",
-  "elapsed_seconds": 7.62,
-  "total": 200,
-  "active": 200,
+  "run_at": "2026-06-15T19:16:42.027671+00:00",
+  "elapsed_seconds": 28.73,
+  "total": 215,
+  "active": 212,
   "pending": 0,
-  "excluded": 0,
-  "passed": 200,
+  "excluded": 3,
+  "passed": 212,
   "failed": 0,
-  "skipped": 0,
-  "active_passed": 200,
+  "skipped": 3,
+  "active_passed": 212,
   "active_failed": 0,
   "pass_rate_active": 100.0,
-  "pass_rate_all": 100.0,
+  "pass_rate_all": 98.6,
   "verdict": "PASS",
   "gate_threshold": 80.0,
   "categories": {
     "Word": {
-      "total": 15,
-      "active": 15,
-      "passed": 15,
+      "total": 18,
+      "active": 18,
+      "passed": 18,
       "failed": 0,
       "skipped": 0
     },
     "Excel": {
-      "total": 15,
-      "active": 15,
-      "passed": 15,
+      "total": 18,
+      "active": 18,
+      "passed": 18,
       "failed": 0,
       "skipped": 0
     },
     "PPT": {
-      "total": 15,
-      "active": 15,
-      "passed": 15,
+      "total": 18,
+      "active": 18,
+      "passed": 18,
       "failed": 0,
       "skipped": 0
     },
@@ -114,16 +114,54 @@
       "passed": 14,
       "failed": 0,
       "skipped": 0
+    },
+    "Notepad": {
+      "total": 3,
+      "active": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0
+    },
+    "Browser": {
+      "total": 3,
+      "active": 0,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 3
     }
   },
   "results": [
+    {
+      "id": "BROWSER_001",
+      "category": "Browser",
+      "status": "gui_only",
+      "oracle_verdict": "SKIP",
+      "reason": "GUI_ONLY: requires gui_gauntlet.yml on Windows runner",
+      "elapsed_s": 0.0
+    },
+    {
+      "id": "BROWSER_002",
+      "category": "Browser",
+      "status": "gui_only",
+      "oracle_verdict": "SKIP",
+      "reason": "GUI_ONLY: requires gui_gauntlet.yml on Windows runner",
+      "elapsed_s": 0.0
+    },
+    {
+      "id": "BROWSER_003",
+      "category": "Browser",
+      "status": "gui_only",
+      "oracle_verdict": "SKIP",
+      "reason": "GUI_ONLY: requires gui_gauntlet.yml on Windows runner",
+      "elapsed_s": 0.0
+    },
     {
       "id": "CODE_001",
       "category": "Code",
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Code oracle passed",
-      "elapsed_s": 0.0026
+      "elapsed_s": 0.0066
     },
     {
       "id": "CODE_002",
@@ -131,7 +169,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Code oracle passed",
-      "elapsed_s": 0.0027
+      "elapsed_s": 0.0089
     },
     {
       "id": "CODE_003",
@@ -139,7 +177,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Code oracle passed",
-      "elapsed_s": 0.0022
+      "elapsed_s": 0.0064
     },
     {
       "id": "CODE_004",
@@ -147,7 +185,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Code oracle passed",
-      "elapsed_s": 0.0019
+      "elapsed_s": 0.0118
     },
     {
       "id": "CODE_005",
@@ -155,7 +193,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Code oracle passed",
-      "elapsed_s": 0.002
+      "elapsed_s": 0.0096
     },
     {
       "id": "CODE_006",
@@ -163,7 +201,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Code oracle passed",
-      "elapsed_s": 0.0022
+      "elapsed_s": 0.0177
     },
     {
       "id": "CODE_007",
@@ -171,7 +209,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Code oracle passed",
-      "elapsed_s": 0.0022
+      "elapsed_s": 0.0086
     },
     {
       "id": "CODE_008",
@@ -179,7 +217,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Code oracle passed",
-      "elapsed_s": 0.0028
+      "elapsed_s": 0.0069
     },
     {
       "id": "CODE_009",
@@ -187,7 +225,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Code oracle passed",
-      "elapsed_s": 0.0023
+      "elapsed_s": 0.0067
     },
     {
       "id": "CODE_010",
@@ -195,7 +233,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Code oracle passed",
-      "elapsed_s": 0.0022
+      "elapsed_s": 0.0108
     },
     {
       "id": "CODE_011",
@@ -203,7 +241,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Code oracle passed",
-      "elapsed_s": 0.0016
+      "elapsed_s": 0.0069
     },
     {
       "id": "CODE_012",
@@ -211,7 +249,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Code oracle passed",
-      "elapsed_s": 0.0017
+      "elapsed_s": 0.0064
     },
     {
       "id": "CODE_013",
@@ -219,7 +257,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Code oracle passed",
-      "elapsed_s": 0.0022
+      "elapsed_s": 0.0078
     },
     {
       "id": "CODE_014",
@@ -227,7 +265,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Code oracle passed",
-      "elapsed_s": 0.0019
+      "elapsed_s": 0.011
     },
     {
       "id": "DEGRADATION_001",
@@ -235,7 +273,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Degradation oracle passed: gracefully rejected invalid_action_1 (invalid_action)",
-      "elapsed_s": 0.0027
+      "elapsed_s": 0.0142
     },
     {
       "id": "DEGRADATION_002",
@@ -243,7 +281,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Degradation oracle passed: gracefully rejected InvalidDomain_2 (invalid_domain)",
-      "elapsed_s": 0.0022
+      "elapsed_s": 0.0134
     },
     {
       "id": "DEGRADATION_003",
@@ -251,7 +289,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Degradation oracle passed: gracefully rejected invalid_action_3 (invalid_action)",
-      "elapsed_s": 0.0034
+      "elapsed_s": 0.0159
     },
     {
       "id": "DEGRADATION_004",
@@ -259,7 +297,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Degradation oracle passed: gracefully rejected InvalidDomain_4 (invalid_domain)",
-      "elapsed_s": 0.0035
+      "elapsed_s": 0.0127
     },
     {
       "id": "DEGRADATION_005",
@@ -267,7 +305,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Degradation oracle passed: gracefully rejected invalid_action_5 (invalid_action)",
-      "elapsed_s": 0.0015
+      "elapsed_s": 0.0149
     },
     {
       "id": "DEGRADATION_006",
@@ -275,7 +313,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Degradation oracle passed: gracefully rejected InvalidDomain_6 (invalid_domain)",
-      "elapsed_s": 0.0016
+      "elapsed_s": 0.0198
     },
     {
       "id": "DEGRADATION_007",
@@ -283,7 +321,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Degradation oracle passed: gracefully rejected invalid_action_7 (invalid_action)",
-      "elapsed_s": 0.0019
+      "elapsed_s": 0.0243
     },
     {
       "id": "DEGRADATION_008",
@@ -291,7 +329,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Degradation oracle passed: gracefully rejected InvalidDomain_8 (invalid_domain)",
-      "elapsed_s": 0.0012
+      "elapsed_s": 0.0182
     },
     {
       "id": "DEGRADATION_009",
@@ -299,7 +337,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Degradation oracle passed: gracefully rejected invalid_action_9 (invalid_action)",
-      "elapsed_s": 0.001
+      "elapsed_s": 0.0161
     },
     {
       "id": "DEGRADATION_010",
@@ -307,7 +345,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Degradation oracle passed: gracefully rejected InvalidDomain_10 (invalid_domain)",
-      "elapsed_s": 0.0009
+      "elapsed_s": 0.0092
     },
     {
       "id": "DEGRADATION_011",
@@ -315,7 +353,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Degradation oracle passed: gracefully rejected invalid_action_11 (invalid_action)",
-      "elapsed_s": 0.002
+      "elapsed_s": 0.0082
     },
     {
       "id": "DEGRADATION_012",
@@ -323,7 +361,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Degradation oracle passed: gracefully rejected InvalidDomain_12 (invalid_domain)",
-      "elapsed_s": 0.0031
+      "elapsed_s": 0.0085
     },
     {
       "id": "DEGRADATION_013",
@@ -331,7 +369,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Degradation oracle passed: gracefully rejected invalid_action_13 (invalid_action)",
-      "elapsed_s": 0.0013
+      "elapsed_s": 0.0074
     },
     {
       "id": "DEGRADATION_014",
@@ -339,7 +377,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Degradation oracle passed: gracefully rejected InvalidDomain_14 (invalid_domain)",
-      "elapsed_s": 0.0008
+      "elapsed_s": 0.0082
     },
     {
       "id": "DESIGN_001",
@@ -347,7 +385,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Design oracle passed",
-      "elapsed_s": 0.0007
+      "elapsed_s": 0.0018
     },
     {
       "id": "DESIGN_002",
@@ -355,7 +393,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Design oracle passed",
-      "elapsed_s": 0.0006
+      "elapsed_s": 0.0022
     },
     {
       "id": "DESIGN_003",
@@ -363,7 +401,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Design oracle passed",
-      "elapsed_s": 0.0007
+      "elapsed_s": 0.0024
     },
     {
       "id": "DESIGN_004",
@@ -371,7 +409,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Design oracle passed",
-      "elapsed_s": 0.0007
+      "elapsed_s": 0.0018
     },
     {
       "id": "DESIGN_005",
@@ -379,7 +417,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Design oracle passed",
-      "elapsed_s": 0.0005
+      "elapsed_s": 0.0018
     },
     {
       "id": "DESIGN_006",
@@ -387,7 +425,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Design oracle passed",
-      "elapsed_s": 0.0007
+      "elapsed_s": 0.0026
     },
     {
       "id": "DESIGN_007",
@@ -395,7 +433,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Design oracle passed",
-      "elapsed_s": 0.0005
+      "elapsed_s": 0.0021
     },
     {
       "id": "DESIGN_008",
@@ -403,7 +441,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Design oracle passed",
-      "elapsed_s": 0.0008
+      "elapsed_s": 0.0027
     },
     {
       "id": "DESIGN_009",
@@ -411,7 +449,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Design oracle passed",
-      "elapsed_s": 0.0014
+      "elapsed_s": 0.0028
     },
     {
       "id": "DESIGN_010",
@@ -419,7 +457,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Design oracle passed",
-      "elapsed_s": 0.0011
+      "elapsed_s": 0.0034
     },
     {
       "id": "DESIGN_011",
@@ -427,7 +465,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Design oracle passed",
-      "elapsed_s": 0.0007
+      "elapsed_s": 0.0023
     },
     {
       "id": "DESIGN_012",
@@ -435,7 +473,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Design oracle passed",
-      "elapsed_s": 0.0004
+      "elapsed_s": 0.0032
     },
     {
       "id": "DESIGN_013",
@@ -443,7 +481,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Design oracle passed",
-      "elapsed_s": 0.0007
+      "elapsed_s": 0.0035
     },
     {
       "id": "DESIGN_014",
@@ -451,7 +489,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Design oracle passed",
-      "elapsed_s": 0.0006
+      "elapsed_s": 0.0026
     },
     {
       "id": "EMAIL_001",
@@ -459,7 +497,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Email oracle passed",
-      "elapsed_s": 0.0005
+      "elapsed_s": 0.0021
     },
     {
       "id": "EMAIL_002",
@@ -467,7 +505,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Email oracle passed",
-      "elapsed_s": 0.0005
+      "elapsed_s": 0.0036
     },
     {
       "id": "EMAIL_003",
@@ -475,7 +513,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Email oracle passed",
-      "elapsed_s": 0.0007
+      "elapsed_s": 0.0026
     },
     {
       "id": "EMAIL_004",
@@ -483,7 +521,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Email oracle passed",
-      "elapsed_s": 0.0006
+      "elapsed_s": 0.0036
     },
     {
       "id": "EMAIL_005",
@@ -491,7 +529,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Email oracle passed",
-      "elapsed_s": 0.0007
+      "elapsed_s": 0.0053
     },
     {
       "id": "EMAIL_006",
@@ -499,7 +537,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Email oracle passed",
-      "elapsed_s": 0.0004
+      "elapsed_s": 0.0035
     },
     {
       "id": "EMAIL_007",
@@ -507,7 +545,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Email oracle passed",
-      "elapsed_s": 0.0004
+      "elapsed_s": 0.0019
     },
     {
       "id": "EMAIL_008",
@@ -515,7 +553,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Email oracle passed",
-      "elapsed_s": 0.0007
+      "elapsed_s": 0.0023
     },
     {
       "id": "EMAIL_009",
@@ -523,7 +561,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Email oracle passed",
-      "elapsed_s": 0.0005
+      "elapsed_s": 0.0024
     },
     {
       "id": "EMAIL_010",
@@ -531,7 +569,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Email oracle passed",
-      "elapsed_s": 0.0011
+      "elapsed_s": 0.0025
     },
     {
       "id": "EMAIL_011",
@@ -539,7 +577,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Email oracle passed",
-      "elapsed_s": 0.0007
+      "elapsed_s": 0.0022
     },
     {
       "id": "EMAIL_012",
@@ -547,7 +585,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Email oracle passed",
-      "elapsed_s": 0.0007
+      "elapsed_s": 0.0018
     },
     {
       "id": "EMAIL_013",
@@ -555,7 +593,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Email oracle passed",
-      "elapsed_s": 0.0008
+      "elapsed_s": 0.0026
     },
     {
       "id": "EMAIL_014",
@@ -563,7 +601,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Email oracle passed",
-      "elapsed_s": 0.0008
+      "elapsed_s": 0.0025
     },
     {
       "id": "EXCEL_001",
@@ -571,7 +609,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Formula validation oracle passed: =SUM(A1:A10) is True",
-      "elapsed_s": 0.7862
+      "elapsed_s": 5.6762
     },
     {
       "id": "EXCEL_002",
@@ -579,7 +617,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Formula validation oracle passed: =AVERAGE(B1:B20) is True",
-      "elapsed_s": 0.5226
+      "elapsed_s": 4.9085
     },
     {
       "id": "EXCEL_003",
@@ -587,7 +625,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Formula validation oracle passed: =IF(A1>0,1,0) is True",
-      "elapsed_s": 0.4191
+      "elapsed_s": 4.6226
     },
     {
       "id": "EXCEL_004",
@@ -595,7 +633,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Formula validation oracle passed: =VLOOKUP(A1,B1:C10,2,FALSE) is True",
-      "elapsed_s": 0.4015
+      "elapsed_s": 4.0459
     },
     {
       "id": "EXCEL_005",
@@ -603,7 +641,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Formula explanation oracle passed: =SUM(A1:A10) explained correctly",
-      "elapsed_s": 0.0003
+      "elapsed_s": 0.0019
     },
     {
       "id": "EXCEL_006",
@@ -611,7 +649,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Formula explanation oracle passed: =VLOOKUP(A1,B1:C10,2,FALSE) explained correctly",
-      "elapsed_s": 0.0012
+      "elapsed_s": 0.0054
     },
     {
       "id": "EXCEL_007",
@@ -619,7 +657,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Formula explanation oracle passed: =IF(A1>0,1,0) explained correctly",
-      "elapsed_s": 0.0008
+      "elapsed_s": 0.003
     },
     {
       "id": "EXCEL_008",
@@ -627,7 +665,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Formula explanation oracle passed: =SUMIFS(A1:A10,B1:B10,\">10\") explained correctly",
-      "elapsed_s": 0.0006
+      "elapsed_s": 0.0034
     },
     {
       "id": "EXCEL_009",
@@ -635,7 +673,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Excel oracle passed for action: write_cell",
-      "elapsed_s": 0.0893
+      "elapsed_s": 0.4665
     },
     {
       "id": "EXCEL_010",
@@ -643,7 +681,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Excel oracle passed for action: write_cell",
-      "elapsed_s": 0.1297
+      "elapsed_s": 0.4892
     },
     {
       "id": "EXCEL_011",
@@ -651,7 +689,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Excel oracle passed for action: write_cell",
-      "elapsed_s": 0.0903
+      "elapsed_s": 0.4952
     },
     {
       "id": "EXCEL_012",
@@ -659,7 +697,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Excel oracle passed for action: write_cell",
-      "elapsed_s": 0.1237
+      "elapsed_s": 0.4612
     },
     {
       "id": "EXCEL_013",
@@ -667,7 +705,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Excel oracle passed for action: write_range",
-      "elapsed_s": 0.1089
+      "elapsed_s": 0.3401
     },
     {
       "id": "EXCEL_014",
@@ -675,7 +713,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Excel oracle passed for action: write_range",
-      "elapsed_s": 0.0729
+      "elapsed_s": 0.3569
     },
     {
       "id": "EXCEL_015",
@@ -683,7 +721,31 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Excel oracle passed for action: write_range",
-      "elapsed_s": 0.0704
+      "elapsed_s": 0.3354
+    },
+    {
+      "id": "EXCEL_016",
+      "category": "Excel",
+      "status": "active",
+      "oracle_verdict": "PASS",
+      "reason": "Excel oracle passed for action: write_cell",
+      "elapsed_s": 0.3275
+    },
+    {
+      "id": "EXCEL_017",
+      "category": "Excel",
+      "status": "active",
+      "oracle_verdict": "PASS",
+      "reason": "Excel oracle passed for action: write_cell",
+      "elapsed_s": 0.2928
+    },
+    {
+      "id": "EXCEL_018",
+      "category": "Excel",
+      "status": "active",
+      "oracle_verdict": "PASS",
+      "reason": "Excel oracle passed for action: write_range",
+      "elapsed_s": 0.2556
     },
     {
       "id": "LEGAL_001",
@@ -691,7 +753,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Legal oracle passed: detected 'termination_for_convenience' in prompt",
-      "elapsed_s": 0.0031
+      "elapsed_s": 0.0139
     },
     {
       "id": "LEGAL_002",
@@ -699,7 +761,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Legal oracle passed: detected 'auto_renewal' in prompt",
-      "elapsed_s": 0.0127
+      "elapsed_s": 0.0117
     },
     {
       "id": "LEGAL_003",
@@ -707,7 +769,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Legal oracle passed: detected 'non_compete' in prompt",
-      "elapsed_s": 0.0028
+      "elapsed_s": 0.0038
     },
     {
       "id": "LEGAL_004",
@@ -715,7 +777,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Legal oracle passed: detected 'liability_cap' in prompt",
-      "elapsed_s": 0.0007
+      "elapsed_s": 0.0099
     },
     {
       "id": "LEGAL_005",
@@ -723,7 +785,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Legal oracle passed: detected 'indemnification' in prompt",
-      "elapsed_s": 0.0009
+      "elapsed_s": 0.0053
     },
     {
       "id": "LEGAL_006",
@@ -731,7 +793,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Legal oracle passed: detected 'ip_ownership' in prompt",
-      "elapsed_s": 0.002
+      "elapsed_s": 0.0047
     },
     {
       "id": "LEGAL_007",
@@ -739,7 +801,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Legal oracle passed: detected 'liquidated_damages' in prompt",
-      "elapsed_s": 0.0017
+      "elapsed_s": 0.0021
     },
     {
       "id": "LEGAL_008",
@@ -755,7 +817,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Legal oracle passed: detected 'force_majeure' in prompt",
-      "elapsed_s": 0.0012
+      "elapsed_s": 0.003
     },
     {
       "id": "LEGAL_010",
@@ -763,7 +825,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Legal oracle passed: detected 'audit_rights' in prompt",
-      "elapsed_s": 0.0009
+      "elapsed_s": 0.0057
     },
     {
       "id": "LEGAL_011",
@@ -771,7 +833,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Legal oracle passed: detected 'exclusivity' in prompt",
-      "elapsed_s": 0.001
+      "elapsed_s": 0.0052
     },
     {
       "id": "LEGAL_012",
@@ -779,7 +841,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Legal oracle passed: detected 'assignment' in prompt",
-      "elapsed_s": 0.0006
+      "elapsed_s": 0.0053
     },
     {
       "id": "LEGAL_013",
@@ -787,7 +849,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Legal oracle passed: detected 'warranty' in prompt",
-      "elapsed_s": 0.0014
+      "elapsed_s": 0.0039
     },
     {
       "id": "LEGAL_014",
@@ -795,7 +857,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Legal oracle passed: detected 'confidentiality' in prompt",
-      "elapsed_s": 0.001
+      "elapsed_s": 0.0046
     },
     {
       "id": "MEMORY_001",
@@ -803,7 +865,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Memory DP noise oracle passed: noisy vector verified",
-      "elapsed_s": 0.0015
+      "elapsed_s": 0.0053
     },
     {
       "id": "MEMORY_002",
@@ -811,7 +873,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Memory DP noise oracle passed: noisy vector verified",
-      "elapsed_s": 0.0014
+      "elapsed_s": 0.0048
     },
     {
       "id": "MEMORY_003",
@@ -819,7 +881,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Memory DP noise oracle passed: noisy vector verified",
-      "elapsed_s": 0.0015
+      "elapsed_s": 0.0047
     },
     {
       "id": "MEMORY_004",
@@ -827,7 +889,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Memory DP noise oracle passed: noisy vector verified",
-      "elapsed_s": 0.0003
+      "elapsed_s": 0.0033
     },
     {
       "id": "MEMORY_005",
@@ -835,7 +897,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Memory DP noise oracle passed: noisy vector verified",
-      "elapsed_s": 0.0008
+      "elapsed_s": 0.0038
     },
     {
       "id": "MEMORY_006",
@@ -843,7 +905,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Memory DP noise oracle passed: noisy vector verified",
-      "elapsed_s": 0.0007
+      "elapsed_s": 0.0036
     },
     {
       "id": "MEMORY_007",
@@ -851,7 +913,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Memory DP noise oracle passed: noisy vector verified",
-      "elapsed_s": 0.0007
+      "elapsed_s": 0.0026
     },
     {
       "id": "MEMORY_008",
@@ -859,7 +921,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Memory DP noise oracle passed: noisy vector verified",
-      "elapsed_s": 0.0008
+      "elapsed_s": 0.0027
     },
     {
       "id": "MEMORY_009",
@@ -867,7 +929,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Memory DP noise oracle passed: noisy vector verified",
-      "elapsed_s": 0.0006
+      "elapsed_s": 0.0033
     },
     {
       "id": "MEMORY_010",
@@ -875,7 +937,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Memory DP noise oracle passed: noisy vector verified",
-      "elapsed_s": 0.0008
+      "elapsed_s": 0.003
     },
     {
       "id": "MEMORY_011",
@@ -883,7 +945,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Memory DP noise oracle passed: noisy vector verified",
-      "elapsed_s": 0.0007
+      "elapsed_s": 0.0021
     },
     {
       "id": "MEMORY_012",
@@ -891,7 +953,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Memory DP noise oracle passed: noisy vector verified",
-      "elapsed_s": 0.0006
+      "elapsed_s": 0.002
     },
     {
       "id": "MEMORY_013",
@@ -899,7 +961,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Memory DP noise oracle passed: noisy vector verified",
-      "elapsed_s": 0.0003
+      "elapsed_s": 0.0038
     },
     {
       "id": "MEMORY_014",
@@ -907,7 +969,31 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Memory DP noise oracle passed: noisy vector verified",
-      "elapsed_s": 0.0006
+      "elapsed_s": 0.0036
+    },
+    {
+      "id": "NOTEPAD_001",
+      "category": "Notepad",
+      "status": "active",
+      "oracle_verdict": "PASS",
+      "reason": "Notepad write_text: content 'Buy milk' present",
+      "elapsed_s": 0.0103
+    },
+    {
+      "id": "NOTEPAD_002",
+      "category": "Notepad",
+      "status": "active",
+      "oracle_verdict": "PASS",
+      "reason": "Notepad append_text: 'System status: OK' appended successfully",
+      "elapsed_s": 0.0144
+    },
+    {
+      "id": "NOTEPAD_003",
+      "category": "Notepad",
+      "status": "active",
+      "oracle_verdict": "PASS",
+      "reason": "Notepad format_text: CRLF line endings verified",
+      "elapsed_s": 0.0136
     },
     {
       "id": "OFFLINE_001",
@@ -915,7 +1001,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Offline mode self check oracle passed",
-      "elapsed_s": 0.3574
+      "elapsed_s": 1.0468
     },
     {
       "id": "OFFLINE_002",
@@ -923,7 +1009,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Offline mode self check oracle passed",
-      "elapsed_s": 0.5705
+      "elapsed_s": 1.2998
     },
     {
       "id": "OFFLINE_003",
@@ -931,7 +1017,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Offline mode self check oracle passed",
-      "elapsed_s": 0.6625
+      "elapsed_s": 1.4462
     },
     {
       "id": "OFFLINE_004",
@@ -939,7 +1025,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Offline mode self check oracle passed",
-      "elapsed_s": 0.8808
+      "elapsed_s": 1.6581
     },
     {
       "id": "OFFLINE_005",
@@ -947,7 +1033,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Offline mode self check oracle passed",
-      "elapsed_s": 0.8833
+      "elapsed_s": 1.0787
     },
     {
       "id": "OFFLINE_006",
@@ -955,7 +1041,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Offline mode self check oracle passed",
-      "elapsed_s": 0.8849
+      "elapsed_s": 1.0915
     },
     {
       "id": "OFFLINE_007",
@@ -963,7 +1049,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Offline mode self check oracle passed",
-      "elapsed_s": 0.9098
+      "elapsed_s": 1.0875
     },
     {
       "id": "OFFLINE_008",
@@ -971,7 +1057,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Offline mode self check oracle passed",
-      "elapsed_s": 0.9226
+      "elapsed_s": 1.0726
     },
     {
       "id": "OFFLINE_009",
@@ -979,7 +1065,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Offline mode self check oracle passed",
-      "elapsed_s": 0.9202
+      "elapsed_s": 1.1065
     },
     {
       "id": "OFFLINE_010",
@@ -987,7 +1073,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Offline mode self check oracle passed",
-      "elapsed_s": 0.9347
+      "elapsed_s": 1.1069
     },
     {
       "id": "OFFLINE_011",
@@ -995,7 +1081,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Offline mode self check oracle passed",
-      "elapsed_s": 0.9302
+      "elapsed_s": 1.1135
     },
     {
       "id": "OFFLINE_012",
@@ -1003,7 +1089,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Offline mode self check oracle passed",
-      "elapsed_s": 0.9453
+      "elapsed_s": 1.2009
     },
     {
       "id": "OFFLINE_013",
@@ -1011,7 +1097,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Offline mode self check oracle passed",
-      "elapsed_s": 0.9497
+      "elapsed_s": 1.3651
     },
     {
       "id": "OFFLINE_014",
@@ -1019,7 +1105,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Offline mode self check oracle passed",
-      "elapsed_s": 0.9332
+      "elapsed_s": 1.7411
     },
     {
       "id": "PDF_001",
@@ -1027,7 +1113,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "PDF oracle passed",
-      "elapsed_s": 0.0603
+      "elapsed_s": 0.2167
     },
     {
       "id": "PDF_002",
@@ -1035,7 +1121,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "PDF oracle passed",
-      "elapsed_s": 0.0302
+      "elapsed_s": 0.1811
     },
     {
       "id": "PDF_003",
@@ -1043,7 +1129,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "PDF oracle passed",
-      "elapsed_s": 0.0302
+      "elapsed_s": 0.154
     },
     {
       "id": "PDF_004",
@@ -1051,7 +1137,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "PDF oracle passed",
-      "elapsed_s": 0.0358
+      "elapsed_s": 0.1483
     },
     {
       "id": "PDF_005",
@@ -1059,7 +1145,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "PDF oracle passed",
-      "elapsed_s": 0.0443
+      "elapsed_s": 0.2077
     },
     {
       "id": "PDF_006",
@@ -1067,7 +1153,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "PDF oracle passed",
-      "elapsed_s": 0.0378
+      "elapsed_s": 0.2661
     },
     {
       "id": "PDF_007",
@@ -1075,7 +1161,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "PDF oracle passed",
-      "elapsed_s": 0.04
+      "elapsed_s": 0.2903
     },
     {
       "id": "PDF_008",
@@ -1083,7 +1169,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "PDF oracle passed",
-      "elapsed_s": 0.0538
+      "elapsed_s": 0.3587
     },
     {
       "id": "PDF_009",
@@ -1091,7 +1177,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "PDF oracle passed",
-      "elapsed_s": 0.0526
+      "elapsed_s": 0.2615
     },
     {
       "id": "PDF_010",
@@ -1099,7 +1185,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "PDF oracle passed",
-      "elapsed_s": 0.0524
+      "elapsed_s": 0.2772
     },
     {
       "id": "PDF_011",
@@ -1107,7 +1193,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "PDF oracle passed",
-      "elapsed_s": 0.0505
+      "elapsed_s": 0.2528
     },
     {
       "id": "PDF_012",
@@ -1115,7 +1201,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "PDF oracle passed",
-      "elapsed_s": 0.0552
+      "elapsed_s": 0.3412
     },
     {
       "id": "PDF_013",
@@ -1123,7 +1209,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "PDF oracle passed",
-      "elapsed_s": 0.0531
+      "elapsed_s": 0.3821
     },
     {
       "id": "PDF_014",
@@ -1131,7 +1217,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "PDF oracle passed",
-      "elapsed_s": 0.0353
+      "elapsed_s": 0.3456
     },
     {
       "id": "PDF_015",
@@ -1139,119 +1225,119 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "PDF oracle passed",
-      "elapsed_s": 0.0392
+      "elapsed_s": 0.1712
     },
     {
       "id": "PERFORMANCE_001",
       "category": "Performance",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "Excel performance oracle passed: 0.003s < 2.5s for 11 rows",
-      "elapsed_s": 0.0105
+      "reason": "Excel performance oracle passed: 0.021s < 2.5s for 11 rows",
+      "elapsed_s": 0.0557
     },
     {
       "id": "PERFORMANCE_002",
       "category": "Performance",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "DOCX performance oracle passed: 0.009s < 2.5s for 12 paragraphs",
-      "elapsed_s": 0.0298
+      "reason": "DOCX performance oracle passed: 0.150s < 2.5s for 12 paragraphs",
+      "elapsed_s": 0.4617
     },
     {
       "id": "PERFORMANCE_003",
       "category": "Performance",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "Excel performance oracle passed: 0.003s < 2.5s for 13 rows",
-      "elapsed_s": 0.0121
+      "reason": "Excel performance oracle passed: 0.052s < 2.5s for 13 rows",
+      "elapsed_s": 0.167
     },
     {
       "id": "PERFORMANCE_004",
       "category": "Performance",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "DOCX performance oracle passed: 0.009s < 2.5s for 14 paragraphs",
-      "elapsed_s": 0.0321
+      "reason": "DOCX performance oracle passed: 0.172s < 2.5s for 14 paragraphs",
+      "elapsed_s": 0.4709
     },
     {
       "id": "PERFORMANCE_005",
       "category": "Performance",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "Excel performance oracle passed: 0.004s < 2.5s for 15 rows",
-      "elapsed_s": 0.0096
+      "reason": "Excel performance oracle passed: 0.053s < 2.5s for 15 rows",
+      "elapsed_s": 0.1071
     },
     {
       "id": "PERFORMANCE_006",
       "category": "Performance",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "DOCX performance oracle passed: 0.011s < 2.5s for 16 paragraphs",
-      "elapsed_s": 0.0317
+      "reason": "DOCX performance oracle passed: 0.103s < 2.5s for 16 paragraphs",
+      "elapsed_s": 0.4978
     },
     {
       "id": "PERFORMANCE_007",
       "category": "Performance",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "Excel performance oracle passed: 0.003s < 2.5s for 17 rows",
-      "elapsed_s": 0.0118
+      "reason": "Excel performance oracle passed: 0.045s < 2.5s for 17 rows",
+      "elapsed_s": 0.1186
     },
     {
       "id": "PERFORMANCE_008",
       "category": "Performance",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "DOCX performance oracle passed: 0.012s < 2.5s for 18 paragraphs",
-      "elapsed_s": 0.0383
+      "reason": "DOCX performance oracle passed: 0.151s < 2.5s for 18 paragraphs",
+      "elapsed_s": 0.4803
     },
     {
       "id": "PERFORMANCE_009",
       "category": "Performance",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "Excel performance oracle passed: 0.005s < 2.5s for 19 rows",
-      "elapsed_s": 0.0108
+      "reason": "Excel performance oracle passed: 0.057s < 2.5s for 19 rows",
+      "elapsed_s": 0.1335
     },
     {
       "id": "PERFORMANCE_010",
       "category": "Performance",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "DOCX performance oracle passed: 0.029s < 2.5s for 20 paragraphs",
-      "elapsed_s": 0.0603
+      "reason": "DOCX performance oracle passed: 0.218s < 2.5s for 20 paragraphs",
+      "elapsed_s": 0.461
     },
     {
       "id": "PERFORMANCE_011",
       "category": "Performance",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "Excel performance oracle passed: 0.006s < 2.5s for 21 rows",
-      "elapsed_s": 0.0162
+      "reason": "Excel performance oracle passed: 0.035s < 2.5s for 21 rows",
+      "elapsed_s": 0.0967
     },
     {
       "id": "PERFORMANCE_012",
       "category": "Performance",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "DOCX performance oracle passed: 0.014s < 2.5s for 22 paragraphs",
-      "elapsed_s": 0.0543
+      "reason": "DOCX performance oracle passed: 0.246s < 2.5s for 22 paragraphs",
+      "elapsed_s": 0.7707
     },
     {
       "id": "PERFORMANCE_013",
       "category": "Performance",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "Excel performance oracle passed: 0.004s < 2.5s for 23 rows",
-      "elapsed_s": 0.0134
+      "reason": "Excel performance oracle passed: 0.042s < 2.5s for 23 rows",
+      "elapsed_s": 0.1604
     },
     {
       "id": "PERFORMANCE_014",
       "category": "Performance",
       "status": "active",
       "oracle_verdict": "PASS",
-      "reason": "DOCX performance oracle passed: 0.012s < 2.5s for 24 paragraphs",
-      "elapsed_s": 0.0379
+      "reason": "DOCX performance oracle passed: 0.695s < 2.5s for 24 paragraphs",
+      "elapsed_s": 1.1921
     },
     {
       "id": "PPT_001",
@@ -1259,7 +1345,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "PowerPoint creation oracle passed: created 3 slides",
-      "elapsed_s": 0.386
+      "elapsed_s": 2.5389
     },
     {
       "id": "PPT_002",
@@ -1267,7 +1353,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "PowerPoint creation oracle passed: created 5 slides",
-      "elapsed_s": 0.3397
+      "elapsed_s": 2.3214
     },
     {
       "id": "PPT_003",
@@ -1275,7 +1361,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "PowerPoint creation oracle passed: created 2 slides",
-      "elapsed_s": 0.3144
+      "elapsed_s": 2.1807
     },
     {
       "id": "PPT_004",
@@ -1283,7 +1369,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "PowerPoint creation oracle passed: created 4 slides",
-      "elapsed_s": 0.3281
+      "elapsed_s": 2.2268
     },
     {
       "id": "PPT_005",
@@ -1291,7 +1377,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "PowerPoint creation oracle passed: created 6 slides",
-      "elapsed_s": 0.1591
+      "elapsed_s": 0.7816
     },
     {
       "id": "PPT_006",
@@ -1299,7 +1385,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "PowerPoint extract_context oracle passed: total_slides matches",
-      "elapsed_s": 0.3109
+      "elapsed_s": 1.441
     },
     {
       "id": "PPT_007",
@@ -1307,7 +1393,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "PowerPoint extract_context oracle passed: total_slides matches",
-      "elapsed_s": 0.3452
+      "elapsed_s": 1.4893
     },
     {
       "id": "PPT_008",
@@ -1315,7 +1401,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "PowerPoint extract_context oracle passed: total_slides matches",
-      "elapsed_s": 0.3108
+      "elapsed_s": 1.3201
     },
     {
       "id": "PPT_009",
@@ -1323,7 +1409,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "PowerPoint extract_context oracle passed: total_slides matches",
-      "elapsed_s": 0.2977
+      "elapsed_s": 1.5536
     },
     {
       "id": "PPT_010",
@@ -1331,7 +1417,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "PowerPoint extract_context oracle passed: total_slides matches",
-      "elapsed_s": 0.2984
+      "elapsed_s": 1.6511
     },
     {
       "id": "PPT_011",
@@ -1339,7 +1425,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "PowerPoint layout oracle passed: layout is 'Title Slide'",
-      "elapsed_s": 0.236
+      "elapsed_s": 1.3393
     },
     {
       "id": "PPT_012",
@@ -1347,7 +1433,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "PowerPoint layout oracle passed: layout is 'Title and Content'",
-      "elapsed_s": 0.2364
+      "elapsed_s": 1.4641
     },
     {
       "id": "PPT_013",
@@ -1355,7 +1441,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "PowerPoint layout oracle passed: layout is 'Blank'",
-      "elapsed_s": 0.2954
+      "elapsed_s": 1.5394
     },
     {
       "id": "PPT_014",
@@ -1363,7 +1449,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "PowerPoint layout oracle passed: layout is 'Section Header'",
-      "elapsed_s": 0.4037
+      "elapsed_s": 2.7741
     },
     {
       "id": "PPT_015",
@@ -1371,7 +1457,31 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "PowerPoint layout oracle passed: layout is 'Title and Content'",
-      "elapsed_s": 0.4065
+      "elapsed_s": 2.658
+    },
+    {
+      "id": "PPT_016",
+      "category": "PPT",
+      "status": "active",
+      "oracle_verdict": "PASS",
+      "reason": "PowerPoint creation oracle passed: created 8 slides",
+      "elapsed_s": 0.8407
+    },
+    {
+      "id": "PPT_017",
+      "category": "PPT",
+      "status": "active",
+      "oracle_verdict": "PASS",
+      "reason": "PowerPoint layout oracle passed: layout is 'Title Slide'",
+      "elapsed_s": 1.11
+    },
+    {
+      "id": "PPT_018",
+      "category": "PPT",
+      "status": "active",
+      "oracle_verdict": "PASS",
+      "reason": "PowerPoint extract_context oracle passed: total_slides matches",
+      "elapsed_s": 1.037
     },
     {
       "id": "SECURITY_001",
@@ -1379,7 +1489,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Security integrity oracle passed for secrets_password (rejected=True)",
-      "elapsed_s": 0.1072
+      "elapsed_s": 0.2788
     },
     {
       "id": "SECURITY_002",
@@ -1387,7 +1497,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Security integrity oracle passed for secrets_eval (rejected=True)",
-      "elapsed_s": 0.1042
+      "elapsed_s": 0.2609
     },
     {
       "id": "SECURITY_003",
@@ -1395,7 +1505,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Security integrity oracle passed for secrets_shell (rejected=True)",
-      "elapsed_s": 0.1002
+      "elapsed_s": 0.2691
     },
     {
       "id": "SECURITY_004",
@@ -1403,7 +1513,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Security integrity oracle passed for secrets_traversal (rejected=True)",
-      "elapsed_s": 0.1002
+      "elapsed_s": 0.257
     },
     {
       "id": "SECURITY_005",
@@ -1411,7 +1521,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Security integrity oracle passed for secrets_apikey (rejected=True)",
-      "elapsed_s": 0.1066
+      "elapsed_s": 0.1789
     },
     {
       "id": "SECURITY_006",
@@ -1419,7 +1529,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Security integrity oracle passed for secrets_exec (rejected=True)",
-      "elapsed_s": 0.116
+      "elapsed_s": 0.1943
     },
     {
       "id": "SECURITY_007",
@@ -1427,7 +1537,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Security integrity oracle passed for secrets_os_system (rejected=True)",
-      "elapsed_s": 0.1142
+      "elapsed_s": 0.185
     },
     {
       "id": "SECURITY_008",
@@ -1435,7 +1545,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Security integrity oracle passed for secrets_path_traversal (rejected=True)",
-      "elapsed_s": 0.1049
+      "elapsed_s": 0.1914
     },
     {
       "id": "SECURITY_009",
@@ -1443,7 +1553,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Security integrity oracle passed for secrets_token (rejected=True)",
-      "elapsed_s": 0.1134
+      "elapsed_s": 0.17
     },
     {
       "id": "SECURITY_010",
@@ -1451,7 +1561,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Security integrity oracle passed for secrets_dynamic_import (rejected=True)",
-      "elapsed_s": 0.1145
+      "elapsed_s": 0.1726
     },
     {
       "id": "SECURITY_011",
@@ -1459,7 +1569,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Security integrity oracle passed for secrets_popen (rejected=True)",
-      "elapsed_s": 0.1073
+      "elapsed_s": 0.1771
     },
     {
       "id": "SECURITY_012",
@@ -1467,7 +1577,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Security integrity oracle passed for secrets_abs_path (rejected=True)",
-      "elapsed_s": 0.1112
+      "elapsed_s": 0.1731
     },
     {
       "id": "SECURITY_013",
@@ -1475,7 +1585,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Security integrity oracle passed for safe_code_1 (rejected=False)",
-      "elapsed_s": 0.0945
+      "elapsed_s": 0.1551
     },
     {
       "id": "SECURITY_014",
@@ -1483,7 +1593,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Security integrity oracle passed for safe_code_2 (rejected=False)",
-      "elapsed_s": 0.1281
+      "elapsed_s": 0.1838
     },
     {
       "id": "TERMINAL_001",
@@ -1491,7 +1601,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Terminal oracle passed",
-      "elapsed_s": 0.0011
+      "elapsed_s": 0.0029
     },
     {
       "id": "TERMINAL_002",
@@ -1499,7 +1609,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Terminal oracle passed",
-      "elapsed_s": 0.0005
+      "elapsed_s": 0.0037
     },
     {
       "id": "TERMINAL_003",
@@ -1507,7 +1617,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Terminal oracle passed",
-      "elapsed_s": 0.0011
+      "elapsed_s": 0.0018
     },
     {
       "id": "TERMINAL_004",
@@ -1515,7 +1625,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Terminal oracle passed",
-      "elapsed_s": 0.0017
+      "elapsed_s": 0.0055
     },
     {
       "id": "TERMINAL_005",
@@ -1523,7 +1633,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Terminal oracle passed",
-      "elapsed_s": 0.0012
+      "elapsed_s": 0.0015
     },
     {
       "id": "TERMINAL_006",
@@ -1531,7 +1641,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Terminal oracle passed",
-      "elapsed_s": 0.0009
+      "elapsed_s": 0.0023
     },
     {
       "id": "TERMINAL_007",
@@ -1539,7 +1649,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Terminal oracle passed",
-      "elapsed_s": 0.0011
+      "elapsed_s": 0.0028
     },
     {
       "id": "TERMINAL_008",
@@ -1547,7 +1657,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Terminal oracle passed",
-      "elapsed_s": 0.001
+      "elapsed_s": 0.002
     },
     {
       "id": "TERMINAL_009",
@@ -1555,7 +1665,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Terminal oracle passed",
-      "elapsed_s": 0.0008
+      "elapsed_s": 0.0016
     },
     {
       "id": "TERMINAL_010",
@@ -1563,7 +1673,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Terminal oracle passed",
-      "elapsed_s": 0.0008
+      "elapsed_s": 0.0024
     },
     {
       "id": "TERMINAL_011",
@@ -1571,7 +1681,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Terminal oracle passed",
-      "elapsed_s": 0.001
+      "elapsed_s": 0.0033
     },
     {
       "id": "TERMINAL_012",
@@ -1579,7 +1689,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Terminal oracle passed",
-      "elapsed_s": 0.0008
+      "elapsed_s": 0.0022
     },
     {
       "id": "TERMINAL_013",
@@ -1587,7 +1697,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Terminal oracle passed",
-      "elapsed_s": 0.0015
+      "elapsed_s": 0.0064
     },
     {
       "id": "TERMINAL_014",
@@ -1595,7 +1705,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Terminal oracle passed",
-      "elapsed_s": 0.0006
+      "elapsed_s": 0.0027
     },
     {
       "id": "WORD_001",
@@ -1603,7 +1713,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Word oracle passed for action: insert_paragraph",
-      "elapsed_s": 0.6971
+      "elapsed_s": 1.6841
     },
     {
       "id": "WORD_002",
@@ -1611,7 +1721,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Word oracle passed for action: insert_paragraph",
-      "elapsed_s": 0.6788
+      "elapsed_s": 1.7114
     },
     {
       "id": "WORD_003",
@@ -1619,7 +1729,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Word oracle passed for action: insert_paragraph",
-      "elapsed_s": 0.6671
+      "elapsed_s": 1.6771
     },
     {
       "id": "WORD_004",
@@ -1627,7 +1737,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Word oracle passed for action: replace_paragraph",
-      "elapsed_s": 0.6606
+      "elapsed_s": 1.7044
     },
     {
       "id": "WORD_005",
@@ -1635,7 +1745,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Word oracle passed for action: replace_paragraph",
-      "elapsed_s": 0.4741
+      "elapsed_s": 0.8035
     },
     {
       "id": "WORD_006",
@@ -1643,7 +1753,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Word oracle passed for action: replace_paragraph",
-      "elapsed_s": 0.3925
+      "elapsed_s": 0.9578
     },
     {
       "id": "WORD_007",
@@ -1651,7 +1761,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Word oracle passed for action: delete_paragraph",
-      "elapsed_s": 0.4194
+      "elapsed_s": 0.9293
     },
     {
       "id": "WORD_008",
@@ -1659,7 +1769,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Word oracle passed for action: delete_paragraph",
-      "elapsed_s": 0.3767
+      "elapsed_s": 1.3048
     },
     {
       "id": "WORD_009",
@@ -1667,7 +1777,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Word oracle passed for action: delete_paragraph",
-      "elapsed_s": 0.3709
+      "elapsed_s": 1.6998
     },
     {
       "id": "WORD_010",
@@ -1675,7 +1785,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Word oracle passed for action: append_to_run",
-      "elapsed_s": 0.4793
+      "elapsed_s": 1.3731
     },
     {
       "id": "WORD_011",
@@ -1683,7 +1793,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Word oracle passed for action: append_to_run",
-      "elapsed_s": 0.4503
+      "elapsed_s": 1.3757
     },
     {
       "id": "WORD_012",
@@ -1691,7 +1801,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Word oracle passed for action: append_to_run",
-      "elapsed_s": 0.4387
+      "elapsed_s": 1.9249
     },
     {
       "id": "WORD_013",
@@ -1699,7 +1809,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Word oracle passed for action: insert_table",
-      "elapsed_s": 0.4078
+      "elapsed_s": 1.7221
     },
     {
       "id": "WORD_014",
@@ -1707,7 +1817,7 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Word oracle passed for action: insert_table",
-      "elapsed_s": 0.4285
+      "elapsed_s": 2.5662
     },
     {
       "id": "WORD_015",
@@ -1715,7 +1825,31 @@
       "status": "active",
       "oracle_verdict": "PASS",
       "reason": "Word oracle passed for action: insert_table",
-      "elapsed_s": 0.3948
+      "elapsed_s": 1.7944
+    },
+    {
+      "id": "WORD_016",
+      "category": "Word",
+      "status": "active",
+      "oracle_verdict": "PASS",
+      "reason": "Word oracle passed for action: insert_paragraph",
+      "elapsed_s": 1.7607
+    },
+    {
+      "id": "WORD_017",
+      "category": "Word",
+      "status": "active",
+      "oracle_verdict": "PASS",
+      "reason": "Word oracle passed for action: append_to_run",
+      "elapsed_s": 2.072
+    },
+    {
+      "id": "WORD_018",
+      "category": "Word",
+      "status": "active",
+      "oracle_verdict": "PASS",
+      "reason": "Word oracle passed for action: insert_table",
+      "elapsed_s": 1.8432
     }
   ]
 }
