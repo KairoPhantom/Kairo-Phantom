@@ -1,4 +1,15 @@
+import sys
+import os
 import pytest
+
+# Setup pathing
+_conftest_dir = os.path.dirname(os.path.abspath(__file__))
+_sidecar_root = os.path.dirname(_conftest_dir)
+if _sidecar_root not in sys.path:
+    sys.path.insert(0, _sidecar_root)
+if os.path.join(_sidecar_root, "sidecar") not in sys.path:
+    sys.path.insert(0, os.path.join(_sidecar_root, "sidecar"))
+
 
 def pytest_runtest_setup(item):
     # Enforce no skipped or xfailed tests at runtime via markers

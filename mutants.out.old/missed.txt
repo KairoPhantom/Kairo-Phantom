@@ -1,0 +1,5 @@
+phantom-core/src/toast_notification.rs:89:17: delete field style from struct WNDCLASSW expression in win_balloon::create_hidden_hwnd
+phantom-core/src/toast_notification.rs:90:17: delete field lpfnWndProc from struct WNDCLASSW expression in win_balloon::create_hidden_hwnd
+phantom-core/src/toast_notification.rs:91:17: delete field hInstance from struct WNDCLASSW expression in win_balloon::create_hidden_hwnd
+phantom-core/src/toast_notification.rs:92:17: delete field lpszClassName from struct WNDCLASSW expression in win_balloon::create_hidden_hwnd
+phantom-core/src/toast_notification.rs:130:17: delete field cbSize from struct NOTIFYICONDATAW expression in win_balloon::show_balloon

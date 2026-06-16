@@ -18,6 +18,69 @@
 
 ---
 
+## Current Status (Honest Disclosure)
+
+> **This is an unvalidated development kernel with the wedge Pack (declassification triage) shipping first. Production-ready status is NOT claimed.**
+> Real-app integration execution (P5/P6) remains **BLOCKED** and "production-ready" is **NOT** claimed until the real Win11+Office+Ollama gauntlet runs green on the full denominator.
+> The 12 legacy domains are preserved byte-for-byte for future progressive launch as Packs.
+
+### What Works (Verified)
+
+| Capability | Status | Evidence |
+|:---|:---:|:---|
+| Full pipeline: ingest -> security -> gate -> extract -> suggest | PROVEN | `make demo`, `make bench`, `make acceptance` all green |
+| Provenance chain: Action -> Extraction -> Chunk -> Document(page,bbox) | PROVEN | 100% coverage on all fixture runs |
+| Air-gap enforcement (Tier3 cloud off by default) | PROVEN | `make safety` egress test passes |
+| Prompt injection blocking (25-payload corpus) | PROVEN | 25/25 blocked in `make safety` |
+| Ingestor robustness (missing files, bad extensions) | PROVEN | Graceful errors, no crashes |
+| Quality gate: ungrounded extractions BLOCKED | PROVEN | Gate-bypass audit passes |
+| CUA: read+suggest only, no autonomous writes | PROVEN | Out-of-allowlist refused, post-state verified |
+| Flywheel: human correction changes next extraction | PROVEN | Integration test passes |
+| Wedge Pack per-field accuracy (12 fields) [SYNTHETIC / self-graded — unvalidated] | PROVEN | 100% on labeled fixtures (see `bench/REPORT.json`) |
+| Kernel purity (no /domains or /legacy imports) | PROVEN | `make build` purity guard green |
+| Domains preserved byte-for-byte | PROVEN | `make domains-check` green |
+| 29 unit/integration tests | PROVEN | `make test` green, 0 failures |
+
+### What's PENDING
+
+| Capability | Status | Blocker |
+|:---|:---:|:---|
+| Real-app CUA (Notepad, Browser, Office) | PENDING-REAL-APP (BLOCKED) | Requires live Win11 host with MS Office + Ollama |
+| Tauri native overlay | PENDING | FastAPI overlay works; Tauri build requires Rust toolchain on target |
+| Design partner validation on their documents | PENDING | Awaiting real classified document test |
+| LiteLLM/Ollama integration (non-test-mode) | PENDING | Requires local Ollama with pulled model |
+
+### Measured Metrics
+
+| Metric | Value | Source |
+|:---|:---|:---|
+| Wedge per-field accuracy [SYNTHETIC / self-graded — unvalidated] | 100% (12/12 fields) | `bench/REPORT.json` |
+| Provenance coverage | 100% | `bench/REPORT.json` |
+| Injection block rate | 100% (25/25) | `make safety` |
+| Unit test pass rate | 100% (29/29) | `make test` |
+| Gate flag rate | 0.0 | `bench/REPORT.json` |
+| Gate block rate | 0.0 | `bench/REPORT.json` |
+
+### Hardware Tiers
+
+| Tier | Description | Model |
+|:---|:---|:---|
+| Tier 1 (default) | On-device, air-gapped | Ollama local models (e.g., Mistral, Llama) |
+| Tier 2 | On-premise gateway | LiteLLM at `127.0.0.1:4000` |
+| Tier 3 | Cloud (OFF by default) | Any OpenAI-compatible API (requires explicit opt-in) |
+
+### Model Licenses
+
+| Model | License | Notes |
+|:---|:---|:---|
+| Mistral 7B | Apache 2.0 | Default local model |
+| Llama 3 | Meta Community License | Alternative local model |
+| GPT-4 (Tier 3 only) | Commercial | Only if user explicitly enables cloud |
+
+</div>
+
+---
+
 ## Table of Contents
 
 - [What Is Kairo Phantom?](#-what-is-kairo-phantom)

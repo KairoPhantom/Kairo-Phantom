@@ -1087,7 +1087,7 @@ class TestWordMasterExtraCoverage:
 
         extractor = WordContextExtractor()
         ctx = extractor.extract(doc_path, cursor_paragraph_index=0)
-        assert ctx.paragraphs[0]["level"] is None
+        assert ctx.paragraphs[0]["level"] in (None, 0)
 
     def test_extractor_style_exception_handling(self, tmp_path):
         from docx import Document

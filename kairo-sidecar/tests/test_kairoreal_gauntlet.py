@@ -158,9 +158,9 @@ def test_task_completion_rate_schema(tmp_path: Path):
     assert data["gauntlet_version"] == "kairoreal-headless-v1"
     assert isinstance(data["elapsed_seconds"], (int, float))
     assert data["total"] == 215
-    assert data["active"] == 212
+    assert data["active"] == 215
     assert data["pending"] == 0
-    assert data["excluded"] == 3
+    assert data["excluded"] == 0
     assert data["gate_threshold"] == 80.0
 
     # ── Gate: active-scenario pass rate must be >= 80% ────────────────────────
@@ -195,6 +195,6 @@ def test_task_completion_rate_schema(tmp_path: Path):
             assert field in r, (
                 f"Field '{field}' missing from result entry {r.get('id', '?')}"
             )
-        assert r["oracle_verdict"] in ("PASS", "FAIL", "SKIP"), (
+        assert r["oracle_verdict"] in ("PASS", "FAIL", "SKIP", "PENDING-REAL-APP"), (
             f"Invalid oracle_verdict '{r['oracle_verdict']}' in {r['id']}"
         )

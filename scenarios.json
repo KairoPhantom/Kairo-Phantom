@@ -2815,12 +2815,11 @@
     "name": "Browser Scenario 01: Join Yjs Peer Session",
     "description": "Validate Browser Yjs editor on prompt: Join the Yjs collaboration session as a peer helper",
     "prompt": "Join the Yjs collaboration session as a peer helper",
-    "status": "gui_only",
+    "status": "active",
     "expected_outcome": {
       "action": "collaborative_peer",
       "clientid_prefix": "kairo-ai-"
-    },
-    "gui_only": true
+    }
   },
   {
     "id": "BROWSER_002",
@@ -2828,12 +2827,11 @@
     "name": "Browser Scenario 02: Verify Awareness Marker",
     "description": "Validate Browser Yjs editor on prompt: Verify that collaborators can see the AI awareness marker on the page",
     "prompt": "Verify that collaborators can see the AI awareness marker on the page",
-    "status": "gui_only",
+    "status": "active",
     "expected_outcome": {
       "action": "awareness_marker",
       "awareness_marker_visible": true
-    },
-    "gui_only": true
+    }
   },
   {
     "id": "BROWSER_003",
@@ -2841,11 +2839,10 @@
     "name": "Browser Scenario 03: Verify Active DOM Injection",
     "description": "Validate Browser Yjs editor on prompt: Generate the paragraph 'Welcome to the Team' in the collaborative editor",
     "prompt": "Generate the paragraph 'Welcome to the Team' in the collaborative editor",
-    "status": "gui_only",
+    "status": "active",
     "expected_outcome": {
       "action": "verify_dom_text",
       "contains": "Welcome to the Team"
-    },
-    "gui_only": true
+    }
   }
 ]

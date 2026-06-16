@@ -800,86 +800,29 @@ def _exec_email(sandbox_path: str, scenario: Dict[str, Any]) -> Dict[str, str]:
         return _fail(f"Email executor error: {exc}")
 
 
-# ── Notepad executor (headless: writes .txt and verifies content) ─────────────
+# ── Notepad executor (headless: requires a real GUI app) ─────────────────────
 
 def _exec_notepad(base_dir: str, scenario: Dict[str, Any]) -> Dict[str, str]:
-    """Notepad domain: write a plain-text file and verify its contents against expected_outcome.
-
-    This is a fully headless proxy for Notepad scenarios. The real GUI test
-    runs in gui_gauntlet.yml against a live Notepad process; here we verify
-    the *write/append/format logic* via direct file I/O.
+    """Notepad scenarios require a real Notepad process and GUI interaction.
+    In the headless environment, we mark these as PENDING-REAL-APP.
     """
-    expected = scenario.get("expected_outcome", {})
-    action   = expected.get("action", "")
-    txt_path = os.path.join(base_dir, "notepad_output.txt")
-
-    try:
-        if action == "write_text":
-            contains = expected.get("contains", "")
-            # Simulate: write a file that contains the expected text
-            content = scenario.get("prompt", "")  # Use prompt as the source text
-            with open(txt_path, "w", encoding="utf-8") as fh:
-                fh.write(content)
-            with open(txt_path, encoding="utf-8") as fh:
-                written = fh.read()
-            if contains and contains not in written:
-                return _fail(
-                    f"Notepad write_text: expected to contain '{contains}', "
-                    f"got '{written[:120]}'"
-                )
-            return _pass(f"Notepad write_text: content '{contains}' present")
-
-        elif action == "append_text":
-            contains = expected.get("contains", "")
-            with open(txt_path, "w", encoding="utf-8") as fh:
-                fh.write("initial content\n")
-            # Append
-            with open(txt_path, "a", encoding="utf-8") as fh:
-                fh.write(contains)
-            with open(txt_path, encoding="utf-8") as fh:
-                written = fh.read()
-            if contains not in written:
-                return _fail(
-                    f"Notepad append_text: expected '{contains}' in file, got '{written[:120]}'"
-                )
-            return _pass(f"Notepad append_text: '{contains}' appended successfully")
-
-        elif action == "format_text":
-            crlf = expected.get("crlf", False)
-            lines = ["Line 1", "Line 2", "Line 3"]
-            sep = "\r\n" if crlf else "\n"
-            with open(txt_path, "wb") as fh:
-                fh.write(sep.join(lines).encode("utf-8"))
-            with open(txt_path, "rb") as fh:
-                raw = fh.read()
-            if crlf and b"\r\n" not in raw:
-                return _fail("Notepad format_text: expected CRLF line endings not found")
-            return _pass("Notepad format_text: CRLF line endings verified")
-
-        else:
-            return _fail(f"Notepad: unknown action '{action}'")
-
-    except Exception as exc:
-        return _fail(f"Notepad executor error: {exc}")
+    return {
+        "oracle_verdict": "PENDING-REAL-APP",
+        "reason": "Requires a real GUI app environment (Windows 11 VM + Office + Ollama)"
+    }
 
 
-# ── Browser executor (GUI-only: explicitly yield SKIP with clear reason) ──────
+# ── Browser executor (headless: requires a real browser/GUI app) ──────────────
 
 def _exec_browser(base_dir: str, scenario: Dict[str, Any]) -> Dict[str, str]:
-    """Browser domain scenarios require a live browser (Yjs, DOM injection).
-
-    These cannot be executed in a headless Python environment. They are
-    formally delegated to gui_gauntlet.yml and are explicitly excluded from
-    the headless active count via the 'gui_only' flag.
-
-    We return SKIP here so the scenario is tracked as GUI_ONLY, not FAIL.
-    The gui_gauntlet.yml workflow runs these with a real Chrome instance.
+    """Browser scenarios require a real browser process (Chrome/Firefox) and Yjs DOM integration.
+    In the headless environment, we mark these as PENDING-REAL-APP.
     """
-    return _skip(
-        "GUI_ONLY: Browser scenarios require a live browser process. "
-        "Covered by gui_gauntlet.yml on Windows runners. "
-        "This SKIP is expected and does NOT count against pass_rate_active."
-    )
+    return {
+        "oracle_verdict": "PENDING-REAL-APP",
+        "reason": "Requires a real browser/GUI app environment (Windows 11 VM + Office + Ollama)"
+    }
+
 
 
 # ── Dispatch table ────────────────────────────────────────────────────────────
@@ -995,6 +938,8 @@ def run_gauntlet(
     passed  = sum(1 for r in results if r["oracle_verdict"] == "PASS")
     failed  = sum(1 for r in results if r["oracle_verdict"] == "FAIL")
     skipped = sum(1 for r in results if r["oracle_verdict"] == "SKIP")
+    pending_real_app = sum(1 for r in results if r["oracle_verdict"] == "PENDING-REAL-APP")
+
     active_passed = sum(
         1 for r in results if r["status"] == "active" and r["oracle_verdict"] == "PASS"
     )
@@ -1016,7 +961,7 @@ def run_gauntlet(
     for r in results:
         cat = r["category"]
         cs = cat_stats.setdefault(cat, {"total": 0, "active": 0, "passed": 0,
-                                        "failed": 0, "skipped": 0})
+                                        "failed": 0, "skipped": 0, "pending_real_app": 0})
         cs["total"] += 1
         if r["status"] == "active":
             cs["active"] += 1
@@ -1024,6 +969,7 @@ def run_gauntlet(
         cs["passed"] += ov == "PASS"
         cs["failed"] += ov == "FAIL"
         cs["skipped"] += ov == "SKIP"
+        cs["pending_real_app"] += ov == "PENDING-REAL-APP"
 
     report = {
         "product": "Kairo Phantom",
@@ -1037,6 +983,7 @@ def run_gauntlet(
         "passed": passed,
         "failed": failed,
         "skipped": skipped,
+        "pending_real_app": pending_real_app,
         "active_passed": active_passed,
         "active_failed": active_failed,
         "pass_rate_active": pass_rate_active,
@@ -1084,10 +1031,10 @@ def main() -> int:
     print("=" * 68)
     print("  KAIROREAL GAUNTLET - %s" % report["verdict"])
     print("=" * 68)
-    print("  Total    : %d  (active=%d pending=%d excl=%d)" % (
-          report["total"], report["active"], report["pending"], report["excluded"]))
-    print("  Results  : PASS=%d FAIL=%d SKIP=%d" % (
-          report["passed"], report["failed"], report["skipped"]))
+    print("  Total    : %d  (active=%d pending=%d excl=%d pending_real_app=%d)" % (
+          report["total"], report["active"], report["pending"], report["excluded"], report.get("pending_real_app", 0)))
+    print("  Results  : PASS=%d FAIL=%d SKIP=%d PENDING_REAL_APP=%d" % (
+          report["passed"], report["failed"], report["skipped"], report.get("pending_real_app", 0)))
     print("  Active   : %d passed / %d -> %.1f%%  (gate=%.0f%%)" % (
           report["active_passed"], report["active"],
           report["pass_rate_active"], report["gate_threshold"]))

@@ -416,6 +416,48 @@ async fn async_main() -> Result<()> {
     }
 
     // ── 100x: New CLI subcommands ─────────────────────────────────────────────
+    
+    // kairo demo <file> — launch full on-device pipeline and open overlay browser
+    if args.len() >= 3 && args[1] == "demo" {
+        let file_path = &args[2];
+        println!("🚀 Launching Kairo Demo for: {}", file_path);
+        println!("Starting Kairo Overlay Server on http://127.0.0.1:7438...");
+        
+        let mut server_cmd = std::process::Command::new("python");
+        server_cmd.args(["-m", "uvicorn", "overlay.server:app", "--port", "7438"]);
+        
+        match server_cmd.spawn() {
+            Ok(mut child) => {
+                // Wait 1.5 seconds for uvicorn to start up
+                std::thread::sleep(std::time::Duration::from_millis(1500));
+                
+                // Open browser
+                let url = format!("http://127.0.0.1:7438/?file={}", file_path);
+                println!("Opening browser to: {}", url);
+                
+                let open_result = if cfg!(target_os = "windows") {
+                    std::process::Command::new("cmd").args(["/C", "start", &url]).status()
+                } else if cfg!(target_os = "macos") {
+                    std::process::Command::new("open").arg(&url).status()
+                } else {
+                    std::process::Command::new("xdg-open").arg(&url).status()
+                };
+
+                if let Err(e) = open_result {
+                    println!("⚠️  Failed to open browser automatically: {}", e);
+                    println!("Please open this URL manually: {}", url);
+                }
+
+                println!("\nPress Ctrl+C to stop the overlay server.");
+                let _ = child.wait();
+            }
+            Err(e) => {
+                println!("❌ Failed to start overlay server: {}", e);
+                println!("Ensure uvicorn is installed and python is on your PATH.");
+            }
+        }
+        return Ok(());
+    }
 
     // kairo seed <folder> — seed MemMachine from existing documents
     if args.len() >= 3 && args[1] == "seed" {

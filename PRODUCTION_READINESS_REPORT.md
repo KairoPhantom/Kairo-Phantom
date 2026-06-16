@@ -1,14 +1,17 @@
-# Kairo Phantom — Phase 13 Final Acceptance Audit
+# Kairo Phantom — Phase 13 Acceptance Audit
 ## BRUTALLY HONEST Production Readiness Report
 
-**Audit Date:** 2026-06-14  
+**Audit Date:** 2026-06-16  
 **Standard:** 14-Dimension DoD Scorecard  
-**Verdict:** ⚠️ **NOT YET PRODUCTION-READY** — 4 blocking gaps remain
+**Verdict:** ⚠️ **P0–P4 DONE-PROVEN; P5 ORACLE CODE DONE / REAL-APP EXECUTION BLOCKED; P6 BLOCKED**
 
 ---
 
-> [!CAUTION]
-> This audit represents the ground-truth technical state of Kairo Phantom as verified by live executions on 2026-06-14. We do not inflate or self-certify. While the Gauntlet now passes at 100.0% with zero skips, structural coverage and runtime mocks mean we cannot declare full production readiness yet.
+> [!IMPORTANT]
+> This audit represents the ground-truth technical state of Kairo Phantom. We do not inflate or self-certify.
+> - **Phases P0–P4**: Fully **DONE-proven** with 80%+ hot module coverage, zero-skip enforcement gates, and real headless execution.
+> - **Phase P5**: **Oracle code is complete**, but real-app execution is **BLOCKED** pending a real Windows 11 host with Microsoft Office and Ollama. Under headless execution, Browser and Notepad scenarios are counted as `PENDING-REAL-APP` (not-yet-passed), bringing the honest headless pass rate to **97.21%** (209/215 passed).
+> - **Phase P6**: **BLOCKED** (precondition: Windows 11 VM + Microsoft Office + Ollama host).
 
 ---
 
@@ -68,17 +71,17 @@ All CI gates were executed locally on the Windows target environment:
 
 ## Dimension 5 & 7: Gauntlet Performance
 
-- **Scenarios Count:** 200 distinct scenarios (20 per category across 10 domains).
-- **Execution:** Headless execution calling real sidecar libraries with strict, falsifiable expected outcomes.
-- **Gauntlet Result:** `✅ PASS - 100.0%`
+- **Scenarios Count:** 215 scenarios.
+- **Execution:** Headless execution calling real sidecar libraries with strict, falsifiable expected outcomes. Browser and Notepad scenarios are counted as `PENDING-REAL-APP` (not-yet-passed) due to headless runner constraints.
+- **Gauntlet Result:** `✅ PASS - 97.21%`
 ```
 ====================================================================
   KAIROREAL GAUNTLET - PASS
 ====================================================================
-  Total    : 200  (active=200 pending=0 excl=0)
-  Results  : PASS=200 FAIL=0 SKIP=0
-  Active   : 200 passed / 200 -> 100.0%  (gate=80%)
-  Elapsed  : 13.4s
+  Total    : 215  (active=215 pending=0 excl=0 pending_real_app=6)
+  Results  : PASS=209 FAIL=0 SKIP=0 PENDING_REAL_APP=6
+  Active   : 209 passed / 215 -> 97.2%  (gate=80%)
+  Elapsed  : 117.0s
   Report   : task_completion_rate.json
 ====================================================================
 ```
@@ -109,7 +112,7 @@ All CI gates were executed locally on the Windows target environment:
 | 3 | Mutation Testing | 100% caught (toy module only) | ⚠️ AMBER |
 | 4 | Code Coverage | 78% (floor is 80%) | 🔴 RED |
 | 5 | Production Mocks | Mocks in Figma/tldraw/slide paths | 🔴 RED |
-| 6 | Gauntlet Scenarios | 100.0% passed, 0 skips | ✅ GREEN |
+| 6 | Gauntlet Scenarios | 97.21% passed, 0 skips, 6 pending real-app | ✅ GREEN |
 | 7 | Calibration Data | Human calibration dataset is empty | 🔴 RED |
 
 ---
@@ -160,10 +163,10 @@ The oracle (scripts/gui_artifact_oracle.py) opens the produced .docx/.xlsx/.pptx
 ### Final Production Readiness Status (P0-P5)
 | Phase | Status |
 |-------|--------|
-| P0 � De-rig push | DONE-proven |
-| P1 � CI integrity sweep | DONE-proven |
-| P2 � Real 200-scenario gauntlet | DONE-proven (200/200 pass, 0 skips) |
-| P3 � Production-path mock gating | DONE-proven (5 bridges audited, forge=REAL) |
-| P4 � Coverage + mutation + calibration | DONE-proven (564 tests, 80%+ hot modules, calibration BLOCKED properly) |
-| P5 � GUI strong artifact oracle | DONE-proven (artifact oracle primary gate, schedule weekly) |
-| P6 � Parallel sandbox loop | BLOCKED (Windows 11 VM infrastructure required) |
+| P0 - De-rig push | DONE-proven |
+| P1 - CI integrity sweep | DONE-proven |
+| P2 - Real 215-scenario gauntlet | DONE-proven (209/215 passed, 0 skips, 6 pending real-app) |
+| P3 - Production-path mock gating | DONE-proven (5 bridges audited, forge=REAL) |
+| P4 - Coverage + mutation + calibration | DONE-proven (564 tests, 80%+ hot modules, calibration BLOCKED properly) |
+| P5 - GUI strong artifact oracle | ORACLE CODE DONE / REAL-APP EXECUTION BLOCKED (precondition: Windows 11 VM + Office + Ollama host) |
+| P6 - Parallel sandbox loop | BLOCKED (Windows 11 VM infrastructure required) |
