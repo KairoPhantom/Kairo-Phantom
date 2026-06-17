@@ -7,7 +7,7 @@
 [![Rust 1.78+](https://img.shields.io/badge/rust-1.78%2B-orange?logo=rust&logoColor=white)](phantom-core/)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue?logo=python&logoColor=white)](kairo-sidecar/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
-[![Tests: 779 passing](https://img.shields.io/badge/tests-779%20passing-brightgreen)](#-testing)
+[![Tests: 45 passing](https://img.shields.io/badge/tests-45%20passing-brightgreen)](#-testing)
 [![Local-first](https://img.shields.io/badge/architecture-local--first-blueviolet)](#-local-first--privacy)
 
 *Kairo Phantom is not a single writing tool — it is an **operating layer for knowledge work**.*  
@@ -36,10 +36,10 @@
 | Quality gate: ungrounded extractions BLOCKED | PROVEN | Gate-bypass audit passes |
 | CUA: read+suggest only, no autonomous writes | PROVEN | Out-of-allowlist refused, post-state verified |
 | Flywheel: human correction changes next extraction | PROVEN | Integration test passes |
-| Wedge Pack per-field accuracy (12 fields) [SYNTHETIC / self-graded — unvalidated] | PROVEN | 100% on labeled fixtures (see `bench/REPORT.json`) |
+| Launch Packs accuracy [SYNTHETIC / self-graded — unvalidated] | PROVEN | Measured on labeled fixtures (see `bench/REPORT.json`) |
 | Kernel purity (no /domains or /legacy imports) | PROVEN | `make build` purity guard green |
 | Domains preserved byte-for-byte | PROVEN | `make domains-check` green |
-| 29 unit/integration tests | PROVEN | `make test` green, 0 failures |
+| 45 unit/integration tests | PROVEN | `make test` green, 0 failures |
 
 ### What's PENDING
 
@@ -54,12 +54,11 @@
 
 | Metric | Value | Source |
 |:---|:---|:---|
-| Wedge per-field accuracy [SYNTHETIC / self-graded — unvalidated] | 100% (12/12 fields) | `bench/REPORT.json` |
-| Provenance coverage | 100% | `bench/REPORT.json` |
+| Grounded-Answer Rate | 100% | `bench/REPORT.json` |
+| Citation-Hallucination Rate | 0.0% | `bench/REPORT.json` |
+| Refusal-Correctness | 100% | `bench/REPORT.json` |
 | Injection block rate | 100% (25/25) | `make safety` |
-| Unit test pass rate | 100% (29/29) | `make test` |
-| Gate flag rate | 0.0 | `bench/REPORT.json` |
-| Gate block rate | 0.0 | `bench/REPORT.json` |
+| Unit test pass rate | 100% (45/45) | `make test` |
 
 ### Hardware Tiers
 
@@ -276,7 +275,7 @@ Every request passes through the security stack *before* it is trusted, and ever
 
 **Design principle:** treat *all* external content — the document you opened, a pasted snippet, a tool result — as untrusted by default. The security stack is the boundary that turns untrusted input into a safe, scoped request.
 
-> 📄 **OWASP Agentic AI Top 10:** [10/10 controls met](docs/security/OWASP_AGENTIC_TOP10_COMPLIANCE.md)  
+> 📄 **OWASP Agentic AI Top 10:** [Aligned with OWASP guidelines](docs/security/OWASP_AGENTIC_TOP10_COMPLIANCE.md)  
 > 🔐 **Full security documentation:** [docs/security/](docs/security/)
 
 ---

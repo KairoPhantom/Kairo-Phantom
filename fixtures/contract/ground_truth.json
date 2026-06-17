@@ -1,0 +1,51 @@
+{
+  "provenance": "SYNTHETIC / self-graded — unvalidated",
+  "fixtures": [
+    {
+      "fixture_id": "sample_contract_01",
+      "file": "sample_contract_01.txt",
+      "ground_truth": {
+        "parties": ["ACME Corp", "Client Solutions Inc."],
+        "effective_date": "2026-06-01",
+        "termination_date": "2026-06-01",
+        "obligations": [
+          "Licensee shall pay the license fees within 30 days of invoice. Licensee agree to keep the software confidential. Licensor shall provide technical support as outlined."
+        ],
+        "governing_law": "Delaware",
+        "payment_terms": "within 30 days",
+        "confidentiality_clause": "Each party agrees to maintain confidentiality of all proprietary information disclosed by the other party."
+      }
+    },
+    {
+      "fixture_id": "sample_contract_02",
+      "file": "sample_contract_02.txt",
+      "ground_truth": {
+        "parties": ["Wayne Enterprises", "Globex Corporation"],
+        "effective_date": "2026-05-15",
+        "termination_date": "2027-05-15",
+        "obligations": [
+          "Consulting Services Agreement is entered into as of May 15, 2026, between Wayne Enterprises (\"Client\") and Globex Corporation (\"Consultant\").",
+          "Consultant shall perform the services described in Exhibit A. Client shall pay Consultant within 15 days of receiving the invoice. Consultant shall maintain regular progress reports."
+        ],
+        "governing_law": "New York",
+        "payment_terms": "within 15 days",
+        "confidentiality_clause": "Consultant agrees that all Wayne Enterprises business secrets are strictly confidential."
+      }
+    },
+    {
+      "fixture_id": "sample_contract_03",
+      "file": "sample_contract_03.txt",
+      "ground_truth": {
+        "parties": ["Initech LLC", "Intertrode Corp"],
+        "effective_date": "2026-06-12",
+        "termination_date": "2028-06-12",
+        "obligations": [
+          "Receiving Party shall use the information solely for evaluation. Receiving Party shall protect information from unauthorized disclosure."
+        ],
+        "governing_law": "Texas",
+        "payment_terms": "",
+        "confidentiality_clause": "Receiving Party agrees to keep all Disclosing Party technical data strictly confidential."
+      }
+    }
+  ]
+}

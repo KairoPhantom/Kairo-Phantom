@@ -1,0 +1,140 @@
+"""
+Kairo Phantom — Command-line Demo Runner (SPEC §S8, §S9)
+
+Runs the de-identification triage pipeline on-device.
+Accepts a document path, processes it through the full orchestrator:
+capture → security → intent → router → extractor → quality → suggest.
+Outputs stage trace details and extraction results to stdout.
+"""
+
+from __future__ import annotations
+
+import argparse
+import os
+import pathlib
+import sys
+from datetime import datetime
+
+from kernel.core.data_model import Document
+from kernel.sidecar.ingestor import IngestorImpl
+from kernel.sidecar.security_filter import LocalSecurityFilter
+from kernel.sidecar.inference_gateway import TieredInferenceGateway
+from kernel.sidecar.quality_gate import LocalQualityGate
+from kernel.core.provenance import ProvenanceLogImpl
+from kernel.sidecar.memory_store import MemoryStoreImpl
+from packs.invoice.pack import InvoicePack
+from kernel.sidecar.orchestrator import OrchestratorImpl
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Kairo Phantom On-Device Demo")
+    parser.add_argument(
+        "--file",
+        required=True,
+        help="Path to the document to process",
+    )
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+    file_path = pathlib.Path(args.file)
+    if not file_path.exists():
+        print(f"[FAIL] Target file not found: {file_path}")
+        sys.exit(1)
+
+    print("=====================================================================")
+    print(f"Kairo Phantom On-Device Demo: Processing {file_path.name}")
+    print("=====================================================================")
+
+    # Use test mode to avoid requiring live external LLM APIs
+    os.environ["KAIRO_GATEWAY_TEST_MODE"] = "true"
+
+    # Initialize components
+    provenance_log = ProvenanceLogImpl()
+    # Write db to a temporary or local cache dir
+    db_dir = pathlib.Path(".kairo")
+    db_dir.mkdir(exist_ok=True)
+    memory_store = MemoryStoreImpl(db_dir / "demo_store.db")
+    
+    ingestor = IngestorImpl()
+    security_filter = LocalSecurityFilter(enable_pii_scan=False)
+    inference_gateway = TieredInferenceGateway(tier3_enabled=False)
+    quality_gate = LocalQualityGate(memory_store)
+    invoice_pack = InvoicePack()
+
+    orchestrator = OrchestratorImpl(
+        ingestor=ingestor,
+        security_filter=security_filter,
+        inference_gateway=inference_gateway,
+        quality_gate=quality_gate,
+        provenance_log=provenance_log,
+        pack=invoice_pack,
+        memory_store=memory_store,
+    )
+
+    # 1. Ingest/Create target document
+    doc = Document(
+        source_path=str(file_path),
+        sha256="mock-sha256",
+    )
+
+    # 2. Run Orchestrator
+    print("\n[Stage] Executing orchestrator pipeline...")
+    trace = orchestrator.run(doc)
+
+    print("\n========================= Pipeline Trace =========================")
+    for i, stage in enumerate(trace.stages, 1):
+        status_str = f"[{stage.status.upper()}]" if hasattr(stage, "status") and stage.status else "[OK]"
+        if stage.name == "human_review" or stage.status == "halted":
+            status_str = "[HALTED]"
+        duration_str = f"{stage.duration_ms:.1f}ms" if stage.duration_ms is not None else "N/A"
+        print(f" {i}. {stage.name:<18} {status_str:<10} (elapsed: {duration_str})")
+        print(f"    Input : {stage.input_data}")
+        print(f"    Output: {stage.output_data}")
+
+    print("\n========================= Extractions =========================")
+    if trace.halted:
+        print(f"[HALTED] Pipeline halted. Reason: {trace.halt_reason}")
+    
+    if trace.extractions:
+        for ext in trace.extractions:
+            chain = provenance_log.get_provenance(ext.ext_id)
+            source_info = "Ungrounded"
+            if chain.is_complete and chain.chunk:
+                bbox_str = f"page {chain.chunk.page}, bbox [{chain.chunk.bbox.x0:.3f}, {chain.chunk.bbox.y0:.3f}, {chain.chunk.bbox.x1:.3f}, {chain.chunk.bbox.y1:.3f}]"
+                source_info = f"Grounded ({bbox_str})"
+            
+            print(f"  Field: {ext.field_name:<25} Value: {ext.value:<35} Conf: {ext.confidence:.2f} [{ext.status.value}] ({source_info})")
+    else:
+        print("  No extractions generated.")
+
+    print("\n========================= Suggestions & Actions =========================")
+    # Filter passed extractions
+    passed_exts = [e for e in trace.extractions if e.status.value == "suggested" or e.status.value == "ok"]
+    if passed_exts:
+        for ext in passed_exts:
+            print(f"  [SUGGEST] Suggest CUA Action: target_app=notepad, payload={{'value': '{ext.value}'}} (ext_id={ext.ext_id})")
+    else:
+        print("  No suggestions generated (pipeline halted or low confidence).")
+
+    print("\n========================= Invoice Pack Accuracy =========================")
+    print("Ground Truth Key Path: fixtures/invoice/ground_truth.json")
+    print("Provenance/Authorship: SYNTHETIC / self-graded — unvalidated")
+    print("                      (Generated by AI agent during feature development)")
+    print("---------------------------------------------------------------------")
+    try:
+        accuracies = invoice_pack.oracle("fixtures/invoice")
+        for field, acc in sorted(accuracies.items()):
+            print(f"  Field: {field:<25} Accuracy: {acc*100.0:>6.1f}%")
+    except Exception as e:
+        print(f"  Failed to compute accuracy: {e}")
+
+    print("\n========================= Launch Overlay =========================")
+    print("To launch the interactive FastAPI glass-chrome overlay UI, run:")
+    print("    uvicorn overlay.server:app --reload --port 7438")
+    print("=====================================================================")
+
+
+if __name__ == "__main__":
+    main()

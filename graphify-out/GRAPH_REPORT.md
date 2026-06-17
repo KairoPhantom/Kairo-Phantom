@@ -1,16 +1,16 @@
-# Graph Report - kairo-phantom  (2026-06-16)
+# Graph Report - kairo-phantom  (2026-06-17)
 
 ## Corpus Check
-- 1478 files · ~2,480,397 words
+- 1504 files · ~849,917 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 19999 nodes · 29476 edges · 1598 communities (1349 shown, 249 thin omitted)
-- Extraction: 87% EXTRACTED · 13% INFERRED · 0% AMBIGUOUS · INFERRED: 3871 edges (avg confidence: 0.58)
+- 20338 nodes · 30364 edges · 1627 communities (1366 shown, 261 thin omitted)
+- Extraction: 86% EXTRACTED · 14% INFERRED · 0% AMBIGUOUS · INFERRED: 4223 edges (avg confidence: 0.58)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `a2ddb93a`
+- Built from commit: `528869bd`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -27,7 +27,6 @@
 - [[_COMMUNITY_Community 9|Community 9]]
 - [[_COMMUNITY_Community 10|Community 10]]
 - [[_COMMUNITY_Community 11|Community 11]]
-- [[_COMMUNITY_Community 12|Community 12]]
 - [[_COMMUNITY_Community 13|Community 13]]
 - [[_COMMUNITY_Community 14|Community 14]]
 - [[_COMMUNITY_Community 15|Community 15]]
@@ -168,6 +167,7 @@
 - [[_COMMUNITY_Community 153|Community 153]]
 - [[_COMMUNITY_Community 154|Community 154]]
 - [[_COMMUNITY_Community 155|Community 155]]
+- [[_COMMUNITY_Community 156|Community 156]]
 - [[_COMMUNITY_Community 157|Community 157]]
 - [[_COMMUNITY_Community 158|Community 158]]
 - [[_COMMUNITY_Community 159|Community 159]]
@@ -1524,18 +1524,46 @@
 - [[_COMMUNITY_Community 1593|Community 1593]]
 - [[_COMMUNITY_Community 1594|Community 1594]]
 - [[_COMMUNITY_Community 1595|Community 1595]]
+- [[_COMMUNITY_Community 1598|Community 1598]]
+- [[_COMMUNITY_Community 1599|Community 1599]]
+- [[_COMMUNITY_Community 1600|Community 1600]]
+- [[_COMMUNITY_Community 1601|Community 1601]]
+- [[_COMMUNITY_Community 1602|Community 1602]]
+- [[_COMMUNITY_Community 1603|Community 1603]]
+- [[_COMMUNITY_Community 1604|Community 1604]]
+- [[_COMMUNITY_Community 1605|Community 1605]]
+- [[_COMMUNITY_Community 1606|Community 1606]]
+- [[_COMMUNITY_Community 1607|Community 1607]]
+- [[_COMMUNITY_Community 1608|Community 1608]]
+- [[_COMMUNITY_Community 1609|Community 1609]]
+- [[_COMMUNITY_Community 1610|Community 1610]]
+- [[_COMMUNITY_Community 1611|Community 1611]]
+- [[_COMMUNITY_Community 1612|Community 1612]]
+- [[_COMMUNITY_Community 1613|Community 1613]]
+- [[_COMMUNITY_Community 1614|Community 1614]]
+- [[_COMMUNITY_Community 1615|Community 1615]]
+- [[_COMMUNITY_Community 1616|Community 1616]]
+- [[_COMMUNITY_Community 1617|Community 1617]]
+- [[_COMMUNITY_Community 1618|Community 1618]]
+- [[_COMMUNITY_Community 1619|Community 1619]]
+- [[_COMMUNITY_Community 1620|Community 1620]]
+- [[_COMMUNITY_Community 1621|Community 1621]]
+- [[_COMMUNITY_Community 1622|Community 1622]]
+- [[_COMMUNITY_Community 1623|Community 1623]]
+- [[_COMMUNITY_Community 1624|Community 1624]]
+- [[_COMMUNITY_Community 1625|Community 1625]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `Json` - 162 edges
-2. `Extraction` - 123 edges
-3. `Chunk` - 108 edges
-4. `Document` - 107 edges
-5. `DomainMasterRouter` - 88 edges
-6. `Action` - 85 edges
-7. `Correction` - 84 edges
-8. `Document` - 83 edges
-9. `allow` - 76 edges
-10. `deny` - 76 edges
+1. `Extraction` - 170 edges
+2. `Chunk` - 168 edges
+3. `Json` - 168 edges
+4. `Document` - 118 edges
+5. `ExtractionStatus` - 97 edges
+6. `Correction` - 93 edges
+7. `Action` - 91 edges
+8. `BBox` - 89 edges
+9. `DomainMasterRouter` - 88 edges
+10. `Document` - 83 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `test_docx_creator()` --calls--> `Document`  [INFERRED]
@@ -1549,7 +1577,7 @@
 - `test_pptx_creator()` --calls--> `PptxCreator`  [INFERRED]
   .agents/teamwork_preview_explorer_m3_m4/proposed_test_creators.py → kairo-sidecar/sidecar/creators/pptx_creator.py
 
-## Communities (1598 total, 249 thin omitted)
+## Communities (1627 total, 261 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.08
@@ -1576,8 +1604,8 @@ Cohesion: 0.06
 Nodes (52): AuditConfig, ClientBuilder, ComplianceConfig, EnterpriseConfig, Default, ModelConfig, Option, PathBuf (+44 more)
 
 ### Community 6 - "Community 6"
-Cohesion: 0.11
-Nodes (22): str, _error(), excelmcp_read_range(), excelmcp_write_range(), get_workbook_blueprint(), _parse_range_spec(), Get structural overview of an Excel workbook via openpyxl.     Returns:, Get structural overview of an Excel workbook via openpyxl.     Returns: (+14 more)
+Cohesion: 0.10
+Nodes (23): _error(), excelmcp_read_range(), excelmcp_write_range(), get_workbook_blueprint(), _parse_range_spec(), ExcelMcp Bridge — Live Excel COM automation for Kairo Phantom Domain 2. =======, Get structural overview of an Excel workbook via openpyxl.     Returns:, Get structural overview of an Excel workbook via openpyxl.     Returns: (+15 more)
 
 ### Community 7 - "Community 7"
 Cohesion: 0.07
@@ -1585,7 +1613,7 @@ Nodes (21): Arc, CancellationToken, CrdtSession, Default, Instant, Mutex, Option
 
 ### Community 8 - "Community 8"
 Cohesion: 0.09
-Nodes (30): KamiCommandHandler, // kami epub — EPUB 3.2 e-book compiling., // kami slides — Interactive Reveal.js presentation., // kami book — Continuous-flow HTML book layout., // kami html — Standalone static HTML file., // kami email — Formats text as professional email to system clipboard., // kami linkedin — LinkedIn post formatted to system clipboard., Core router for the Kairo Universal Document Compiler (Kami Pipeline). (+22 more)
+Nodes (28): KamiCommandHandler, // kami epub — EPUB 3.2 e-book compiling., // kami slides — Interactive Reveal.js presentation., // kami book — Continuous-flow HTML book layout., // kami html — Standalone static HTML file., // kami email — Formats text as professional email to system clipboard., // kami linkedin — LinkedIn post formatted to system clipboard., Core router for the Kairo Universal Document Compiler (Kami Pipeline). (+20 more)
 
 ### Community 9 - "Community 9"
 Cohesion: 0.10
@@ -1593,15 +1621,11 @@ Nodes (38): Default, Option, PromptGuard, Self, String, Vec, compute_structural_
 
 ### Community 10 - "Community 10"
 Cohesion: 0.03
-Nodes (93): main(), parse_args(), Kairo Phantom — Acceptance Audit Generator (SPEC §S8, §S9)  Runs the pipeline on, main(), parse_args(), Kairo Phantom — Benchmark Harness (SPEC §S8, §S9)  Runs the declassification pip, main(), parse_args() (+85 more)
+Nodes (102): main(), parse_args(), Kairo Phantom — Acceptance Audit Generator (SPEC §S8, §S9)  Runs the pipeline on, main(), parse_args(), Kairo Phantom — Comprehensive Grounding Benchmark Harness (SPEC §S8, §S9), main(), parse_args() (+94 more)
 
 ### Community 11 - "Community 11"
 Cohesion: 0.07
 Nodes (33): Any, float, int, str, ExtractionTier, PdfExtractionResult, Multi-Tier PDF Extraction Engine for Kairo Phantom Domain 4.  Tier 1 (PyMuPDF/, Main entry point.  Attempts tiers 1–4 in order, accepting the first         res (+25 more)
-
-### Community 12 - "Community 12"
-Cohesion: 0.04
-Nodes (13): SwarmOrchestrator, make_swarm(), p2_powerpoint_slides_prompt_routes_to_agent(), r10_output_tags_in_directives(), r1_design_agent_for_powerpoint(), r2_data_analyst_for_excel(), r3_content_agent_for_word(), r4_reasoning_for_query_mode() (+5 more)
 
 ### Community 13 - "Community 13"
 Cohesion: 0.05
@@ -1612,8 +1636,8 @@ Cohesion: 0.04
 Nodes (45): build, active, targets, csp, all, beforeBuildCommand, beforeDevCommand, devPath (+37 more)
 
 ### Community 15 - "Community 15"
-Cohesion: 0.05
-Nodes (16): Domain 7: Export & Publishing — Kairo Phantom Comprehensive test suite for all, Provide a temporary output directory for each test., temp_output_dir(), TestBatchExport, TestBookExport, TestEmailFormat, TestEpubExport, TestFlashcardsExport (+8 more)
+Cohesion: 0.04
+Nodes (17): Domain 7: Export & Publishing — Kairo Phantom Comprehensive test suite for all, Provide a temporary output directory for each test., temp_output_dir(), TestBatchExport, TestBookExport, TestCommandParser, TestEmailFormat, TestEpubExport (+9 more)
 
 ### Community 16 - "Community 16"
 Cohesion: 0.08
@@ -1644,12 +1668,12 @@ Cohesion: 0.12
 Nodes (43): ContextEngine, AiBackend, Arc, CrdtSession, DocumentContext, DomainCapability, Mutex, Option (+35 more)
 
 ### Community 24 - "Community 24"
-Cohesion: 0.03
-Nodes (61): Exception, Any, Any, bool, int, str, str, Reads COMPLETE document state before any LLM call. (+53 more)
+Cohesion: 0.07
+Nodes (19): Any, bool, int, str, COM/app APIs wrapper for Word matching UseIt-AI/use-it-agent interface., COM/app APIs wrapper for Word matching UseIt-AI/use-it-agent interface., CORRECT paragraph insertion using XML manipulation.         Never use doc.add_pa, CORRECT paragraph insertion using XML manipulation.         Never use doc.add_pa (+11 more)
 
 ### Community 25 - "Community 25"
-Cohesion: 0.05
-Nodes (45): Any, bool, float, int, str, Test 29: tldraw canvas correctly pre-populates process flow blocks., Test 30: tldraw bridge states unavailable on local port checks during isolated r, Test 31: Creating a geometric shape in tldraw canvas assigns unique ID and prope (+37 more)
+Cohesion: 0.10
+Nodes (25): Any, bool, float, int, str, tldraw Canvas Bridge for Kairo Domain 5.  Interfaces with the infinite whitebo, Check if the tldraw MCP server is available., Call the tldraw MCP tool via WebSocket or standard stdio if WS fails. (+17 more)
 
 ### Community 26 - "Community 26"
 Cohesion: 0.08
@@ -1668,16 +1692,16 @@ Cohesion: 0.05
 Nodes (38): 10. Domain 10 Gate Certification, 11. Security Contact, 1. Prompt-Injection Firewall (PromptShield) Audit, 2. Autonomous Red-Team Exercise, 3. WASM Sandbox Escape Attempts, 4. Governance Gate Audit, 5. Supply Chain Audit, 6. Cryptographic Audit Chain Verification (+30 more)
 
 ### Community 30 - "Community 30"
-Cohesion: 0.05
-Nodes (79): ApplyResult, ApplyResult, ActionKind, ActionStatus, BBox, Entity, ExtractionStatus, ModelVersion (+71 more)
+Cohesion: 0.03
+Nodes (64): Entity, ModelVersion, A named entity extracted from chunks., Tracks which model version produced an extraction., A named entity extracted from chunks., Tracks which model version produced an extraction., A user of the system., A user of the system. (+56 more)
 
 ### Community 31 - "Community 31"
 Cohesion: 0.16
 Nodes (16): _adeu_installed(), adeu_read_document(), adeu_sanitize(), _get_adeu_cmd(), Adeu Bridge — Native Track Changes for Kairo Phantom Word Specialist. =========, Extract document text + paragraph structure via `adeu extract`.      Returns:, Strip dangerous metadata from DOCX before sharing (adeu sanitize).     Removes, Strip dangerous metadata from DOCX before sharing (adeu sanitize).     Removes (+8 more)
 
 ### Community 32 - "Community 32"
-Cohesion: 0.02
-Nodes (82): Test 6: Grouping section creation adds section type container., Test 7: Solid hex color fills correctly translate to normalized RGB color ratios, Test 8: Invalid hex color string falls back gracefully to standard slate grey., Test 9: Applying HORIZONTAL auto layout maps correct layout parameters., Test 10: Applying VERTICAL auto layout sets layoutMode to vertical container., Test 11: CANVAS node is transpiled to a full viewport dark dashboard container., Test 12: SECTION nodes map to premium semantic HTML <section> containers., Test 13: COMPONENTs containing button names are converted to accessible buttons. (+74 more)
+Cohesion: 0.03
+Nodes (77): Test 11: CANVAS node is transpiled to a full viewport dark dashboard container., Test 12: SECTION nodes map to premium semantic HTML <section> containers., Test 13: COMPONENTs containing button names are converted to accessible buttons., Test 14: Non-button COMPONENTs are transpiled into structured grid/flex HTML div, Test 15: Huge figma text sizes (fontSize >= 36) transpile to h1 with modern head, Test 16: Medium figma text sizes (fontSize >= 24) transpile to h2 subheads., Test 17: Normal body fonts (fontSize between 13 and 23) transpile to standard re, Test 18: Tiny utility captions (fontSize <= 12) transpile to semantic inline spa (+69 more)
 
 ### Community 33 - "Community 33"
 Cohesion: 0.11
@@ -1700,24 +1724,24 @@ Cohesion: 0.09
 Nodes (25): Enigo, Item, AppHandle, CancellationToken, Receiver, Self, Sender, String (+17 more)
 
 ### Community 38 - "Community 38"
-Cohesion: 0.07
-Nodes (38): AuditResult, bool, int, str, main(), PersonalFinetuner, Wrapper to expose PersonalFinetuner from scripts.training.personal_finetune., Manages personal fine-tuning pipelines using LlamaFactory/Unsloth.     Saves use (+30 more)
+Cohesion: 0.06
+Nodes (38): AuditResult, bool, int, str, audit_generated_text convenience function works., TestWritingIntelligenceOrchestrator, audit_generated_text(), AuditResult (+30 more)
 
 ### Community 39 - "Community 39"
 Cohesion: 0.05
-Nodes (93): BaseModel, BrowserResponse, CodeResponse, DataResponse, DesignResponse, EmailResponse, SimpleSchema, BaseModel (+85 more)
+Nodes (97): BaseModel, BrowserResponse, CodeResponse, DataResponse, DesignResponse, EmailResponse, SimpleSchema, BaseModel (+89 more)
 
 ### Community 40 - "Community 40"
 Cohesion: 0.04
-Nodes (19): Kami Command Handler for Kairo Phantom Domain 7. Central coordinator routing //, NotebookLM Bridge for Kairo Phantom Domain 7. Cloud-based document-to-multimedi, Json, main(), str, send_request(), build_html(), main() (+11 more)
+Nodes (20): Kairo Phantom — HTML Leaderboard Generator (SPEC §S8, §S9), Json, build_html(), main(), get_tier(), main(), diagnose_failures.py — Sample actual Kairo API outputs for failing tests, ident, generate_certification.py ========================== Reads all gauntlet and be (+12 more)
 
 ### Community 41 - "Community 41"
 Cohesion: 0.10
 Nodes (18): float, int, str, Populate placeholder with text., Add formatted bullet points. Max 5 bullets, <= 7 words per bullet., Add image to slide with positioning., Create a new presentation. Returns presentation ID (file path)., Create data‑driven chart. (+10 more)
 
 ### Community 42 - "Community 42"
-Cohesion: 0.10
-Nodes (18): _make_temp_pdf_cjk(), Create a PDF whose text block contains CJK characters., Create a PDF whose text block contains CJK characters., Create a PDF whose text block contains CJK characters., Section 5: Surya Tier 4 multilingual OCR availability and routing tests., Section 5: Surya Tier 4 multilingual OCR availability and routing tests., Router detects CJK language and routes to Surya (Tier 4) when available., Router detects CJK language and routes to Surya (Tier 4) when available. (+10 more)
+Cohesion: 0.07
+Nodes (25): _check_surya(), _make_temp_pdf_cjk(), Return True when surya is importable., Return True when surya is importable., Return True when surya is importable., Create a PDF whose text block contains CJK characters., Create a PDF whose text block contains CJK characters., Create a PDF whose text block contains CJK characters. (+17 more)
 
 ### Community 43 - "Community 43"
 Cohesion: 0.09
@@ -1736,12 +1760,12 @@ Cohesion: 0.11
 Nodes (17): bool, Path, str, Domain 8: TTS Service for Kairo Phantom =======================================, Play a WAV file using the platform's audio system., Speak using pyttsx3 (cross-platform, works offline)., Speak using Windows SAPI via PowerShell (fallback)., Speak using macOS say command (fallback). (+9 more)
 
 ### Community 47 - "Community 47"
-Cohesion: 0.10
-Nodes (26): Any, bool, int, str, Check if Figma WebSocket service is available. Always False if offline_mode., Check if Figma WebSocket service is available. Always False if offline_mode., Call the Figma MCP tool via WebSocket or standard stdio if WS fails., Call the Figma MCP tool via WebSocket or standard stdio if WS fails. (+18 more)
+Cohesion: 0.05
+Nodes (56): Any, bool, int, str, Test 6: Grouping section creation adds section type container., Test 7: Solid hex color fills correctly translate to normalized RGB color ratios, Test 8: Invalid hex color string falls back gracefully to standard slate grey., Test 9: Applying HORIZONTAL auto layout maps correct layout parameters. (+48 more)
 
 ### Community 48 - "Community 48"
-Cohesion: 0.13
-Nodes (20): KamiPdfExporter, KamiTheme, Kami PDF Export Pipeline for Kairo Phantom Domain 4.  Converts Markdown conten, Attempt to invoke unipress CLI for non-PDF/txt formats.         Returns output, Write markdown_content as a UTF-8 plain-text file with a warning         header, Escape characters that would break reportlab's Paragraph XML parser.         Ha, Converts Markdown strings to styled PDFs using reportlab.      Usage::, Convert markdown_content to a PDF at output_path.          Args: (+12 more)
+Cohesion: 0.14
+Nodes (19): KamiPdfExporter, KamiTheme, Attempt to invoke unipress CLI for non-PDF/txt formats.         Returns output, Write markdown_content as a UTF-8 plain-text file with a warning         header, Escape characters that would break reportlab's Paragraph XML parser.         Ha, Converts Markdown strings to styled PDFs using reportlab.      Usage::, Convert markdown_content to a PDF at output_path.          Args:, Export all .md files in markdown_dir to output_dir.          Args: (+11 more)
 
 ### Community 49 - "Community 49"
 Cohesion: 0.06
@@ -1856,8 +1880,8 @@ Cohesion: 0.17
 Nodes (13): Default, Option, Self, String, Vec, ExcelFormulaEngine, extract_top_level_args(), FormulaExplanation (+5 more)
 
 ### Community 77 - "Community 77"
-Cohesion: 0.11
-Nodes (13): bool, float, int, _notify_kairo(), Listens to the microphone and detects the wake word phrase.      Uses openwake, Load openwakeword model (lazy)., Check if wake word is detected in current frame.          Maps openwakeword pr, Start the wake word detection loop (blocking). (+5 more)
+Cohesion: 0.08
+Nodes (24): bool, float, int, bytes, float, int, FallbackWakeWordDetector, _http_notify_handler() (+16 more)
 
 ### Community 78 - "Community 78"
 Cohesion: 0.14
@@ -1908,8 +1932,8 @@ Cohesion: 0.09
 Nodes (21): A local-first, cross-application agentic document-intelligence layer for Windows, 🛠️ CLI Reference, 🏆 Competitive Positioning, 🖥️ Computer-Use Agent (CUA), 📱 Domain Coverage, 🔒 Enterprise & Security, ⚡ How It Works, 👻 Kairo Phantom (+13 more)
 
 ### Community 91 - "Community 91"
-Cohesion: 0.07
-Nodes (27): tests/test_production_gates_v2.py — 14 Production Gate Tests for Kairo Phantom =, PromptBuilder.build() must not raise even when all optional args are None., PromptBuilder must accept an IntentClassification dataclass and serialise it, When Ollama returns valid JSON, IntentGate must return a populated     IntentCla, When the model returns malformed JSON, IntentGate must return the fallback     I, When Ollama raises an exception (e.g. model not found), IntentGate must     retu, Extracting context from a 100-paragraph document must complete in <200ms., _insert_paragraph(after_idx=0) must insert at position 1, not at the end.     Th (+19 more)
+Cohesion: 0.06
+Nodes (26): AppWorkflowPlan, An ordered list of steps forming a complete cross-app workflow.          Example, 'Take the Q3 report from Excel, put it into PowerPoint, and email it', Export Word document as PDF and optionally email it., Execute a cross-app workflow plan.          Args:             plan: The workflow, Execute a single workflow step. Returns True on success., Bring the target app to foreground using Windows API., Take a screenshot and store the path. (+18 more)
 
 ### Community 92 - "Community 92"
 Cohesion: 0.19
@@ -1925,11 +1949,11 @@ Nodes (8): AtomicBool, Option, Path, PathBuf, Result, Self, TtsConfig, TtsEngine
 
 ### Community 95 - "Community 95"
 Cohesion: 0.15
-Nodes (12): float, str, handle_request(), Normalize whitespace and casing., Remove common filler words from transcription., Add basic punctuation to unpunctuated transcription., Detect Kairo commands from natural language transcription., Estimate transcription quality (0.0 to 1.0). (+4 more)
+Nodes (12): float, str, str, Normalize whitespace and casing., Remove common filler words from transcription., Add basic punctuation to unpunctuated transcription., Detect Kairo commands from natural language transcription., Estimate transcription quality (0.0 to 1.0). (+4 more)
 
 ### Community 96 - "Community 96"
-Cohesion: 0.05
-Nodes (39): bool, str, Gate 3 Requirement:         - Generate slide image via gpt-image-2 (Pillow fall, Gate 3 Requirement:         - Generate slide image via gpt-image-2 (Pillow fall, Gate 3 Requirement:         - Generate slide image via gpt-image-2 (Pillow fall, Gate 3 Requirement:         - Generate slide image via gpt-image-2 (Pillow fall, Gate 3 Requirement:         - Generate slide image via gpt-image-2 (Pillow fall, TestSlideImageGenerator (+31 more)
+Cohesion: 0.03
+Nodes (77): bool, bool, str, str, Path, Domain 3 PowerPoint Integration Test Suite ====================================, Create a minimal real PowerPoint file for test context., Create a minimal real PowerPoint file for test context. (+69 more)
 
 ### Community 97 - "Community 97"
 Cohesion: 0.20
@@ -1964,8 +1988,8 @@ Cohesion: 0.23
 Nodes (9): Option, Path, PathBuf, Result, ScreenContextConfig, Self, String, ScreenContext (+1 more)
 
 ### Community 105 - "Community 105"
-Cohesion: 0.13
-Nodes (4): TestPptxMcpBridge, PptxMcpBridge, PPTX MCP Bridge: Programmatic PowerPoint for Kairo Phantom., Provides PowerPoint creation/manipulation via MCP server with python-pptx fallba
+Cohesion: 0.14
+Nodes (3): TestPptxMcpBridge, PptxMcpBridge, Provides PowerPoint creation/manipulation via MCP server with python-pptx fallba
 
 ### Community 106 - "Community 106"
 Cohesion: 0.11
@@ -1988,8 +2012,8 @@ Cohesion: 0.07
 Nodes (26): 1. Observation, 2. Logic Chain, 3. Caveats, 4. Conclusion, 5-Component Handoff Report, 5. Verification Method, Adversarial Review Report (Challenge Report), Challenges (+18 more)
 
 ### Community 111 - "Community 111"
-Cohesion: 0.03
-Nodes (87): _estimate_word_count(), _extract_with_pymupdf(), ExtractionTier, _make_temp_pdf(), _make_temp_pdf_with_heading(), Any, float, int (+79 more)
+Cohesion: 0.04
+Nodes (52): _extract_with_pymupdf(), _make_temp_pdf(), Section 8: Integration, memory leak detection, and idempotency tests., Extraction of a 20-page PDF completes without OOM or unhandled exception., Extraction of a 20-page PDF completes without OOM or unhandled exception., Section 8: Integration, memory leak detection, and idempotency tests., Extraction of a 20-page PDF completes without OOM or unhandled exception., Repeated extraction cycles do not accumulate open file handles. (+44 more)
 
 ### Community 112 - "Community 112"
 Cohesion: 0.16
@@ -2024,16 +2048,16 @@ Cohesion: 0.11
 Nodes (17): code:block1 (// rewrite this email opening to sound warmer and more perso), code:block2 (// write a LinkedIn post about our Q2 results), code:block3 (cargo install kairo-phantom), code:block4 (# Installation (show this terminal command)), Commands to Show On-Screen, Kairo Phantom — 90-Second Demo Video Script, Music, Pre-Production Checklist (+9 more)
 
 ### Community 120 - "Community 120"
-Cohesion: 0.07
-Nodes (18): str, get_workbook_blueprint(), parse_xlsx(), Get structural overview of an Excel workbook., Read Excel file and return surrounding context grid and named ranges., Get structural overview of an Excel workbook., XLSX parser and writer verification (10 tests), 1. Validate cell grid and sheet metadata retrieval. (+10 more)
+Cohesion: 0.08
+Nodes (12): XLSX parser and writer verification (10 tests), 1. Validate cell grid and sheet metadata retrieval., 2. Write simple plain cell values., 3. Write Excel formulas starting with '='., 4. Ensure standard math formulas evaluate., 5. Assert workbook-wide named range lists are parsed., 6. Verify adjacent cells are untouched by updates., 7. Ensure xlsm load preserves VBA macro layers. (+4 more)
 
 ### Community 121 - "Community 121"
-Cohesion: 0.06
-Nodes (18): str, str, extract_context(), Route to correct reader based on file extension.     Returns unified context di, parse_pptx(), Read PowerPoint and return slide/shape inventory., PPTX parser and writer verification (10 tests), 1. Enumerate slide lists, titles, and layouts. (+10 more)
+Cohesion: 0.11
+Nodes (9): PPTX parser and writer verification (10 tests), 2. Populate bullet lists on specific slides., 3. Catch bullets that exceed the strict 7-word constraint limit., 4. Add new slides with correct custom layout configurations., 5. Update slide header titles., 7. Assert theme font, scale, and color mappings are inherited on writes., 9. Locate content placeholders when custom shape IDs are missing., 10. Ensure correct layout indentation structure is maintained for sub-bullets. (+1 more)
 
 ### Community 122 - "Community 122"
-Cohesion: 0.10
-Nodes (19): int, str, TestExcelContextCapture, _empty_context(), ExcelContextCapture, format_excel_context_for_prompt(), get_active_cell_context(), get_workbook_overview() (+11 more)
+Cohesion: 0.05
+Nodes (25): int, str, Path, Domain 2 Excel Integration Test Suite — 60 Tests ==============================, Create a minimal real Excel file for test context., temp_xlsx(), TestExcelContextCapture, TestGateConditions (+17 more)
 
 ### Community 123 - "Community 123"
 Cohesion: 0.20
@@ -2092,12 +2116,12 @@ Cohesion: 0.12
 Nodes (16): code:block1 (I built a local AI writing assistant that writes directly in), code:block2 (Hey r/rust,), code:block3 (I built Kairo Phantom, an open-source AI ghost-writer with a), code:block4 (Hey r/LocalLLaMA,), code:block5 (If you're already running Ollama for local AI, Kairo Phantom), code:block6 (Hey Product Hunt! 👋), Kairo Phantom — Launch Kit, Launch Day Checklist (+8 more)
 
 ### Community 138 - "Community 138"
-Cohesion: 0.12
-Nodes (15): bool, int, str, DeepPresenterBridge, Generate slides from a pre-defined outline., Provides DeepPresenter-9B slide generation capabilities., Check if DeepPresenter is installed., Generates a high-quality presentation structure programmatically. (+7 more)
+Cohesion: 0.14
+Nodes (12): bool, int, str, Generate slides from a pre-defined outline., Check if DeepPresenter is installed., Generates a high-quality presentation structure programmatically., Check if DeepPresenter is installed., Generates a high-quality presentation structure programmatically. (+4 more)
 
 ### Community 139 - "Community 139"
-Cohesion: 0.10
-Nodes (25): bool, str, explain_formula(), ForgeValidator, Forge Validator — Pure-Python deterministic Excel formula validation for Kairo P, Validate formula and return full details., Deterministic Excel formula validator.     Catches 7 real-world LLM mistakes:, Returns (corrected_formula, fix_description | None) (+17 more)
+Cohesion: 0.05
+Nodes (28): bool, str, TestForgeValidator, explain_formula(), ForgeValidator, Forge Validator — Pure-Python deterministic Excel formula validation for Kairo P, Validate formula and return full details., Deterministic Excel formula validator.     Catches 7 real-world LLM mistakes: (+20 more)
 
 ### Community 140 - "Community 140"
 Cohesion: 0.10
@@ -2152,8 +2176,8 @@ Cohesion: 0.15
 Nodes (13): definitions, Identifier, Number, PermissionEntry, Target, description, oneOf, anyOf (+5 more)
 
 ### Community 153 - "Community 153"
-Cohesion: 0.13
-Nodes (15): definitions, Identifier, Number, PermissionEntry, Target, Value, oneOf, anyOf (+7 more)
+Cohesion: 0.15
+Nodes (13): definitions, Identifier, Number, PermissionEntry, Target, description, oneOf, anyOf (+5 more)
 
 ### Community 154 - "Community 154"
 Cohesion: 0.25
@@ -2177,15 +2201,15 @@ Nodes (13): Activation, CODE REVIEW, Code Reviewer, code:block1 (You are a princ
 
 ### Community 160 - "Community 160"
 Cohesion: 0.05
-Nodes (57): Any, bool, float, int, str, excel_libreoffice_recompute(), NetworkSnifferOracle, normalize_text() (+49 more)
+Nodes (59): Any, bool, float, int, str, Run deterministic document/network/air-gap check oracles., Run deterministic document/network/air-gap check oracles., excel_libreoffice_recompute() (+51 more)
 
 ### Community 161 - "Community 161"
-Cohesion: 0.16
-Nodes (11): bool, Path, TestBloomFilter, BloomFilter, Initialize auditor with optional external corpus.          Args:             cor, Initialize auditor with optional external corpus.          Args:             cor, Load additional n-gram hashes from a JSON file., Load additional n-gram hashes from a JSON file. (+3 more)
+Cohesion: 0.09
+Nodes (20): bool, int, Path, TestBloomFilter, BloomFilter, Initialize auditor with optional external corpus.          Args:             cor, Initialize auditor with optional external corpus.          Args:             cor, Load additional n-gram hashes from a JSON file. (+12 more)
 
 ### Community 162 - "Community 162"
-Cohesion: 0.04
-Nodes (101): bool, bool, int, ExcelContextExtractor, Reads spreadsheet context centered on active cell (15x15 region) with full detai, Reads spreadsheet context centered on active cell (15x15 region) with full detai, ValidationResult, Validates DocxOperation against THIS document's actual state. (+93 more)
+Cohesion: 0.03
+Nodes (150): DocxCreator, sidecar/creators/docx_creator.py — Kairo Phantom Create-From-Scratch DOCX ======, Creates new .docx documents from a structured content dict.     Saves to ~/Docum, sidecar/creators/__init__.py — Kairo Phantom Create-From-Scratch Module, PptxCreator, sidecar/creators/pptx_creator.py — Kairo Phantom Create-From-Scratch PPTX =====, Creates new .pptx presentations from a structured content dict.     Saves to ~/, sidecar/creators/xlsx_creator.py — Kairo Phantom Create-From-Scratch XLSX ====== (+142 more)
 
 ### Community 163 - "Community 163"
 Cohesion: 0.23
@@ -2224,8 +2248,8 @@ Cohesion: 0.33
 Nodes (10): classify_style(), format_fidelity_score(), kmb1_score(), personalisation_delta(), semantic_coherence_score(), style_retention_score(), test_kmb1_format_fidelity_is_perfect(), test_kmb1_personalisation_delta_exceeds_baseline() (+2 more)
 
 ### Community 172 - "Community 172"
-Cohesion: 0.03
-Nodes (99): AppTarget, AppWorkflowPlan, CrossAppOrchestrator, OrchestrationResult, kairo-sidecar/sidecar/cua/cross_app_orchestrator.py  Cross-Application Workflow, An ordered list of steps forming a complete cross-app workflow.          Example, Final result of a cross-app workflow execution., Factory for common cross-app workflow plans.          These pre-built workflows (+91 more)
+Cohesion: 0.06
+Nodes (70): sidecar/cua/canva_cua.py  CUA for Canva text element editing.  Canva has no prog, AppTarget, CrossAppOrchestrator, OrchestrationResult, kairo-sidecar/sidecar/cua/cross_app_orchestrator.py  Cross-Application Workflow, Final result of a cross-app workflow execution., Factory for common cross-app workflow plans.          These pre-built workflows, Orchestrates multi-step cross-application workflows.      This is the component (+62 more)
 
 ### Community 173 - "Community 173"
 Cohesion: 0.24
@@ -2268,8 +2292,8 @@ Cohesion: 0.23
 Nodes (8): Subtxt Bridge for Kairo Phantom Domain 7. Converts document content or podcast, Generate professional SRT/VTT subtitle files., Generate SRT or VTT subtitles from document content., Split document text into clean, individual sentences., Format seconds into HH:MM:SS,mmm (SRT) or HH:MM:SS.mmm (VTT)., SubtxtBridge, int, str
 
 ### Community 184 - "Community 184"
-Cohesion: 0.07
-Nodes (23): MIT License verbatim copy should be BLOCKED (well-known copyright)., GPL license header should be detected., Custom corpus should detect n-gram matches., Common phrases that aren't copyrighted should not be flagged., AuditResult.to_dict() should return serializable dict., add_to_corpus should return the number of n-grams added., AuditResult.highest_risk returns the highest risk level., Risk levels should have a natural ordering from SAFE to BLOCKED. (+15 more)
+Cohesion: 0.08
+Nodes (18): MIT License verbatim copy should be BLOCKED (well-known copyright)., GPL license header should be detected., Custom corpus should detect n-gram matches., Common phrases that aren't copyrighted should not be flagged., AuditResult.to_dict() should return serializable dict., add_to_corpus should return the number of n-grams added., Risk levels should have a natural ordering from SAFE to BLOCKED., Corpus can be loaded from a JSON file. (+10 more)
 
 ### Community 185 - "Community 185"
 Cohesion: 0.22
@@ -2288,8 +2312,8 @@ Cohesion: 0.32
 Nodes (7): DeepPresenterResult, Option, Result, String, Value, PptxContextResponse, PptAgent
 
 ### Community 189 - "Community 189"
-Cohesion: 0.10
-Nodes (22): bool, float, str, _domain_for_label(), farscry_app_label(), farscry_app_name(), farscry_domain(), _label_for_process() (+14 more)
+Cohesion: 0.03
+Nodes (87): bool, bytes, float, str, str, str, int, str (+79 more)
 
 ### Community 190 - "Community 190"
 Cohesion: 0.39
@@ -2348,8 +2372,8 @@ Cohesion: 0.14
 Nodes (14): description, properties, required, type, Capability, type, default, description (+6 more)
 
 ### Community 204 - "Community 204"
-Cohesion: 0.18
-Nodes (11): properties, description, type, default, description, type, identifier, local (+3 more)
+Cohesion: 0.14
+Nodes (14): description, properties, required, type, Capability, type, default, description (+6 more)
 
 ### Community 205 - "Community 205"
 Cohesion: 0.35
@@ -2360,8 +2384,8 @@ Cohesion: 0.27
 Nodes (6): DocumentContext, String, SectionSummarizer, test_normalize_bullets_from_prose(), test_normalize_bullets_with_bullets(), test_normalize_trims_to_3()
 
 ### Community 207 - "Community 207"
-Cohesion: 0.05
-Nodes (33): _detect_language(), Heuristic language detector.      Returns 'zh' when the text contains more tha, Heuristic language detector.      Returns 'zh' when the text contains more tha, Heuristic language detector.      Returns 'zh' when the text contains more tha, Section 1: Engine availability checks and core unit tests., Verify that the inline PDF extraction engine imports cleanly with no side-effect, Section 1: Engine availability checks and core unit tests., Verify that the inline PDF extraction engine imports cleanly with no side-effect (+25 more)
+Cohesion: 0.07
+Nodes (25): _detect_language(), Heuristic language detector.      Returns 'zh' when the text contains more tha, Heuristic language detector.      Returns 'zh' when the text contains more tha, Heuristic language detector.      Returns 'zh' when the text contains more tha, Section 1: Engine availability checks and core unit tests., Verify that the inline PDF extraction engine imports cleanly with no side-effect, Section 1: Engine availability checks and core unit tests., Verify that the inline PDF extraction engine imports cleanly with no side-effect (+17 more)
 
 ### Community 209 - "Community 209"
 Cohesion: 0.27
@@ -2393,7 +2417,7 @@ Nodes (6): Any, Path, str, DocumentCache, Retrieve cached JSON data if it exists
 
 ### Community 216 - "Community 216"
 Cohesion: 0.06
-Nodes (39): BackgroundVlmDownloader, DownloadProgress, Manages async download of the GGUF model file.      Usage:         manager = Vlm, Manages async download of the GGUF model file.      Usage:         manager = Vlm, Check if the model file is downloaded and ready for Ollama., Ensure the model is available. Downloads if missing.                  Args:, Check if the model file is downloaded and ready for Ollama., Ensure the model is available. Downloads if missing.                  Args: (+31 more)
+Nodes (40): BackgroundVlmDownloader, DownloadProgress, Manages async download of the GGUF model file.      Usage:         manager = Vlm, Manages async download of the GGUF model file.      Usage:         manager = Vlm, Check if the model file is downloaded and ready for Ollama., Ensure the model is available. Downloads if missing.                  Args:, Check if the model file is downloaded and ready for Ollama., Ensure the model is available. Downloads if missing.                  Args: (+32 more)
 
 ### Community 217 - "Community 217"
 Cohesion: 0.24
@@ -2460,8 +2484,8 @@ Cohesion: 0.22
 Nodes (8): Activation, code:block1 (You are an expert direct-response copywriter with a track re), code:block2 (// convert these feature bullets into a landing page hero se), Examples, HERO SECTION, Marketing Copywriter, System Prompt, What This Skill Does
 
 ### Community 233 - "Community 233"
-Cohesion: 0.13
-Nodes (16): int, excelmcp_create_pivot_table(), idx_to_col(), parse_cell_ref(), 0→A, 1→B, …, 25→Z, 26→AA, …, Parse 'C7' → ('C', 7). Returns ('A', 1) on failure., 0→A, 1→B, …, 25→Z, 26→AA, …, 0→A, 1→B, …, 25→Z, 26→AA, … (+8 more)
+Cohesion: 0.12
+Nodes (18): int, str, _adjust_formula(), idx_to_col(), parse_cell_ref(), 0→A, 1→B, …, 25→Z, 26→AA, …, Parse 'C7' → ('C', 7). Returns ('A', 1) on failure., 0→A, 1→B, …, 25→Z, 26→AA, … (+10 more)
 
 ### Community 234 - "Community 234"
 Cohesion: 0.36
@@ -2496,8 +2520,8 @@ Cohesion: 0.31
 Nodes (4): DocumentContext, String, SwarmAgent, SalesAgent
 
 ### Community 242 - "Community 242"
-Cohesion: 0.04
-Nodes (37): Summarize failed steps for error reporting., Summarize failed steps for error reporting., Summarize failed steps for error reporting., AppProfile, AppWatcher, Domain, Detect the currently active application using Windows APIs., Windows-specific app detection using ctypes/win32. (+29 more)
+Cohesion: 0.08
+Nodes (23): Enum, AppProfile, AppWatcher, Domain, Detect the currently active application using Windows APIs., Windows-specific app detection using ctypes/win32., Map process name to Domain., Extract file path from window title if it contains a known file extension. (+15 more)
 
 ### Community 243 - "Community 243"
 Cohesion: 0.22
@@ -2576,8 +2600,8 @@ Cohesion: 0.46
 Nodes (5): MemMachine, kmb1_format_recall(), kmb1_full_benchmark(), kmb1_length_recall(), kmb1_tone_recall()
 
 ### Community 262 - "Community 262"
-Cohesion: 0.09
-Nodes (39): Any, str, DataMaster, MediaMaster, build_browser_prompt(), build_code_prompt(), build_data_prompt(), build_design_prompt() (+31 more)
+Cohesion: 0.07
+Nodes (46): Any, bool, str, DataMaster, MediaMaster, PDFMaster, Convert parsed PDF content to a new file via the PDF output writer.          Arg, TerminalMaster (+38 more)
 
 ### Community 263 - "Community 263"
 Cohesion: 0.25
@@ -2696,8 +2720,8 @@ Cohesion: 0.29
 Nodes (6): code:block1 (You are Kairo's Health Monitor. Run a complete system diagno), Health Skill — Kairo Phantom System Diagnostic Layer, Purpose, System Directive, Trigger: `// health`, When Kairo Uses Health Mode
 
 ### Community 294 - "Community 294"
-Cohesion: 0.16
-Nodes (24): Any, str, _cache_get(), _cache_set(), _heading_style_from_level(), _map_mineru_content_list(), MineruParser, _parse_mineru_table() (+16 more)
+Cohesion: 0.13
+Nodes (26): get_context(), make_temp_docx(), tests/test_e2e_docx.py — E2E Word Document Tests ===============================, replace_paragraph → surrounding paragraphs are unchanged., insert_table with 3 headers and 2 rows → table exists with correct dimensions., delete_paragraph → paragraph count decreases by exactly 1., insert_paragraph with after_paragraph_index=-1 → paragraph appended to end., Fuzzy style match → 'Heading1' resolves to a heading style that exists. (+18 more)
 
 ### Community 295 - "Community 295"
 Cohesion: 0.25
@@ -2796,12 +2820,12 @@ Cohesion: 0.33
 Nodes (3): Self, String, McpAuthorizer
 
 ### Community 321 - "Community 321"
-Cohesion: 0.24
-Nodes (5): Result, String, PhantomConfig, read_line(), run_setup_wizard()
+Cohesion: 0.53
+Nodes (4): Result, String, read_line(), run_setup_wizard()
 
 ### Community 323 - "Community 323"
-Cohesion: 0.15
-Nodes (13): ContextAssembler, Assemble context for Alt+Shift+M pointer mode (visual analysis)., Assembles the final context package sent to the domain master.     Combines: pre, Any, int, str, Context assembly from preloaded cache should complete in under 100ms., Context assembler works even without preloaded context. (+5 more)
+Cohesion: 0.06
+Nodes (25): ContextAssembler, Assemble context for Alt+Shift+M pointer mode (visual analysis)., Assembles the final context package sent to the domain master.     Combines: pre, FarscryService, Find farscry binary in PATH or common global spots., Screen visual analysis for Alt+Shift+M pointer mode., Any, int (+17 more)
 
 ### Community 324 - "Community 324"
 Cohesion: 0.70
@@ -2833,7 +2857,7 @@ Nodes (4): bool, int, is_port_in_use(), main()
 
 ### Community 331 - "Community 331"
 Cohesion: 0.03
-Nodes (63): mock_llm_response(), tests/test_router.py — Domain Master Router Integration Tests ==================, route(KairoRequest(domain='word')) must dispatch to WordMaster.     ExcelMaster., When the orchestrator classifies a request as is_ambiguous=True with     confide, When quality gates fail on the first LLM call, route() must call     call_with_s, Create a temporary Word doc., route() must call mem_machine.query() with domain='word' for a Word request., After a successful route(), mem_machine.record_interaction() must be called (+55 more)
+Nodes (77): DomainMasterRouter, Intelligence routing layer that directs requests to specialized Word/Excel     D, Intelligence routing layer that directs every Alt+M request to the correct, Intelligence routing layer that directs every Alt+M request to the correct, Test that _dispatch_create_from_scratch falls back to default doc on LLM failure, test_offline_mode_isolation(), mock_win32com(), Automatically mock win32com to prevent interaction with live Word. (+69 more)
 
 ### Community 332 - "Community 332"
 Cohesion: 0.40
@@ -2881,15 +2905,15 @@ Nodes (3): ShellScopeEntryAllowedArg, anyOf, description
 
 ### Community 345 - "Community 345"
 Cohesion: 0.07
-Nodes (26): bool, float, str, Formal text should have high formality score., Casual text should have lower formality score., Empty documents should return default fingerprint., Documents too short should be filtered., Multiple documents should be combined. (+18 more)
+Nodes (28): Path, tests/test_writing_intelligence.py  Test suite for Writing Intelligence v2.0:, Formal text should have high formality score., Casual text should have lower formality score., Empty documents should return default fingerprint., Documents too short should be filtered., Multiple documents should be combined., Formal fingerprint should produce formal voice prompt. (+20 more)
 
 ### Community 346 - "Community 346"
-Cohesion: 0.27
-Nodes (4): TestXlsxParserUpgrade, Write Excel operations WITH formatting preservation.     Each operation: {cell,, Write Excel operations WITH formatting preservation.     Each operation: {cell,, write_xlsx_with_formatting()
+Cohesion: 0.15
+Nodes (10): str, TestXlsxParserUpgrade, get_workbook_blueprint(), parse_xlsx(), Get structural overview of an Excel workbook., Write Excel operations WITH formatting preservation.     Each operation: {cell,, Read Excel file and return surrounding context grid and named ranges., Get structural overview of an Excel workbook. (+2 more)
 
 ### Community 347 - "Community 347"
-Cohesion: 0.13
-Nodes (26): CuaGateError, get_process_name(), make_ctx(), RateLimiter, test_gate_blocks_forbidden_executable(), test_gate_blocks_forbidden_window(), test_gate_blocks_forbidden_window_password_manager(), test_gate_blocks_out_of_bounds() (+18 more)
+Cohesion: 0.08
+Nodes (43): CuaGateError, get_process_name(), make_ctx(), RateLimiter, test_gate_blocks_forbidden_executable(), test_gate_blocks_forbidden_window(), test_gate_blocks_forbidden_window_password_manager(), test_gate_blocks_out_of_bounds() (+35 more)
 
 ### Community 348 - "Community 348"
 Cohesion: 0.32
@@ -2915,13 +2939,17 @@ Nodes (4): items, title, weeks, P2_DOC_INTELLIGENCE
 Cohesion: 0.50
 Nodes (4): items, title, weeks, P4_NETWORK_EFFECTS
 
+### Community 354 - "Community 354"
+Cohesion: 0.29
+Nodes (5): Synthesizer Bridge for Kairo Phantom Domain 7. Local, offline document-to-audio, Local, sovereign document-to-podcast TTS pipeline adapter., Generate two-speaker dialogue-style audio overview 100% offline., SynthesizerBridge, str
+
 ### Community 355 - "Community 355"
 Cohesion: 0.08
 Nodes (27): callable, Any, bool, int, str, get_humanized_injector(), HumanizedInjector, InjectionSession (+19 more)
 
 ### Community 356 - "Community 356"
-Cohesion: 0.10
-Nodes (20): str, Path, Domain 3 PowerPoint Integration Test Suite ====================================, Create a minimal real PowerPoint file for test context., Create a minimal real PowerPoint file for test context., temp_pptx(), TestDeepPresenterBridge, TestGateConditions (+12 more)
+Cohesion: 0.09
+Nodes (21): Four-tier router that mirrors the roadmap gate conditions.      Routing heuris, Four-tier router that mirrors the roadmap gate conditions.      Routing heuris, Four-tier router that mirrors the roadmap gate conditions.      Routing heuris, Section 3: OpenDataLoader Tier 2 availability and fallback tests., _check_opendataloader returns a plain bool — never raises., Section 3: OpenDataLoader Tier 2 availability and fallback tests., When opendataloader is absent, extraction returns a valid ExtractionResult., Section 3: OpenDataLoader Tier 2 availability and fallback tests. (+13 more)
 
 ### Community 357 - "Community 357"
 Cohesion: 0.67
@@ -2953,7 +2981,7 @@ Nodes (8): check_vulnerabilities(), bool, str, Scan Cargo.toml and requirements.
 
 ### Community 364 - "Community 364"
 Cohesion: 0.08
-Nodes (20): Any, str, AdversaryPersona, ExpertPersona, ImpatientPersona, MessyPersona, MultiSessionPersona, NovicePersona (+12 more)
+Nodes (23): Any, str, AdversaryPersona, ExpertPersona, ImpatientPersona, MessyPersona, MultiSessionPersona, NovicePersona (+15 more)
 
 ### Community 366 - "Community 366"
 Cohesion: 0.50
@@ -2964,8 +2992,8 @@ Cohesion: 0.18
 Nodes (6): Tests for screen context extraction., Non-existent image returns error., Empty path returns error., Real image file returns at least metadata context., App context is passed through to result., TestScreenContextBridge
 
 ### Community 368 - "Community 368"
-Cohesion: 0.50
-Nodes (4): commands, description, identifier, allow-set-text
+Cohesion: 0.11
+Nodes (16): ContractPack, Kairo Phantom — Contract Pack (SPEC §S7) Extracts parties, effective_date, termi, Score per-field accuracy vs ground-truth fixtures., Parse standard date formats to YYYY-MM-DD., Contract review Pack implementing PackInterface., Check if an extracted value matches the ground truth., Extract contract fields from ingested chunks., Any (+8 more)
 
 ### Community 369 - "Community 369"
 Cohesion: 0.50
@@ -3004,8 +3032,8 @@ Cohesion: 0.50
 Nodes (4): commands, description, identifier, allow-is-enabled
 
 ### Community 378 - "Community 378"
-Cohesion: 0.18
-Nodes (8): Injector, Instant, String, Launch passive model warmup in a daemon background thread.     Non-blocking — re, start_background_warmup(), SpeedProfile, UndoRecord, Thread
+Cohesion: 0.22
+Nodes (6): Injector, Instant, String, SpeedProfile, UndoRecord, Thread
 
 ### Community 379 - "Community 379"
 Cohesion: 0.50
@@ -3040,8 +3068,8 @@ Cohesion: 0.50
 Nodes (4): commands, description, identifier, deny-bundle-type
 
 ### Community 388 - "Community 388"
-Cohesion: 0.06
-Nodes (30): Any, bool, Path, str, FramegroundManipulator, MemMachine, OpenPencilBridge, PenpotBridge (+22 more)
+Cohesion: 0.09
+Nodes (15): Any, Path, str, MemMachine, Robust mockup parser simulating XPath selector query in Frameground., Upload and render an SVG component inside the mock or live Penpot session., Persists cross-tool visual preferences (colors, fonts) across sessions., Execute open-pencil CLI command directly on native system. (+7 more)
 
 ### Community 389 - "Community 389"
 Cohesion: 0.50
@@ -3068,8 +3096,8 @@ Cohesion: 0.50
 Nodes (4): commands, description, identifier, deny-version
 
 ### Community 395 - "Community 395"
-Cohesion: 0.10
-Nodes (21): str, bytes, float, int, str, Extract text using tesseract OCR as fallback., Parse VASP structured output into sections., Find farscry binary in PATH or common locations. (+13 more)
+Cohesion: 0.17
+Nodes (10): str, Domain 8: Screen Context Bridge ================================ Python sideca, Extract text using tesseract OCR as fallback., Parse VASP structured output into sections., Find farscry binary in PATH or common locations., Extracts and structures screen content from screenshots., Find tesseract binary in PATH or common locations., Extract structured context from a screenshot image.          Tries farscry fir (+2 more)
 
 ### Community 396 - "Community 396"
 Cohesion: 0.50
@@ -3096,8 +3124,8 @@ Cohesion: 0.38
 Nodes (9): str, get_excel_exe(), _infra_pass(), _kairo_inject(), kill_excel(), run_excel_scenario(), setup_excel_fixture(), _start_excel_blank() (+1 more)
 
 ### Community 403 - "Community 403"
-Cohesion: 0.67
-Nodes (3): Return a reportlab Color from 0-255 RGB components, or a plain tuple when not av, _rgb(), int
+Cohesion: 0.40
+Nodes (4): Kami PDF Export Pipeline for Kairo Phantom Domain 4.  Converts Markdown conten, Return a reportlab Color from 0-255 RGB components, or a plain tuple when not av, _rgb(), int
 
 ### Community 405 - "Community 405"
 Cohesion: 0.15
@@ -3108,8 +3136,8 @@ Cohesion: 0.67
 Nodes (3): ShellScopeEntryAllowedArgs, anyOf, description
 
 ### Community 407 - "Community 407"
-Cohesion: 0.04
-Nodes (52): MockHTTPResponse, bytes, test_llm_caller_json_decode_retry(), float, str, Any, float, str (+44 more)
+Cohesion: 0.03
+Nodes (49): MockHTTPResponse, bytes, test_llm_caller_json_decode_retry(), float, str, str, str, bytes (+41 more)
 
 ### Community 408 - "Community 408"
 Cohesion: 0.21
@@ -3125,7 +3153,7 @@ Nodes (4): commands, description, identifier, allow-remove-listener
 
 ### Community 428 - "Community 428"
 Cohesion: 0.06
-Nodes (48): sidecar/cua/canva_cua.py  CUA for Canva text element editing.  Canva has no prog, get_cross_app_orchestrator(), Get (or create) the singleton cross-app orchestrator., Get (or create) the singleton cross-app orchestrator., Get (or create) the singleton cross-app orchestrator., kairo-sidecar/sidecar/cua/__init__.py  CUA — Computer Use Agent package.  This p, build_vlm_config(), detect_hardware() (+40 more)
+Nodes (36): build_vlm_config(), detect_hardware(), _get_amd_vram_gb(), _get_nvidia_vram_gb(), _get_total_ram_gb(), get_vlm_config(), kairo-sidecar/sidecar/cua/vlm_config.py  VLM (Vision-Language Model) configurati, Query NVIDIA VRAM via nvidia-smi. Returns 0.0 if not available. (+28 more)
 
 ### Community 430 - "Community 430"
 Cohesion: 0.83
@@ -3145,7 +3173,7 @@ Nodes (8): Gate 1 & 2: Adeu bridge internal helpers., TestAdeuBridgeHelpers, _pa
 
 ### Community 479 - "Community 479"
 Cohesion: 0.12
-Nodes (18): Any, excelmcp_write_cell(), _openpyxl_write_cell(), Read a cell range from an xlsx file.     range_spec: "A1:D10" or "Sheet1!A1:D10, Write a value or formula to a single cell, preserving all other formatting., Write a value or formula to a single cell, preserving all other formatting., Write a value or formula to a single cell, preserving all other formatting., Write a single cell via openpyxl, preserving other cell formatting. (+10 more)
+Nodes (17): Any, excelmcp_write_cell(), _openpyxl_write_cell(), Write a value or formula to a single cell, preserving all other formatting., Write a value or formula to a single cell, preserving all other formatting., Write a value or formula to a single cell, preserving all other formatting., Write a single cell via openpyxl, preserving other cell formatting., Write to a live Excel file via win32com COM automation. (+9 more)
 
 ### Community 480 - "Community 480"
 Cohesion: 0.38
@@ -3172,16 +3200,16 @@ Cohesion: 0.23
 Nodes (15): Option, String, Vec, check_tools(), detect_display_server(), erase_chars(), get_active_process_name(), get_active_window_title() (+7 more)
 
 ### Community 488 - "Community 488"
-Cohesion: 0.13
-Nodes (26): Any, int, str, _cache_get(), _cache_set(), DoclingParser, _extract_docling_runs(), _extract_docling_table_rows() (+18 more)
+Cohesion: 0.06
+Nodes (54): Any, int, str, Any, bool, float, int, str (+46 more)
 
 ### Community 489 - "Community 489"
 Cohesion: 0.10
 Nodes (19): active, active_failed, active_passed, elapsed_seconds, excluded, failed, gate_threshold, gauntlet_version (+11 more)
 
 ### Community 490 - "Community 490"
-Cohesion: 0.10
-Nodes (23): Any, bool, DuckDBPyConnection, int, str, _default_db_path(), OutcomeStore, outcome_store.py — DuckDB-backed episode store for Kairo Phantom gauntlet.  Stor (+15 more)
+Cohesion: 0.06
+Nodes (43): Any, bool, float, int, str, Any, bool, DuckDBPyConnection (+35 more)
 
 ### Community 492 - "Community 492"
 Cohesion: 0.14
@@ -3196,12 +3224,12 @@ Cohesion: 0.15
 Nodes (19): bool, str, apply_update(), Auto-update checker for Kairo Phantom. Checks GitHub releases API on startup (n, Startup health check simulation., Verifies signature and checksum, backs up target directory, extracts update arch, Startup health check simulation., Verifies signature and checksum, backs up target directory, extracts update arch (+11 more)
 
 ### Community 496 - "Community 496"
-Cohesion: 0.06
-Nodes (31): kami_export_pdf(), _parse_markdown_headings(), Section 7: Kami PDF/TXT export tests — theme, content, and fallback paths., Section 7: Kami PDF/TXT export tests — theme, content, and fallback paths., Kami exporter functions are importable and callable., Kami exporter functions are importable and callable., Section 7: Kami PDF/TXT export tests — theme, content, and fallback paths., Kami exporter functions are importable and callable. (+23 more)
+Cohesion: 0.07
+Nodes (25): kami_export_pdf(), Section 7: Kami PDF/TXT export tests — theme, content, and fallback paths., Section 7: Kami PDF/TXT export tests — theme, content, and fallback paths., Kami exporter functions are importable and callable., Kami exporter functions are importable and callable., Section 7: Kami PDF/TXT export tests — theme, content, and fallback paths., Kami exporter functions are importable and callable., KAMI_THEME_MAP must contain exactly 10 named themes. (+17 more)
 
 ### Community 497 - "Community 497"
-Cohesion: 0.09
-Nodes (24): Any, bool, str, GauntletJudge, JudgeOutputSchema, Judging hierarchy for Kairo Phantom test gauntlet. Implements 4 tiers of verific, Ensure transformational invariants (e.g. no markdown format changes semantic mea, AI Judge using LiteLLM call_with_schema with 2-Model Tiebreak. (+16 more)
+Cohesion: 0.10
+Nodes (22): Any, bool, str, GauntletJudge, JudgeOutputSchema, Judging hierarchy for Kairo Phantom test gauntlet. Implements 4 tiers of verific, Ensure transformational invariants (e.g. no markdown format changes semantic mea, AI Judge using LiteLLM call_with_schema with 2-Model Tiebreak. (+14 more)
 
 ### Community 498 - "Community 498"
 Cohesion: 0.40
@@ -3224,8 +3252,8 @@ Cohesion: 0.18
 Nodes (17): CuaPlanner, PlannerError, TemplateEntry, CuaAction, CuaContext, CuaPlan, Default, Display (+9 more)
 
 ### Community 511 - "Community 511"
-Cohesion: 0.18
-Nodes (10): cargo_mutants_version, caught, end_time, missed, outcomes, start_time, success, timeout (+2 more)
+Cohesion: 0.10
+Nodes (20): cargo_mutants_version, caught, end_time, missed, outcomes, start_time, success, timeout (+12 more)
 
 ### Community 512 - "Community 512"
 Cohesion: 0.07
@@ -3237,7 +3265,7 @@ Nodes (18): Arc, Duration, JoinHandle, Mutex, Option, Receiver, Self, Sender (+1
 
 ### Community 514 - "Community 514"
 Cohesion: 0.09
-Nodes (18): Path, Path, tests/test_writing_intelligence.py  Test suite for Writing Intelligence v2.0:, Save fingerprint and load it back., Loading non-existent user returns None., Delete removes the fingerprint file., Deleting non-existent user returns False without error., list_users returns all saved users. (+10 more)
+Nodes (18): bool, float, Path, str, Extract writing style fingerprint from user documents.          Args:, Build a system prompt addition that instructs the LLM to match the user's voice., Split text into sentences using a robust regex., Extract the most-used transition words/phrases from the text. (+10 more)
 
 ### Community 515 - "Community 515"
 Cohesion: 0.12
@@ -3248,8 +3276,8 @@ Cohesion: 0.08
 Nodes (23): 1. Observation, 2. Logic Chain, 3. Caveats, 4. Conclusion, 5. Verification Method, Adversarial Review Report, Challenge Summary, Challenges (+15 more)
 
 ### Community 517 - "Community 517"
-Cohesion: 0.09
-Nodes (21): Any, bool, float, int, str, Box, Dict, Discrete (+13 more)
+Cohesion: 0.12
+Nodes (15): GenericPack, Kairo Phantom — Generic Pack (SPEC §S7) Extracts summary, key_claims, entities,, Score per-field accuracy vs ground-truth fixtures., Check if an extracted value matches the ground truth., Generic document intelligence Pack implementing PackInterface., Extract generic fields from ingested chunks., Any, bool (+7 more)
 
 ### Community 518 - "Community 518"
 Cohesion: 0.08
@@ -3269,7 +3297,7 @@ Nodes (19): 1. Observation, 2. Logic Chain, 3. Caveats, 4. Conclusion, 5. Verifi
 
 ### Community 522 - "Community 522"
 Cohesion: 0.07
-Nodes (32): Any, bool, Connection, float, int, str, MemMachineClient, MemSyncManager (+24 more)
+Nodes (29): Any, bool, Connection, float, int, str, MemSyncManager, Retrieve recent style context for user+domain as a formatted string.         Ret (+21 more)
 
 ### Community 523 - "Community 523"
 Cohesion: 0.12
@@ -3368,8 +3396,8 @@ Cohesion: 0.16
 Nodes (11): float, str, Waza Agent Prompt Optimizer — Offline prompt optimization using DSPy. Evaluates, DspyPromptOptimizer, Wrapper to expose DspyPromptOptimizer from scripts.training.dspy_prompt_optimize, Executes the Rust integration test suite (kmb1_benchmark) and parses the KMB-1 m, Offline Waza Agent prompt optimizer.     Uses DSPy to optimize prompt instructio, Loads the prompt from the target SKILL.md file. (+3 more)
 
 ### Community 547 - "Community 547"
-Cohesion: 0.12
-Nodes (13): bool, str, Hot-swap the fine-tuned adapter into the local model running in Ollama., Hot-swap the fine-tuned adapter into the local model running in Ollama., Hot-swap the fine-tuned adapter into the local model running in Ollama., Schedules a one-off fine-tuning run at 2:00 AM local time.         Spawns a back, Schedules a one-off fine-tuning run at 2:00 AM local time.         Spawns a back, Schedules a one-off fine-tuning run at 2:00 AM local time.         Spawns a back (+5 more)
+Cohesion: 0.10
+Nodes (18): bool, str, main(), PersonalFinetuner, Wrapper to expose PersonalFinetuner from scripts.training.personal_finetune., Hot-swap the fine-tuned adapter into the local model running in Ollama., Hot-swap the fine-tuned adapter into the local model running in Ollama., Hot-swap the fine-tuned adapter into the local model running in Ollama. (+10 more)
 
 ### Community 548 - "Community 548"
 Cohesion: 0.12
@@ -3428,8 +3456,8 @@ Cohesion: 0.29
 Nodes (7): check_for_update_async(), Run update check in background thread, call callback with result., Run update check in background thread, call callback with result., Run update check in background thread, call callback with result., Run update check in background thread, call callback with result., Async variant calls callback when update is available., test_check_for_update_async()
 
 ### Community 562 - "Community 562"
-Cohesion: 0.13
-Nodes (19): str, int, str, AppChangedEvent, Emitted each time the active application changes., get_intent_gate(), IntentClassification, IntentGate (+11 more)
+Cohesion: 0.10
+Nodes (16): bool, Test 21: Penpot is_available returns False when offline_mode is active., Test 22: Penpot is_available returns True when online mode is explicitly enabled, Test 23: Drawing SVG to Penpot registers successfully in local state., Test 24: Multiple sequential SVG draws are recorded in order., Test 25: Drawing empty SVG element is handled gracefully., Test 26: Drawing complex rectangular vector SVG handles coordinates., test_penpot_custom_rect_svg() (+8 more)
 
 ### Community 563 - "Community 563"
 Cohesion: 0.12
@@ -5247,6 +5275,10 @@ Nodes (10): BRIEFING — 2026-06-09T01:19:30Z, Change Tracker, Current Parent, �
 Cohesion: 0.18
 Nodes (10): Artifact Index, BRIEFING — 2026-06-07T14:01:30Z, Change Tracker, Current Parent, 🔒 Key Constraints, Key Decisions Made, Mission, 🔒 My Identity (+2 more)
 
+### Community 1017 - "Community 1017"
+Cohesion: 0.12
+Nodes (20): _check_olmocr(), _check_opendataloader(), _check_pymupdf(), _check_reportlab(), bool, Domain 4 PDF Extraction & AI-Ready Data — Test Suite (60 Tests) ===============, Return True when PyMuPDF (fitz) is importable., Return True when opendataloader is importable. (+12 more)
+
 ### Community 1018 - "Community 1018"
 Cohesion: 0.20
 Nodes (9): Artifact Index, Audit Progress, Audit Scope, BRIEFING — 2026-06-09T01:10:41+05:30, Current Parent, 🔒 Key Constraints, Key Decisions Made, Mission (+1 more)
@@ -5401,7 +5433,7 @@ Nodes (10): cargo_mutants_version, caught, end_time, missed, outcomes, start_tim
 
 ### Community 1057 - "Community 1057"
 Cohesion: 0.07
-Nodes (28): float, int, Add a text passage to the auditor corpus.          This is used during training, Add a text passage to the auditor corpus.          This is used during training, Add a text passage to the auditor corpus.          This is used during training, Check generated text for memorization of copyrighted content.          This is t, Check generated text for memorization of copyrighted content.          This is t, Check generated text for memorization of copyrighted content.          This is t (+20 more)
+Nodes (26): float, AuditResult.highest_risk returns the highest risk level., MemorizationFinding, Check generated text for memorization of copyrighted content.          This is t, Check generated text for memorization of copyrighted content.          This is t, Check generated text for memorization of copyrighted content.          This is t, Compute longest contiguous block, bmc_at_3, bmc_at_5, and cross-paragraph ratio., Compute longest contiguous block, bmc_at_3, bmc_at_5, and cross-paragraph ratio. (+18 more)
 
 ### Community 1058 - "Community 1058"
 Cohesion: 0.25
@@ -5516,20 +5548,20 @@ Cohesion: 0.33
 Nodes (6): R1. Word Master Conformance & Architecture Fixes, R2. MemMachine SQLite client & style recall loop, R3. Offline Execution Profile, R4. Kairo Eye AppWatcher & Context Preloader, R5. Complete 14 Production Gates Compliance, Requirements
 
 ### Community 1087 - "Community 1087"
-Cohesion: 0.08
-Nodes (73): ActionExecutor, InferenceGateway, InferenceTier, Ingestor, MemoryStore, Orchestrator, PackInterface, ProvenanceLog (+65 more)
+Cohesion: 0.05
+Nodes (105): ApplyResult, ActionExecutor, ApplyResult, GroundingVerifier, InferenceGateway, InferenceTier, Ingestor, Orchestrator (+97 more)
 
 ### Community 1088 - "Community 1088"
-Cohesion: 0.06
-Nodes (38): DocxCreator, sidecar/creators/docx_creator.py — Kairo Phantom Create-From-Scratch DOCX ======, Creates a .docx and opens it in the default Word application.         Returns th, Creates new .docx documents from a structured content dict.     Saves to ~/Docum, Creates a .docx from structured content and saves to disk.          Parameters, sidecar/creators/__init__.py — Kairo Phantom Create-From-Scratch Module, PptxCreator, sidecar/creators/pptx_creator.py — Kairo Phantom Create-From-Scratch PPTX ===== (+30 more)
+Cohesion: 0.47
+Nodes (4): Creates a .pptx and opens it in PowerPoint., Creates a .pptx from structured content.          Parameters         --------, Any, str
 
 ### Community 1089 - "Community 1089"
 Cohesion: 0.50
 Nodes (4): commands, description, identifier, allow-items
 
 ### Community 1090 - "Community 1090"
-Cohesion: 0.04
-Nodes (49): Document, Create a temporary Word doc., Create a temporary Excel workbook., temp_docx(), temp_xlsx(), test_adjacent_elements_unchanged(), When _DOCLING_AVAILABLE is False, python-docx path runs., Docling returns empty paragraphs → falls back to python-docx. (+41 more)
+Cohesion: 0.05
+Nodes (26): Document, When _DOCLING_AVAILABLE is False, python-docx path runs., Docling returns empty paragraphs → falls back to python-docx., Docling raises exception → falls back to python-docx cleanly., Insert paragraph past the document length → appends., Delete a specific paragraph by index., If save fails mid-write, original file is untouched., Target additional uncovered branches in word_master.py. (+18 more)
 
 ### Community 1091 - "Community 1091"
 Cohesion: 0.18
@@ -5580,8 +5612,8 @@ Cohesion: 0.80
 Nodes (4): fib(), fibonacci(), main(), HashMap
 
 ### Community 1105 - "Community 1105"
-Cohesion: 0.14
-Nodes (21): generate_sbom(), main(), SBOM and supply chain security gate for Kairo Phantom. Scans for dependencies, c, Sign the SBOM file with Ed25519., Run cargo-audit to check Rust dependencies for known CVEs.     Returns True if c, Scan the repository for hardcoded secrets (mock Gitleaks)., Generate CycloneDX 1.5 JSON SBOM., run_cargo_audit() (+13 more)
+Cohesion: 0.11
+Nodes (25): generate_sbom(), main(), SBOM and supply chain security gate for Kairo Phantom. Scans for dependencies, c, Sign the SBOM file with Ed25519., Run cargo-audit to check Rust dependencies for known CVEs.     Returns True if c, Scan the repository for hardcoded secrets (mock Gitleaks)., Generate CycloneDX 1.5 JSON SBOM., run_cargo_audit() (+17 more)
 
 ### Community 1106 - "Community 1106"
 Cohesion: 0.50
@@ -5624,8 +5656,8 @@ Cohesion: 0.50
 Nodes (3): 2026-06-08T00:09:59Z, Input Documents, Requirements
 
 ### Community 1116 - "Community 1116"
-Cohesion: 0.10
-Nodes (20): cargo_mutants_version, caught, end_time, cargo_mutants_version, caught, end_time, missed, outcomes (+12 more)
+Cohesion: 0.13
+Nodes (14): Any, bool, Chunk, Extraction, float, str, PaperPack, Kairo Phantom — Paper Pack (SPEC §S7) Extracts title, authors, abstract_summary, (+6 more)
 
 ### Community 1117 - "Community 1117"
 Cohesion: 0.17
@@ -5640,8 +5672,8 @@ Cohesion: 0.40
 Nodes (5): main(), measure_latency(), float, int, str
 
 ### Community 1120 - "Community 1120"
-Cohesion: 0.08
-Nodes (71): GateResult, GateVerdict, InferenceResult, ScanResult, Correction, Extraction, A field value extracted by a Pack.     Links to the source Chunk for provenance., A human correction to an extraction (flywheel input). (+63 more)
+Cohesion: 0.06
+Nodes (73): GateVerdict, MemoryStore, Persistent store for documents, extractions, and corrections., Persistent store for documents, extractions, and corrections., Anchor, Correction, Extraction, GroundingMethod (+65 more)
 
 ### Community 1121 - "Community 1121"
 Cohesion: 0.15
@@ -5700,24 +5732,24 @@ Cohesion: 0.15
 Nodes (13): Verify that the Windows installer has a valid Authenticode signature.     Uses, verify_installer_signature(), Tests for auto-update module., On non-Windows platforms, verify_installer_signature returns True., If the installer file does not exist, return False., If the signature check returns Valid, return True., If the signature check returns a non-Valid status, return False., If subprocess.run raises an error, return False. (+5 more)
 
 ### Community 1283 - "Community 1283"
-Cohesion: 0.50
-Nodes (4): commands, description, identifier, deny-identifier
+Cohesion: 0.10
+Nodes (16): ExtractionResult, ExtractionResult can be constructed without network access (offline-safe)., ExtractionResult can be constructed without network access (offline-safe)., ExtractionResult can be constructed without network access (offline-safe)., ExtractionResult exposes all required public fields., ExtractionResult exposes all required public fields., ExtractionResult exposes all required public fields., Structured container for PDF extraction output. (+8 more)
 
 ### Community 1284 - "Community 1284"
-Cohesion: 0.14
-Nodes (15): Any, str, SOPS secrets manager for Kairo Phantom. Handles transparent decryption of encryp, Manages SOPS secret file decryption and retrieval., Decrypt a SOPS encrypted file.         If sops is installed and configured, decr, Return a dictionary of safe, mock secrets for local/CI test runs., Simple manual yaml parser for key-value pairs in case pyyaml is missing., Parse env/dotenv output format into a dict. (+7 more)
+Cohesion: 0.16
+Nodes (13): Any, str, SOPS secrets manager for Kairo Phantom. Handles transparent decryption of encryp, Manages SOPS secret file decryption and retrieval., Decrypt a SOPS encrypted file.         If sops is installed and configured, decr, Return a dictionary of safe, mock secrets for local/CI test runs., Simple manual yaml parser for key-value pairs in case pyyaml is missing., Parse env/dotenv output format into a dict. (+5 more)
 
 ### Community 1285 - "Community 1285"
 Cohesion: 0.10
 Nodes (20): Any, bool, float, str, DriftAlarm, Calibration Drift Alarm for Kairo Phantom. Monitors the gap between synthetic us, Monitors evaluation drift and protects the learning loop from training on wrong, Monitors evaluation drift and protects the learning loop from training on wrong (+12 more)
 
 ### Community 1286 - "Community 1286"
-Cohesion: 0.09
-Nodes (33): ClassificationMarking, Any, bool, Chunk, Extraction, float, str, Tests for WedgePack extraction and oracle scoring. (+25 more)
+Cohesion: 0.10
+Nodes (30): ClassificationMarking, Any, bool, Chunk, Extraction, float, str, Score per-field accuracy vs ground-truth fixtures.          Returns {field_name: (+22 more)
 
 ### Community 1287 - "Community 1287"
-Cohesion: 0.57
-Nodes (6): str, parse_pdf(), _parse_pdf_docling(), _parse_pdf_mineru(), _parse_pdf_pymupdf(), Parses a PDF file using the Kairo Three-Tier PDF Router:     1. Average charact
+Cohesion: 0.29
+Nodes (9): str, str, extract_context(), Route to correct reader based on file extension.     Returns unified context di, parse_pdf(), _parse_pdf_docling(), _parse_pdf_mineru(), _parse_pdf_pymupdf() (+1 more)
 
 ### Community 1288 - "Community 1288"
 Cohesion: 0.11
@@ -5756,16 +5788,16 @@ Cohesion: 0.17
 Nodes (11): Artifact Index, Attack Surface, Audit Progress, Audit Scope, BRIEFING — 2026-06-14T13:14:10+05:30, Current Parent, 🔒 Key Constraints, Key Decisions Made (+3 more)
 
 ### Community 1298 - "Community 1298"
-Cohesion: 0.23
-Nodes (13): _is_excluded(), main(), CI gate script to prevent developers or auto-fixers from introducing skipped or, Scan Python test files for skipped decorators or code-level skips., Scan Rust test files for #[ignore] attributes., Return True if any path component is in the exclusion set., Scan ALL test_*.py files in the repo for forbidden skip patterns., Scan ALL .rs files in the repo for #[ignore] attributes. (+5 more)
+Cohesion: 0.26
+Nodes (12): _is_excluded(), main(), CI gate script to prevent developers or auto-fixers from introducing skipped or, Scan Python test files for skipped decorators or code-level skips., Scan Rust test files for #[ignore] attributes., Return True if any path component is in the exclusion set., Scan ALL test_*.py files in the repo for forbidden skip patterns., Scan ALL .rs files in the repo for #[ignore] attributes. (+4 more)
 
 ### Community 1299 - "Community 1299"
 Cohesion: 0.22
 Nodes (8): cargo_mutants_version, hostname, cargo_mutants_version, hostname, start_time, username, start_time, username
 
 ### Community 1300 - "Community 1300"
-Cohesion: 0.02
-Nodes (97): _check_olmocr(), _check_opendataloader(), _check_pymupdf(), _check_reportlab(), _check_surya(), _extract_fallback(), ExtractionResult, _make_empty_pdf() (+89 more)
+Cohesion: 0.06
+Nodes (27): _extract_fallback(), _extract_fallback tries PyMuPDF before returning zero-confidence result., _extract_fallback tries PyMuPDF before returning zero-confidence result., _extract_fallback tries PyMuPDF before returning zero-confidence result., Graceful fallback that always returns a valid (possibly empty) ExtractionResult., Graceful fallback that always returns a valid (possibly empty) ExtractionResult., Graceful fallback that always returns a valid (possibly empty) ExtractionResult., _extract_fallback must never raise — it returns ExtractionResult for bad paths. (+19 more)
 
 ### Community 1301 - "Community 1301"
 Cohesion: 0.17
@@ -5824,8 +5856,8 @@ Cohesion: 0.18
 Nodes (10): 1. Observation, 2. Logic Chain, 3. Caveats, 4. Conclusion, 5. Verification Method, code:rust (// Line 25), code:bash (cargo test --test layer1_unit_tests --test test_sentinel_ret), code:bash (cargo test --test test_cross_platform --no-run) (+2 more)
 
 ### Community 1315 - "Community 1315"
-Cohesion: 0.18
-Nodes (9): Gate 6 Requirement:         - // kami slides generates .pptx file         - //, Gate 6 Requirement:         - // kami slides generates .pptx file         - //, Gate 7 Requirement:         - MemMachine records preferred format/theme, Gate 6 Requirement:         - // kami slides generates .pptx file         - //, Gate 7 Requirement:         - MemMachine records preferred format/theme, Gate 6 Requirement:         - // kami slides generates .pptx file         - //, Gate 6 Requirement:         - // kami slides generates .pptx file         - //, Gate 7 Requirement:         - MemMachine records preferred format/theme (+1 more)
+Cohesion: 0.10
+Nodes (16): High-density born-digital PDF is routed to Tier 1 (PyMuPDF)., Router completes without raising even when preferred tiers are unavailable., Router completes without raising even when preferred tiers are unavailable., Router completes without raising even when preferred tiers are unavailable., extraction_time_ms field is positive after a real extraction., extraction_time_ms field is positive after a real extraction., extraction_time_ms field is positive after a real extraction., Confidence scores returned by all tiers must be in [0.0, 1.0]. (+8 more)
 
 ### Community 1316 - "Community 1316"
 Cohesion: 0.06
@@ -5960,8 +5992,8 @@ Cohesion: 0.26
 Nodes (8): ChaosReport, main(), bool, float, int, str, Run the chaos test suite with specific fault flags., run_cargo_tests()
 
 ### Community 1352 - "Community 1352"
-Cohesion: 0.33
-Nodes (5): Gate 2 Requirement:         - Generate a 10-slide research talk on "Transformer, Gate 2 Requirement:         - Generate a 10-slide research talk on "Transformer, Gate 2 Requirement:         - Generate a 10-slide research talk on "Transformer, Gate 2 Requirement:         - Generate a 10-slide research talk on "Transformer, Gate 2 Requirement:         - Generate a 10-slide research talk on "Transformer
+Cohesion: 0.22
+Nodes (9): InferenceResult, InferenceTier, bool, Path, str, Call the LiteLLM proxy for real inference., Deterministic test-mode response. NOT for production use.          This is clear, Append a structured log entry for provenance. (+1 more)
 
 ### Community 1365 - "Community 1365"
 Cohesion: 0.18
@@ -5992,8 +6024,8 @@ Cohesion: 0.20
 Nodes (9): abstention_threshold, bins, calibration_method, coefficients, intercept, slope, expected_calibration_error, generated_at (+1 more)
 
 ### Community 1392 - "Community 1392"
-Cohesion: 0.10
-Nodes (20): gate_block_rate, gate_flag_rate, per_field_accuracy, author, classification_marking, control_markings, date_of_information, declassify_on (+12 more)
+Cohesion: 0.17
+Nodes (12): per_field_accuracy, author, classification_marking, control_markings, date_of_information, declassify_on, handling_instructions, originating_org (+4 more)
 
 ### Community 1393 - "Community 1393"
 Cohesion: 0.17
@@ -6016,8 +6048,8 @@ Cohesion: 0.29
 Nodes (4): True if VLM is downloaded and Ollama is running., True when VLM is not yet available (downloading)., True when VLM is not yet available (downloading)., bool
 
 ### Community 1402 - "Community 1402"
-Cohesion: 0.29
-Nodes (7): bool, str, passive_preloader.py — Kairo Phantom Passive Model Preloader ===================, Send a silent warmup request to the LiteLLM proxy for the given model.     Retur, Warm up all models sequentially with a delay between each., _warmup_all(), _warmup_model()
+Cohesion: 0.13
+Nodes (15): bool, str, main(), _preload_models(), Sends a tiny probe request to warm up the local LLM models (kairo-fast, kairo-st, Sends a tiny probe request to warm up the local LLM models (kairo-fast, kairo-st, Sends a tiny probe request to warm up the local LLM models (kairo-fast, kairo-st, passive_preloader.py — Kairo Phantom Passive Model Preloader =================== (+7 more)
 
 ### Community 1403 - "Community 1403"
 Cohesion: 0.25
@@ -6028,12 +6060,12 @@ Cohesion: 0.18
 Nodes (12): Path, _load_gauntlet(), tests/test_kairoreal_gauntlet.py — Pytest verification of the headless gauntlet, Run the gauntlet script end-to-end via subprocess, verify the output JSON     sc, Run the gauntlet script end-to-end via subprocess, verify the output JSON     sc, Import run_kairoreal_gauntlet as a module (cached per process)., Verify run_kairoreal_gauntlet.py is importable and scenarios.json has 200 entrie, Run <=5 active scenarios across >=2 categories; all must PASS or SKIP. (+4 more)
 
 ### Community 1408 - "Community 1408"
-Cohesion: 0.18
-Nodes (9): str, ParagraphInfo, sidecar/masters/word/context_extractor.py ======================================, Classify the document purpose from the first 50 paragraphs.          Rules (eval, Return a deduplicated list of paragraph style names used in the document., Rich per-paragraph metadata extracted from a .docx paragraph., Full document snapshot for prompt assembly., Extract a WordDocumentContext from an open python-docx Document.          Parame (+1 more)
+Cohesion: 0.12
+Nodes (14): _estimate_word_count(), ExtractionTier, Any, float, int, Estimate word count using whitespace splitting (no NLP required)., Tier 1 PyMuPDF extraction.  Returns an ExtractionResult.     Raises ImportError, Estimate word count using whitespace splitting (no NLP required). (+6 more)
 
 ### Community 1409 - "Community 1409"
-Cohesion: 0.20
-Nodes (17): ctx_with_title(), safe_ctx(), test_app_aware_templates_excel(), test_dpi_scaling_applied_to_mouse_coordinates(), test_esc_cancels_all_pending_actions(), test_esc_stops_executor(), test_executor_fails_closed_when_verification_unavailable(), test_executor_fallback() (+9 more)
+Cohesion: 0.13
+Nodes (12): _make_empty_pdf(), _route_extraction must never propagate an exception to the caller., _route_extraction must never propagate an exception to the caller., _route_extraction must never propagate an exception to the caller., Create a one-page PDF with no text content., Create a one-page PDF with no text content., Create a one-page PDF with no text content., Extraction engine handles a blank (no text) PDF without raising. (+4 more)
 
 ### Community 1410 - "Community 1410"
 Cohesion: 0.20
@@ -6080,8 +6112,8 @@ Cohesion: 0.50
 Nodes (4): commands, description, identifier, deny-create-default
 
 ### Community 1422 - "Community 1422"
-Cohesion: 0.28
-Nodes (6): bool, int, str, Clamp *idx* to the valid paragraph range [0, doc_length-1].          Parameters, Run all applicable validations on *operation* and return the corrected         o, Fuzzy-match *requested_style* against *available_styles*.          Uses difflib.
+Cohesion: 0.21
+Nodes (9): bool, int, str, sidecar/masters/word/validator.py =================================== Validation, Clamp *idx* to the valid paragraph range [0, doc_length-1].          Parameters, Run all applicable validations on *operation* and return the corrected         o, Validates Word document operations against the live document state.      All val, Fuzzy-match *requested_style* against *available_styles*.          Uses difflib. (+1 more)
 
 ### Community 1423 - "Community 1423"
 Cohesion: 0.29
@@ -6124,8 +6156,8 @@ Cohesion: 0.29
 Nodes (7): categories, CUA, active, failed, passed, skipped, total
 
 ### Community 1436 - "Community 1436"
-Cohesion: 0.19
-Nodes (11): Document, int, str, sidecar/masters/word/writer.py ================================ Atomic, XML-leve, Change the paragraph style at *idx* without altering its text content., Remove paragraph *idx* from the document body using XML removal.          Implem, Save *doc* to *path* atomically by:           1. Writing to a sibling .tmp file, XML-level paragraph writer for python-docx Documents.      All mutating methods (+3 more)
+Cohesion: 0.23
+Nodes (8): Document, int, str, Change the paragraph style at *idx* without altering its text content., Remove paragraph *idx* from the document body using XML removal.          Implem, Save *doc* to *path* atomically by:           1. Writing to a sibling .tmp file, Insert a new paragraph AFTER the paragraph at *after_idx*.          Implementati, Replace the text of paragraph *idx* while preserving the paragraph element.
 
 ### Community 1437 - "Community 1437"
 Cohesion: 0.29
@@ -6151,6 +6183,10 @@ Nodes (6): Excel, active, failed, passed, skipped, total
 Cohesion: 0.50
 Nodes (4): S4: Translate Spanish message and reply in Spanish., S4: Translate Spanish message and reply in Spanish., S4: Translate Spanish message and reply in Spanish., _s4()
 
+### Community 1443 - "Community 1443"
+Cohesion: 0.15
+Nodes (13): SwarmOrchestrator, make_swarm(), p2_powerpoint_slides_prompt_routes_to_agent(), r10_output_tags_in_directives(), r1_design_agent_for_powerpoint(), r2_data_analyst_for_excel(), r3_content_agent_for_word(), r4_reasoning_for_query_mode() (+5 more)
+
 ### Community 1444 - "Community 1444"
 Cohesion: 0.33
 Nodes (5): Architecture, Gauntlet Runner ↔ scenarios.json, Interface Contracts, Milestones, Project: Headless KairoReal Gauntlet Runner and CI Integration
@@ -6164,8 +6200,8 @@ Cohesion: 0.29
 Nodes (7): categories, CUA, active, failed, passed, skipped, total
 
 ### Community 1447 - "Community 1447"
-Cohesion: 0.18
-Nodes (12): bool, excel_com_lease(), excel_is_open(), ExcelMcp Bridge — Live Excel COM automation for Kairo Phantom Domain 2. =======, True if win32com (pywin32) is importable., True if win32com (pywin32) is importable., Windows-only: check if Excel has the given file open via COM.     Returns False, Windows-only: check if Excel has the given file open via COM.     Returns False (+4 more)
+Cohesion: 0.13
+Nodes (16): bool, excel_com_lease(), excel_is_open(), excelmcp_create_pivot_table(), True if win32com (pywin32) is importable., True if win32com (pywin32) is importable., Create a pivot summary table (openpyxl doesn't support native PivotTables)., Windows-only: check if Excel has the given file open via COM.     Returns False (+8 more)
 
 ### Community 1448 - "Community 1448"
 Cohesion: 0.33
@@ -6188,8 +6224,8 @@ Cohesion: 0.33
 Nodes (6): Excel, active, failed, passed, skipped, total
 
 ### Community 1455 - "Community 1455"
-Cohesion: 0.07
-Nodes (28): bool, int, str, ExcelContext, ExcelMaster, ForgeValidator, parse_cell_ref(), _parse_range_spec() (+20 more)
+Cohesion: 0.08
+Nodes (22): bool, int, str, ExcelContext, ForgeValidator, parse_cell_ref(), _parse_range_spec(), Wraps Forge formula validation. Prevents bad formulas reaching the file. (+14 more)
 
 ### Community 1456 - "Community 1456"
 Cohesion: 0.33
@@ -6328,20 +6364,20 @@ Cohesion: 0.40
 Nodes (4): Checklist, Current Status, Iteration Status, Progress Tracker — KairoReal Gauntlet Rebuild
 
 ### Community 1499 - "Community 1499"
-Cohesion: 0.30
-Nodes (9): Chunk, int, Path, str, Ingest a text/markdown file into chunks by paragraph., Ingest a PDF file. Uses fitz (PyMuPDF) if available., Ingest a DOCX file. Uses python-docx if available., Split text into paragraphs by double newline or single newline         when line (+1 more)
+Cohesion: 0.05
+Nodes (69): BBox, Chunk, A piece of a document with source localization.     INVARIANT: page and bbox are, Bounding box coordinates for source localization., Bounding box coordinates for source localization., A piece of a document with source localization.     INVARIANT: page and bbox are, cosine_similarity(), get_embedding() (+61 more)
 
 ### Community 1500 - "Community 1500"
 Cohesion: 0.17
-Nodes (12): _adjust_formula(), excelmcp_fill_formula(), AutoFill a formula across a range — relative cell references are adjusted     p, Write a value or formula to a single cell, preserving all other formatting., AutoFill a formula across a range — relative cell references are adjusted     p, AutoFill a formula across a range — relative cell references are adjusted     p, AutoFill a formula across a range — relative cell references are adjusted     p, Adjust relative cell references in a formula by row/col offset.     Absolute re (+4 more)
+Nodes (12): citation_hallucination_rate, grounded_answer_rate, passed_extractions, per_field_accuracy, refusal_correctness, total_documents, total_extractions, generic (+4 more)
 
 ### Community 1501 - "Community 1501"
 Cohesion: 0.50
 Nodes (4): _no1(), NO1: Create structured project kickoff page with 5 toggle sections., NO1: Create structured project kickoff page with 5 toggle sections., NO1: Create structured project kickoff page with 5 toggle sections.
 
 ### Community 1502 - "Community 1502"
-Cohesion: 0.22
-Nodes (8): get_user_voice_prompt(), get_voice_adapter(), get_voice_store(), kairo-sidecar/sidecar/writers/voice_adapter.py  LoRA Voice Adapter for KairoDocW, Load a voice fingerprint for a user., Get (or create) the singleton VoiceAdapter., Get (or create) the singleton VoiceStore., Get the voice-adapted system prompt for a user.      This is the main entry poin
+Cohesion: 0.19
+Nodes (9): check_llm_available(), handle_request(), test_check_llm_available(), get_user_voice_prompt(), get_voice_adapter(), get_voice_store(), Get (or create) the singleton VoiceAdapter., Get (or create) the singleton VoiceStore. (+1 more)
 
 ### Community 1503 - "Community 1503"
 Cohesion: 0.18
@@ -6352,8 +6388,8 @@ Cohesion: 0.33
 Nodes (6): _adeu_cli_apply(), CLI-based fallback using `adeu apply` subcommand., CLI-based fallback using `adeu apply` subcommand., CLI-based fallback using `adeu apply` subcommand., CLI-based fallback using `adeu apply` subcommand., CLI-based fallback using `adeu apply` subcommand.
 
 ### Community 1505 - "Community 1505"
-Cohesion: 0.33
-Nodes (5): audit_generated_text convenience function works., audit_generated_text(), Convenience function — audit generated text for copyright compliance.      This, Convenience function — audit generated text for copyright compliance.      This, Convenience function — audit generated text for copyright compliance.      This
+Cohesion: 0.17
+Nodes (11): Kairo Phantom — Implementation Tasks, P0 — Repo Scaffold + Contracts, P1 — Ingestion + Provenance Store, P2 — The Grounding Verifier (THE MOAT), P3 — The CLI Product, P4 — The 4 Launch Packs, P5 — Public Grounding Benchmark, P6 — Overlay (PENDING-REAL-APP interim) (+3 more)
 
 ### Community 1506 - "Community 1506"
 Cohesion: 0.20
@@ -6364,8 +6400,8 @@ Cohesion: 0.40
 Nodes (5): Acceptance Criteria, Autonomous Skill Creation, Document Graph Memory, Feynman Verification Agent, Licensing & Attribution
 
 ### Community 1508 - "Community 1508"
-Cohesion: 0.09
-Nodes (5): Path, Domain 2 Excel Integration Test Suite — 60 Tests ==============================, Create a minimal real Excel file for test context., temp_xlsx(), TestForgeValidator
+Cohesion: 0.18
+Nodes (10): cargo_mutants_version, caught, end_time, missed, outcomes, start_time, success, timeout (+2 more)
 
 ### Community 1509 - "Community 1509"
 Cohesion: 0.40
@@ -6380,12 +6416,16 @@ Cohesion: 0.67
 Nodes (3): 🏗️ Architecture, Local Process Map, Technology Stack
 
 ### Community 1514 - "Community 1514"
-Cohesion: 0.20
-Nodes (9): excelmcp_create_chart(), Saves an openpyxl Workbook to path. If a PermissionError is encountered,     it, Saves an openpyxl Workbook to path. If a PermissionError is encountered,     it, Saves an openpyxl Workbook to path. If a PermissionError is encountered,     it, Create an Excel chart from a data range using openpyxl.     chart_type: "bar",, Create an Excel chart from a data range using openpyxl.     chart_type: "bar",, Create an Excel chart from a data range using openpyxl.     chart_type: "bar",, Create an Excel chart from a data range using openpyxl.     chart_type: "bar", (+1 more)
+Cohesion: 0.14
+Nodes (15): excelmcp_create_chart(), excelmcp_fill_formula(), Saves an openpyxl Workbook to path. If a PermissionError is encountered,     it, Saves an openpyxl Workbook to path. If a PermissionError is encountered,     it, Saves an openpyxl Workbook to path. If a PermissionError is encountered,     it, AutoFill a formula across a range — relative cell references are adjusted     p, Create an Excel chart from a data range using openpyxl.     chart_type: "bar",, Write a value or formula to a single cell, preserving all other formatting. (+7 more)
 
 ### Community 1517 - "Community 1517"
 Cohesion: 0.22
 Nodes (7): Tests for overlay FastAPI server., Test that GET / returns the index.html page., Test that POST /demo returns 404 for missing file., Test full flow: run demo on fixture -> apply action -> correct., test_demo_and_actions_endpoints(), test_demo_endpoint_not_found(), test_serve_index_html()
+
+### Community 1519 - "Community 1519"
+Cohesion: 0.20
+Nodes (6): str, parse_pptx(), Read PowerPoint and return slide/shape inventory., 1. Enumerate slide lists, titles, and layouts., 6. Enumerate boundary EMUs and placement constraints., 8. Guarantee adjacent slides are unmodified.
 
 ### Community 1520 - "Community 1520"
 Cohesion: 0.40
@@ -6420,8 +6460,8 @@ Cohesion: 0.50
 Nodes (4): R1. Autonomous Skill Creation (Hermes Agent Pattern), R2. Document Graph Memory (Graphify / GraphRAG Pattern), R3. Feynman Verification Agent (Self-Critique Pattern), Requirements
 
 ### Community 1528 - "Community 1528"
-Cohesion: 0.20
-Nodes (8): check_llm_available(), main(), _preload_models(), Sends a tiny probe request to warm up the local LLM models (kairo-fast, kairo-st, Sends a tiny probe request to warm up the local LLM models (kairo-fast, kairo-st, Sends a tiny probe request to warm up the local LLM models (kairo-fast, kairo-st, test_model_preloader_warmup(), test_check_llm_available()
+Cohesion: 0.24
+Nodes (6): ScanResult, str, Scan text for prompt injection and PII. BLOCKS, never soft-warns., Redact all detected PII from text before model sees it., Heuristic injection classifier with weighted scoring.          Accumulates signa, Detect PII in text using pattern matching.
 
 ### Community 1529 - "Community 1529"
 Cohesion: 0.50
@@ -6434,6 +6474,10 @@ Nodes (21): commands, description, identifier, commands, description, identifier
 ### Community 1531 - "Community 1531"
 Cohesion: 0.07
 Nodes (31): Any, bool, int, str, Test 39: Local port check fails safely in fully isolated offline environments., Test 40: Pil presence helper returns importability boolean state., Test 41: Asset generation with empty path automatically creates temp asset file., Test 42: Style 'hero' uses Kairo premium brand purple (97, 64, 240). (+23 more)
+
+### Community 1532 - "Community 1532"
+Cohesion: 0.22
+Nodes (9): per_field_accuracy, currency, due_date, invoice_date, invoice_number, line_items, tax_amount, total_amount (+1 more)
 
 ### Community 1534 - "Community 1534"
 Cohesion: 0.50
@@ -6456,8 +6500,8 @@ Cohesion: 0.33
 Nodes (5): code:bash (make bench FIXTURES_DIR=fixtures/wedge), Contents, Fixtures, Note, Usage
 
 ### Community 1539 - "Community 1539"
-Cohesion: 0.11
-Nodes (14): bytes, Queue, FarScryService, get_farscry_service(), KairoEyeContext, Asyncio-compatible foreground window watcher with Kairo Eye cursor-OCR context., Return a new asyncio.Queue that will receive AppChangedEvent objects.         Th, Return the most recent AppChangedEvent (None if not yet polled). (+6 more)
+Cohesion: 0.33
+Nodes (8): check_cargo_licenses(), check_kernel_imports(), main(), License check CI gate for Kairo Phantom. Fails the build if any AGPL, BSL, or co, Ensure kernel/core/ files do NOT import AGPL libraries like PyMuPDF (fitz)., Check Cargo.toml and Cargo.lock for forbidden dependencies., bool, str
 
 ### Community 1540 - "Community 1540"
 Cohesion: 0.12
@@ -6468,12 +6512,12 @@ Cohesion: 0.33
 Nodes (6): Current Status (Honest Disclosure), Hardware Tiers, Measured Metrics, Model Licenses, What's PENDING, What Works (Verified)
 
 ### Community 1542 - "Community 1542"
-Cohesion: 0.33
-Nodes (5): Gate 5 Requirement:         - Every AI-generated bullet is <= 7 words, Gate 5 Requirement:         - Every AI-generated bullet is <= 7 words, Gate 5 Requirement:         - Every AI-generated bullet is <= 7 words, Gate 5 Requirement:         - Every AI-generated bullet is <= 7 words, Gate 5 Requirement:         - Every AI-generated bullet is <= 7 words
+Cohesion: 0.25
+Nodes (8): per_field_accuracy, confidentiality_clause, effective_date, governing_law, obligations, parties, payment_terms, termination_date
 
 ### Community 1547 - "Community 1547"
-Cohesion: 0.33
-Nodes (5): Manages the swarm of 7 synthetic personas., Manages the swarm of 7 synthetic personas., SyntheticUserSwarm, test_drive_sandbox_all_personas(), test_synthetic_user_swarm()
+Cohesion: 0.25
+Nodes (7): gate_block_rate, gate_flag_rate, provenance_coverage_pct, successful_documents, timestamp, total_documents, total_extractions
 
 ### Community 1548 - "Community 1548"
 Cohesion: 0.40
@@ -6484,8 +6528,8 @@ Cohesion: 0.40
 Nodes (4): CI Guards (SPEC §S0), Domain Inventory, Kairo Phantom — DOMAINS.md, Re-activation Contract (SPEC §S10)
 
 ### Community 1550 - "Community 1550"
-Cohesion: 0.40
-Nodes (5): bool, float, int, _is_likely_heading_block(), Heuristic for PyMuPDF blocks: bold text at > 14pt is treated as a heading.     R
+Cohesion: 0.25
+Nodes (8): citation_hallucination_rate, grounded_answer_rate, passed_extractions, refusal_correctness, total_documents, total_extractions, packs, invoice
 
 ### Community 1551 - "Community 1551"
 Cohesion: 0.22
@@ -6499,6 +6543,10 @@ Nodes (9): _is_newer(), Return True if version a > version b., Return True if ve
 Cohesion: 0.40
 Nodes (4): str, build_docx_prompt(), Builds a highly structured system + user prompt for document editing.     Instr, Builds a highly structured system + user prompt for document editing.     Instr
 
+### Community 1554 - "Community 1554"
+Cohesion: 0.25
+Nodes (8): per_field_accuracy, abstract_summary, authors, figure_references, methods, reported_numbers, table_references, title
+
 ### Community 1555 - "Community 1555"
 Cohesion: 0.25
 Nodes (5): Tests for action routing in main.py handle_request., voice_process action routes correctly., voice_format action routes correctly., screen_extract action routes correctly (missing file graceful)., TestSidecarRouting
@@ -6508,8 +6556,8 @@ Cohesion: 0.40
 Nodes (4): /legacy — Disabled Integrity Problems, Policy, What Belongs Here, What Does NOT Belong Here
 
 ### Community 1557 - "Community 1557"
-Cohesion: 0.50
-Nodes (3): Core Metrics, Kairo Phantom — Benchmark Report, Per-Field Accuracy
+Cohesion: 0.15
+Nodes (12): Core Metrics, Kairo Phantom — Benchmark Report, Kairo Phantom — Grounding Benchmark Report, Per-Field Accuracy, Pack: `contract`, Pack: `generic`, Pack: `invoice`, Pack: `paper` (+4 more)
 
 ### Community 1558 - "Community 1558"
 Cohesion: 0.29
@@ -6524,24 +6572,32 @@ Cohesion: 0.33
 Nodes (5): Gate 4 Requirement:         - PowerPoint file open check (simulated via write_p, Gate 4 Requirement:         - PowerPoint file open check (simulated via write_p, Gate 4 Requirement:         - PowerPoint file open check (simulated via write_p, Gate 4 Requirement:         - PowerPoint file open check (simulated via write_p, Gate 4 Requirement:         - PowerPoint file open check (simulated via write_p
 
 ### Community 1561 - "Community 1561"
-Cohesion: 0.33
-Nodes (5): bool, int, str, Runs the SFT training pipeline on the dataset., run_sft_pipeline()
+Cohesion: 0.25
+Nodes (7): _make_temp_pdf_with_heading(), Create a PDF with a large-font heading and smaller body text., Create a PDF with a large-font heading and smaller body text., Create a PDF with a large-font heading and smaller body text., Tier 1 extraction populates headings list when large-font spans exist., Tier 1 extraction populates headings list when large-font spans exist., Tier 1 extraction populates headings list when large-font spans exist.
 
 ### Community 1562 - "Community 1562"
-Cohesion: 0.50
-Nodes (4): bool, str, Basic validation for Excel formulas:     - Must start with '='     - Must have, validate_excel_formula()
+Cohesion: 0.29
+Nodes (7): citation_hallucination_rate, grounded_answer_rate, passed_extractions, refusal_correctness, total_documents, total_extractions, contract
+
+### Community 1563 - "Community 1563"
+Cohesion: 0.29
+Nodes (7): paper, citation_hallucination_rate, grounded_answer_rate, passed_extractions, refusal_correctness, total_documents, total_extractions
+
+### Community 1564 - "Community 1564"
+Cohesion: 0.29
+Nodes (6): _parse_markdown_headings(), _parse_markdown_headings extracts all heading levels from markdown text., _parse_markdown_headings extracts all heading levels from markdown text., Return a list of heading strings found in markdown content., Return a list of heading strings found in markdown content., Return a list of heading strings found in markdown content.
 
 ### Community 1565 - "Community 1565"
 Cohesion: 0.67
 Nodes (3): handle_request(), main(), Stdio JSON-RPC server loop
 
 ### Community 1567 - "Community 1567"
-Cohesion: 0.50
-Nodes (3): _InjectionSignal, Kairo Phantom — Security Filter (SPEC §S4 line 5)  Local prompt-injection classi, A weighted signal for injection detection.
+Cohesion: 0.10
+Nodes (45): GateResult, InferenceResult, ScanResult, ExtractionStatus, Page, A page from a Document., ProvenanceLogImpl, Concrete ProvenanceLog implementation.      Maintains an in-memory registry of a (+37 more)
 
 ### Community 1568 - "Community 1568"
-Cohesion: 0.83
-Nodes (3): main(), run_vscode_mcp_e2e(), write_result()
+Cohesion: 0.47
+Nodes (4): Creates a .docx and opens it in the default Word application.         Returns th, Creates a .docx from structured content and saves to disk.          Parameters, Any, str
 
 ### Community 1569 - "Community 1569"
 Cohesion: 0.50
@@ -6568,12 +6624,12 @@ Cohesion: 0.50
 Nodes (4): commands, description, identifier, deny-unlisten
 
 ### Community 1578 - "Community 1578"
-Cohesion: 0.50
-Nodes (4): description, required, type, Capability
+Cohesion: 0.47
+Nodes (4): Creates a .xlsx and opens it in Excel., Creates a .xlsx from structured content.          Parameters         ----------, Any, str
 
 ### Community 1579 - "Community 1579"
-Cohesion: 0.83
-Nodes (3): main(), run_powerpoint_e2e(), write_result()
+Cohesion: 0.33
+Nodes (5): Acceptance Criteria, Kairo Phantom — Zero-Install Web Demo Specification, Key Features, Overview, Technical Design
 
 ### Community 1580 - "Community 1580"
 Cohesion: 0.83
@@ -6591,25 +6647,61 @@ Nodes (3): _gen_id(), Generate a unique ID., str
 Cohesion: 0.67
 Nodes (3): Value, anyOf, description
 
+### Community 1587 - "Community 1587"
+Cohesion: 0.33
+Nodes (5): Gate 3 Requirement:         - Generate slide image via gpt-image-2 (Pillow fall, Gate 3 Requirement:         - Generate slide image via gpt-image-2 (Pillow fall, Gate 3 Requirement:         - Generate slide image via gpt-image-2 (Pillow fall, Gate 3 Requirement:         - Generate slide image via gpt-image-2 (Pillow fall, Gate 3 Requirement:         - Generate slide image via gpt-image-2 (Pillow fall
+
+### Community 1598 - "Community 1598"
+Cohesion: 0.33
+Nodes (5): Create a temporary Word doc., Create a temporary Excel workbook., temp_docx(), temp_xlsx(), test_adjacent_elements_unchanged()
+
+### Community 1599 - "Community 1599"
+Cohesion: 0.50
+Nodes (3): Notifies the Rust daemon of download progress via the named pipe.     The daemon, Notifies the Rust daemon of download progress via the named pipe.     The daemon, TrayProgressNotifier
+
+### Community 1600 - "Community 1600"
+Cohesion: 0.50
+Nodes (4): get_cross_app_orchestrator(), Get (or create) the singleton cross-app orchestrator., Get (or create) the singleton cross-app orchestrator., Get (or create) the singleton cross-app orchestrator.
+
+### Community 1601 - "Community 1601"
+Cohesion: 0.67
+Nodes (3): main(), str, send_request()
+
+### Community 1602 - "Community 1602"
+Cohesion: 0.50
+Nodes (4): commands, description, identifier, allow-name
+
+### Community 1603 - "Community 1603"
+Cohesion: 0.50
+Nodes (4): commands, description, identifier, deny-name
+
+### Community 1609 - "Community 1609"
+Cohesion: 0.67
+Nodes (3): Value, anyOf, description
+
+### Community 1611 - "Community 1611"
+Cohesion: 0.67
+Nodes (3): Create a temporary Word doc., Create a temporary Word doc with real content., temp_docx()
+
 ## Knowledge Gaps
-- **8422 isolated node(s):** `timestamp`, `platform`, `suite`, `chaos`, `total` (+8417 more)
+- **8496 isolated node(s):** `timestamp`, `platform`, `suite`, `chaos`, `total` (+8491 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **249 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **261 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Json` connect `Community 40` to `Community 514`, `Community 515`, `Community 1027`, `Community 1540`, `Community 519`, `Community 10`, `Community 523`, `Community 15`, `Community 1553`, `Community 530`, `Community 23`, `Community 24`, `Community 26`, `Community 538`, `Community 1565`, `Community 30`, `Community 31`, `Community 32`, `Community 1568`, `Community 1570`, `Community 546`, `Community 1062`, `Community 39`, `Community 38`, `Community 1063`, `Community 43`, `Community 1579`, `Community 1580`, `Community 562`, `Community 50`, `Community 1077`, `Community 54`, `Community 1080`, `Community 58`, `Community 60`, `Community 62`, `Community 64`, `Community 65`, `Community 583`, `Community 75`, `Community 1105`, `Community 83`, `Community 1119`, `Community 96`, `Community 105`, `Community 117`, `Community 133`, `Community 135`, `Community 1170`, `Community 1171`, `Community 162`, `Community 163`, `Community 172`, `Community 173`, `Community 178`, `Community 181`, `Community 195`, `Community 210`, `Community 215`, `Community 216`, `Community 230`, `Community 242`, `Community 250`, `Community 1282`, `Community 1284`, `Community 1285`, `Community 262`, `Community 1286`, `Community 274`, `Community 294`, `Community 295`, `Community 312`, `Community 1338`, `Community 324`, `Community 1349`, `Community 1351`, `Community 1365`, `Community 1368`, `Community 356`, `Community 365`, `Community 1402`, `Community 1407`, `Community 388`, `Community 1415`, `Community 395`, `Community 407`, `Community 408`, `Community 1447`, `Community 1451`, `Community 428`, `Community 1502`, `Community 480`, `Community 483`, `Community 490`, `Community 495`, `Community 497`, `Community 498`, `Community 1524`, `Community 1531`?**
+- **Why does `Json` connect `Community 40` to `Community 515`, `Community 1027`, `Community 517`, `Community 6`, `Community 519`, `Community 1540`, `Community 10`, `Community 523`, `Community 15`, `Community 1553`, `Community 530`, `Community 23`, `Community 26`, `Community 538`, `Community 1565`, `Community 31`, `Community 32`, `Community 1570`, `Community 546`, `Community 1062`, `Community 39`, `Community 38`, `Community 1063`, `Community 43`, `Community 1580`, `Community 47`, `Community 50`, `Community 1077`, `Community 54`, `Community 1080`, `Community 58`, `Community 60`, `Community 62`, `Community 1087`, `Community 64`, `Community 1601`, `Community 65`, `Community 583`, `Community 75`, `Community 1612`, `Community 1613`, `Community 1614`, `Community 77`, `Community 1105`, `Community 83`, `Community 1116`, `Community 1119`, `Community 96`, `Community 117`, `Community 133`, `Community 135`, `Community 1170`, `Community 1171`, `Community 162`, `Community 163`, `Community 172`, `Community 173`, `Community 178`, `Community 181`, `Community 189`, `Community 195`, `Community 210`, `Community 215`, `Community 216`, `Community 230`, `Community 242`, `Community 250`, `Community 1282`, `Community 1284`, `Community 1285`, `Community 262`, `Community 274`, `Community 295`, `Community 312`, `Community 1338`, `Community 324`, `Community 1349`, `Community 1351`, `Community 1365`, `Community 1368`, `Community 345`, `Community 365`, `Community 368`, `Community 1402`, `Community 1407`, `Community 1415`, `Community 395`, `Community 407`, `Community 408`, `Community 1451`, `Community 428`, `Community 1499`, `Community 480`, `Community 483`, `Community 488`, `Community 490`, `Community 495`, `Community 497`, `Community 498`, `Community 1524`, `Community 1531`?**
   _High betweenness centrality (0.072) - this node is a cross-community bridge._
-- **Why does `handle_request()` connect `Community 95` to `Community 514`, `Community 131`, `Community 388`, `Community 1415`, `Community 8`, `Community 138`, `Community 1290`, `Community 1292`, `Community 395`, `Community 1553`, `Community 407`, `Community 24`, `Community 31`, `Community 162`, `Community 39`, `Community 428`, `Community 172`, `Community 46`, `Community 48`, `Community 60`, `Community 199`, `Community 345`, `Community 346`, `Community 1500`, `Community 120`, `Community 1502`, `Community 96`, `Community 1505`, `Community 99`, `Community 356`, `Community 233`, `Community 1514`, `Community 1528`, `Community 121`, `Community 122`?**
-  _High betweenness centrality (0.018) - this node is a cross-community bridge._
+- **Why does `handle_request()` connect `Community 1502` to `Community 131`, `Community 1415`, `Community 8`, `Community 1290`, `Community 395`, `Community 1292`, `Community 1553`, `Community 407`, `Community 31`, `Community 32`, `Community 162`, `Community 38`, `Community 1447`, `Community 39`, `Community 428`, `Community 172`, `Community 46`, `Community 48`, `Community 60`, `Community 199`, `Community 331`, `Community 345`, `Community 346`, `Community 95`, `Community 96`, `Community 99`, `Community 1514`, `Community 1519`, `Community 122`?**
+  _High betweenness centrality (0.022) - this node is a cross-community bridge._
 - **Why does `UiaReader` connect `Community 23` to `Community 136`?**
-  _High betweenness centrality (0.017) - this node is a cross-community bridge._
-- **Are the 94 inferred relationships involving `Extraction` (e.g. with `ActionExecutor` and `ApplyResult`) actually correct?**
-  _`Extraction` has 94 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 86 inferred relationships involving `Chunk` (e.g. with `ActionExecutor` and `ApplyResult`) actually correct?**
-  _`Chunk` has 86 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 82 inferred relationships involving `Document` (e.g. with `ActionExecutor` and `ApplyResult`) actually correct?**
-  _`Document` has 82 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 73 inferred relationships involving `DomainMasterRouter` (e.g. with `bool` and `int`) actually correct?**
-  _`DomainMasterRouter` has 73 INFERRED edges - model-reasoned connections that need verification._
+  _High betweenness centrality (0.014) - this node is a cross-community bridge._
+- **Are the 134 inferred relationships involving `Extraction` (e.g. with `Path` and `ContractPack`) actually correct?**
+  _`Extraction` has 134 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 127 inferred relationships involving `Chunk` (e.g. with `ContractPack` and `ActionExecutor`) actually correct?**
+  _`Chunk` has 127 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 90 inferred relationships involving `Document` (e.g. with `Path` and `ActionExecutor`) actually correct?**
+  _`Document` has 90 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 85 inferred relationships involving `ExtractionStatus` (e.g. with `ContractPack` and `GroundingVerifierImpl`) actually correct?**
+  _`ExtractionStatus` has 85 INFERRED edges - model-reasoned connections that need verification._

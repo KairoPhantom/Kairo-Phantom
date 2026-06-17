@@ -1,0 +1,57 @@
+{
+  "provenance": "SYNTHETIC / self-graded — unvalidated",
+  "fixtures": [
+    {
+      "fixture_id": "sample_invoice_01",
+      "file": "sample_invoice_01.txt",
+      "ground_truth": {
+        "vendor_name": "ACME Corp",
+        "invoice_number": "INV-2026-001",
+        "invoice_date": "2026-06-15",
+        "due_date": "2026-07-15",
+        "total_amount": 1250.00,
+        "currency": "USD",
+        "line_items": [
+          {"description": "Consulting Services", "quantity": 10, "unit_price": 125.00, "total": 1250.00}
+        ],
+        "tax_amount": 0.00,
+        "payment_terms": "Net 30"
+      }
+    },
+    {
+      "fixture_id": "sample_invoice_02",
+      "file": "sample_invoice_02.txt",
+      "ground_truth": {
+        "vendor_name": "Globex Corporation",
+        "invoice_number": "INV-10024",
+        "invoice_date": "2026-06-10",
+        "due_date": "2026-07-10",
+        "total_amount": 3000.00,
+        "currency": "USD",
+        "line_items": [
+          {"description": "Custom Widgets", "quantity": 5, "unit_price": 500.00, "total": 2500.00},
+          {"description": "Installation", "quantity": 1, "unit_price": 450.00, "total": 450.00}
+        ],
+        "tax_amount": 50.00,
+        "payment_terms": "Net 30"
+      }
+    },
+    {
+      "fixture_id": "sample_invoice_03",
+      "file": "sample_invoice_03.txt",
+      "ground_truth": {
+        "vendor_name": "Initech LLC",
+        "invoice_number": "INV-998877",
+        "invoice_date": "2026-06-12",
+        "due_date": "2026-06-12",
+        "total_amount": 4320.00,
+        "currency": "USD",
+        "line_items": [
+          {"description": "Software Licenses", "quantity": 100, "unit_price": 40.00, "total": 4000.00}
+        ],
+        "tax_amount": 320.00,
+        "payment_terms": "Due on Receipt"
+      }
+    }
+  ]
+}

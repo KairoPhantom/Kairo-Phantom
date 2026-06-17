@@ -1,0 +1,47 @@
+{
+  "provenance": "SYNTHETIC / self-graded — unvalidated",
+  "fixtures": [
+    {
+      "fixture_id": "sample_generic_01",
+      "file": "sample_generic_01.txt",
+      "ground_truth": {
+        "summary": "Kairo Phantom Project Overview Kairo Phantom is a verifiable document intelligence system designed for local-first operations.",
+        "key_claims": [
+          "Every extraction must be grounded or it is blocked.",
+          "The system maintains a local SQLite database for provenance tracking.",
+          "User privacy is protected because all computations are done locally on-device."
+        ],
+        "entities": ["Kairo Phantom", "Antigravity Team"],
+        "topics": ["technology", "security", "intelligence"]
+      }
+    },
+    {
+      "fixture_id": "sample_generic_02",
+      "file": "sample_generic_02.txt",
+      "ground_truth": {
+        "summary": "Verifiable RAG Systems in 2026 Standard Retrieval-Augmented Generation (RAG) systems are notorious for hallucinating information that doesn't exist in the source document corpus.",
+        "key_claims": [
+          "Standard RAG systems suffer from high hallucination rates.",
+          "The grounding cascade filters out ungrounded responses before rendering.",
+          "Cosine similarity threshold for semantic matches is set to 0.86."
+        ],
+        "entities": ["RAG", "Kairo Phantom", "DeepMind Team"],
+        "topics": ["technology", "security"]
+      }
+    },
+    {
+      "fixture_id": "sample_generic_03",
+      "file": "sample_generic_03.txt",
+      "ground_truth": {
+        "summary": "Local-First Software Development The local-first software movement prioritizes user ownership of data, offline support, and security.",
+        "key_claims": [
+          "Local-first software provides superior privacy and offline capabilities.",
+          "Ollama enables fully offline local LLM completions.",
+          "Open-core model builds trust with developers and users alike."
+        ],
+        "entities": ["Ollama", "Qdrant Edge", "Kairo Phantom", "OSS Community"],
+        "topics": ["technology", "paper", "intelligence"]
+      }
+    }
+  ]
+}

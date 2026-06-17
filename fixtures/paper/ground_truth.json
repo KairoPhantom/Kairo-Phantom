@@ -1,0 +1,68 @@
+{
+  "provenance": "SYNTHETIC / self-graded — unvalidated",
+  "fixtures": [
+    {
+      "fixture_id": "sample_paper_01",
+      "file": "sample_paper_01.txt",
+      "ground_truth": {
+        "title": "Attention Is All You Need",
+        "authors": [
+          "Ashish Vaswani", "Noam Shazeer", "Niki Parmar", "Jakob Uszkoreit", "Llion Jones", "Aidan N. Gomez", "Lukasz Kaiser", "Illia Polosukhin"
+        ],
+        "abstract_summary": "We propose a new simple network architecture, the Transformer, based solely on attention mechanisms, dispensing with recurrence and convolutions entirely.",
+        "key_claims": [
+          "The Transformer model outperforms recurrent or convolutional models in translation quality.",
+          "Training requires significantly less time than traditional architectures."
+        ],
+        "methods": [
+          "We used the Transformer architecture with multi-head self-attention."
+        ],
+        "reported_numbers": ["28.4", "2.0"],
+        "figure_references": ["Figure 1", "Figure 2"],
+        "table_references": ["Table 1", "Table 2"]
+      }
+    },
+    {
+      "fixture_id": "sample_paper_02",
+      "file": "sample_paper_02.txt",
+      "ground_truth": {
+        "title": "LoRA: Low-Rank Adaptation of Large Language Models",
+        "authors": [
+          "Edward J. Hu", "Yibin Shen", "Phillip Wallis", "Zeyuan Allen-Zhu", "Yuanzhi Li", "Shean Wang", "Lu Wang", "Weizhu Chen"
+        ],
+        "abstract_summary": "We propose Low-Rank Adaptation, or LoRA, which freezes the pre-trained model weights and injects trainable rank decomposition matrices into each layer of the Transformer architecture",
+        "key_claims": [
+          "LoRA reduces the number of trainable parameters by 10000 times.",
+          "Performance is comparable or superior to full fine-tuning."
+        ],
+        "methods": [
+          "We parameterize the weight updates by representing them as product of two low-rank matrices."
+        ],
+        "reported_numbers": ["82.5%", "0.12%"],
+        "figure_references": ["Figure 1", "Figure 3"],
+        "table_references": ["Table 1", "Table 2"]
+      }
+    },
+    {
+      "fixture_id": "sample_paper_03",
+      "file": "sample_paper_03.txt",
+      "ground_truth": {
+        "title": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks",
+        "authors": [
+          "Patrick Lewis", "Ethan Perez", "Aleksandara Piktus", "Fabio Petroni", "Vladimir Karpukhin", "Naman Goyal", "Heinrich Küttler", "Mike Lewis", "Wen-tau Yih", "Tim Rocktäschel", "Sebastian Riedel", "Douwe Kiela"
+        ],
+        "abstract_summary": "We introduce Retrieval-Augmented Generation (RAG) models, which combine pre-trained parametric memory with non-parametric memory (retrieved Wikipedia documents)",
+        "key_claims": [
+          "RAG models produce more factual, specific, and diverse responses than parametric-only models.",
+          "In-context retrieval improves answer accuracy on open-domain QA."
+        ],
+        "methods": [
+          "We combine a dense passage retriever (DPR) with a sequence-to-sequence generator (BART)."
+        ],
+        "reported_numbers": ["44.5%"],
+        "figure_references": ["Figure 1", "Figure 2"],
+        "table_references": ["Table 1", "Table 3"]
+      }
+    }
+  ]
+}

@@ -44,7 +44,9 @@ build/
 *.rpm
 
 # ── Runtime data (not source) ─────────────────────────────────
+.kairo/
 .kairo-phantom/
+graphify-out/cache/
 *.log
 kairo_err.log
 
