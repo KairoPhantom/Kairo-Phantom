@@ -1,13 +1,16 @@
 {
-  "provenance": "SYNTHETIC / self-graded — unvalidated",
+  "provenance": "SYNTHETIC / self-graded \u2014 unvalidated",
   "fixtures": [
     {
       "fixture_id": "sample_contract_01",
       "file": "sample_contract_01.txt",
       "ground_truth": {
-        "parties": ["ACME Corp", "Client Solutions Inc."],
+        "parties": [
+          "ACME Corp",
+          "Client Solutions Inc."
+        ],
         "effective_date": "2026-06-01",
-        "termination_date": "2026-06-01",
+        "termination_date": "2029-06-01",
         "obligations": [
           "Licensee shall pay the license fees within 30 days of invoice. Licensee agree to keep the software confidential. Licensor shall provide technical support as outlined."
         ],
@@ -20,7 +23,10 @@
       "fixture_id": "sample_contract_02",
       "file": "sample_contract_02.txt",
       "ground_truth": {
-        "parties": ["Wayne Enterprises", "Globex Corporation"],
+        "parties": [
+          "Wayne Enterprises",
+          "Globex Corporation"
+        ],
         "effective_date": "2026-05-15",
         "termination_date": "2027-05-15",
         "obligations": [
@@ -36,7 +42,10 @@
       "fixture_id": "sample_contract_03",
       "file": "sample_contract_03.txt",
       "ground_truth": {
-        "parties": ["Initech LLC", "Intertrode Corp"],
+        "parties": [
+          "Initech LLC",
+          "Intertrode Corp"
+        ],
         "effective_date": "2026-06-12",
         "termination_date": "2028-06-12",
         "obligations": [

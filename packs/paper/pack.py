@@ -103,11 +103,39 @@ class PaperPack:
         claims_chunk = None
         for c in chunks:
             lines = c.text.splitlines()
+            # Strategy 1: Look for "Key Claims:" header and extract numbered items
+            in_claims_section = False
             for line in lines:
-                if any(x in line.lower() for x in ["we show", "we propose", "contribution", "our results", "conclude"]):
-                    claims.append(line.strip())
+                line_stripped = line.strip()
+                if re.match(r'key\s+claims\s*:', line_stripped, re.IGNORECASE):
+                    in_claims_section = True
                     if not claims_chunk:
                         claims_chunk = c
+                    continue
+                if in_claims_section:
+                    m = re.match(r'^\d+\.\s*(.+)', line_stripped)
+                    if m:
+                        cleaned = m.group(1).strip()
+                        if len(cleaned) > 10 and cleaned not in claims:
+                            claims.append(cleaned)
+                    elif line_stripped and not line_stripped.startswith('---'):
+                        if len(claims) > 0:
+                            in_claims_section = False
+            if claims:
+                break
+
+        # Strategy 2: Fallback
+        if not claims:
+            for c in chunks:
+                lines = c.text.splitlines()
+                for line in lines:
+                    if any(x in line.lower() for x in ["we show", "we propose", "contribution", "our results", "conclude", "outperform", "improve"]):
+                        cleaned = line.strip()
+                        cleaned = re.sub(r'^\d+\.\s*', '', cleaned)
+                        if len(cleaned) > 10 and cleaned not in claims:
+                            claims.append(cleaned)
+                            if not claims_chunk:
+                                claims_chunk = c
 
         if claims:
             extractions.append(Extraction(
@@ -145,9 +173,17 @@ class PaperPack:
         numbers = []
         num_chunk = None
         for c in chunks:
-            # Look for numbers/percentages
-            matches = re.findall(r'\b\d+(?:\.\d+)?%\b|\b0\.\d{2,4}\b', c.text)
+            # Look for numbers/percentages in Results section or anywhere
+            # Pattern: percentages (44.5%), decimals (28.4, 2.0), and small decimals (0.12)
+            matches = re.findall(r'\b\d+\.\d+%?\b', c.text)
             for m in matches:
+                if m not in numbers:
+                    numbers.append(m)
+                    if not num_chunk:
+                        num_chunk = c
+            # Also look for percentages without decimal
+            matches2 = re.findall(r'\b\d+%\b', c.text)
+            for m in matches2:
                 if m not in numbers:
                     numbers.append(m)
                     if not num_chunk:

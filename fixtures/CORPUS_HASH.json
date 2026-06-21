@@ -1,6 +1,6 @@
 {
-  "version": "1.0.0",
-  "fingerprint": "ceb9393dfbe6421406d3469e6935b839a4e2196cfa6c88c3277a41485f412d94",
+  "version": "1.1.0",
+  "fingerprint": "d945b0bfd6f2044b4bdedcd3c092a1aad8badd63ba1b0c0c8064098d542162f6",
   "files": {
     "adversarial": {
       "embedded_instructions.txt": "64f4bdb035f998d11929e07f6dba2337baa5d1e017f68c6d740d1b65629a0382",

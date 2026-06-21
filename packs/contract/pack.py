@@ -41,18 +41,54 @@ class ContractPack:
         full_text = "\n".join(c.text for c in chunks)
         extractions: list[Extraction] = []
 
-        # Parties (usually in the introductory clause of first chunk)
+        # Parties — extract from the introductory clause
+        # Patterns: "between X (\"alias\") and Y (\"alias\")" or "between X and Y"
         parties = []
-        parties_chunk = chunks[0] if chunks else None
-        if parties_chunk:
-            m = re.findall(r'(?:between|among)\s+([A-Z][a-zA-Z\s,]+?)(?:\s+\(|and\b)', parties_chunk.text)
+        parties_chunk = None
+        # Search ALL chunks for the parties clause (it may not be in chunks[0])
+        for c in chunks:
+            text = c.text
+            if not ('between' in text.lower() or 'among' in text.lower()):
+                continue
+            # Strategy 1: "between X, a ... (\"alias\"), and Y, a ... (\"alias\")"
+            m = re.search(
+                r'(?:between|among)\s+([A-Z][a-zA-Z0-9\s,.&]+?)\s*(?:\([^)]*\))?\s*(?:,\s*a\s+\w+\s+\w+)?\s*(?:\([^)]*\))?\s*,?\s*and\s+([A-Z][a-zA-Z0-9\s,.&]+?)(?:\s*(?:\(|,|\.|$))',
+                text
+            )
             if m:
-                parties = [p.strip() for p in m]
-            # Fallback regex for two capitalized entities near "between" or "agreement"
+                parties_chunk = c
+                p1 = m.group(1).strip().rstrip(',')
+                p2 = m.group(2).strip().rstrip(',')
+                # Clean up: remove trailing "a Delaware corporation" etc.
+                p1 = re.sub(r',\s+a\s+.*$', '', p1).strip()
+                p2 = re.sub(r',\s+a\s+.*$', '', p2).strip()
+                parties = [p1, p2]
+
+            # Strategy 2: "between X (\"alias\") and Y (\"alias\")" — simpler
             if not parties:
-                m2 = re.findall(r'\b([A-Z][a-zA-Z0-9\s]+?)\s+(?:and|&)\s+([A-Z][a-zA-Z0-9\s]+?)\b', parties_chunk.text)
+                m2 = re.findall(
+                    r'(?:between|among)\s+([A-Z][a-zA-Z0-9\s.&]+?)(?:\s*\([^)]*\))?(?:,\s*a\s+\w+\s+\w+)?(?:\s*\([^)]*\))?\s*(?:,?\s*and\s+([A-Z][a-zA-Z0-9\s.&]+?))(?:\s*\(|,|\.|$)',
+                    text
+                )
                 if m2:
-                    parties = list(m2[0])
+                    for match in m2:
+                        if match[0] and match[1]:
+                            parties = [match[0].strip().rstrip(','), match[1].strip().rstrip(',')]
+                            break
+
+            # Strategy 3: Fallback — find "X and Y" near "between" or "entered into"
+            if not parties:
+                m3 = re.search(
+                    r'(?:between|entered into.*?between)\s+([A-Z][a-zA-Z0-9]+(?:\s+[A-Z][a-zA-Z0-9]+)*)\s+(?:\([^)]*\)\s+)?and\s+([A-Z][a-zA-Z0-9]+(?:\s+[A-Z][a-zA-Z0-9]+)*)',
+                    text
+                )
+                if m3:
+                    parties = [m3.group(1).strip(), m3.group(2).strip()]
+                    if not parties_chunk:
+                        parties_chunk = c
+
+            if parties:
+                break
 
         if parties:
             extractions.append(Extraction(
@@ -69,12 +105,40 @@ class ContractPack:
         term_date = ""
         date_chunk = None
         for c in chunks:
-            m = re.search(r'(?:effective date|commencement date|date of this agreement)\s*(?:is|of|as of)?\s*(\d{4}[-/]\d{2}[-/]\d{2}|\d{1,2}\s+[a-zA-Z]+\s+\d{4}|\w+\s+\d{1,2},?\s+\d{4})', c.text, re.IGNORECASE)
-            if m:
-                eff_date = m.group(1).strip()
-                date_chunk = c
-            
-            m2 = re.search(r'(?:terminate on|expiration date|termination date|ends on)\s*(?:is|of|as of)?\s*(\d{4}[-/]\d{2}[-/]\d{2}|\d{1,2}\s+[a-zA-Z]+\s+\d{4}|\w+\s+\d{1,2},?\s+\d{4})', c.text, re.IGNORECASE)
+            # Effective date: look for "as of <date>" or "entered into on/as of <date>" or "Effective Date" near a date
+            if not eff_date:
+                # Pattern: "as of <date>" or "entered into ... on/as of <date>"
+                m = re.search(
+                    r'(?:as of|entered into\s+(?:as of|on))\s+(\d{4}[-/]\d{2}[-/]\d{2}|\d{1,2}\s+[a-zA-Z]+\s+\d{4}|[a-zA-Z]+\s+\d{1,2},?\s+\d{4})',
+                    c.text, re.IGNORECASE
+                )
+                if m:
+                    eff_date = m.group(1).strip()
+                    date_chunk = c
+                else:
+                    # Pattern: "made and entered into as of <date>"
+                    m = re.search(
+                        r'(?:made|entered)\s+(?:and\s+\w+\s+)?(?:into\s+)?(?:as of|on)\s+(\d{4}[-/]\d{2}[-/]\d{2}|\d{1,2}\s+[a-zA-Z]+\s+\d{4}|[a-zA-Z]+\s+\d{1,2},?\s+\d{4})',
+                        c.text, re.IGNORECASE
+                    )
+                    if m:
+                        eff_date = m.group(1).strip()
+                        date_chunk = c
+                # Also check "effective date ... is <date>" or "commencement date ... <date>"
+                if not eff_date:
+                    m = re.search(
+                        r'(?:effective date|commencement date|date of this agreement)\s*(?:is|of|as of|=|:)?\s*(\d{4}[-/]\d{2}[-/]\d{2}|\d{1,2}\s+[a-zA-Z]+\s+\d{4}|[a-zA-Z]+\s+\d{1,2},?\s+\d{4})',
+                        c.text, re.IGNORECASE
+                    )
+                    if m:
+                        eff_date = m.group(1).strip()
+                        date_chunk = c
+
+            # Termination date
+            m2 = re.search(
+                r'(?:terminate on|expiration date|termination date|ends on|terminate\s+on)\s*(?:is|of|as of)?\s*(\d{4}[-/]\d{2}[-/]\d{2}|\d{1,2}\s+[a-zA-Z]+\s+\d{4}|[a-zA-Z]+\s+\d{1,2},?\s+\d{4})',
+                c.text, re.IGNORECASE
+            )
             if m2:
                 term_date = m2.group(1).strip()
                 date_chunk = c
@@ -123,11 +187,16 @@ class ContractPack:
         gov_law = ""
         gov_chunk = None
         for c in chunks:
-            m = re.search(r'(?:governed by|governing law|laws of|jurisdiction of)\s*(?:the state of|the laws of)?\s*([A-Z][a-zA-Z\s]+)', c.text, re.IGNORECASE)
+            # Pattern: "State of New York" or "State of Delaware" — allow multi-word state names
+            m = re.search(r'(?:State of|state of)\s+([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)*)', c.text)
             if m:
                 gov_law = m.group(1).strip()
-                # Clean up trailing words
-                gov_law = gov_law.split("\n")[0].split(".")[0].strip()
+                gov_chunk = c
+                break
+            # Fallback: "governed by the laws of New York"
+            m = re.search(r'(?:governed by|governing law|laws of)\s+(?:the\s+)?(?:State\s+of\s+)?([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)*)', c.text, re.IGNORECASE)
+            if m:
+                gov_law = m.group(1).strip()
                 gov_chunk = c
                 break
 
@@ -145,9 +214,22 @@ class ContractPack:
         pay_terms = ""
         pay_chunk = None
         for c in chunks:
-            m = re.search(r'(?:payment|invoice|paid within)\s+(\d+\s+days|net\s+\d+|upon receipt)', c.text, re.IGNORECASE)
+            # Pattern 1: "within N days" (common in contracts)
+            m = re.search(r'within\s+(\d+\s*days)', c.text, re.IGNORECASE)
             if m:
-                pay_terms = m.group(0).strip()
+                pay_terms = "within " + m.group(1).strip()
+                pay_chunk = c
+                break
+            # Pattern 2: "payment terms: ..." or "terms: ..."
+            m = re.search(r'(?:payment terms|terms)\s*:?\s*(net\s*\d+|due on receipt|immediate|within\s+\d+\s*days)', c.text, re.IGNORECASE)
+            if m:
+                pay_terms = m.group(1).strip()
+                pay_chunk = c
+                break
+            # Pattern 3: "paid within N days" or "pay ... within N days"
+            m = re.search(r'(?:paid|pay)\s+(?:within\s+)?(\d+\s*days)', c.text, re.IGNORECASE)
+            if m:
+                pay_terms = "within " + m.group(1).strip()
                 pay_chunk = c
                 break
 
@@ -164,12 +246,43 @@ class ContractPack:
         # Confidentiality clause
         conf = ""
         conf_chunk = None
+        # Strategy 1: Look for a "Confidentiality:" section header and extract the text after it
         for c in chunks:
-            if "confidential" in c.text.lower() or "proprietary" in c.text.lower():
+            lines = c.text.splitlines()
+            in_conf_section = False
+            for line in lines:
+                line_stripped = line.strip()
+                # Check for confidentiality section header
+                if re.search(r'confidentiality\s*:', line_stripped, re.IGNORECASE):
+                    in_conf_section = True
+                    conf_chunk = c
+                    continue
+                if in_conf_section:
+                    # Skip section headers
+                    if re.match(r'^\d+\.\s*', line_stripped):
+                        continue
+                    if len(line_stripped) < 10:
+                        continue
+                    # This is the confidentiality clause text
+                    conf = line_stripped
+                    break
+            if conf:
+                break
+
+        # Strategy 2: Look for lines with "agrees" + "confidential" or "disclosure"
+        if not conf:
+            for c in chunks:
                 lines = c.text.splitlines()
                 for line in lines:
-                    if "confidential" in line.lower() or "disclosure" in line.lower():
-                        conf = line.strip()
+                    line_stripped = line.strip()
+                    if re.match(r'^\d+\.\s*', line_stripped):
+                        continue
+                    if len(line_stripped) < 20 and line_stripped.endswith(':'):
+                        continue
+                    if ("confidential" in line_stripped.lower() or "proprietary" in line_stripped.lower()) and \
+                       ("agrees" in line_stripped.lower() or "disclosure" in line_stripped.lower() or \
+                        "shall" in line_stripped.lower() or "party" in line_stripped.lower()):
+                        conf = line_stripped
                         conf_chunk = c
                         break
                 if conf:

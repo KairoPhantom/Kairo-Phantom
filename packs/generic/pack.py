@@ -61,13 +61,42 @@ class GenericPack:
         claims_chunk = None
         for c in chunks:
             lines = c.text.splitlines()
+            # Strategy 1: Look for "Key Claims:" header and extract numbered items after it
+            in_claims_section = False
             for line in lines:
-                if any(k in line.lower() for k in ["claim", "show", "propose", "suggest", "result", "find"]):
-                    cleaned = line.strip("-*• ").strip()
-                    if len(cleaned) > 20 and cleaned not in claims_list:
-                        claims_list.append(cleaned)
-                        if not claims_chunk:
-                            claims_chunk = c
+                line_stripped = line.strip()
+                if re.match(r'key\s+claims\s*:', line_stripped, re.IGNORECASE):
+                    in_claims_section = True
+                    if not claims_chunk:
+                        claims_chunk = c
+                    continue
+                if in_claims_section:
+                    # Check if this line is a numbered claim (e.g., "1. Some claim text.")
+                    m = re.match(r'^\d+\.\s*(.+)', line_stripped)
+                    if m:
+                        cleaned = m.group(1).strip()
+                        if len(cleaned) > 10 and cleaned not in claims_list:
+                            claims_list.append(cleaned)
+                    elif line_stripped and not line_stripped.startswith('---'):
+                        # End of claims section (non-numbered, non-empty line)
+                        if len(claims_list) > 0:
+                            in_claims_section = False
+            if claims_list:
+                break
+
+        # Strategy 2: Fallback — look for lines with claim-related keywords
+        if not claims_list:
+            for c in chunks:
+                lines = c.text.splitlines()
+                for line in lines:
+                    if any(k in line.lower() for k in ["claim", "show", "propose", "suggest", "result", "find"]):
+                        cleaned = line.strip("-*\u2022 ").strip()
+                        # Remove leading numbers
+                        cleaned = re.sub(r'^\d+\.\s*', '', cleaned)
+                        if len(cleaned) > 20 and cleaned not in claims_list:
+                            claims_list.append(cleaned)
+                            if not claims_chunk:
+                                claims_chunk = c
 
         if claims_list:
             extractions.append(Extraction(

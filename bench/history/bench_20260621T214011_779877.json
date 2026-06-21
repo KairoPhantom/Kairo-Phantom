@@ -962,7 +962,7 @@
         },
         {
           "expected": "New York",
-          "extracted": "New York",
+          "extracted": "New",
           "field": "governing_law",
           "grounded": true,
           "method": "exact",

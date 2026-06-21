@@ -1,6 +1,6 @@
 # Kairo Phantom — Pack-Specific Benchmark Report
 
-> Generated: 2026-06-21T21:10:25.063681+00:00
+> Generated: 2026-06-21T21:43:19.195959+00:00
 
 ## Pack: `invoice`
 
@@ -33,35 +33,35 @@
 
 | Metric | Value | Target |
 | :--- | :--- | :--- |
-| Grounded-Answer Rate | 58.33% | ≥95% |
-| False-Refusal Rate | 41.67% | <5% |
-| Refusal-Correctness | 54.55% | 100% |
-| Ungrounded Renders | 5 | 0 |
+| Grounded-Answer Rate | 100.0% | ≥95% |
+| False-Refusal Rate | 0.0% | <5% |
+| Refusal-Correctness | 18.18% | 100% |
+| Ungrounded Renders | 9 | 0 |
 
 ### Hard Cases (contract)
 
 | Case | Answerable | Grounded | False Refusals | False-Refusal Rate |
 | :--- | :--- | :--- | :--- | :--- |
-| cross_refs | 4 | 2 | 2 | 50.0% |
+| cross_refs | 4 | 4 | 0 | 0.0% |
 
 ### Per-Document (contract)
 
 | Fixture | Source | Answerable | Grounded | False Refusals | FR Rate |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| sample_contract_01 | base | 7 | 4 | 3 | 42.86% |
-| sample_contract_02 | base | 7 | 4 | 3 | 42.86% |
-| sample_contract_03 | base | 6 | 4 | 2 | 33.33% |
-| sample_contract_xref_01 | cross_refs | 3 | 2 | 1 | 33.33% |
-| sample_contract_xref_02 | cross_refs | 1 | 0 | 1 | 100.0% |
+| sample_contract_01 | base | 7 | 7 | 0 | 0.0% |
+| sample_contract_02 | base | 7 | 7 | 0 | 0.0% |
+| sample_contract_03 | base | 6 | 6 | 0 | 0.0% |
+| sample_contract_xref_01 | cross_refs | 3 | 3 | 0 | 0.0% |
+| sample_contract_xref_02 | cross_refs | 1 | 1 | 0 | 0.0% |
 
 ## Pack: `paper`
 
 | Metric | Value | Target |
 | :--- | :--- | :--- |
-| Grounded-Answer Rate | 89.29% | ≥95% |
-| False-Refusal Rate | 10.71% | <5% |
-| Refusal-Correctness | 16.67% | 100% |
-| Ungrounded Renders | 10 | 0 |
+| Grounded-Answer Rate | 100.0% | ≥95% |
+| False-Refusal Rate | 0.0% | <5% |
+| Refusal-Correctness | 0.0% | 100% |
+| Ungrounded Renders | 12 | 0 |
 
 ### Hard Cases (paper)
 
@@ -73,9 +73,9 @@
 
 | Fixture | Source | Answerable | Grounded | False Refusals | FR Rate |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| sample_paper_01 | base | 8 | 7 | 1 | 12.5% |
+| sample_paper_01 | base | 8 | 8 | 0 | 0.0% |
 | sample_paper_02 | base | 8 | 8 | 0 | 0.0% |
-| sample_paper_03 | base | 8 | 6 | 2 | 25.0% |
+| sample_paper_03 | base | 8 | 8 | 0 | 0.0% |
 | sample_paper_figcap_01 | figure_captions | 2 | 2 | 0 | 0.0% |
 | sample_paper_figcap_02 | figure_captions | 2 | 2 | 0 | 0.0% |
 
@@ -83,8 +83,8 @@
 
 | Metric | Value | Target |
 | :--- | :--- | :--- |
-| Grounded-Answer Rate | 75.0% | ≥95% |
-| False-Refusal Rate | 25.0% | <5% |
+| Grounded-Answer Rate | 100.0% | ≥95% |
+| False-Refusal Rate | 0.0% | <5% |
 | Refusal-Correctness | 100.0% | 100% |
 | Ungrounded Renders | 0 | 0 |
 
@@ -92,7 +92,7 @@
 
 | Fixture | Source | Answerable | Grounded | False Refusals | FR Rate |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| sample_generic_01 | base | 4 | 3 | 1 | 25.0% |
-| sample_generic_02 | base | 4 | 3 | 1 | 25.0% |
-| sample_generic_03 | base | 4 | 3 | 1 | 25.0% |
+| sample_generic_01 | base | 4 | 4 | 0 | 0.0% |
+| sample_generic_02 | base | 4 | 4 | 0 | 0.0% |
+| sample_generic_03 | base | 4 | 4 | 0 | 0.0% |
 

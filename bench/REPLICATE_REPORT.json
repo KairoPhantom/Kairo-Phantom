@@ -1,20 +1,20 @@
 {
-  "timestamp": "2026-06-21T21:10:29.523319+00:00",
-  "corpus_hash": "a6252a59f7a3c41c9208bd5e990366595d9217929ee0780636a7401697d161e4",
+  "timestamp": "2026-06-21T21:43:23.567798+00:00",
+  "corpus_hash": "2881e0c3f8fb5c637d723da5e72c02223d1196ed7191c8a56b5bfc2c4434ff91",
   "python_version": "3.12.12 (main, Nov  4 2025, 14:39:41) [GCC 14.2.0]",
   "platform": "Linux-6.1.158+-x86_64-with-glibc2.41",
   "model_id": "kairo-test-mode-v1",
   "gates": {
     "grounded_answer_rate": {
-      "measured": 83.13,
-      "numerator": 69,
+      "measured": 100.0,
+      "numerator": 83,
       "denominator": 83,
       "target": 95.0,
       "unit": "percent"
     },
     "false_refusal_rate": {
-      "measured": 16.87,
-      "numerator": 14,
+      "measured": 0.0,
+      "numerator": 0,
       "denominator": 83,
       "target": 5.0,
       "unit": "percent"
@@ -36,13 +36,13 @@
     "generic": {
       "total_documents": 3,
       "total_answerable": 12,
-      "grounded_answers": 9,
-      "false_refusals": 3,
+      "grounded_answers": 12,
+      "false_refusals": 0,
       "correct_refusals": 0,
       "unanswerable_fields": 0,
       "ungrounded_renders": 0,
-      "grounded_answer_rate": 75.0,
-      "false_refusal_rate": 25.0,
+      "grounded_answer_rate": 100.0,
+      "false_refusal_rate": 0.0,
       "refusal_correctness": 100.0,
       "per_document": [
         {
@@ -50,39 +50,39 @@
           "file": "sample_generic_01.txt",
           "pack": "generic",
           "answerable_fields": 4,
-          "grounded_answers": 3,
-          "false_refusals": 1,
+          "grounded_answers": 4,
+          "false_refusals": 0,
           "correct_refusals": 0,
           "unanswerable_fields": 0,
           "ungrounded_renders": 0,
-          "grounded_answer_rate": 75.0,
-          "false_refusal_rate": 25.0
+          "grounded_answer_rate": 100.0,
+          "false_refusal_rate": 0.0
         },
         {
           "fixture_id": "sample_generic_02",
           "file": "sample_generic_02.txt",
           "pack": "generic",
           "answerable_fields": 4,
-          "grounded_answers": 3,
-          "false_refusals": 1,
+          "grounded_answers": 4,
+          "false_refusals": 0,
           "correct_refusals": 0,
           "unanswerable_fields": 0,
           "ungrounded_renders": 0,
-          "grounded_answer_rate": 75.0,
-          "false_refusal_rate": 25.0
+          "grounded_answer_rate": 100.0,
+          "false_refusal_rate": 0.0
         },
         {
           "fixture_id": "sample_generic_03",
           "file": "sample_generic_03.txt",
           "pack": "generic",
           "answerable_fields": 4,
-          "grounded_answers": 3,
-          "false_refusals": 1,
+          "grounded_answers": 4,
+          "false_refusals": 0,
           "correct_refusals": 0,
           "unanswerable_fields": 0,
           "ungrounded_renders": 0,
-          "grounded_answer_rate": 75.0,
-          "false_refusal_rate": 25.0
+          "grounded_answer_rate": 100.0,
+          "false_refusal_rate": 0.0
         }
       ]
     },
@@ -142,13 +142,13 @@
     "paper": {
       "total_documents": 3,
       "total_answerable": 24,
-      "grounded_answers": 21,
-      "false_refusals": 3,
+      "grounded_answers": 24,
+      "false_refusals": 0,
       "correct_refusals": 0,
       "unanswerable_fields": 0,
       "ungrounded_renders": 0,
-      "grounded_answer_rate": 87.5,
-      "false_refusal_rate": 12.5,
+      "grounded_answer_rate": 100.0,
+      "false_refusal_rate": 0.0,
       "refusal_correctness": 100.0,
       "per_document": [
         {
@@ -156,13 +156,13 @@
           "file": "sample_paper_01.txt",
           "pack": "paper",
           "answerable_fields": 8,
-          "grounded_answers": 7,
-          "false_refusals": 1,
+          "grounded_answers": 8,
+          "false_refusals": 0,
           "correct_refusals": 0,
           "unanswerable_fields": 0,
           "ungrounded_renders": 0,
-          "grounded_answer_rate": 87.5,
-          "false_refusal_rate": 12.5
+          "grounded_answer_rate": 100.0,
+          "false_refusal_rate": 0.0
         },
         {
           "fixture_id": "sample_paper_02",
@@ -182,26 +182,26 @@
           "file": "sample_paper_03.txt",
           "pack": "paper",
           "answerable_fields": 8,
-          "grounded_answers": 6,
-          "false_refusals": 2,
+          "grounded_answers": 8,
+          "false_refusals": 0,
           "correct_refusals": 0,
           "unanswerable_fields": 0,
           "ungrounded_renders": 0,
-          "grounded_answer_rate": 75.0,
-          "false_refusal_rate": 25.0
+          "grounded_answer_rate": 100.0,
+          "false_refusal_rate": 0.0
         }
       ]
     },
     "contract": {
       "total_documents": 3,
       "total_answerable": 20,
-      "grounded_answers": 12,
-      "false_refusals": 8,
+      "grounded_answers": 20,
+      "false_refusals": 0,
       "correct_refusals": 1,
       "unanswerable_fields": 1,
       "ungrounded_renders": 0,
-      "grounded_answer_rate": 60.0,
-      "false_refusal_rate": 40.0,
+      "grounded_answer_rate": 100.0,
+      "false_refusal_rate": 0.0,
       "refusal_correctness": 100.0,
       "per_document": [
         {
@@ -209,39 +209,39 @@
           "file": "sample_contract_01.txt",
           "pack": "contract",
           "answerable_fields": 7,
-          "grounded_answers": 4,
-          "false_refusals": 3,
+          "grounded_answers": 7,
+          "false_refusals": 0,
           "correct_refusals": 0,
           "unanswerable_fields": 0,
           "ungrounded_renders": 0,
-          "grounded_answer_rate": 57.14,
-          "false_refusal_rate": 42.86
+          "grounded_answer_rate": 100.0,
+          "false_refusal_rate": 0.0
         },
         {
           "fixture_id": "sample_contract_02",
           "file": "sample_contract_02.txt",
           "pack": "contract",
           "answerable_fields": 7,
-          "grounded_answers": 4,
-          "false_refusals": 3,
+          "grounded_answers": 7,
+          "false_refusals": 0,
           "correct_refusals": 0,
           "unanswerable_fields": 0,
           "ungrounded_renders": 0,
-          "grounded_answer_rate": 57.14,
-          "false_refusal_rate": 42.86
+          "grounded_answer_rate": 100.0,
+          "false_refusal_rate": 0.0
         },
         {
           "fixture_id": "sample_contract_03",
           "file": "sample_contract_03.txt",
           "pack": "contract",
           "answerable_fields": 6,
-          "grounded_answers": 4,
-          "false_refusals": 2,
+          "grounded_answers": 6,
+          "false_refusals": 0,
           "correct_refusals": 1,
           "unanswerable_fields": 1,
           "ungrounded_renders": 0,
-          "grounded_answer_rate": 66.67,
-          "false_refusal_rate": 33.33
+          "grounded_answer_rate": 100.0,
+          "false_refusal_rate": 0.0
         }
       ]
     }

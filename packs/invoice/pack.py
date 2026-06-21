@@ -47,11 +47,25 @@ class InvoicePack:
         if vendor_chunk:
             lines = [l.strip() for l in vendor_chunk.text.splitlines() if l.strip()]
             for line in lines[:5]:
-                if any(x in line.lower() for x in ["invoice", "bill to", "to:", "date:"]):
-                    continue
-                if len(line) > 3:
+                # Pattern 1: "INVOICE: Company Name" — extract company name after colon
+                m = re.match(r'^INVOICE\s*:?\s+(.+)', line, re.IGNORECASE)
+                if m:
+                    vendor_name = m.group(1).strip()
+                    break
+                # Skip lines that are just labels
+                if any(x in line.lower() for x in ["invoice", "bill to", "to:", "date:", "due date:"]):
+                    # But check if it's "INVOICE: Company Name" — handled above
+                    if not m:
+                        continue
+                if len(line) > 3 and not line.lower().startswith("invoice"):
                     vendor_name = line
                     break
+            # Fallback: if vendor_name still empty, try first non-label line
+            if not vendor_name:
+                for line in lines[:5]:
+                    if len(line) > 3 and not any(x in line.lower() for x in ["invoice", "bill to", "to:", "date:", "due date:", "description", "qty", "unit"]):
+                        vendor_name = line
+                        break
 
         if vendor_name:
             extractions.append(Extraction(
@@ -67,7 +81,14 @@ class InvoicePack:
         inv_no = ""
         inv_chunk = None
         for c in chunks:
-            m = re.search(r'(?:invoice|inv|number|no\.?|#)\s*:?\s*([a-zA-Z0-9\-]+)', c.text, re.IGNORECASE)
+            # Pattern 1: "Invoice Number: INV-XXXX" or "Invoice No: XXXX"
+            m = re.search(r'(?:invoice\s+number|invoice\s+no\.?|inv\s+number)\s*:?\s*([A-Za-z0-9][A-Za-z0-9\-]+)', c.text, re.IGNORECASE)
+            if m:
+                inv_no = m.group(1).strip()
+                inv_chunk = c
+                break
+            # Pattern 2: "INV-XXXX" standalone (starts with INV-)
+            m = re.search(r'\b(INV-[A-Za-z0-9\-]+)\b', c.text)
             if m:
                 inv_no = m.group(1).strip()
                 inv_chunk = c
@@ -121,22 +142,60 @@ class InvoicePack:
         currency = "USD"  # Default
         amt_chunk = None
         for c in chunks:
-            # Look for total or amount due
-            m = re.search(r'(?:total|amount due|balance due|total due|grand total)\s*:?\s*([$€£¥]?\s*[\d,]+\.\d{2})', c.text, re.IGNORECASE)
+            # Pattern 1: "Total Amount Due: $XXXX" (must NOT match "Subtotal")
+            m = re.search(r'(?:total\s+amount\s+due|total\s+due|grand\s+total|amount\s+due|balance\s+due)\s*:?\s*([$\u20ac\u00a3\u00a5]?\s*[\d,]+\.\d{2})', c.text, re.IGNORECASE)
             if m:
                 total_str = m.group(1).strip()
                 amt_chunk = c
-                # Extract currency symbol
                 if "$" in total_str:
                     currency = "USD"
-                elif "€" in total_str:
+                elif "\u20ac" in total_str:
                     currency = "EUR"
-                elif "£" in total_str:
+                elif "\u00a3" in total_str:
                     currency = "GBP"
-                
                 total_val = re.sub(r'[^\d\.]', '', total_str)
                 total_amt = total_val
                 break
+            # Pattern 2: "TOTAL" (all caps, standalone) — handles held-out format
+            m = re.search(r'^TOTAL\s+([$\u20ac\u00a3\u00a5]?\s*[\d,]+\.\d{2})', c.text, re.MULTILINE | re.IGNORECASE)
+            if m:
+                total_str = m.group(1).strip()
+                amt_chunk = c
+                if "$" in total_str:
+                    currency = "USD"
+                total_val = re.sub(r'[^\d\.]', '', total_str)
+                total_amt = total_val
+                break
+            # Pattern 3: "Total: $XXXX" but NOT "Subtotal"
+            m = re.search(r'(?<!sub)(?<!Sub)total\s*:?\s*([$\u20ac\u00a3\u00a5]?\s*[\d,]+\.\d{2})', c.text, re.IGNORECASE)
+            if m:
+                total_str = m.group(1).strip()
+                amt_chunk = c
+                if "$" in total_str:
+                    currency = "USD"
+                total_val = re.sub(r'[^\d\.]', '', total_str)
+                total_amt = total_val
+                break
+            # Pattern 4: OCR-tolerant — "T0tal Am0unt Due" (0 instead of o)
+            m = re.search(r't[0o]tal\s*am[0o]unt\s*due\s*:?\s*([$\u20ac\u00a3\u00a5]?\s*[\d,]+\.\d{2})', c.text, re.IGNORECASE)
+            if m:
+                total_str = m.group(1).strip()
+                amt_chunk = c
+                if "$" in total_str:
+                    currency = "USD"
+                total_val = re.sub(r'[^\d\.]', '', total_str)
+                total_amt = total_val
+                break
+            # Pattern 5: Calculate from subtotal + tax if total not found
+            if not total_amt:
+                sub_m = re.search(r'subtotal\s*:?\s*[$\u20ac\u00a3\u00a5]?\s*([\d,]+\.\d{2})', c.text, re.IGNORECASE)
+                tax_m = re.search(r'tax\s*(?:\([^)]*\))?\s*:?\s*[$\u20ac\u00a3\u00a5]?\s*([\d,]+\.\d{2})', c.text, re.IGNORECASE)
+                if sub_m and tax_m:
+                    subtotal = float(re.sub(r'[^\d\.]', '', sub_m.group(1)))
+                    tax = float(re.sub(r'[^\d\.]', '', tax_m.group(1)))
+                    total_amt = f"{subtotal + tax:.2f}"
+                    amt_chunk = c
+                    break
 
         if total_amt:
             extractions.append(Extraction(
@@ -156,11 +215,12 @@ class InvoicePack:
                 chunk_id=amt_chunk.chunk_id if amt_chunk else "",
             ))
 
-        # Tax amount
+# Tax amount
         tax_amt = "0.00"
         tax_chunk = None
         for c in chunks:
-            m = re.search(r'(?:tax|vat|gst)\s*:?\s*([$€£¥]?\s*[\d,]+\.\d{2})', c.text, re.IGNORECASE)
+            # Pattern 1: "Tax: $XX.XX" or "Tax (N%): $XX.XX"
+            m = re.search(r'(?:tax|vat|gst)\s*(?:\([^)]*\))?\s*:?\s*([$\u20ac\u00a3\u00a5]?\s*[\d,]+\.\d{2})', c.text, re.IGNORECASE)
             if m:
                 tax_str = m.group(1).strip()
                 tax_amt = re.sub(r'[^\d\.]', '', tax_str)

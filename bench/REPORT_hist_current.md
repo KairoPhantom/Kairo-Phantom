@@ -1,6 +1,6 @@
 # Kairo Phantom — Grounding Benchmark Report
 
-> Model ID: `kairo-test-mode-v1` | Seed: `42` | Corpus Hash: `8101742f91ae4b38268ed3ee947b4ac009f7b8fe1deb883dd719d08209331be8`
+> Model ID: `kairo-test-mode-v1` | Seed: `42` | Corpus Hash: `52ceb0265dfff3ce31604ae98ebadf75a488df1f6993610d4d0ddfc810482060`
 
 > Python: `3.12.12` | Platform: `Linux-x86_64`
 
@@ -8,9 +8,9 @@
 
 | Gate | Measured | Target | Status | Numerator | Denominator |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| Grounded Answer Rate | 83.1325% | ≥95.0% | ❌ FAIL | 69 | 83 |
+| Grounded Answer Rate | 100.0% | ≥95.0% | ✅ PASS | 83 | 83 |
 | Refusal On Unanswerable | 100.0% | ≥100.0% | ✅ PASS | 1 | 1 |
-| False Refusal Rate | 16.8675% | <5.0% | ❌ FAIL | 14 | 83 |
+| False Refusal Rate | 0.0% | <5.0% | ✅ PASS | 0 | 83 |
 | Ungrounded Render Count | 0 | =0 | ✅ PASS | — | — |
 
 ## Per-Pack Breakdown
@@ -21,23 +21,23 @@
 | :--- | :--- |
 | Total Documents | 3 |
 | Answerable Fields | 20 |
-| Grounded Answers | 12 |
+| Grounded Answers | 20 |
 | Ungrounded Render Count | 0 |
-| Grounded-Answer Rate | 60.0% |
+| Grounded-Answer Rate | 100.0% |
 | Refusal-on-Unanswerable | 100.0% |
-| False-Refusal Rate | 40.0% |
+| False-Refusal Rate | 0.0% |
 
 #### Per-Field Accuracy (contract)
 
 | Field | Accuracy |
 | :--- | :--- |
-| `confidentiality_clause` | 0.0% |
-| `effective_date` | 0.0% |
+| `confidentiality_clause` | 100.0% |
+| `effective_date` | 100.0% |
 | `governing_law` | 100.0% |
 | `obligations` | 100.0% |
-| `parties` | 0.0% |
-| `payment_terms` | 0.0% |
-| `termination_date` | 66.7% |
+| `parties` | 100.0% |
+| `payment_terms` | 66.7% |
+| `termination_date` | 100.0% |
 
 ### Pack: `generic`
 
@@ -45,18 +45,18 @@
 | :--- | :--- |
 | Total Documents | 3 |
 | Answerable Fields | 12 |
-| Grounded Answers | 9 |
+| Grounded Answers | 12 |
 | Ungrounded Render Count | 0 |
-| Grounded-Answer Rate | 75.0% |
+| Grounded-Answer Rate | 100.0% |
 | Refusal-on-Unanswerable | 100.0% |
-| False-Refusal Rate | 25.0% |
+| False-Refusal Rate | 0.0% |
 
 #### Per-Field Accuracy (generic)
 
 | Field | Accuracy |
 | :--- | :--- |
 | `entities` | 100.0% |
-| `key_claims` | 0.0% |
+| `key_claims` | 100.0% |
 | `summary` | 100.0% |
 | `topics` | 100.0% |
 
@@ -79,7 +79,7 @@
 | `currency` | 100.0% |
 | `due_date` | 100.0% |
 | `invoice_date` | 100.0% |
-| `invoice_number` | 0.0% |
+| `invoice_number` | 100.0% |
 | `line_items` | 100.0% |
 | `payment_terms` | 100.0% |
 | `tax_amount` | 100.0% |
@@ -92,11 +92,11 @@
 | :--- | :--- |
 | Total Documents | 3 |
 | Answerable Fields | 24 |
-| Grounded Answers | 21 |
+| Grounded Answers | 24 |
 | Ungrounded Render Count | 0 |
-| Grounded-Answer Rate | 87.5% |
+| Grounded-Answer Rate | 100.0% |
 | Refusal-on-Unanswerable | 100.0% |
-| False-Refusal Rate | 12.5% |
+| False-Refusal Rate | 0.0% |
 
 #### Per-Field Accuracy (paper)
 
@@ -105,9 +105,9 @@
 | `abstract_summary` | 100.0% |
 | `authors` | 100.0% |
 | `figure_references` | 100.0% |
-| `key_claims` | 0.0% |
+| `key_claims` | 100.0% |
 | `methods` | 100.0% |
-| `reported_numbers` | 33.3% |
+| `reported_numbers` | 100.0% |
 | `table_references` | 100.0% |
 | `title` | 100.0% |
 
@@ -115,18 +115,18 @@
 
 | Fixture | Pack | Grounded% | Refusal% | FalseRef% | Ungrounded |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| sample_generic_01 | generic | 75.0% | 100.0% | 25.0% | 0 |
-| sample_generic_02 | generic | 75.0% | 100.0% | 25.0% | 0 |
-| sample_generic_03 | generic | 75.0% | 100.0% | 25.0% | 0 |
+| sample_generic_01 | generic | 100.0% | 100.0% | 0.0% | 0 |
+| sample_generic_02 | generic | 100.0% | 100.0% | 0.0% | 0 |
+| sample_generic_03 | generic | 100.0% | 100.0% | 0.0% | 0 |
 | sample_invoice_01 | invoice | 100.0% | 100.0% | 0.0% | 0 |
 | sample_invoice_02 | invoice | 100.0% | 100.0% | 0.0% | 0 |
 | sample_invoice_03 | invoice | 100.0% | 100.0% | 0.0% | 0 |
-| sample_paper_01 | paper | 87.5% | 100.0% | 12.5% | 0 |
+| sample_paper_01 | paper | 100.0% | 100.0% | 0.0% | 0 |
 | sample_paper_02 | paper | 100.0% | 100.0% | 0.0% | 0 |
-| sample_paper_03 | paper | 75.0% | 100.0% | 25.0% | 0 |
-| sample_contract_01 | contract | 57.1429% | 100.0% | 42.8571% | 0 |
-| sample_contract_02 | contract | 57.1429% | 100.0% | 42.8571% | 0 |
-| sample_contract_03 | contract | 66.6667% | 100.0% | 33.3333% | 0 |
+| sample_paper_03 | paper | 100.0% | 100.0% | 0.0% | 0 |
+| sample_contract_01 | contract | 100.0% | 100.0% | 0.0% | 0 |
+| sample_contract_02 | contract | 100.0% | 100.0% | 0.0% | 0 |
+| sample_contract_03 | contract | 100.0% | 100.0% | 0.0% | 0 |
 
 ## Per-Document Quality Details
 
@@ -136,7 +136,7 @@
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | summary | grounded | Kairo Phantom Project Overview Kairo Phantom is a  | Kairo Phantom Project Overview
 Kairo Phantom is a  | ✅ | ✅ | exact |
-| key_claims | false_refusal | ['Every extraction must be grounded or it is block | — | ❌ | ❌ | — |
+| key_claims | grounded | ['Every extraction must be grounded or it is block | ["Every extraction must be grounded or it is block | ✅ | ✅ | exact |
 | entities | grounded | ['Kairo Phantom', 'Antigravity Team'] | ["Kairo Phantom Project Overview\nKairo Phantom",  | ✅ | ✅ | exact |
 | topics | grounded | ['technology', 'security', 'intelligence'] | ["system", "intelligence", "data", "technology", " | ✅ | ✅ | exact |
 
@@ -146,7 +146,7 @@ Kairo Phantom is a  | ✅ | ✅ | exact |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | summary | grounded | Verifiable RAG Systems in 2026 Standard Retrieval- | Verifiable RAG Systems in 2026
 Standard Retrieval- | ✅ | ✅ | exact |
-| key_claims | false_refusal | ['Standard RAG systems suffer from high hallucinat | — | ❌ | ❌ | — |
+| key_claims | grounded | ['Standard RAG systems suffer from high hallucinat | ["Standard RAG systems suffer from high hallucinat | ✅ | ✅ | exact |
 | entities | grounded | ['RAG', 'Kairo Phantom', 'DeepMind Team'] | ["Verifiable RAG Systems", "Standard Retrieval", " | ✅ | ✅ | exact |
 | topics | grounded | ['technology', 'security'] | ["financial", "system", "technology"] | ✅ | ✅ | exact |
 
@@ -156,7 +156,7 @@ Standard Retrieval- | ✅ | ✅ | exact |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | summary | grounded | Local-First Software Development The local-first s | Local-First Software Development
 The local-first s | ✅ | ✅ | exact |
-| key_claims | false_refusal | ['Local-first software provides superior privacy a | — | ❌ | ❌ | — |
+| key_claims | grounded | ['Local-first software provides superior privacy a | ["Local-first software provides superior privacy a | ✅ | ✅ | exact |
 | entities | grounded | ['Ollama', 'Qdrant Edge', 'Kairo Phantom', 'OSS Co | ["Local", "First Software Development\nThe", "Olla | ✅ | ✅ | exact |
 | topics | grounded | ['technology', 'paper', 'intelligence'] | ["security", "data", "technology", "paper"] | ✅ | ✅ | exact |
 
@@ -165,7 +165,7 @@ The local-first s | ✅ | ✅ | exact |
 | Field | Status | Expected | Extracted | Grounded | Rendered | Method |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | vendor_name | grounded | ACME Corp | ACME Corp | ✅ | ✅ | exact |
-| invoice_number | grounded | INV-2026-001 | vation | ✅ | ✅ | exact |
+| invoice_number | grounded | INV-2026-001 | INV-2026-001 | ✅ | ✅ | exact |
 | invoice_date | grounded | 2026-06-15 | 2026-06-15 | ✅ | ✅ | exact |
 | due_date | grounded | 2026-07-15 | 2026-07-15 | ✅ | ✅ | exact |
 | total_amount | grounded | 1250.0 | 1250.00 | ✅ | ✅ | exact |
@@ -179,7 +179,7 @@ The local-first s | ✅ | ✅ | exact |
 | Field | Status | Expected | Extracted | Grounded | Rendered | Method |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | vendor_name | grounded | Globex Corporation | Globex Corporation | ✅ | ✅ | exact |
-| invoice_number | grounded | INV-10024 | Invoice | ✅ | ✅ | exact |
+| invoice_number | grounded | INV-10024 | INV-10024 | ✅ | ✅ | exact |
 | invoice_date | grounded | 2026-06-10 | 2026-06-10 | ✅ | ✅ | exact |
 | due_date | grounded | 2026-07-10 | 2026-07-10 | ✅ | ✅ | exact |
 | total_amount | grounded | 3000.0 | 3000.00 | ✅ | ✅ | exact |
@@ -193,7 +193,7 @@ The local-first s | ✅ | ✅ | exact |
 | Field | Status | Expected | Extracted | Grounded | Rendered | Method |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | vendor_name | grounded | Initech LLC | Initech LLC | ✅ | ✅ | exact |
-| invoice_number | grounded | INV-998877 | Invoice | ✅ | ✅ | exact |
+| invoice_number | grounded | INV-998877 | INV-998877 | ✅ | ✅ | exact |
 | invoice_date | grounded | 2026-06-12 | 2026-06-12 | ✅ | ✅ | exact |
 | due_date | grounded | 2026-06-12 | 2026-06-12 | ✅ | ✅ | exact |
 | total_amount | grounded | 4320.0 | 4320.00 | ✅ | ✅ | exact |
@@ -209,9 +209,9 @@ The local-first s | ✅ | ✅ | exact |
 | title | grounded | Attention Is All You Need | Attention Is All You Need | ✅ | ✅ | exact |
 | authors | grounded | ['Ashish Vaswani', 'Noam Shazeer', 'Niki Parmar',  | ["Ashish Vaswani", "Noam Shazeer", "Niki Parmar",  | ✅ | ✅ | exact |
 | abstract_summary | grounded | We propose a new simple network architecture, the  | We propose a new simple network architecture, the  | ✅ | ✅ | exact |
-| key_claims | grounded | ['The Transformer model outperforms recurrent or c | ["We propose a new simple network architecture, th | ✅ | ✅ | exact |
+| key_claims | grounded | ['The Transformer model outperforms recurrent or c | ["The Transformer model outperforms recurrent or c | ✅ | ✅ | exact |
 | methods | grounded | ['We used the Transformer architecture with multi- | ["We used the Transformer architecture with multi- | ✅ | ✅ | exact |
-| reported_numbers | false_refusal | ['28.4', '2.0'] | — | ❌ | ❌ | — |
+| reported_numbers | grounded | ['28.4', '2.0'] | ["28.4", "2.0"] | ✅ | ✅ | exact |
 | figure_references | grounded | ['Figure 1', 'Figure 2'] | ["Figure 1", "Figure 2"] | ✅ | ✅ | exact |
 | table_references | grounded | ['Table 1', 'Table 2'] | ["Table 1", "Table 2"] | ✅ | ✅ | exact |
 
@@ -222,9 +222,9 @@ The local-first s | ✅ | ✅ | exact |
 | title | grounded | LoRA: Low-Rank Adaptation of Large Language Models | LoRA: Low-Rank Adaptation of Large Language Models | ✅ | ✅ | exact |
 | authors | grounded | ['Edward J. Hu', 'Yibin Shen', 'Phillip Wallis', ' | ["Edward J. Hu", "Yibin Shen", "Phillip Wallis", " | ✅ | ✅ | exact |
 | abstract_summary | grounded | We propose Low-Rank Adaptation, or LoRA, which fre | We propose Low-Rank Adaptation, or LoRA, which fre | ✅ | ✅ | exact |
-| key_claims | grounded | ['LoRA reduces the number of trainable parameters  | ["We propose Low-Rank Adaptation, or LoRA, which f | ✅ | ✅ | exact |
+| key_claims | grounded | ['LoRA reduces the number of trainable parameters  | ["LoRA reduces the number of trainable parameters  | ✅ | ✅ | exact |
 | methods | grounded | ['We parameterize the weight updates by representi | ["We parameterize the weight updates by representi | ✅ | ✅ | exact |
-| reported_numbers | grounded | ['82.5%', '0.12%'] | ["0.12"] | ✅ | ✅ | exact |
+| reported_numbers | grounded | ['82.5%', '0.12%'] | ["82.5", "0.12"] | ✅ | ✅ | exact |
 | figure_references | grounded | ['Figure 1', 'Figure 3'] | ["Figure 1", "Figure 3"] | ✅ | ✅ | exact |
 | table_references | grounded | ['Table 1', 'Table 2'] | ["Table 1", "Table 2"] | ✅ | ✅ | exact |
 
@@ -235,9 +235,9 @@ The local-first s | ✅ | ✅ | exact |
 | title | grounded | Retrieval-Augmented Generation for Knowledge-Inten | Retrieval-Augmented Generation for Knowledge-Inten | ✅ | ✅ | exact |
 | authors | grounded | ['Patrick Lewis', 'Ethan Perez', 'Aleksandara Pikt | ["Patrick Lewis", "Ethan Perez", "Aleksandara Pikt | ✅ | ✅ | exact |
 | abstract_summary | grounded | We introduce Retrieval-Augmented Generation (RAG)  | We introduce Retrieval-Augmented Generation (RAG)  | ✅ | ✅ | exact |
-| key_claims | false_refusal | ['RAG models produce more factual, specific, and d | — | ❌ | ❌ | — |
+| key_claims | grounded | ['RAG models produce more factual, specific, and d | ["RAG models produce more factual, specific, and d | ✅ | ✅ | exact |
 | methods | grounded | ['We combine a dense passage retriever (DPR) with  | ["We combine a dense passage retriever (DPR) with  | ✅ | ✅ | exact |
-| reported_numbers | false_refusal | ['44.5%'] | — | ❌ | ❌ | — |
+| reported_numbers | grounded | ['44.5%'] | ["44.5"] | ✅ | ✅ | exact |
 | figure_references | grounded | ['Figure 1', 'Figure 2'] | ["Figure 1", "Figure 2"] | ✅ | ✅ | exact |
 | table_references | grounded | ['Table 1', 'Table 3'] | ["Table 1", "Table 3"] | ✅ | ✅ | exact |
 
@@ -245,35 +245,35 @@ The local-first s | ✅ | ✅ | exact |
 
 | Field | Status | Expected | Extracted | Grounded | Rendered | Method |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| parties | false_refusal | ['ACME Corp', 'Client Solutions Inc.'] | — | ❌ | ❌ | — |
-| effective_date | false_refusal | 2026-06-01 | — | ❌ | ❌ | — |
-| termination_date | grounded | 2026-06-01 | 2029-06-01 | ✅ | ✅ | exact |
+| parties | grounded | ['ACME Corp', 'Client Solutions Inc.'] | ["ACME Corp", "Client Solutions Inc"] | ✅ | ✅ | exact |
+| effective_date | grounded | 2026-06-01 | 2026-06-01 | ✅ | ✅ | exact |
+| termination_date | grounded | 2029-06-01 | 2029-06-01 | ✅ | ✅ | exact |
 | obligations | grounded | ['Licensee shall pay the license fees within 30 da | ["Licensee shall pay the license fees within 30 da | ✅ | ✅ | exact |
-| governing_law | grounded | Delaware | and construed in accordance with the laws of the S | ✅ | ✅ | exact |
-| payment_terms | false_refusal | within 30 days | — | ❌ | ❌ | — |
-| confidentiality_clause | grounded | Each party agrees to maintain confidentiality of a | Licensee shall pay the license fees within 30 days | ✅ | ✅ | exact |
+| governing_law | grounded | Delaware | Delaware | ✅ | ✅ | exact |
+| payment_terms | grounded | within 30 days | within 30 days | ✅ | ✅ | exact |
+| confidentiality_clause | grounded | Each party agrees to maintain confidentiality of a | Each party agrees to maintain confidentiality of a | ✅ | ✅ | exact |
 
 ### sample_contract_02 (contract)
 
 | Field | Status | Expected | Extracted | Grounded | Rendered | Method |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| parties | false_refusal | ['Wayne Enterprises', 'Globex Corporation'] | — | ❌ | ❌ | — |
-| effective_date | false_refusal | 2026-05-15 | — | ❌ | ❌ | — |
+| parties | grounded | ['Wayne Enterprises', 'Globex Corporation'] | ["Wayne Enterprises", "Globex Corporation"] | ✅ | ✅ | exact |
+| effective_date | grounded | 2026-05-15 | 2026-05-15 | ✅ | ✅ | exact |
 | termination_date | grounded | 2027-05-15 | 2027-05-15 | ✅ | ✅ | exact |
 | obligations | grounded | ['Consulting Services Agreement is entered into as | ["Consultant shall perform the services described  | ✅ | ✅ | exact |
-| governing_law | grounded | New York | the State of New York | ✅ | ✅ | exact |
-| payment_terms | false_refusal | within 15 days | — | ❌ | ❌ | — |
-| confidentiality_clause | grounded | Consultant agrees that all Wayne Enterprises busin | 2. Confidentiality: | ✅ | ✅ | exact |
+| governing_law | grounded | New York | New York | ✅ | ✅ | exact |
+| payment_terms | grounded | within 15 days | within 15 days | ✅ | ✅ | exact |
+| confidentiality_clause | grounded | Consultant agrees that all Wayne Enterprises busin | Consultant agrees that all Wayne Enterprises busin | ✅ | ✅ | exact |
 
 ### sample_contract_03 (contract)
 
 | Field | Status | Expected | Extracted | Grounded | Rendered | Method |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| parties | false_refusal | ['Initech LLC', 'Intertrode Corp'] | — | ❌ | ❌ | — |
-| effective_date | false_refusal | 2026-06-12 | — | ❌ | ❌ | — |
+| parties | grounded | ['Initech LLC', 'Intertrode Corp'] | ["Initech LLC", "Intertrode Corp"] | ✅ | ✅ | exact |
+| effective_date | grounded | 2026-06-12 | 2026-06-12 | ✅ | ✅ | exact |
 | termination_date | grounded | 2028-06-12 | 2028-06-12 | ✅ | ✅ | exact |
 | obligations | grounded | ['Receiving Party shall use the information solely | ["Receiving Party shall use the information solely | ✅ | ✅ | exact |
-| governing_law | grounded | Texas | the State of Texas | ✅ | ✅ | exact |
+| governing_law | grounded | Texas | Texas | ✅ | ✅ | exact |
 | payment_terms | correct_refusal | None | — | ❌ | ❌ | — |
-| confidentiality_clause | grounded | Receiving Party agrees to keep all Disclosing Part | 2. Confidentiality: | ✅ | ✅ | exact |
+| confidentiality_clause | grounded | Receiving Party agrees to keep all Disclosing Part | Receiving Party agrees to keep all Disclosing Part | ✅ | ✅ | exact |
 
