@@ -1,0 +1,322 @@
+{
+  "provenance": "BLIND HOLDOUT \u2014 measure-only, do NOT tune to this set",
+  "fixtures": [
+    {
+      "fixture_id": "blind_invoice_01",
+      "file": "blind_invoice_01.txt",
+      "pack": "invoice",
+      "ground_truth": {
+        "vendor_name": "TechFlow Solutions Ltd",
+        "invoice_number": "TF-2024-0892",
+        "invoice_date": "2024-03-15",
+        "due_date": "",
+        "total_amount": 9483.0,
+        "currency": "SGD",
+        "line_items": [
+          {
+            "description": "Cloud Infrastructure Setup",
+            "quantity": 1,
+            "unit_price": 4500.0,
+            "total": 4500.0
+          },
+          {
+            "description": "Monthly Maintenance",
+            "quantity": 3,
+            "unit_price": 800.0,
+            "total": 2400.0
+          },
+          {
+            "description": "Consultation Hours",
+            "quantity": 12,
+            "unit_price": 150.0,
+            "total": 1800.0
+          }
+        ],
+        "tax_amount": 783.0,
+        "payment_terms": "2/10 Net 30"
+      }
+    },
+    {
+      "fixture_id": "blind_invoice_02",
+      "file": "blind_invoice_02.txt",
+      "pack": "invoice",
+      "ground_truth": {
+        "vendor_name": "GLOBAL SERVICES INC",
+        "invoice_number": "2024-GSI-4471",
+        "invoice_date": "2024-03-28",
+        "due_date": "",
+        "total_amount": 19063.5,
+        "currency": "USD",
+        "line_items": [
+          {
+            "description": "Software License (Annual)",
+            "quantity": 1,
+            "unit_price": 12000.0,
+            "total": 12000.0
+          },
+          {
+            "description": "Premium Support Package",
+            "quantity": 1,
+            "unit_price": 3500.0,
+            "total": 3500.0
+          },
+          {
+            "description": "Training Session (On-site)",
+            "quantity": 2,
+            "unit_price": 1200.0,
+            "total": 2400.0
+          }
+        ],
+        "tax_amount": 1163.5,
+        "payment_terms": "Due upon receipt"
+      }
+    },
+    {
+      "fixture_id": "blind_invoice_03",
+      "file": "blind_invoice_03.txt",
+      "pack": "invoice",
+      "ground_truth": {
+        "vendor_name": "Nordic Tech AB",
+        "invoice_number": "NT-2024-0033",
+        "invoice_date": "2024-04-10",
+        "due_date": "2024-05-10",
+        "total_amount": 8184.0,
+        "currency": "EUR",
+        "line_items": [
+          {
+            "description": "Konsulttj\u00e4nster",
+            "quantity": 40,
+            "unit_price": 95.0,
+            "total": 3800.0
+          },
+          {
+            "description": "Licens (\u00e5rlig)",
+            "quantity": 1,
+            "unit_price": 2200.0,
+            "total": 2200.0
+          },
+          {
+            "description": "Support-paket",
+            "quantity": 1,
+            "unit_price": 600.0,
+            "total": 600.0
+          }
+        ],
+        "tax_amount": 1584.0,
+        "payment_terms": "30 dagar"
+      }
+    },
+    {
+      "fixture_id": "blind_invoice_04",
+      "file": "blind_invoice_04.txt",
+      "pack": "invoice",
+      "ground_truth": {
+        "vendor_name": "ACME Dynamics",
+        "invoice_number": "RC-9981",
+        "invoice_date": "2024-04-12",
+        "due_date": "2024-04-12",
+        "total_amount": 2029.69,
+        "currency": "USD",
+        "line_items": [
+          {
+            "description": "Equipment Calibration",
+            "quantity": 8,
+            "unit_price": 175.0,
+            "total": 1400.0
+          },
+          {
+            "description": "Diagnostic Report Generation",
+            "quantity": 1,
+            "unit_price": 350.0,
+            "total": 350.0
+          },
+          {
+            "description": "Travel Reimbursement",
+            "quantity": 1,
+            "unit_price": 125.0,
+            "total": 125.0
+          }
+        ],
+        "tax_amount": 154.69,
+        "payment_terms": "Due on Receipt"
+      }
+    },
+    {
+      "fixture_id": "blind_contract_01",
+      "file": "blind_contract_01.txt",
+      "pack": "contract",
+      "ground_truth": {
+        "parties": [
+          "Omega Systems LLC",
+          "Delta Corporation"
+        ],
+        "effective_date": "2024-01-15",
+        "termination_date": "2027-01-14",
+        "obligations": [
+          "Provider shall deliver cloud migration services as described in Schedule A.",
+          "Client shall remit payment within forty-five (45) days of receipt of each invoice.",
+          "Provider shall maintain service availability of 99.9% uptime."
+        ],
+        "governing_law": "Ontario",
+        "payment_terms": "within 45 days",
+        "confidentiality_clause": "Both parties covenant and agree that all proprietary or confidential information shared during the engagement shall be held in strict confidence and used solely for the purposes of this Agreement."
+      }
+    },
+    {
+      "fixture_id": "blind_contract_02",
+      "file": "blind_contract_02.txt",
+      "pack": "contract",
+      "ground_truth": {
+        "parties": [
+          "Sigma Technologies Inc.",
+          "Jane Marie Doe"
+        ],
+        "effective_date": "2024-06-03",
+        "termination_date": "",
+        "obligations": [
+          "The Employee shall serve as Chief Technology Officer and shall perform duties as may be assigned by the Board.",
+          "The Employee agrees to devote substantially all of her professional time to the Company.",
+          "Salary shall be paid bi-weekly at the rate of $250,000 per annum."
+        ],
+        "governing_law": "New York",
+        "payment_terms": "",
+        "confidentiality_clause": "The Employee acknowledges that all inventions, designs, and proprietary information created during employment are the exclusive property of the Company."
+      }
+    },
+    {
+      "fixture_id": "blind_contract_03",
+      "file": "blind_contract_03.txt",
+      "pack": "contract",
+      "ground_truth": {
+        "parties": [
+          "BlueOcean Ventures LP",
+          "GreenField Capital Ltd"
+        ],
+        "effective_date": "2024-02-01",
+        "termination_date": "2034-01-31",
+        "obligations": [
+          "Each partner shall contribute capital within 60 days of signing.",
+          "BlueOcean shall contribute $5,000,000.",
+          "GreenField shall contribute $3,000,000."
+        ],
+        "governing_law": "Ireland",
+        "payment_terms": "within 60 days",
+        "confidentiality_clause": "All financial data, investor information, and proprietary strategies disclosed between partners are deemed strictly confidential."
+      }
+    },
+    {
+      "fixture_id": "blind_generic_01",
+      "file": "blind_generic_01.txt",
+      "pack": "generic",
+      "ground_truth": {
+        "summary": "Project Atlas is a cross-functional initiative to modernize the company's data infrastructure.",
+        "key_claims": [
+          "Data migration completed for 4 of 6 business units",
+          "API gateway latency reduced by 34% after optimization",
+          "Two critical security vulnerabilities patched in November",
+          "User adoption rate at 62%, below the 75% target"
+        ],
+        "entities": [
+          "Project Atlas",
+          "Infrastructure Modernization Team"
+        ],
+        "topics": [
+          "technology",
+          "security",
+          "data"
+        ]
+      }
+    },
+    {
+      "fixture_id": "blind_generic_02",
+      "file": "blind_generic_02.txt",
+      "pack": "generic",
+      "ground_truth": {
+        "summary": "The electric vehicle (EV) market has experienced significant growth in 2024, with global sales reaching 14.2 million units.",
+        "key_claims": [
+          "China remains the largest EV market with 8.1 million units sold",
+          "European adoption accelerated due to new EU emissions regulations",
+          "North American growth was slower at 18% YoY",
+          "Battery costs declined to $98/kWh, approaching price parity with ICE vehicles"
+        ],
+        "entities": [
+          "Market Intelligence Group",
+          "China",
+          "European",
+          "North American"
+        ],
+        "topics": [
+          "technology",
+          "market",
+          "automotive"
+        ]
+      }
+    },
+    {
+      "fixture_id": "blind_paper_01",
+      "file": "blind_paper_01.txt",
+      "pack": "paper",
+      "ground_truth": {
+        "title": "Diffusion Models Beat GANs on Image Synthesis",
+        "authors": [
+          "Prafulla Dhariwal",
+          "Alex Nichol"
+        ],
+        "abstract_summary": "We show that diffusion models achieve image sample quality superior to current state-of-the-art generative models.",
+        "key_claims": [
+          "Our model achieves FID 2.45 on CIFAR-10, compared to 3.05 for the best GAN.",
+          "Diffusion models show better diversity metrics across all evaluated datasets."
+        ],
+        "methods": [
+          "We use a U-Net architecture with attention mechanisms at each resolution."
+        ],
+        "reported_numbers": [
+          "2.45",
+          "3.05",
+          "2.27",
+          "4.59",
+          "0.84",
+          "0.53"
+        ],
+        "figure_references": [
+          "Figure 1"
+        ],
+        "table_references": [
+          "Table 2"
+        ]
+      }
+    },
+    {
+      "fixture_id": "blind_paper_02",
+      "file": "blind_paper_02.txt",
+      "pack": "paper",
+      "ground_truth": {
+        "title": "Scaling Laws for Neural Language Models",
+        "authors": [
+          "Tom Brown",
+          "Benjamin Mann",
+          "Nick Ryder",
+          "Melanie Subbiah"
+        ],
+        "abstract_summary": "We investigate the scaling properties of neural language models and find that performance depends strongly on model size, dataset size, and compute.",
+        "key_claims": [
+          "Performance follows a power law in model parameters with exponent 0.076",
+          "Optimal batch size scales linearly with model size",
+          "Overfitting occurs when dataset size is insufficient relative to model parameters"
+        ],
+        "methods": [
+          "We trained models ranging from 10^7 to 10^11 parameters on datasets from 10^9 to 10^12 tokens."
+        ],
+        "reported_numbers": [
+          "0.076"
+        ],
+        "figure_references": [
+          "Figure 3"
+        ],
+        "table_references": [
+          "Table 1"
+        ]
+      }
+    }
+  ]
+}

@@ -75,10 +75,55 @@ Kairo Phantom is a local-first, verifiable document-intelligence tool. Core prom
 
 **Result:** 110/111 fields OK (1 F2 correct refusal), 0 false-refusals, 0 grounded-but-wrong, 0 retrieval misses. All packs at 100% grounded, 0% false-refusal. `make release-check` → ALL GATES PASSED.
 
+## Blind Holdout Verification (VERIFY_no_overfit.md)
+
+A genuinely new blind set of 11 documents (4 invoice, 3 contract, 2 generic, 2 paper) with structurally different formats was created in `fixtures/blind_holdout/`. These documents use different vendors, layouts, date/currency formats, section headers, and languages (Swedish, Singapore, Cayman Islands) that the remediation regexes were NOT tuned to.
+
+### Dev vs Blind — Side by Side
+
+| Pack | Metric | Dev | Blind | Gap |
+|:---|:---|---:|---:|---:|
+| invoice | Grounded-answer % | 100.0% | 58.8% | -41.2 |
+| invoice | False-refusal % | 0.0% | 41.2% | +41.2 |
+| contract | Grounded-answer % | 100.0% | 57.9% | -42.1 |
+| contract | False-refusal % | 0.0% | 42.1% | +42.1 |
+| generic | Grounded-answer % | 100.0% | 87.5% | -12.5 |
+| generic | False-refusal % | 0.0% | 12.5% | +12.5 |
+| paper | Grounded-answer % | 100.0% | 87.5% | -12.5 |
+| paper | False-refusal % | 0.0% | 12.5% | +12.5 |
+| **OVERALL** | **Grounded-answer %** | **100.0%** | **67.5%** | **-32.5** |
+| **OVERALL** | **False-refusal %** | **0.0%** | **32.5%** | **+32.5** |
+| OVERALL | Refusal-on-unanswerable | 100.0% | 100.0% | 0.0 |
+| OVERALL | Ungrounded renders | 0 | 0 | 0 |
+
+### Overfitting Audit Summary
+
+- 26 regex patterns audited: 19 GENERAL (73%), 7 SAMPLE-SPECIFIC (27%)
+- Sample-specific patterns: `INV-` prefix only, `^TOTAL` at line start, `T0tal Am0unt Due` OCR artifact, `INVOICE: Company` format, `Key Claims:` exact header, `Confidentiality:` exact header
+- The 32.5-point gap between dev (100%) and blind (67.5%) is the overfitting tax
+
+### Ground-Truth Edit Verdict: JUSTIFIED
+
+Contract_01 termination_date changed from 2026-06-01 to 2029-06-01. Verbatim source: "This Agreement shall commence on the Effective Date and terminate on June 1, 2029 ("Termination Date")." The original ground truth had the effective date duplicated as the termination date — a genuine error, not a fix-to-pass.
+
+### Corpus Reality
+
+15 synthetic documents (111 fields) is NOT sufficient for production claims. The blind set adds 11 more (77 answerable fields) but all are still synthetic. Real-world validation requires actual invoices, contracts, and papers from different sources.
+
+### Extraction Architecture
+
+The extraction layer is ALMOST ENTIRELY REGEX-BASED. The grounding cascade and quality gate are real and working (0 ungrounded renders on both dev and blind, 100% refusal-on-unanswerable on both). But the extraction itself does not use layout-aware parsing, model-based extraction, or OCR/layout engines. Regex-per-format does not scale to the open world.
+
 ## Honest Verdict
 
-**Kairo Phantom's 4 hard release gates are now GREEN.** All 29 prompts from the Pre-Launch Prompt Pack are implemented and PASS with 594 tests green. The gate-closing remediation brought grounded-answer from 83.13% to 100.0% and false-refusal from 16.87% to 0.0%, without breaking refusal-on-unanswerable (100%) or ungrounded renders (0).
+**The 100% dev gates do NOT reflect real generalization. The remediation overfit the fixtures.** The blind set proves this: grounded-answer dropped from 100% to 67.5%, and false-refusal rose from 0% to 32.5%. The verifier moat is intact (0 ungrounded renders, 100% refusal-on-unanswerable on both sets), but the extraction layer is too brittle for real-world documents.
 
-**What remains for full production-ready (Secondary Track S1+S2):**
-1. **S1 — Run CI on real runners:** Push `.github/workflows/cross-platform.yml` to GitHub Actions; fix real per-OS breakages until `make acceptance` is green on macOS + Windows + Linux runners.
-2. **S2 — Build + sign real installers:** Use tauri-action to produce `.dmg` / `.msi` / `.AppImage` with conditional signing; verify install → first grounded highlight in < 2 minutes per OS.
+**The smallest honest next step:** Replace per-field regexes with a model-based extraction layer (local LLM via Ollama with structured JSON output), where the LLM extracts field values and the EXISTING grounding verifier independently re-checks each value. This leverages the moat while making extraction robust to format variation. The regex approach can remain as a fast-path fallback for common formats.
+
+**Current TRUE state:** NOT production-ready. The 4 gates pass on the dev corpus but FAIL on the blind set (grounded 67.5% < 95%, false-refusal 32.5% > 5%). The verifier and refusal mechanisms are production-grade; the extraction layer is not.
+
+**What remains for full production-ready:**
+1. **Replace regex extraction with model-based extraction** (local LLM + verifier re-check) to reach ≥95% grounded on blind set
+2. **S1 — Run CI on real runners:** Push cross-platform CI to GitHub Actions
+3. **S2 — Build + sign real installers:** Use tauri-action for .dmg/.msi/.AppImage
+4. **Validate on real-world documents** (not synthetic samples)
