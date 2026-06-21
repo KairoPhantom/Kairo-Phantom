@@ -1,0 +1,10 @@
+PROJECT BUDGET TABLE
+
+Category          Q1         Q2         Q3         Q4         Total
+Personnel         $50,000    $50,000    $55,000    $55,000    $210,000
+Equipment         $10,000    ---        $15,000    ---        $25,000
+Travel            $5,000     $5,000     $5,000     $5,000     $20,000
+
+GRAND TOTAL                                          $255,000
+
+Note: Equipment Q2 and Q4 merged cells indicate no spending in those quarters.

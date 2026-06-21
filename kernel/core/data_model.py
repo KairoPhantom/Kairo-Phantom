@@ -38,6 +38,7 @@ class GroundingMethod(enum.Enum):
     EXACT = "exact"
     FUZZY = "fuzzy"
     SEMANTIC = "semantic"
+    VISUAL = "visual"  # IoU ≥ 0.5 on stored geometry
     BLOCK = "block"  # none of the above passed → value is blocked
 
 
@@ -266,6 +267,9 @@ class Answer:
     citations: tuple[Anchor, ...] = ()
     grounded: bool = False
     refused: bool = False  # True when Kairo declined to answer
+    refusal_stage: str = ""  # which cascade stage blocked (e.g. "BLOCK", "FUZZY")
+    refusal_reason: str = ""  # human-readable explanation of why it was blocked
+    refusal_suggestion: str = ""  # actionable suggestion for the user
 
 
 # ---------------------------------------------------------------------------

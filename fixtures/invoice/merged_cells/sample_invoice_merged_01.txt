@@ -1,0 +1,28 @@
+Globex Corporation
+789 Commerce Boulevard, Industrial City
+
+INVOICE
+Invoice Number: INV-MG-2001
+Invoice Date: 2026-06-18
+Due Date: 2026-07-18
+Payment Terms: Net 30
+
+Bill To:
+ACME Industries
+100 Corporate Drive, Metro City
+
+Description           Qty    Unit Price    Total
+┌──────────────────────────────────────────────┐
+│ Custom Widgets       5      $500.00     $2500.00 │
+│ Installation         1      $450.00     $450.00  │
+│ Maintenance Plan     12     $75.00      $900.00  │
+├──────────────────────────────────────────────┤
+│ Subtotal                                $3850.00 │
+│ Tax (8%)                                $308.00  │
+│ ┌──────────────────────────────────────┐        │
+│ │ TOTAL AMOUNT DUE          $4158.00   │        │
+│ └──────────────────────────────────────┘        │
+└──────────────────────────────────────────────┘
+Currency: USD
+
+Thank you for your business!

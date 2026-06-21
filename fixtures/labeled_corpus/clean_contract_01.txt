@@ -1,0 +1,15 @@
+SOFTWARE LICENSE AGREEMENT
+
+This Software License Agreement ("Agreement") is made and entered into as of June 1, 2026 ("Effective Date"), by and between ACME Corp, a Delaware corporation ("Licensor"), and Client Solutions Inc., a California corporation ("Licensee").
+
+1. License Grant and Obligations:
+Licensee shall pay the license fees within 30 days of invoice.
+
+2. Confidentiality:
+Each party agrees to maintain confidentiality of all proprietary information.
+
+3. Term and Termination:
+This Agreement shall commence on the Effective Date and terminate on June 1, 2029.
+
+4. Governing Law:
+This Agreement shall be governed by the laws of the State of Delaware.

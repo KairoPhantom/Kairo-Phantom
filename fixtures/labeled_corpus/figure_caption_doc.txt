@@ -1,0 +1,14 @@
+TECHNICAL SPECIFICATION DOCUMENT
+
+Figure 1: System Architecture Overview
+Caption: The system consists of three layers: presentation, business logic, and data storage.
+The maximum throughput is 10,000 requests per second as shown in Figure 1.
+
+Figure 2: Latency Distribution
+Caption: 95th percentile latency is 250ms under peak load conditions.
+
+Table 1: Performance Metrics
+Metric              Value
+Max Throughput      10,000 req/s
+P95 Latency         250ms
+Uptime SLA          99.9%

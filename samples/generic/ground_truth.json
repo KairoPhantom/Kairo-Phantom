@@ -1,0 +1,8 @@
+{
+  "doc": "sample_generic_01.txt",
+  "pack": "generic",
+  "questions": [
+    {"question": "What is the main topic of this document?", "answerable": true, "expected_answer_contains": "project", "expected_page": 1},
+    {"question": "What is the stock price of Apple today?", "answerable": false, "expected_refusal": true}
+  ]
+}

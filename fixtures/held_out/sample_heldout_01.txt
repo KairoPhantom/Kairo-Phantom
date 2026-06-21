@@ -1,0 +1,21 @@
+INVOICE: Globex Corporation
+Invoice Number: INV-2026-HOLDOUT-001
+Date: 2026-06-20
+Due Date: 2026-07-20
+
+Bill To:
+  Held-Out Test Corp
+  456 Validation Lane
+  Test City, TC 54321
+
+Description                          Qty    Unit Price    Total
+----------------------------------------------------------------
+Validation Services                   8       $150.00   $1,200.00
+Quality Assurance Audit              1       $300.00     $300.00
+----------------------------------------------------------------
+Subtotal                                                $1,500.00
+Tax (0%)                                                 $0.00
+TOTAL                                                   $1,500.00
+
+Currency: USD
+Payment Terms: Net 30

@@ -1,0 +1,15 @@
+MASTER SERVICE AGREEMENT
+
+Section 1: Definitions
+"Notice Period" means the period defined in Section 4.2.
+"Confidential Information" has the meaning set forth in Section 3.
+
+Section 3: Confidentiality
+All Confidential Information shall be kept secret for five years.
+
+Section 4: Termination
+4.1 Either party may terminate with written notice.
+4.2 The Notice Period shall be ninety (90) days.
+
+Section 5: Governing Law
+This agreement is governed by the laws of New York.

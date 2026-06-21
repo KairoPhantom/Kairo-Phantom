@@ -1,0 +1,38 @@
+{
+  "provenance": "SYNTHETIC / self-graded — unvalidated",
+  "category": "cross_references",
+  "fixtures": [
+    {
+      "fixture_id": "sample_contract_xref_01",
+      "file": "sample_contract_xref_01.txt",
+      "ground_truth": {
+        "agreement_title": "SOFTWARE LICENSE AGREEMENT",
+        "effective_date": "June 1, 2026",
+        "licensor": "ACME Corp",
+        "licensee": "Client Solutions Inc.",
+        "termination_date": "June 1, 2029",
+        "governing_law": "Delaware",
+        "payment_terms_days": 30,
+        "confidentiality_survival_years": 5,
+        "cross_references": ["Section 1", "Section 2", "Section 4", "Section 5", "Exhibit A"],
+        "indemnification_cap_reference": "Section 1"
+      }
+    },
+    {
+      "fixture_id": "sample_contract_xref_02",
+      "file": "sample_contract_xref_02.txt",
+      "ground_truth": {
+        "agreement_title": "MASTER SERVICES AGREEMENT",
+        "effective_date": "January 15, 2026",
+        "licensor": "Globex Corporation",
+        "licensee": "Initech LLC",
+        "termination_date": "",
+        "governing_law": "",
+        "payment_terms_days": 45,
+        "confidentiality_survival_years": 0,
+        "cross_references": ["Section 1", "Section 2", "Section 3", "Section 4", "Section 5", "Exhibit B"],
+        "indemnification_cap_reference": "Section 2"
+      }
+    }
+  ]
+}

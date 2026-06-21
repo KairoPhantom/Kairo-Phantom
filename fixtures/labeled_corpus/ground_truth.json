@@ -1,0 +1,220 @@
+{
+  "provenance": "SYNTHETIC / self-graded for false-refusal testing",
+  "strata": {
+    "clean_digital": [
+      {
+        "file": "clean_invoice_01.txt",
+        "questions": [
+          {
+            "q": "What is the total amount due?",
+            "a": "$1250.00",
+            "answerable": true,
+            "source": "Total Amount Due: $1250.00"
+          },
+          {
+            "q": "What is the invoice number?",
+            "a": "INV-2026-001",
+            "answerable": true,
+            "source": "Invoice Number: INV-2026-001"
+          },
+          {
+            "q": "What are the payment terms?",
+            "a": "Net 30",
+            "answerable": true,
+            "source": "Payment Terms: Net 30"
+          },
+          {
+            "q": "What is the tax rate percentage?",
+            "a": null,
+            "answerable": false,
+            "source": null
+          }
+        ]
+      },
+      {
+        "file": "clean_contract_01.txt",
+        "questions": [
+          {
+            "q": "What is the effective date?",
+            "a": "June 1, 2026",
+            "answerable": true,
+            "source": "Effective Date"
+          },
+          {
+            "q": "What is the governing law?",
+            "a": "Delaware",
+            "answerable": true,
+            "source": "State of Delaware"
+          },
+          {
+            "q": "When does the agreement terminate?",
+            "a": "June 1, 2029",
+            "answerable": true,
+            "source": "terminate on June 1, 2029"
+          },
+          {
+            "q": "What is the penalty for late payment?",
+            "a": null,
+            "answerable": false,
+            "source": null
+          }
+        ]
+      }
+    ],
+    "scanned_poor_ocr": [
+      {
+        "file": "poor_ocr_invoice.txt",
+        "questions": [
+          {
+            "q": "What is the total amount due?",
+            "a": "$3000.00",
+            "answerable": true,
+            "source": "Totl Amont Due: $3000.00"
+          },
+          {
+            "q": "What is the invoice number?",
+            "a": "INV-10024",
+            "answerable": true,
+            "source": "Invioce Numbr: INV-10024"
+          },
+          {
+            "q": "What is the tax amount?",
+            "a": "$50.00",
+            "answerable": true,
+            "source": "Tax: $50.00"
+          },
+          {
+            "q": "What is the vendor's tax ID?",
+            "a": null,
+            "answerable": false,
+            "source": null
+          }
+        ]
+      }
+    ],
+    "multi_column": [
+      {
+        "file": "multi_column_report.txt",
+        "questions": [
+          {
+            "q": "What is the total revenue?",
+            "a": "$1,250,000",
+            "answerable": true,
+            "source": "Revenue: $1,250,000"
+          },
+          {
+            "q": "What is the NPS score?",
+            "a": "72",
+            "answerable": true,
+            "source": "NPS Score: 72"
+          },
+          {
+            "q": "What is the recommended dividend per share?",
+            "a": "$0.50",
+            "answerable": true,
+            "source": "dividend distribution of $0.50 per share"
+          },
+          {
+            "q": "What is the CEO's salary?",
+            "a": null,
+            "answerable": false,
+            "source": null
+          }
+        ]
+      }
+    ],
+    "merged_cell_tables": [
+      {
+        "file": "merged_cell_table.txt",
+        "questions": [
+          {
+            "q": "What is the grand total budget?",
+            "a": "$255,000",
+            "answerable": true,
+            "source": "GRAND TOTAL"
+          },
+          {
+            "q": "What is the personnel total?",
+            "a": "$210,000",
+            "answerable": true,
+            "source": "Personnel"
+          },
+          {
+            "q": "What is the travel budget for Q3?",
+            "a": "$5,000",
+            "answerable": true,
+            "source": "Travel"
+          },
+          {
+            "q": "What is the contingency fund?",
+            "a": null,
+            "answerable": false,
+            "source": null
+          }
+        ]
+      }
+    ],
+    "cross_referenced": [
+      {
+        "file": "cross_ref_contract.txt",
+        "questions": [
+          {
+            "q": "What is the notice period for termination?",
+            "a": "ninety (90) days",
+            "answerable": true,
+            "source": "The Notice Period shall be ninety (90) days"
+          },
+          {
+            "q": "How long must confidential information be kept secret?",
+            "a": "five years",
+            "answerable": true,
+            "source": "kept secret for five years"
+          },
+          {
+            "q": "What is the governing law?",
+            "a": "New York",
+            "answerable": true,
+            "source": "laws of New York"
+          },
+          {
+            "q": "What is the termination penalty fee?",
+            "a": null,
+            "answerable": false,
+            "source": null
+          }
+        ]
+      }
+    ],
+    "figure_caption_only": [
+      {
+        "file": "figure_caption_doc.txt",
+        "questions": [
+          {
+            "q": "What is the maximum throughput?",
+            "a": "10,000 requests per second",
+            "answerable": true,
+            "source": "maximum throughput is 10,000 requests per second"
+          },
+          {
+            "q": "What is the P95 latency?",
+            "a": "250ms",
+            "answerable": true,
+            "source": "95th percentile latency is 250ms"
+          },
+          {
+            "q": "What is the uptime SLA?",
+            "a": "99.9%",
+            "answerable": true,
+            "source": "Uptime SLA          99.9%"
+          },
+          {
+            "q": "What is the cost per request?",
+            "a": null,
+            "answerable": false,
+            "source": null
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "doc": "sample_invoice_01.txt",
+  "pack": "invoice",
+  "questions": [
+    {"question": "What is the invoice number?", "answerable": true, "expected_answer_contains": "INV-2026-001", "expected_page": 1},
+    {"question": "What is the total amount due?", "answerable": true, "expected_answer_contains": "1250", "expected_page": 1},
+    {"question": "Who is the vendor?", "answerable": true, "expected_answer_contains": "ACME", "expected_page": 1},
+    {"question": "What is the CEO's salary?", "answerable": false, "expected_refusal": true}
+  ]
+}

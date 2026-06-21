@@ -1,0 +1,9 @@
+{
+  "doc": "sample_contract_01.txt",
+  "pack": "contract",
+  "questions": [
+    {"question": "What is the termination date?", "answerable": true, "expected_answer_contains": "June 1, 2029", "expected_page": 1},
+    {"question": "Which state's laws govern this agreement?", "answerable": true, "expected_answer_contains": "Delaware", "expected_page": 1},
+    {"question": "What is the annual revenue of the Licensor?", "answerable": false, "expected_refusal": true}
+  ]
+}

@@ -1,0 +1,322 @@
+{
+  "snapshots": [
+    {
+      "case_id": "contract_01_01",
+      "doc_file": "fixtures/contract/sample_contract_01.txt",
+      "doc_id": "contract_01",
+      "question": "What are the parties to this agreement?",
+      "value": "ACME Corp",
+      "source_span": "ACME Corp",
+      "expected_outcome": "answer",
+      "actual_outcome": "answer",
+      "grounding_method": "exact",
+      "grounded": true,
+      "anchor_count": 1,
+      "anchor_page": 1,
+      "anchor_chunk_id": "contract_01_chunk_1",
+      "anchor_char_span": [
+        125,
+        134
+      ],
+      "anchor_bbox": [
+        0.05,
+        0.1,
+        0.95,
+        0.15000000000000002
+      ]
+    },
+    {
+      "case_id": "contract_01_02",
+      "doc_file": "fixtures/contract/sample_contract_01.txt",
+      "doc_id": "contract_01",
+      "question": "What is the governing law?",
+      "value": "Delaware",
+      "source_span": "Delaware",
+      "expected_outcome": "answer",
+      "actual_outcome": "answer",
+      "grounding_method": "exact",
+      "grounded": true,
+      "anchor_count": 1,
+      "anchor_page": 1,
+      "anchor_chunk_id": "contract_01_chunk_1",
+      "anchor_char_span": [
+        138,
+        146
+      ],
+      "anchor_bbox": [
+        0.05,
+        0.1,
+        0.95,
+        0.15000000000000002
+      ]
+    },
+    {
+      "case_id": "contract_01_03",
+      "doc_file": "fixtures/contract/sample_contract_01.txt",
+      "doc_id": "contract_01",
+      "question": "What is the termination date?",
+      "value": "June 1, 2029",
+      "source_span": "June 1, 2029",
+      "expected_outcome": "answer",
+      "actual_outcome": "answer",
+      "grounding_method": "exact",
+      "grounded": true,
+      "anchor_count": 1,
+      "anchor_page": 1,
+      "anchor_chunk_id": "contract_01_chunk_7",
+      "anchor_char_span": [
+        69,
+        81
+      ],
+      "anchor_bbox": [
+        0.05,
+        0.4,
+        0.95,
+        0.45000000000000007
+      ]
+    },
+    {
+      "case_id": "contract_01_04",
+      "doc_file": "fixtures/contract/sample_contract_01.txt",
+      "doc_id": "contract_01",
+      "question": "What is the payment terms?",
+      "value": "within 30 days",
+      "source_span": "within 30 days",
+      "expected_outcome": "answer",
+      "actual_outcome": "answer",
+      "grounding_method": "exact",
+      "grounded": true,
+      "anchor_count": 1,
+      "anchor_page": 1,
+      "anchor_chunk_id": "contract_01_chunk_3",
+      "anchor_char_span": [
+        36,
+        50
+      ],
+      "anchor_bbox": [
+        0.05,
+        0.2,
+        0.95,
+        0.25
+      ]
+    },
+    {
+      "case_id": "contract_01_05",
+      "doc_file": "fixtures/contract/sample_contract_01.txt",
+      "doc_id": "contract_01",
+      "question": "What is the CEO's salary?",
+      "value": "$500,000",
+      "source_span": "$500,000",
+      "expected_outcome": "refusal",
+      "actual_outcome": "refusal",
+      "grounding_method": "block",
+      "grounded": false,
+      "anchor_count": 0,
+      "anchor_page": null,
+      "anchor_chunk_id": null,
+      "anchor_char_span": null,
+      "anchor_bbox": null
+    },
+    {
+      "case_id": "invoice_01_06",
+      "doc_file": "fixtures/invoice/sample_invoice_01.txt",
+      "doc_id": "invoice_01",
+      "question": "What is the invoice number?",
+      "value": "INV-2026-001",
+      "source_span": "INV-2026-001",
+      "expected_outcome": "answer",
+      "actual_outcome": "answer",
+      "grounding_method": "exact",
+      "grounded": true,
+      "anchor_count": 1,
+      "anchor_page": 1,
+      "anchor_chunk_id": "invoice_01_chunk_3",
+      "anchor_char_span": [
+        16,
+        28
+      ],
+      "anchor_bbox": [
+        0.05,
+        0.2,
+        0.95,
+        0.25
+      ]
+    },
+    {
+      "case_id": "invoice_01_07",
+      "doc_file": "fixtures/invoice/sample_invoice_01.txt",
+      "doc_id": "invoice_01",
+      "question": "What is the total amount due?",
+      "value": "$1250.00",
+      "source_span": "$1250.00",
+      "expected_outcome": "answer",
+      "actual_outcome": "answer",
+      "grounding_method": "exact",
+      "grounded": true,
+      "anchor_count": 1,
+      "anchor_page": 1,
+      "anchor_chunk_id": "invoice_01_chunk_11",
+      "anchor_char_span": [
+        43,
+        51
+      ],
+      "anchor_bbox": [
+        0.05,
+        0.6000000000000001,
+        0.95,
+        0.65
+      ]
+    },
+    {
+      "case_id": "invoice_01_08",
+      "doc_file": "fixtures/invoice/sample_invoice_01.txt",
+      "doc_id": "invoice_01",
+      "question": "What are the payment terms?",
+      "value": "Net 30",
+      "source_span": "Net 30",
+      "expected_outcome": "answer",
+      "actual_outcome": "answer",
+      "grounding_method": "exact",
+      "grounded": true,
+      "anchor_count": 1,
+      "anchor_page": 1,
+      "anchor_chunk_id": "invoice_01_chunk_6",
+      "anchor_char_span": [
+        15,
+        21
+      ],
+      "anchor_bbox": [
+        0.05,
+        0.35000000000000003,
+        0.95,
+        0.4
+      ]
+    },
+    {
+      "case_id": "invoice_01_09",
+      "doc_file": "fixtures/invoice/sample_invoice_01.txt",
+      "doc_id": "invoice_01",
+      "question": "Who is the CFO of ACME Corp?",
+      "value": "John Smith",
+      "source_span": "John Smith",
+      "expected_outcome": "refusal",
+      "actual_outcome": "refusal",
+      "grounding_method": "block",
+      "grounded": false,
+      "anchor_count": 0,
+      "anchor_page": null,
+      "anchor_chunk_id": null,
+      "anchor_char_span": null,
+      "anchor_bbox": null
+    },
+    {
+      "case_id": "paper_01_10",
+      "doc_file": "fixtures/paper/sample_paper_01.txt",
+      "doc_id": "paper_01",
+      "question": "What is the title of the paper?",
+      "value": "Attention Is All You Need",
+      "source_span": "Attention Is All You Need",
+      "expected_outcome": "answer",
+      "actual_outcome": "answer",
+      "grounding_method": "exact",
+      "grounded": true,
+      "anchor_count": 1,
+      "anchor_page": 1,
+      "anchor_chunk_id": "paper_01_chunk_0",
+      "anchor_char_span": [
+        0,
+        25
+      ],
+      "anchor_bbox": [
+        0.05,
+        0.05,
+        0.95,
+        0.1
+      ]
+    },
+    {
+      "case_id": "paper_01_11",
+      "doc_file": "fixtures/paper/sample_paper_01.txt",
+      "doc_id": "paper_01",
+      "question": "What BLEU score does the model achieve?",
+      "value": "28.4 BLEU",
+      "source_span": "28.4 BLEU",
+      "expected_outcome": "answer",
+      "actual_outcome": "answer",
+      "grounding_method": "exact",
+      "grounded": true,
+      "anchor_count": 1,
+      "anchor_page": 1,
+      "anchor_chunk_id": "paper_01_chunk_10",
+      "anchor_char_span": [
+        19,
+        28
+      ],
+      "anchor_bbox": [
+        0.05,
+        0.55,
+        0.95,
+        0.6
+      ]
+    },
+    {
+      "case_id": "paper_01_12",
+      "doc_file": "fixtures/paper/sample_paper_01.txt",
+      "doc_id": "paper_01",
+      "question": "What is the author's home address?",
+      "value": "123 Main Street",
+      "source_span": "123 Main Street",
+      "expected_outcome": "refusal",
+      "actual_outcome": "refusal",
+      "grounding_method": "block",
+      "grounded": false,
+      "anchor_count": 0,
+      "anchor_page": null,
+      "anchor_chunk_id": null,
+      "anchor_char_span": null,
+      "anchor_bbox": null
+    },
+    {
+      "case_id": "generic_01_13",
+      "doc_file": "fixtures/generic/sample_generic_01.txt",
+      "doc_id": "generic_01",
+      "question": "What is Kairo Phantom's primary purpose?",
+      "value": "address AI hallucinations",
+      "source_span": "address AI hallucinations",
+      "expected_outcome": "answer",
+      "actual_outcome": "answer",
+      "grounding_method": "exact",
+      "grounded": true,
+      "anchor_count": 1,
+      "anchor_page": 1,
+      "anchor_chunk_id": "generic_01_chunk_1",
+      "anchor_char_span": [
+        122,
+        147
+      ],
+      "anchor_bbox": [
+        0.05,
+        0.1,
+        0.95,
+        0.15000000000000002
+      ]
+    },
+    {
+      "case_id": "generic_01_14",
+      "doc_file": "fixtures/generic/sample_generic_01.txt",
+      "doc_id": "generic_01",
+      "question": "What is the stock price of Apple?",
+      "value": "$150.00",
+      "source_span": "$150.00",
+      "expected_outcome": "refusal",
+      "actual_outcome": "refusal",
+      "grounding_method": "block",
+      "grounded": false,
+      "anchor_count": 0,
+      "anchor_page": null,
+      "anchor_chunk_id": null,
+      "anchor_char_span": null,
+      "anchor_bbox": null
+    }
+  ]
+}

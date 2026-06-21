@@ -1,0 +1,59 @@
+{
+  "description": "Cases that must NOT be falsely refused \u2014 these are high-value extractions where a false refusal constitutes a trust collapse.",
+  "cases": [
+    {
+      "id": "tc_invoice_total",
+      "stratum": "clean_digital",
+      "document": "clean_invoice_01.txt",
+      "question": "What is the total amount due?",
+      "expected_answer": "$1250.00",
+      "source_span": "Total Amount Due: $1250.00",
+      "reason": "Invoice total is the single most important field; false refusal here destroys user trust."
+    },
+    {
+      "id": "tc_notice_period_crossref",
+      "stratum": "cross_referenced",
+      "document": "cross_ref_contract.txt",
+      "question": "What is the notice period for termination?",
+      "expected_answer": "ninety (90) days",
+      "source_span": "The Notice Period shall be ninety (90) days",
+      "reason": "Cross-referenced defined terms require following the reference chain; false refusal means the system can't handle real contracts."
+    },
+    {
+      "id": "tc_figure_caption_finding",
+      "stratum": "figure_caption_only",
+      "document": "figure_caption_doc.txt",
+      "question": "What is the maximum throughput?",
+      "expected_answer": "10,000 requests per second",
+      "source_span": "maximum throughput is 10,000 requests per second",
+      "reason": "Facts stated in figure captions are real document content; false refusal means the system ignores valid source regions."
+    },
+    {
+      "id": "tc_poor_ocr_total",
+      "stratum": "scanned_poor_ocr",
+      "document": "poor_ocr_invoice.txt",
+      "question": "What is the total amount due?",
+      "expected_answer": "$3000.00",
+      "source_span": "Totl Amont Due: $3000.00",
+      "reason": "Poor OCR documents still contain the answer; fuzzy matching must handle OCR degradation without false refusal."
+    },
+    {
+      "id": "tc_multi_column_revenue",
+      "stratum": "multi_column",
+      "document": "multi_column_report.txt",
+      "question": "What is the total revenue?",
+      "expected_answer": "$1,250,000",
+      "source_span": "Revenue: $1,250,000",
+      "reason": "Multi-column layouts must not cause false refusals for clearly present values."
+    },
+    {
+      "id": "tc_merged_cell_grand_total",
+      "stratum": "merged_cell_tables",
+      "document": "merged_cell_table.txt",
+      "question": "What is the grand total budget?",
+      "expected_answer": "$255,000",
+      "source_span": "GRAND TOTAL",
+      "reason": "Merged-cell tables with summary rows must not cause false refusals."
+    }
+  ]
+}

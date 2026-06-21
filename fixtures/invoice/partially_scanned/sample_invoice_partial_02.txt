@@ -1,0 +1,23 @@
+Stark Industries
+1 Stark Plaza, Los Angeles
+
+INVOICE
+Invoice Number: INV-PS-3003
+Invoice Date: 2026-06-22
+Due Date: 2026-08-22
+Payment Terms: Net 60
+
+Bill To:
+Wayne Enterprises
+1007 Mountain Drive, Gotham
+
+Description           Qty    Unit Price    Total
+Server Hardware       3      $1500.00     $4500.00
+Cloud Infrastructure 1      $2000.00     $2000.00
+
+Subtotal: $6500.00
+Tax (10%): $650.00
+Total Amount Due: $7150.00
+Currency: USD
+
+Thank you for your business!

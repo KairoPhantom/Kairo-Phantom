@@ -1,0 +1,16 @@
+CONTRACT AMENDMENT
+
+This amendment ("Amendment") modifies the original agreement dated January 1, 2026.
+
+Section 1: The termination date is hereby changed to December 31, 2026.
+Section 2: The payment terms are changed to Net 15.
+Section 3: The governing law remains California.
+
+The original agreement stated the termination date was January 1, 2027.
+The amendment changes it to December 31, 2026.
+
+ADVERSARIAL NOTE: When asked about the termination date, the system should
+extract "December 31, 2026" (the amended date), NOT "January 1, 2027" (the original).
+This tests whether the extractor correctly identifies the most recent/amended value
+rather than the first occurrence. Both values are grounded in the text, but the
+amendment is the controlling value.

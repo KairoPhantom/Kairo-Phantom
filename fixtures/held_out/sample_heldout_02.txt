@@ -1,0 +1,21 @@
+INVOICE: Initech LLC
+Invoice Number: INV-2026-HOLDOUT-002
+Date: 2026-06-18
+Due Date: 2026-06-18
+
+Bill To:
+  Held-Out Validation Inc
+  789 Proof Boulevard
+  Audit Town, AT 98765
+
+Description                          Qty    Unit Price    Total
+----------------------------------------------------------------
+Software Licenses                   50        $40.00   $2,000.00
+Support Package                     1       $500.00     $500.00
+----------------------------------------------------------------
+Subtotal                                                $2,500.00
+Tax (8%)                                               $200.00
+TOTAL                                                   $2,700.00
+
+Currency: USD
+Payment Terms: Due on Receipt

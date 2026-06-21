@@ -1,0 +1,12 @@
+QUARTERLY REPORT Q2 2026
+
+LEFT COLUMN:                    RIGHT COLUMN:
+Revenue: $1,250,000            Expenses: $980,000
+Growth Rate: 15%               Headcount: 42
+
+LEFT COLUMN:                    RIGHT COLUMN:
+New Clients: 12                Churned: 3
+Net Retention: 97%             NPS Score: 72
+
+Summary: Total revenue exceeded projections by 8%.
+The board recommends dividend distribution of $0.50 per share.

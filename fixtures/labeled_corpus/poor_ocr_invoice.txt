@@ -1,0 +1,20 @@
+Globx Corpraton
+789 Power Aveneu, Captal Ctiy
+
+INVIOCE
+Invioce Numbr: INV-10024
+Invioce Date: June 10, 2026
+Due Date: July 10, 2026
+Paymant Terms: Net 30
+
+Bill To:
+Wayne Enterprizes
+1007 Mountan Drive, Gothm
+
+Descrpton           Qty    Unt Prce    Totl
+Custom Wdgets      5      $500.00      $2500.00
+Instalaton          1      $450.00      $450.00
+
+Tax: $50.00
+Totl Amont Due: $3000.00
+Curency: USD

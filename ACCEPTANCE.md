@@ -1,8 +1,8 @@
 # Kairo Phantom — ACCEPTANCE.md
 
-Generated at: 2026-06-17T15:10:03.149653+00:00Z  
+Generated at: 2026-06-21T21:11:27.983770+00:00Z  
 Target file: `sample_invoice_01.txt`  
-Processing time: 31.00ms
+Processing time: 20.60ms
 
 ## 1. Acceptance Checklist (DoD Checklist Status)
 
@@ -18,10 +18,10 @@ Processing time: 31.00ms
 ## 2. Pipeline Execution Trace
 
 ```
- 1. context_capture    [OK]       (elapsed: 0.0ms)
-    Input : {'path': 'fixtures\\invoice\\sample_invoice_01.txt'}
+ 1. context_capture    [OK]       (elapsed: 0.4ms)
+    Input : {'path': 'fixtures/invoice/sample_invoice_01.txt'}
     Output: {'chunk_count': 6, 'page_count': 1}
- 2. security_filter    [OK]       (elapsed: 0.0ms)
+ 2. security_filter    [OK]       (elapsed: 0.4ms)
     Input : {'text_length': 392}
     Output: {'blocked': False, 'reasons': []}
  3. intent_gate        [OK]       (elapsed: 0.0ms)
@@ -30,15 +30,15 @@ Processing time: 31.00ms
  4. router             [OK]       (elapsed: 0.0ms)
     Input : {'type': 'extract', 'pack': 'InvoicePack', 'fields': ['vendor_name', 'invoice_number', 'invoice_date', 'due_date', 'total_amount', 'currency', 'line_items', 'tax_amount', 'payment_terms']}
     Output: {'selected_pack': 'InvoicePack', 'fields_to_extract': ['vendor_name', 'invoice_number', 'invoice_date', 'due_date', 'total_amount', 'currency', 'line_items', 'tax_amount', 'payment_terms']}
- 5. extractor          [OK]       (elapsed: 15.0ms)
+ 5. extractor          [OK]       (elapsed: 4.4ms)
     Input : {'chunk_count': 6}
     Output: {'extraction_count': 9}
- 6. quality_gate       [OK]       (elapsed: 0.0ms)
+ 6. quality_gate       [OK]       (elapsed: 0.5ms)
     Input : {'extraction_count': 9}
-    Output: {'results': [{'ext_id': 'fff56a85-4579-4876-9730-2a2bd47b6a7d', 'field': 'vendor_name', 'verdict': 'pass', 'confidence': 0.9}, {'ext_id': '6b32ae34-6b2e-4712-964c-7f0a48facf41', 'field': 'invoice_number', 'verdict': 'pass', 'confidence': 0.95}, {'ext_id': '5de9568c-9446-4cef-b2bf-80b16cc979c2', 'field': 'invoice_date', 'verdict': 'pass', 'confidence': 0.9}, {'ext_id': '28e0655e-39fc-4df8-8439-19ddb5ef773c', 'field': 'due_date', 'verdict': 'pass', 'confidence': 0.9}, {'ext_id': '4b6ee339-a7c7-4d9a-bdbb-c718c2f645bc', 'field': 'total_amount', 'verdict': 'pass', 'confidence': 0.95}, {'ext_id': 'cec98a9d-63bd-4da9-ac67-fc3d60e434fc', 'field': 'currency', 'verdict': 'pass', 'confidence': 0.9}, {'ext_id': 'e3bfef5b-27d9-43af-a868-66cc4b51a5ab', 'field': 'tax_amount', 'verdict': 'pass', 'confidence': 0.85}, {'ext_id': '9a69544e-0809-4d88-9766-9fefb8ac3db2', 'field': 'payment_terms', 'verdict': 'pass', 'confidence': 0.85}, {'ext_id': '88ba48ef-1f32-4074-bac3-ce9658c0f1e8', 'field': 'line_items', 'verdict': 'pass', 'confidence': 0.8}], 'passed': 9, 'flagged_or_blocked': 0}
+    Output: {'results': [{'ext_id': '6856724b-4aeb-4763-a212-e17faebe78f9', 'field': 'vendor_name', 'verdict': 'pass', 'confidence': 0.9}, {'ext_id': '80706361-b808-4c83-81bf-5918aacc7a74', 'field': 'invoice_number', 'verdict': 'pass', 'confidence': 0.95}, {'ext_id': '77e893db-3e64-46a6-855b-380a345c38ce', 'field': 'invoice_date', 'verdict': 'pass', 'confidence': 0.9}, {'ext_id': 'eb8972fa-6053-4006-945f-ccf9bb83df0b', 'field': 'due_date', 'verdict': 'pass', 'confidence': 0.9}, {'ext_id': '62b347eb-18d7-4ecb-9025-522062204db0', 'field': 'total_amount', 'verdict': 'pass', 'confidence': 0.95}, {'ext_id': '0aa86b6e-098d-4a98-8495-34e05fc5881f', 'field': 'currency', 'verdict': 'pass', 'confidence': 0.9}, {'ext_id': '67da3b28-d252-4bc3-b613-7c28d5004964', 'field': 'tax_amount', 'verdict': 'pass', 'confidence': 0.85}, {'ext_id': '5fcdd696-06c0-4cc8-8914-702a8a479165', 'field': 'payment_terms', 'verdict': 'pass', 'confidence': 0.85}, {'ext_id': '5abdc470-be85-4a47-ab3f-9c90bae618da', 'field': 'line_items', 'verdict': 'pass', 'confidence': 0.8}], 'passed': 9, 'flagged_or_blocked': 0}
  7. suggest            [OK]       (elapsed: 0.0ms)
     Input : {'passed_count': 9}
-    Output: {'suggestions': [{'ext_id': 'fff56a85-4579-4876-9730-2a2bd47b6a7d', 'field': 'vendor_name', 'value': 'ACME Corp', 'confidence': 0.9}, {'ext_id': '6b32ae34-6b2e-4712-964c-7f0a48facf41', 'field': 'invoice_number', 'value': 'vation', 'confidence': 0.95}, {'ext_id': '5de9568c-9446-4cef-b2bf-80b16cc979c2', 'field': 'invoice_date', 'value': '2026-06-15', 'confidence': 0.9}, {'ext_id': '28e0655e-39fc-4df8-8439-19ddb5ef773c', 'field': 'due_date', 'value': '2026-07-15', 'confidence': 0.9}, {'ext_id': '4b6ee339-a7c7-4d9a-bdbb-c718c2f645bc', 'field': 'total_amount', 'value': '1250.00', 'confidence': 0.95}, {'ext_id': 'cec98a9d-63bd-4da9-ac67-fc3d60e434fc', 'field': 'currency', 'value': 'USD', 'confidence': 0.9}, {'ext_id': 'e3bfef5b-27d9-43af-a868-66cc4b51a5ab', 'field': 'tax_amount', 'value': '0.00', 'confidence': 0.85}, {'ext_id': '9a69544e-0809-4d88-9766-9fefb8ac3db2', 'field': 'payment_terms', 'value': 'Net 30', 'confidence': 0.85}, {'ext_id': '88ba48ef-1f32-4074-bac3-ce9658c0f1e8', 'field': 'line_items', 'value': '[{"description": "Consulting Services", "quantity": 10, "unit_price": 125.0, "total": 1250.0}]', 'confidence': 0.8}]}
+    Output: {'suggestions': [{'ext_id': '6856724b-4aeb-4763-a212-e17faebe78f9', 'field': 'vendor_name', 'value': 'ACME Corp', 'confidence': 0.9}, {'ext_id': '80706361-b808-4c83-81bf-5918aacc7a74', 'field': 'invoice_number', 'value': 'vation', 'confidence': 0.95}, {'ext_id': '77e893db-3e64-46a6-855b-380a345c38ce', 'field': 'invoice_date', 'value': '2026-06-15', 'confidence': 0.9}, {'ext_id': 'eb8972fa-6053-4006-945f-ccf9bb83df0b', 'field': 'due_date', 'value': '2026-07-15', 'confidence': 0.9}, {'ext_id': '62b347eb-18d7-4ecb-9025-522062204db0', 'field': 'total_amount', 'value': '1250.00', 'confidence': 0.95}, {'ext_id': '0aa86b6e-098d-4a98-8495-34e05fc5881f', 'field': 'currency', 'value': 'USD', 'confidence': 0.9}, {'ext_id': '67da3b28-d252-4bc3-b613-7c28d5004964', 'field': 'tax_amount', 'value': '0.00', 'confidence': 0.85}, {'ext_id': '5fcdd696-06c0-4cc8-8914-702a8a479165', 'field': 'payment_terms', 'value': 'Net 30', 'confidence': 0.85}, {'ext_id': '5abdc470-be85-4a47-ab3f-9c90bae618da', 'field': 'line_items', 'value': '[{"description": "Consulting Services", "quantity": 10, "unit_price": 125.0, "total": 1250.0}]', 'confidence': 0.8}]}
 ```
 
 ## 3. Grounded Suggestions & Provenance
@@ -67,7 +67,7 @@ BUILD: GREEN
 $ make test
 packs/tests/test_paper_pack.py::test_paper_pack_fields PASSED            [ 97%]
 packs/tests/test_paper_pack.py::test_paper_pack_extract PASSED           [100%]
-============================= 45 passed in 0.55s ==============================
+============================== 45 passed in 0.28s ==============================
 TEST: GREEN
 
 $ make safety

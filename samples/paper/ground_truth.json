@@ -1,0 +1,9 @@
+{
+  "doc": "sample_paper_01.txt",
+  "pack": "paper",
+  "questions": [
+    {"question": "What architecture does the paper propose?", "answerable": true, "expected_answer_contains": "Transformer", "expected_page": 1},
+    {"question": "What BLEU score does the model achieve on English-to-German translation?", "answerable": true, "expected_answer_contains": "28.4", "expected_page": 1},
+    {"question": "What is the author's home address?", "answerable": false, "expected_refusal": true}
+  ]
+}

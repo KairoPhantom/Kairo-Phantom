@@ -1,0 +1,23 @@
+Initech LLC
+456 Tech Park Road, Silicon Valley
+
+INVOICE
+Invoice Number: INV-PS-3002
+Invoice Date: 2026-06-20
+Due Date: 2026-07-20
+Payment Terms: Net 30
+
+Bill To:
+Umbrella Corporation
+200 Research Way, Science City
+
+Description           Qty    Unit Price    Total
+Software Licenses     100    $40.00       $4000.00
+Premium Support       1      $320.00      $320.00
+
+Subtotal: $4320.00
+Tax: $320.00
+T0tal Am0unt Due: $4640.00
+Currency: USD
+
+Thank you for your business!

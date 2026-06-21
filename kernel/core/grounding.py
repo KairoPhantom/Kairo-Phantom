@@ -100,16 +100,51 @@ def best_fuzzy_match(value: str, text: str) -> tuple[float, tuple[int, int]]:
     return best_ratio, best_span
 
 
-class GroundingVerifierImpl:
-    """Grounding verifier cascade implementation."""
+def bbox_iou(b1: BBox, b2: BBox) -> float:
+    """Compute Intersection-over-Union between two bounding boxes."""
+    ix0 = max(b1.x0, b2.x0)
+    iy0 = max(b1.y0, b2.y0)
+    ix1 = min(b1.x1, b2.x1)
+    iy1 = min(b1.y1, b2.y1)
+    inter_w = max(0.0, ix1 - ix0)
+    inter_h = max(0.0, iy1 - iy0)
+    inter_area = inter_w * inter_h
+    area1 = (b1.x1 - b1.x0) * (b1.y1 - b1.y0)
+    area2 = (b2.x1 - b2.x0) * (b2.y1 - b2.y0)
+    union = area1 + area2 - inter_area
+    if union <= 0:
+        return 0.0
+    return inter_area / union
 
-    def __init__(self, fuzzy_threshold: float = 0.92, semantic_threshold: float = 0.86) -> None:
+
+class GroundingVerifierImpl:
+    """Grounding verifier cascade implementation.
+
+    Cascade: NORMALIZE → EXACT → FUZZY(≥0.92) → SEMANTIC(≥0.86, re-verify) → VISUAL(IoU≥0.5) → BLOCK.
+
+    The ``disabled_stages`` parameter (ablation hook) allows disabling one or more
+    stages for ablation experiments. When a stage is disabled, the cascade skips it
+    as if it always fails, falling through to the next stage.
+    """
+
+    def __init__(
+        self,
+        fuzzy_threshold: float = 0.92,
+        semantic_threshold: float = 0.86,
+        visual_threshold: float = 0.5,
+        disabled_stages: set[GroundingMethod] | None = None,
+    ) -> None:
         self.fuzzy_threshold = fuzzy_threshold
         self.semantic_threshold = semantic_threshold
+        self.visual_threshold = visual_threshold
+        self.disabled_stages: set[GroundingMethod] = disabled_stages or set()
 
     def verify(self, value: str, source_span: str, chunks: list[Chunk]) -> tuple[GroundingMethod, tuple[Anchor, ...]]:
         """Verify the value/source_span against all chunks in the document.
         Returns (method, tuple of anchors).
+
+        Cascade: NORMALIZE → EXACT → FUZZY(≥0.92) → SEMANTIC(≥0.86, re-verify) → VISUAL(IoU≥0.5) → BLOCK.
+        Stages listed in ``self.disabled_stages`` are skipped (ablation hook).
         """
         if not chunks:
             return GroundingMethod.BLOCK, ()
@@ -122,70 +157,118 @@ class GroundingVerifierImpl:
         norm_target = normalize_text(target)
 
         # 2. EXACT match
-        for chunk in chunks:
-            if target.lower() in chunk.text.lower():
-                # Find start and end offset
-                start = chunk.text.lower().find(target.lower())
-                end = start + len(target)
-                anchor = Anchor(
-                    chunk_id=chunk.chunk_id,
-                    char_span=(start, end),
-                    page=chunk.page,
-                    bbox=chunk.bbox,
-                )
-                return GroundingMethod.EXACT, (anchor,)
+        if GroundingMethod.EXACT not in self.disabled_stages:
+            for chunk in chunks:
+                if target.lower() in chunk.text.lower():
+                    # Find start and end offset
+                    start = chunk.text.lower().find(target.lower())
+                    end = start + len(target)
+                    anchor = Anchor(
+                        chunk_id=chunk.chunk_id,
+                        char_span=(start, end),
+                        page=chunk.page,
+                        bbox=chunk.bbox,
+                    )
+                    return GroundingMethod.EXACT, (anchor,)
 
         # 3. FUZZY match (Levenshtein token ratio >= 0.92)
-        best_ratio = 0.0
-        best_anchor = None
-        for chunk in chunks:
-            ratio, span = best_fuzzy_match(target, chunk.text)
-            if ratio >= self.fuzzy_threshold and ratio > best_ratio:
-                best_ratio = ratio
-                best_anchor = Anchor(
-                    chunk_id=chunk.chunk_id,
-                    char_span=span,
-                    page=chunk.page,
-                    bbox=chunk.bbox,
-                )
+        if GroundingMethod.FUZZY not in self.disabled_stages:
+            best_ratio = 0.0
+            best_anchor = None
+            for chunk in chunks:
+                ratio, span = best_fuzzy_match(target, chunk.text)
+                if ratio >= self.fuzzy_threshold and ratio > best_ratio:
+                    best_ratio = ratio
+                    best_anchor = Anchor(
+                        chunk_id=chunk.chunk_id,
+                        char_span=span,
+                        page=chunk.page,
+                        bbox=chunk.bbox,
+                    )
 
-        if best_anchor:
-            return GroundingMethod.FUZZY, (best_anchor,)
+            if best_anchor:
+                return GroundingMethod.FUZZY, (best_anchor,)
 
         # 4. SEMANTIC match (Cosine similarity >= 0.86 + re-verify)
-        # Compute embedding of the value
-        target_emb = get_embedding(target)
-        best_cosine = 0.0
-        best_sem_chunk = None
+        if GroundingMethod.SEMANTIC not in self.disabled_stages:
+            # Compute embedding of the value
+            target_emb = get_embedding(target)
+            best_cosine = 0.0
+            best_sem_chunk = None
 
-        for chunk in chunks:
-            if not chunk.embedding:
-                # compute embedding on demand if missing
-                # (usually populated at index time)
-                from dataclasses import replace
-                chunk_emb = get_embedding(chunk.text)
-            else:
-                chunk_emb = chunk.embedding
+            for chunk in chunks:
+                if not chunk.embedding:
+                    # compute embedding on demand if missing
+                    # (usually populated at index time)
+                    chunk_emb = get_embedding(chunk.text)
+                else:
+                    chunk_emb = chunk.embedding
 
-            sim = cosine_similarity(target_emb, chunk_emb)
-            if sim >= self.semantic_threshold and sim > best_cosine:
-                best_cosine = sim
-                best_sem_chunk = chunk
+                sim = cosine_similarity(target_emb, chunk_emb)
+                if sim >= self.semantic_threshold and sim > best_cosine:
+                    best_cosine = sim
+                    best_sem_chunk = chunk
 
-        # Re-verify step: check if there's any word intersection/meaning overlap
-        if best_sem_chunk:
-            chunk_words = set(normalize_text(best_sem_chunk.text).split())
-            target_words = set(norm_target.split())
-            # Require at least 25% or 1 word of target words to be present in chunk for re-verification
-            intersection = chunk_words.intersection(target_words)
-            if len(intersection) > 0 or len(target_words) == 0:
-                anchor = Anchor(
-                    chunk_id=best_sem_chunk.chunk_id,
-                    char_span=(0, len(best_sem_chunk.text)),
-                    page=best_sem_chunk.page,
-                    bbox=best_sem_chunk.bbox,
-                )
-                return GroundingMethod.SEMANTIC, (anchor,)
+            # Re-verify step: check if there's any word intersection/meaning overlap
+            if best_sem_chunk:
+                chunk_words = set(normalize_text(best_sem_chunk.text).split())
+                target_words = set(norm_target.split())
+                # Require at least 25% or 1 word of target words to be present in chunk for re-verification
+                intersection = chunk_words.intersection(target_words)
+                if len(intersection) > 0 or len(target_words) == 0:
+                    anchor = Anchor(
+                        chunk_id=best_sem_chunk.chunk_id,
+                        char_span=(0, len(best_sem_chunk.text)),
+                        page=best_sem_chunk.page,
+                        bbox=best_sem_chunk.bbox,
+                    )
+                    return GroundingMethod.SEMANTIC, (anchor,)
 
-        # 5. BLOCK if none of the above pass
+        # 5. VISUAL match (IoU >= 0.5 on stored geometry)
+        if GroundingMethod.VISUAL not in self.disabled_stages:
+            # The caller may pass a candidate bbox via the source_span encoding
+            # "bbox:x0,y0,x1,y1" or we compare chunk bboxes against each other
+            # for spatial overlap. In the standard flow, visual grounding checks
+            # whether the claimed bbox overlaps a stored chunk bbox with IoU >= threshold.
+            candidate_bbox = self._parse_candidate_bbox(source_span)
+            if candidate_bbox is not None:
+                best_iou = 0.0
+                best_vis_chunk = None
+                for chunk in chunks:
+                    if chunk.bbox is None:
+                        continue
+                    iou = bbox_iou(candidate_bbox, chunk.bbox)
+                    if iou >= self.visual_threshold and iou > best_iou:
+                        best_iou = iou
+                        best_vis_chunk = chunk
+
+                if best_vis_chunk is not None:
+                    anchor = Anchor(
+                        chunk_id=best_vis_chunk.chunk_id,
+                        char_span=(0, len(best_vis_chunk.text)),
+                        page=best_vis_chunk.page,
+                        bbox=best_vis_chunk.bbox,
+                    )
+                    return GroundingMethod.VISUAL, (anchor,)
+
+        # 6. BLOCK if none of the above pass
         return GroundingMethod.BLOCK, ()
+
+    @staticmethod
+    def _parse_candidate_bbox(source_span: str) -> BBox | None:
+        """Parse a candidate bbox from a source_span string of form 'bbox:x0,y0,x1,y1'.
+        Returns None if the string does not encode a bbox."""
+        if not source_span or not source_span.startswith("bbox:"):
+            return None
+        try:
+            parts = source_span[5:].split(",")
+            if len(parts) != 4:
+                return None
+            return BBox(
+                x0=float(parts[0]),
+                y0=float(parts[1]),
+                x1=float(parts[2]),
+                y1=float(parts[3]),
+            )
+        except (ValueError, IndexError):
+            return None

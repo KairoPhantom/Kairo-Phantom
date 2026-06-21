@@ -1,0 +1,23 @@
+MASTER SERVICES AGREEMENT
+
+This Master Services Agreement ("MSA") is entered into as of January 15, 2026, by and between Globex Corporation ("Provider") and Initech LLC ("Client").
+
+1. Services:
+Provider shall deliver the consulting services described in Exhibit B. The scope of each engagement shall be defined per the statement of work referenced in Section 3.
+
+2. Payment Terms:
+Client shall pay all invoices within 45 days of receipt. Late payments shall accrue interest at 1.5% per month as specified in Section 1 of Exhibit B.
+
+3. Term and Renewal:
+This MSA shall remain in effect for three (3) years from the Effective Date. Renewal terms are governed by Section 1 of this Agreement.
+
+4. Limitation of Liability:
+Provider's total liability shall not exceed the fees paid under Section 2 in the twelve months preceding the claim. The confidentiality obligations in Section 5 survive termination.
+
+5. Confidentiality:
+All confidential information shared under this MSA shall be protected per the terms defined in Section 2 of Exhibit B.
+
+EXHIBIT B — Service Level Details
+Service levels and response times are defined per the payment terms in Section 2. All service credits are calculated based on the limitation of liability in Section 4.
+
+IN WITNESS WHEREOF, the parties have executed this MSA.

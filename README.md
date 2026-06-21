@@ -125,43 +125,105 @@ Press `Alt+Ctrl+M` in any Windows application and describe what you need. Kairo 
 
 ## 🚀 Quick Start
 
-### Option 1 — One-Click Install (Recommended)
+Get a grounded answer from Kairo Phantom in under 5 minutes on a clean checkout.
 
-```powershell
-irm https://get.kairo.sh | iex
-```
+### Prerequisites
 
-This installs Ollama, pulls the default model, registers the daemon as a Windows service, and configures the global `Alt+Ctrl+M` hotkey — all in under 90 seconds.
+- **Python 3.10+** (required — the kernel and sidecar are Python-native)
+- **make** (pre-installed on macOS/Linux; on Windows use `winget install GnuWin32.Make` or WSL)
+- **numpy** (the only pip dependency for text-based samples)
 
-### Option 2 — winget
+> **Why is the sidecar Python?** OCR and layout engines like [Docling](https://github.com/DS4SD/docling) and DeepSeek-OCR2 are Python-native. The Python sidecar handles OCR/layout/extraction/embeddings as stateless compute on `127.0.0.1:7438`. The Rust core (`phantom-core/`) is the trust boundary and the only writer to the append-only provenance store — it independently re-checks every quote/coordinate against stored geometry. The model can never self-certify a bounding box.
 
-```powershell
-winget install kairo-phantom
-```
-
-### Option 3 — Build From Source
-
-**Prerequisites:** Rust 1.78+, Python 3.12+, Ollama
+### macOS / Linux — copy-paste exact
 
 ```bash
-# Clone the repository
+# 1. Clone the repository
 git clone https://github.com/KairoPhantom/Kairo-Phantom.git
 cd Kairo-Phantom
 
-# Build the Rust core
-cargo build --workspace
+# 2. Install the Python sidecar dependency
+pip install numpy
 
-# Install Python sidecar dependencies
-cd kairo-sidecar && pip install -r requirements.txt && cd ..
+# 3. Run the first-run flow (builds index, answers a bundled question)
+python3 scripts/first_run.py
 
-# Run the first-time setup
-kairo first-run
+# 4. Ask your own question
+make run DOC=samples/invoice/sample_invoice_01.txt Q="What is the invoice number?"
+
+# 5. See all bundled samples (grounded answers + refusals)
+make samples
 ```
 
-> 📘 **60-second quickstart guide:** [docs/QUICKSTART.md](docs/QUICKSTART.md)
+### Windows (best-effort) — copy-paste exact
 
-**Then open Word, type `// your request`, and press `Alt+Ctrl+M`.**  
-Kairo writes directly into your document.
+```powershell
+# 1. Clone the repository
+git clone https://github.com/KairoPhantom/Kairo-Phantom.git
+cd Kairo-Phantom
+
+# 2. Install the Python sidecar dependency
+pip install numpy
+
+# 3. Run the first-run flow
+python scripts\first_run.py
+
+# 4. Ask your own question (use python directly if make is unavailable)
+python scripts\qa_pipeline.py --doc samples/invoice/sample_invoice_01.txt --question "What is the invoice number?"
+
+# 5. See all bundled samples
+python scripts\qa_pipeline.py --doc samples/contract/sample_contract_01.txt --question "What is the termination date?"
+```
+
+### Docker — one-liner
+
+```bash
+# Build
+docker build -t kairo-phantom -f docker/Dockerfile .
+
+# Run (first-run flow on bundled invoice sample)
+docker run --rm kairo-phantom
+
+# Ask a custom question
+docker run --rm kairo-phantom python3 scripts/qa_pipeline.py \
+  --doc samples/invoice/sample_invoice_01.txt \
+  --question "What is the total amount due?"
+```
+
+### What you'll see
+
+```
+======================================================================
+Kairo Phantom — Grounded Q&A
+======================================================================
+Document: samples/invoice/sample_invoice_01.txt
+Question: What is the invoice number?
+----------------------------------------------------------------------
+ANSWER: Invoice Number: INV-2026-001
+  [Source: page 1, bbox=[0.000, 0.050, 1.000, 0.133] | Method: exact]
+
+Citations (verified by independent grounding checker):
+  [1] page 1, bbox=(0.000, 0.050, 1.000, 0.133), char_span=(8, 36)
+======================================================================
+```
+
+For an unanswerable question, Kairo refuses — **No source → no answer**:
+
+```
+ANSWER: [REFUSED] I cannot answer this question because the document does not
+contain sufficient information relevant to this query. No source → no answer.
+```
+
+### Bundled Samples
+
+| Pack | Document | Answerable Question | Unanswerable Question |
+|:---|:---|:---|:---|
+| Invoice | `samples/invoice/sample_invoice_01.txt` | "What is the invoice number?" | "What is the CEO's salary?" |
+| Contract | `samples/contract/sample_contract_01.txt` | "What is the termination date?" | "What is the annual revenue of the Licensor?" |
+| Paper | `samples/paper/sample_paper_01.txt` | "What architecture does the paper propose?" | "What is the author's home address?" |
+| Generic | `samples/generic/sample_generic_01.txt` | "What is the main topic of this document?" | "What is the stock price of Apple today?" |
+
+> 📘 **60-second quickstart guide:** [docs/QUICKSTART.md](docs/QUICKSTART.md)
 
 ---
 
@@ -553,3 +615,26 @@ MIT © Kairo Phantom Contributors — see [LICENSE](LICENSE) for details.
 
 </div>
 
+---
+
+## Scope Boundaries — What Kairo Does and Does Not Do
+
+### Kairo DOES:
+- **Read** documents and extract structured data with grounded citations to exact source regions
+- **Suggest** actions to the user — never auto-applies without explicit human confirmation
+- **Refuse** to answer when it cannot ground a claim to source text ("No source → no answer")
+- **Audit** every answer and every refusal in a tamper-evident, cryptographically signed log
+- Run **local-first** with zero network egress by default (air-gap proven in CI)
+- Support **four launch Packs**: generic, invoice, paper, contract
+- Provide a **standalone grounding verifier** that any RAG pipeline can bolt on
+
+### Kairo Does NOT:
+- Write to or drive source applications (Word, Excel, desktop) — v1 is **READ + SUGGEST ONLY**
+- Act as a multi-domain expert swarm or router
+- Operate as a collaborative/cloud-by-default layer
+- Auto-apply any suggestion without explicit human confirmation
+- Support Packs beyond the four launch Packs in v1
+- Allow the model to self-certify a bounding box — the verifier independently re-checks every citation
+
+### If a feature seems out of scope
+It probably is. Kairo's scope is deliberately narrow: verifiable, grounded document intelligence. See [CONTRIBUTING.md](CONTRIBUTING.md) for scope boundaries and [docs/PUBLIC_ROADMAP.md](docs/PUBLIC_ROADMAP.md) for planned features.

@@ -1,0 +1,29 @@
+{
+  "ablation": "verifier_on_vs_off_vs_confidence",
+  "conditions": [
+    {
+      "condition": "verifier_active",
+      "total_claims": 70,
+      "rendered": 19,
+      "ungrounded_renders": 0,
+      "ungrounded_render_rate": 0.0,
+      "correctly_blocked": 34
+    },
+    {
+      "condition": "verifier_bypassed",
+      "total_claims": 70,
+      "rendered": 70,
+      "ungrounded_renders": 34,
+      "ungrounded_render_rate": 48.57,
+      "correctly_blocked": 0
+    },
+    {
+      "condition": "confidence_threshold_0.8",
+      "total_claims": 70,
+      "rendered": 61,
+      "ungrounded_renders": 34,
+      "ungrounded_render_rate": 48.57,
+      "correctly_blocked": 0
+    }
+  ]
+}

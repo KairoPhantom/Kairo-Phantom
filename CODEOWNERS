@@ -1,0 +1,54 @@
+# CODEOWNERS for Kairo Phantom
+#
+# Each line: pattern  owner(s)
+# Owners are GitHub usernames or team names.
+# PRs touching these paths will automatically request review from the owners.
+
+# Core kernel — the trust boundary
+/kernel/core/grounding.py          @kairo/core-team
+/kernel/core/provenance.py         @kairo/core-team
+/kernel/core/contracts.py          @kairo/core-team
+/kernel/core/data_model.py         @kairo/core-team
+/kernel/core/audit_log.py          @kairo/compliance-team
+/kernel/core/audit_export.py       @kairo/compliance-team
+/kernel/core/reproducibility.py    @kairo/core-team
+/kernel/core/embeddings.py         @kairo/core-team
+
+# Rust core / phantom-core — the trust boundary + provenance store
+/phantom-core/                     @kairo/core-team
+
+# Tests — must be failing-capable, no mocks
+/tests/                            @kairo/core-team @kairo/qa-team
+
+# Benchmarks — measured metrics, no hardcoded numbers
+/bench/                            @kairo/core-team
+
+# Packs — domain-specific extraction
+/packs/                            @kairo/pack-team
+
+# Red team — adversarial corpus
+/red-team/                         @kairo/security-team @kairo/core-team
+
+# Golden corpus — snapshot tests
+/fixtures/golden_corpus/           @kairo/qa-team @kairo/core-team
+
+# Documentation
+/docs/COMPLIANCE_BRIEF.md          @kairo/compliance-team
+/docs/VERIFIER_CRATE_RELEASE.md    @kairo/core-team
+/docs/PUBLIC_ROADMAP.md            @kairo/core-team
+/CONTRIBUTING.md                   @kairo/core-team
+/README.md                         @kairo/core-team
+/STATUS.md                         @kairo/core-team
+
+# CI / GitHub workflows
+/.github/                          @kairo/core-team
+
+# Makefile — build targets
+/Makefile                          @kairo/core-team
+
+# Security
+/SECURITY.md                       @kairo/security-team
+/SECURITY_AUDIT.md                 @kairo/security-team
+
+# Default — fallthrough for any file not matched above
+*                                  @kairo/core-team

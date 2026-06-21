@@ -1,0 +1,66 @@
+{
+  "version": "1.0.0",
+  "fingerprint": "ceb9393dfbe6421406d3469e6935b839a4e2196cfa6c88c3277a41485f412d94",
+  "files": {
+    "adversarial": {
+      "embedded_instructions.txt": "64f4bdb035f998d11929e07f6dba2337baa5d1e017f68c6d740d1b65629a0382",
+      "hidden_text_layer.txt": "7bd15af1437caf1a3d377da3e76648a03311ea2a5a0d48745489688c091a67fb",
+      "malformed_structure.txt": "ea13db4608d8bc7cedc7fe9e6650f9f6071b67aa614025c192e465ae42499848",
+      "oversized_input.txt": "3cf07b9954c083c50bc24d1416868dced933047d988dbb511d56b715847c4c91",
+      "prompt_injection_qa.txt": "744e4fb1597d2e27fbd96e38b044f1f0ec09363d6aeda3d2fad3c8026d858df4",
+      "tool_url_trigger.txt": "23ab70d45159e6e6d4793d4a308017d1120b56015e0ee675639b2ec3bb440a4f"
+    },
+    "contract": {
+      "ground_truth.json": "5ccecb9232aa4213f2592b1affc8c71f1afc8d6854b6a69b5d49bcaf6034d710",
+      "sample_contract_01.txt": "9a8ad174351078e5b4822ae283a525e4e1932990f75ef9560e0899ebdb57a1e0",
+      "sample_contract_02.txt": "105c35af3babed68dfc3d4cec31cf4bdd1c3503719d66e300c5e1c492ecb6985",
+      "sample_contract_03.txt": "bb82d3afd14a25f645479fb639c4225ed151a930968705d4c019ae01b1fd18af"
+    },
+    "generic": {
+      "ground_truth.json": "1fc437da65afbbd63e5e316d1bd6aa1bfad0c117b441492c40fc4ccb43573e25",
+      "sample_generic_01.txt": "b755b988b241a84dc2ea6c349d194b92a15599529a6606d027769f1824e8a528",
+      "sample_generic_02.txt": "2a865dba1e0748602169944e656e81087769bd830cf0f877c90a865b7e3c7e24",
+      "sample_generic_03.txt": "36c055c8ccf419c6a5e994fa241d3eec85c9dd98f7d67d775e9e454968c0b21e"
+    },
+    "golden_corpus": {
+      "README.md": "1a3537daf9a25e864470ba75336ad949c3eb8869f648549698e9c2a2bfab2032",
+      "snapshots.json": "d90539e4fb051f2fa0bca9611b301d285fad7dce544f07343ec33feea040eaab"
+    },
+    "held_out": {
+      "ground_truth.json": "87f7c0d31847b5b2d21d51699cd83f485e58259db90cb6fe3b3576d1c3f39847",
+      "sample_heldout_01.txt": "c986edbd8045734aaa1b6a23800610bd6a08ca7d534ed6a793cec155a6684d47",
+      "sample_heldout_02.txt": "805d2e317ee9d959f2d70b4a420ed037bd9891253c4129950bb33ff21ebe402f",
+      "sample_heldout_03.txt": "bada40f9c549a4d455fd56db84d3ef4bcd8996b8f14ccf986eb21dd66d387565"
+    },
+    "invoice": {
+      "ground_truth.json": "519001baf7b987475c11d04e234035f353e0403446c256b29d51641697a5fc4f",
+      "sample_invoice_01.txt": "9e0328983fa4844fdaa954ca5320f6dc28dbc67d96e0d0795b808c740b04faab",
+      "sample_invoice_02.txt": "6f1976ca214da70da70166cde416bce9964adb509da97e8be7440e3a76a4d17b",
+      "sample_invoice_03.txt": "4edebcdbaddee5e3c82eb255808427d6d3116ec0bb8aae220d0664cbdfa24dd3"
+    },
+    "labeled_corpus": {
+      "clean_contract_01.txt": "b58a47fe536db55cf694491c7ca49c0ce9ae423beba1d853626ad14340cfcebd",
+      "clean_invoice_01.txt": "465c38929b2a4a0648627cda0a994acb7527c82ee0a804b7d764ef0b69454abd",
+      "cross_ref_contract.txt": "c5a21d163794f5b5df38a79e7e465e4207d27b76d43b5ab8a582baebb9021bc5",
+      "figure_caption_doc.txt": "f0ff295158a0f09873398a1b8c0a834187bb9789fa3e606e9e3bfbb6915cabe0",
+      "ground_truth.json": "c4eba5c16b8241acdebd32be03824086d2e775eb2a88f2c40faa5750263580cf",
+      "merged_cell_table.txt": "444d8020e9c6f875ec6074c882ea7178809b13cfb15708195b32c849ebd6a1a3",
+      "multi_column_report.txt": "38dfe8bc99e7cf3591319e18d6f49c5ac99c997799317b2b797823bf30f57df4",
+      "poor_ocr_invoice.txt": "3d8f3e132cfc692171ca9fc75417bb846af89b8e5ecd13c19be78cd272f4e94b"
+    },
+    "paper": {
+      "ground_truth.json": "f19b4fc114d8f93bf005b3d0c6b5069257744f24fa4cd69379865db26b75e3b9",
+      "sample_paper_01.txt": "081339a8527265b7f799220c1289112715155b1438597e3ac9424643a3203d5a",
+      "sample_paper_02.txt": "0c09fc1c599899aaa834e50b2ac3568c35b09979d102a6e1f39700ba94c6c4b2",
+      "sample_paper_03.txt": "386ff3f9ef8404da0c6e83d8e0abfd5d6494b47958c3d4aecdd3e08be4642b0d"
+    },
+    "wedge": {
+      "ground_truth.json": "949792373ad7b29d5932198479e90c998a724b6954584339d1dfc54bac781f69",
+      "sample_memo_01.txt": "2cee63241b4f234c1f9c7411a8d9e061ab6e0d16a8206354410b7a32d1510867",
+      "sample_memo_02.txt": "c717f35938dd65c7faa5b0595d415418ab2c1361e9088a3dbd6b67f17febe6da",
+      "sample_memo_03.txt": "6065d7c6ce01c5d9b0785a6c0975dd3517c45beb02291b155fd9ff8f6c4cf8be",
+      "sample_memo_04.txt": "b42cd62fe0a1fa05d6bca3633c2eac9bbbb0e181747d6fae887c3ef4f9811f1c",
+      "sample_memo_05.txt": "1c5480939fe4bd6bf09bf28e6c4e09339429822e1ddce9a89f1d0816c6f95569"
+    }
+  }
+}
