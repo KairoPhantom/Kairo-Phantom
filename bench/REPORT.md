@@ -1,6 +1,6 @@
 # Kairo Phantom — Grounding Benchmark Report
 
-> Generated: 2026-06-17T13:15:35.782818+00:00
+> Generated: 2026-06-18T11:00:50.645249+00:00
 
 ## Pack: `generic`
 
