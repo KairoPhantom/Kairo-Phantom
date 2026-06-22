@@ -1,8 +1,8 @@
 # Kairo Phantom — ACCEPTANCE.md
 
-Generated at: 2026-06-21T21:11:27.983770+00:00Z  
+Generated at: 2026-06-22T14:17:17.918695+00:00Z  
 Target file: `sample_invoice_01.txt`  
-Processing time: 20.60ms
+Processing time: 33.49ms
 
 ## 1. Acceptance Checklist (DoD Checklist Status)
 
@@ -18,10 +18,10 @@ Processing time: 20.60ms
 ## 2. Pipeline Execution Trace
 
 ```
- 1. context_capture    [OK]       (elapsed: 0.4ms)
+ 1. context_capture    [OK]       (elapsed: 0.7ms)
     Input : {'path': 'fixtures/invoice/sample_invoice_01.txt'}
     Output: {'chunk_count': 6, 'page_count': 1}
- 2. security_filter    [OK]       (elapsed: 0.4ms)
+ 2. security_filter    [OK]       (elapsed: 0.7ms)
     Input : {'text_length': 392}
     Output: {'blocked': False, 'reasons': []}
  3. intent_gate        [OK]       (elapsed: 0.0ms)
@@ -30,15 +30,15 @@ Processing time: 20.60ms
  4. router             [OK]       (elapsed: 0.0ms)
     Input : {'type': 'extract', 'pack': 'InvoicePack', 'fields': ['vendor_name', 'invoice_number', 'invoice_date', 'due_date', 'total_amount', 'currency', 'line_items', 'tax_amount', 'payment_terms']}
     Output: {'selected_pack': 'InvoicePack', 'fields_to_extract': ['vendor_name', 'invoice_number', 'invoice_date', 'due_date', 'total_amount', 'currency', 'line_items', 'tax_amount', 'payment_terms']}
- 5. extractor          [OK]       (elapsed: 4.4ms)
+ 5. extractor          [OK]       (elapsed: 13.9ms)
     Input : {'chunk_count': 6}
     Output: {'extraction_count': 9}
  6. quality_gate       [OK]       (elapsed: 0.5ms)
     Input : {'extraction_count': 9}
-    Output: {'results': [{'ext_id': '6856724b-4aeb-4763-a212-e17faebe78f9', 'field': 'vendor_name', 'verdict': 'pass', 'confidence': 0.9}, {'ext_id': '80706361-b808-4c83-81bf-5918aacc7a74', 'field': 'invoice_number', 'verdict': 'pass', 'confidence': 0.95}, {'ext_id': '77e893db-3e64-46a6-855b-380a345c38ce', 'field': 'invoice_date', 'verdict': 'pass', 'confidence': 0.9}, {'ext_id': 'eb8972fa-6053-4006-945f-ccf9bb83df0b', 'field': 'due_date', 'verdict': 'pass', 'confidence': 0.9}, {'ext_id': '62b347eb-18d7-4ecb-9025-522062204db0', 'field': 'total_amount', 'verdict': 'pass', 'confidence': 0.95}, {'ext_id': '0aa86b6e-098d-4a98-8495-34e05fc5881f', 'field': 'currency', 'verdict': 'pass', 'confidence': 0.9}, {'ext_id': '67da3b28-d252-4bc3-b613-7c28d5004964', 'field': 'tax_amount', 'verdict': 'pass', 'confidence': 0.85}, {'ext_id': '5fcdd696-06c0-4cc8-8914-702a8a479165', 'field': 'payment_terms', 'verdict': 'pass', 'confidence': 0.85}, {'ext_id': '5abdc470-be85-4a47-ab3f-9c90bae618da', 'field': 'line_items', 'verdict': 'pass', 'confidence': 0.8}], 'passed': 9, 'flagged_or_blocked': 0}
+    Output: {'results': [{'ext_id': '2a56f8fe-876a-4651-8ca4-70995d05d169', 'field': 'vendor_name', 'verdict': 'pass', 'confidence': 0.9}, {'ext_id': '169aa086-6ffa-47a4-bad7-195715aab566', 'field': 'invoice_number', 'verdict': 'pass', 'confidence': 0.95}, {'ext_id': '3d21d781-dc51-418c-bac8-8acfbe118882', 'field': 'invoice_date', 'verdict': 'pass', 'confidence': 0.9}, {'ext_id': '1e214f5b-ffbe-4d94-8999-64cf3c486c48', 'field': 'due_date', 'verdict': 'pass', 'confidence': 0.9}, {'ext_id': 'b1e93afb-2b03-44ac-80bb-591d334a0545', 'field': 'total_amount', 'verdict': 'pass', 'confidence': 0.95}, {'ext_id': '7a2d4117-e72c-483a-bfa9-87e7518a2f75', 'field': 'currency', 'verdict': 'pass', 'confidence': 0.9}, {'ext_id': '527bde04-66cb-49b1-8f51-efdef7d88520', 'field': 'tax_amount', 'verdict': 'pass', 'confidence': 0.85}, {'ext_id': '4b47790d-c0eb-4c5b-92d2-ee2d3d626d37', 'field': 'payment_terms', 'verdict': 'pass', 'confidence': 0.85}, {'ext_id': 'd1aa7e41-d98d-45ce-99c3-20338f339f7d', 'field': 'line_items', 'verdict': 'pass', 'confidence': 0.8}], 'passed': 9, 'flagged_or_blocked': 0}
  7. suggest            [OK]       (elapsed: 0.0ms)
     Input : {'passed_count': 9}
-    Output: {'suggestions': [{'ext_id': '6856724b-4aeb-4763-a212-e17faebe78f9', 'field': 'vendor_name', 'value': 'ACME Corp', 'confidence': 0.9}, {'ext_id': '80706361-b808-4c83-81bf-5918aacc7a74', 'field': 'invoice_number', 'value': 'vation', 'confidence': 0.95}, {'ext_id': '77e893db-3e64-46a6-855b-380a345c38ce', 'field': 'invoice_date', 'value': '2026-06-15', 'confidence': 0.9}, {'ext_id': 'eb8972fa-6053-4006-945f-ccf9bb83df0b', 'field': 'due_date', 'value': '2026-07-15', 'confidence': 0.9}, {'ext_id': '62b347eb-18d7-4ecb-9025-522062204db0', 'field': 'total_amount', 'value': '1250.00', 'confidence': 0.95}, {'ext_id': '0aa86b6e-098d-4a98-8495-34e05fc5881f', 'field': 'currency', 'value': 'USD', 'confidence': 0.9}, {'ext_id': '67da3b28-d252-4bc3-b613-7c28d5004964', 'field': 'tax_amount', 'value': '0.00', 'confidence': 0.85}, {'ext_id': '5fcdd696-06c0-4cc8-8914-702a8a479165', 'field': 'payment_terms', 'value': 'Net 30', 'confidence': 0.85}, {'ext_id': '5abdc470-be85-4a47-ab3f-9c90bae618da', 'field': 'line_items', 'value': '[{"description": "Consulting Services", "quantity": 10, "unit_price": 125.0, "total": 1250.0}]', 'confidence': 0.8}]}
+    Output: {'suggestions': [{'ext_id': '2a56f8fe-876a-4651-8ca4-70995d05d169', 'field': 'vendor_name', 'value': 'ACME Corp', 'confidence': 0.9}, {'ext_id': '169aa086-6ffa-47a4-bad7-195715aab566', 'field': 'invoice_number', 'value': 'INV-2026-001', 'confidence': 0.95}, {'ext_id': '3d21d781-dc51-418c-bac8-8acfbe118882', 'field': 'invoice_date', 'value': '2026-06-15', 'confidence': 0.9}, {'ext_id': '1e214f5b-ffbe-4d94-8999-64cf3c486c48', 'field': 'due_date', 'value': '2026-07-15', 'confidence': 0.9}, {'ext_id': 'b1e93afb-2b03-44ac-80bb-591d334a0545', 'field': 'total_amount', 'value': '1250.00', 'confidence': 0.95}, {'ext_id': '7a2d4117-e72c-483a-bfa9-87e7518a2f75', 'field': 'currency', 'value': 'USD', 'confidence': 0.9}, {'ext_id': '527bde04-66cb-49b1-8f51-efdef7d88520', 'field': 'tax_amount', 'value': '0.00', 'confidence': 0.85}, {'ext_id': '4b47790d-c0eb-4c5b-92d2-ee2d3d626d37', 'field': 'payment_terms', 'value': 'Net 30', 'confidence': 0.85}, {'ext_id': 'd1aa7e41-d98d-45ce-99c3-20338f339f7d', 'field': 'line_items', 'value': '[{"description": "Consulting Services", "quantity": 10, "unit_price": 125.0, "total": 1250.0}]', 'confidence': 0.8}]}
 ```
 
 ## 3. Grounded Suggestions & Provenance
@@ -46,7 +46,7 @@ Processing time: 20.60ms
 | Field Name | Extracted Value | Confidence | Provenance Source | Status |
 | --- | --- | --- | --- | --- |
 | vendor_name | ACME Corp | 0.90 | Grounded (page 1, bbox [0.00, 0.00, 1.00, 0.03]) | suggested |
-| invoice_number | vation | 0.95 | Grounded (page 1, bbox [0.00, 0.00, 1.00, 0.03]) | suggested |
+| invoice_number | INV-2026-001 | 0.95 | Grounded (page 1, bbox [0.00, 0.05, 1.00, 0.13]) | suggested |
 | invoice_date | 2026-06-15 | 0.90 | Grounded (page 1, bbox [0.00, 0.05, 1.00, 0.13]) | suggested |
 | due_date | 2026-07-15 | 0.90 | Grounded (page 1, bbox [0.00, 0.05, 1.00, 0.13]) | suggested |
 | total_amount | 1250.00 | 0.95 | Grounded (page 1, bbox [0.00, 0.22, 1.00, 0.25]) | suggested |
@@ -67,7 +67,7 @@ BUILD: GREEN
 $ make test
 packs/tests/test_paper_pack.py::test_paper_pack_fields PASSED            [ 97%]
 packs/tests/test_paper_pack.py::test_paper_pack_extract PASSED           [100%]
-============================== 45 passed in 0.28s ==============================
+============================== 45 passed in 0.34s ==============================
 TEST: GREEN
 
 $ make safety
