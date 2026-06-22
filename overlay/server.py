@@ -34,7 +34,7 @@ from kernel.sidecar.memory_store import MemoryStoreImpl
 from kernel.sidecar.orchestrator import OrchestratorImpl
 from kernel.sidecar.quality_gate import LocalQualityGate
 from kernel.sidecar.security_filter import LocalSecurityFilter
-from packs.wedge.pack import WedgePack
+from packs.generic.pack import GenericPack
 
 # Initialize FastAPI
 app = FastAPI(title="Kairo Phantom Web Overlay")
@@ -55,7 +55,7 @@ os.environ["KAIRO_GATEWAY_TEST_MODE"] = "true"
 inference_gateway = TieredInferenceGateway(tier3_enabled=False)
 
 quality_gate = LocalQualityGate(memory_store)
-wedge_pack = WedgePack()
+wedge_pack = GenericPack()
 
 orchestrator = OrchestratorImpl(
     ingestor=ingestor,
