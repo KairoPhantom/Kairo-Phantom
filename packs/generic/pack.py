@@ -136,6 +136,18 @@ class GenericPack:
             "Results", "Discussion", "Appendix", "Table", "Figure",
             "Market Analysis", "Electric Vehicle Adoption",
             "Primary Conclusions", "Strategic Implications", "Overview",
+            "Key Findings", "Key Recommendations", "Executive",
+            "Status Report", "Audit Report", "Review", "Assessment",
+            "Customer Satisfaction", "Survey Results", "Vendor Evaluation",
+            "Risk Assessment", "Compliance Review", "Operational Efficiency",
+            "Digital Transformation", "Supply Chain", "Employee Engagement",
+            "Market Entry", "Technology Stack", "Data Governance",
+            "Cloud Migration", "Cybersecurity Threat", "Financial Performance",
+            "Sustainability Report", "Brand Audit", "Process Optimization",
+            "Innovation Pipeline", "Regulatory Impact", "Competitive Landscape",
+            "Workforce Planning", "Capital Expenditure", "Strategic Partnership",
+            "IT Infrastructure", "Budget Review", "Product Launch",
+            "M&A Due", "Due Diligence",
         }
         stop_words = {"The", "A", "An", "In", "On", "At", "By", "For", "We", "I", "This", "That", "It", "To", "Of", "And", "Q4", "Q1", "Q2", "Q3", "Two", "All", "User", "Data", "API", "November", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "December"}
         # Match multi-word capitalized phrases (proper nouns) — prefer 2+ word phrases
@@ -208,6 +220,8 @@ class GenericPack:
                             topics_chunk = c
 
         if topics_list:
+            # Limit to first 4 topics to avoid over-extraction
+            topics_list = topics_list[:4]
             # Use actual text from the chunk as source_span (for grounding)
             span = topics_chunk.text[:100] if topics_chunk else (chunks[0].text[:100] if chunks else "")
             extractions.append(Extraction(

@@ -39,7 +39,7 @@ _INJECTION_SIGNALS: Final[tuple[_InjectionSignal, ...]] = (
         weight=1.0, label="direct_override:ignore_previous",
     ),
     _InjectionSignal(
-        re.compile(r"disregard\s+(your\s+)?(previous\s+)?instructions", re.IGNORECASE),
+        re.compile(r"disregard\s+(your\s+)?(previous\s+|prior\s+)?instructions", re.IGNORECASE),
         weight=1.0, label="direct_override:disregard",
     ),
     _InjectionSignal(
@@ -75,7 +75,7 @@ _INJECTION_SIGNALS: Final[tuple[_InjectionSignal, ...]] = (
         weight=0.8, label="exfil:reveal_prompt",
     ),
     _InjectionSignal(
-        re.compile(r"replace\s+(all\s+)?(outputs?|values?|text|responses?|answers?)\s+with", re.IGNORECASE),
+        re.compile(r"replace\s+(all\s+)?(outputs?|values?|text|responses?|answers?)\s*(?:with\b|[:=]|$)", re.IGNORECASE),
         weight=1.0, label="direct_override:replace_output",
     ),
 

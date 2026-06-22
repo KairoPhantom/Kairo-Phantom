@@ -88,7 +88,7 @@ class InvoicePack:
         inv_chunk = None
         for c in chunks:
             # Pattern 1: "Invoice Number: XXXX" or "Invoice No: XXXX" (multilingual labels)
-            m = re.search(r'(?:invoice\s+number|invoice\s+no\.?|inv\s+number|fakturanr|faktura\s+nr|rechnungsnr|invoice\s*#)\s*:?\s*([A-Za-z0-9][A-Za-z0-9\-]+)', c.text, re.IGNORECASE)
+            m = re.search(r'(?:invoice\s+number|invoice\s+no\.?|inv\s+number|fakturanr|faktura\s+nr|rechnungsnr|invoice\s*#|receipt\s+no\.?|receipt\s*#)\s*:?\s*#?\s*([A-Za-z0-9][A-Za-z0-9\-]+)', c.text, re.IGNORECASE)
             if m:
                 inv_no = m.group(1).strip()
                 inv_chunk = c
@@ -131,7 +131,7 @@ class InvoicePack:
             if dates:
                 inv_date = dates[0]
                 date_chunk = c
-            due_dates = re.findall(r'(?:due|due date|payment due|förfallodatum|förfallo|fällig|zahlbar bis)\s*:?\s*(\d{4}[-/]\d{2}[-/]\d{2}|\d{1,2}\s+[a-zA-Z]+\s+\d{4}|\w+\s+\d{1,2},?\s+\d{4}|\d{2}/\d{2}/\d{4})', c.text, re.IGNORECASE)
+            due_dates = re.findall(r'(?:due date|due|payment due|förfallodatum|förfallo|fällig|zahlbar bis)\s*:?\s*(\d{4}[-/]\d{2}[-/]\d{2}|\d{1,2}\s+[a-zA-Z]+\s+\d{4}|\w+\s+\d{1,2},?\s+\d{4}|\d{2}/\d{2}/\d{4})', c.text, re.IGNORECASE)
             if due_dates:
                 due_date = due_dates[0]
                 date_chunk = c
