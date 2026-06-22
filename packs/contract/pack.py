@@ -41,54 +41,72 @@ class ContractPack:
         full_text = "\n".join(c.text for c in chunks)
         extractions: list[Extraction] = []
 
-        # Parties — extract from the introductory clause
-        # Patterns: "between X (\"alias\") and Y (\"alias\")" or "between X and Y"
+        # Parties — extract from the introductory clause (multiple formats)
         parties = []
         parties_chunk = None
-        # Search ALL chunks for the parties clause (it may not be in chunks[0])
-        for c in chunks:
-            text = c.text
-            if not ('between' in text.lower() or 'among' in text.lower()):
-                continue
-            # Strategy 1: "between X, a ... (\"alias\"), and Y, a ... (\"alias\")"
-            m = re.search(
-                r'(?:between|among)\s+([A-Z][a-zA-Z0-9\s,.&]+?)\s*(?:\([^)]*\))?\s*(?:,\s*a\s+\w+\s+\w+)?\s*(?:\([^)]*\))?\s*,?\s*and\s+([A-Z][a-zA-Z0-9\s,.&]+?)(?:\s*(?:\(|,|\.|$))',
-                text
-            )
+        full_text = "\n".join(c.text for c in chunks)
+
+        # Format A: "by and between:" followed by lines, then "and", then more
+        # e.g. "by and between:\nOmega Systems LLC, ... (hereinafter "Provider"),\nand\nDelta Corporation, ..."
+        m = re.search(r'(?:by\s+and\s+between|between)\s*:?\s*\n(.+?)(?:\n\s*and\s*\n|\n\s*-\s+and\s+-\s*\n)(.+?)(?:\n\n|\n\d+\.|$)', full_text, re.DOTALL)
+        if m:
+            p1 = m.group(1).strip()
+            p2 = m.group(2).strip()
+            # Clean: remove "a limited liability company..." suffix and "(hereinafter ...)"
+            for pp in (p1, p2):
+                pp_clean = re.sub(r'\s*\(hereinafter[^)]*\)', '', pp)
+                pp_clean = re.sub(r'\s*,\s*a\s+.*$', '', pp_clean)
+                pp_clean = re.sub(r'\s*\(the\s+["\'][^"\']*["\']\)', '', pp_clean)
+                pp_clean = pp_clean.strip().rstrip(',')
+                if pp_clean:
+                    parties.append(pp_clean)
+            if len(parties) >= 2:
+                parties_chunk = next((c for c in chunks if 'between' in c.text.lower() or 'among' in c.text.lower()), None)
+
+        # Format B: "BETWEEN:" header + "- and -" separator
+        if not parties:
+            m = re.search(r'(?:between|parties)\s*:?\s*\n(.+?)\n\s*-\s+and\s+-\s*\n(.+?)(?:\n\n|\n\d+\.|$)', full_text, re.DOTALL | re.IGNORECASE)
             if m:
-                parties_chunk = c
-                p1 = m.group(1).strip().rstrip(',')
-                p2 = m.group(2).strip().rstrip(',')
-                # Clean up: remove trailing "a Delaware corporation" etc.
-                p1 = re.sub(r',\s+a\s+.*$', '', p1).strip()
-                p2 = re.sub(r',\s+a\s+.*$', '', p2).strip()
-                parties = [p1, p2]
+                p1 = re.sub(r'\s*\(the\s+["\'][^"\']*["\']\)', '', m.group(1).strip()).strip()
+                p2 = re.sub(r'\s*\(the\s+["\'][^"\']*["\']\)', '', m.group(2).strip()).strip()
+                p1 = re.sub(r'\s*,\s+a\s+.*$', '', p1).strip()
+                p2 = re.sub(r'\s*,\s+a\s+.*$', '', p2).strip()
+                if p1: parties.append(p1)
+                if p2: parties.append(p2)
+                if len(parties) >= 2:
+                    parties_chunk = next((c for c in chunks if 'between' in c.text.lower()), None)
 
-            # Strategy 2: "between X (\"alias\") and Y (\"alias\")" — simpler
-            if not parties:
-                m2 = re.findall(
-                    r'(?:between|among)\s+([A-Z][a-zA-Z0-9\s.&]+?)(?:\s*\([^)]*\))?(?:,\s*a\s+\w+\s+\w+)?(?:\s*\([^)]*\))?\s*(?:,?\s*and\s+([A-Z][a-zA-Z0-9\s.&]+?))(?:\s*\(|,|\.|$)',
-                    text
-                )
-                if m2:
-                    for match in m2:
-                        if match[0] and match[1]:
-                            parties = [match[0].strip().rstrip(','), match[1].strip().rstrip(',')]
-                            break
+        # Format C: "The parties to this agreement are:" + numbered list
+        if not parties:
+            m = re.search(r'(?:parties\s+to\s+this\s+agreement\s+are|parties\s*:)\s*:?\s*\n', full_text, re.IGNORECASE)
+            if m:
+                # Find all numbered items after the header
+                after_header = full_text[m.end():]
+                # Stop at section headers (RECITALS, WHEREAS, ARTICLE, etc.)
+                items = re.findall(r'\d+\.\s+(.+?)(?=\n\d+\.|\n\n|\n[A-Z][A-Z]|\nRECITALS|\nWHEREAS|\nARTICLE|$)', after_header, re.DOTALL)
+                for item in items:
+                    item_clean = re.sub(r'\s*,\s+a\s+.*$', '', item.strip()).strip()
+                    if item_clean:
+                        parties.append(item_clean)
+                if parties:
+                    parties_chunk = next((c for c in chunks if 'parties' in c.text.lower()), None)
 
-            # Strategy 3: Fallback — find "X and Y" near "between" or "entered into"
-            if not parties:
-                m3 = re.search(
-                    r'(?:between|entered into.*?between)\s+([A-Z][a-zA-Z0-9]+(?:\s+[A-Z][a-zA-Z0-9]+)*)\s+(?:\([^)]*\)\s+)?and\s+([A-Z][a-zA-Z0-9]+(?:\s+[A-Z][a-zA-Z0-9]+)*)',
-                    text
-                )
-                if m3:
-                    parties = [m3.group(1).strip(), m3.group(2).strip()]
-                    if not parties_chunk:
-                        parties_chunk = c
+        # Format D: original inline "between X and Y" (fallback)
+        if not parties:
+            for c in chunks:
+                text = c.text
+                if not ('between' in text.lower() or 'among' in text.lower()):
+                    continue
+                m = re.search(r'(?:between|among)\s+([A-Z][a-zA-Z0-9\s,.&]+?)\s*(?:\([^)]*\))?\s*(?:,\s*a\s+\w+\s+\w+)?\s*(?:\([^)]*\))?\s*,?\s*and\s+([A-Z][a-zA-Z0-9\s,.&]+?)(?:\s*(?:\(|,|\.|$))', text)
+                if m:
+                    parties_chunk = c
+                    p1 = re.sub(r',\s+a\s+.*$', '', m.group(1).strip().rstrip(',')).strip()
+                    p2 = re.sub(r',\s+a\s+.*$', '', m.group(2).strip().rstrip(',')).strip()
+                    parties = [p1, p2]
+                    break
 
-            if parties:
-                break
+        # Dedupe
+        parties = list(dict.fromkeys(parties))
 
         if parties:
             extractions.append(Extraction(
@@ -105,43 +123,63 @@ class ContractPack:
         term_date = ""
         date_chunk = None
         for c in chunks:
-            # Effective date: look for "as of <date>" or "entered into on/as of <date>" or "Effective Date" near a date
+            # Effective date: multiple formats
             if not eff_date:
-                # Pattern: "as of <date>" or "entered into ... on/as of <date>"
+                # "dated as of the 15th day of January, 2024" or "dated as of <date>"
                 m = re.search(
-                    r'(?:as of|entered into\s+(?:as of|on))\s+(\d{4}[-/]\d{2}[-/]\d{2}|\d{1,2}\s+[a-zA-Z]+\s+\d{4}|[a-zA-Z]+\s+\d{1,2},?\s+\d{4})',
+                    r'(?:dated\s+)?(?:as\s+of|on)\s+(?:the\s+)?(\d{1,2}(?:st|nd|rd|th)?\s+(?:day\s+of\s+)?[a-zA-Z]+,?\s+\d{4}|\d{4}[-/]\d{2}[-/]\d{2}|\d{1,2}\s+[a-zA-Z]+\s+\d{4}|[a-zA-Z]+\s+\d{1,2},?\s+\d{4})',
                     c.text, re.IGNORECASE
                 )
                 if m:
                     eff_date = m.group(1).strip()
                     date_chunk = c
-                else:
-                    # Pattern: "made and entered into as of <date>"
+                # "made on the 3rd day of June, 2024" or "made on <date>"
+                if not eff_date:
                     m = re.search(
-                        r'(?:made|entered)\s+(?:and\s+\w+\s+)?(?:into\s+)?(?:as of|on)\s+(\d{4}[-/]\d{2}[-/]\d{2}|\d{1,2}\s+[a-zA-Z]+\s+\d{4}|[a-zA-Z]+\s+\d{1,2},?\s+\d{4})',
+                        r'(?:made|entered)\s+(?:and\s+\w+\s+)?(?:into\s+)?(?:as\s+of|on)\s+(?:the\s+)?(\d{1,2}(?:st|nd|rd|th)?\s+(?:day\s+of\s+)?[a-zA-Z]+,?\s+\d{4}|\d{4}[-/]\d{2}[-/]\d{2}|\d{1,2}\s+[a-zA-Z]+\s+\d{4}|[a-zA-Z]+\s+\d{1,2},?\s+\d{4})',
                         c.text, re.IGNORECASE
                     )
                     if m:
                         eff_date = m.group(1).strip()
                         date_chunk = c
-                # Also check "effective date ... is <date>" or "commencement date ... <date>"
+                # "Effective Date: 2024-02-01" (label with colon)
                 if not eff_date:
                     m = re.search(
-                        r'(?:effective date|commencement date|date of this agreement)\s*(?:is|of|as of|=|:)?\s*(\d{4}[-/]\d{2}[-/]\d{2}|\d{1,2}\s+[a-zA-Z]+\s+\d{4}|[a-zA-Z]+\s+\d{1,2},?\s+\d{4})',
+                        r'(?:effective\s+date|commencement\s+date|date\s+of\s+this\s+agreement)\s*(?:is|of|as\s+of|=|:)?\s*(\d{4}[-/]\d{2}[-/]\d{2}|\d{1,2}\s+[a-zA-Z]+\s+\d{4}|[a-zA-Z]+\s+\d{1,2},?\s+\d{4})',
+                        c.text, re.IGNORECASE
+                    )
+                    if m:
+                        eff_date = m.group(1).strip()
+                        date_chunk = c
+                # "commences on <date>"
+                if not eff_date:
+                    m = re.search(
+                        r'(?:commences|commenc(?:es|ing)|starts)\s+on\s+(\d{4}[-/]\d{2}[-/]\d{2}|\d{1,2}\s+[a-zA-Z]+\s+\d{4}|[a-zA-Z]+\s+\d{1,2},?\s+\d{4})',
                         c.text, re.IGNORECASE
                     )
                     if m:
                         eff_date = m.group(1).strip()
                         date_chunk = c
 
-            # Termination date
-            m2 = re.search(
-                r'(?:terminate on|expiration date|termination date|ends on|terminate\s+on)\s*(?:is|of|as of)?\s*(\d{4}[-/]\d{2}[-/]\d{2}|\d{1,2}\s+[a-zA-Z]+\s+\d{4}|[a-zA-Z]+\s+\d{1,2},?\s+\d{4})',
-                c.text, re.IGNORECASE
-            )
-            if m2:
-                term_date = m2.group(1).strip()
-                date_chunk = c
+            # Termination date: multiple formats
+            if not term_date:
+                # "terminate on <date>" / "termination date: <date>" / "expiration date: <date>"
+                m2 = re.search(
+                    r'(?:terminate(?:s)?\s+on|expiration\s+date|termination\s+date|ends\s+on|expire(?:s)?\s+on)\s*(?:is|of|as\s+of|=|:)?\s*(\d{4}[-/]\d{2}[-/]\d{2}|\d{1,2}\s+[a-zA-Z]+\s+\d{4}|[a-zA-Z]+\s+\d{1,2},?\s+\d{4})',
+                    c.text, re.IGNORECASE
+                )
+                if m2:
+                    term_date = m2.group(1).strip()
+                    date_chunk = c
+                # "shall remain in effect until <date>" / "in effect until <date>"
+                if not term_date:
+                    m2 = re.search(
+                        r'(?:shall\s+remain\s+in\s+effect|in\s+effect|effective)\s+(?:until|through|to)\s+(\d{4}[-/]\d{2}[-/]\d{2}|\d{1,2}\s+[a-zA-Z]+\s+\d{4}|[a-zA-Z]+\s+\d{1,2},?\s+\d{4})',
+                        c.text, re.IGNORECASE
+                    )
+                    if m2:
+                        term_date = m2.group(1).strip()
+                        date_chunk = c
 
         if eff_date:
             extractions.append(Extraction(
@@ -162,16 +200,39 @@ class ContractPack:
                 chunk_id=date_chunk.chunk_id if date_chunk else "",
             ))
 
-        # Obligations
+        # Obligations — extract each "shall" clause as a separate obligation
+        # The label expects each obligation as a separate sentence, not the whole paragraph
         obligations = []
         ob_chunk = None
         for c in chunks:
-            lines = c.text.splitlines()
+            text = c.text
+            # Remove section headers (lines like "1. SCOPE OF SERVICES" or "ARTICLE I — TITLE")
+            # before splitting into sentences
+            lines = text.split('\n')
+            cleaned_lines = []
             for line in lines:
-                if any(x in line.lower() for x in ["shall", "agree to", "covenant", "undertake"]):
-                    obligations.append(line.strip())
-                    if not ob_chunk:
-                        ob_chunk = c
+                line_stripped = line.strip()
+                # Skip section headers: "N. TITLE" or "ARTICLE N — TITLE" or "RECITALS"
+                if re.match(r'^\d+\.\s+[A-Z][A-Z\s]+$', line_stripped):
+                    continue
+                if re.match(r'^ARTICLE\s+[IVX]+\s+[—\-]\s+[A-Z][A-Z\s]+$', line_stripped):
+                    continue
+                if line_stripped in ('RECITALS', 'WHEREAS'):
+                    continue
+                cleaned_lines.append(line)
+            cleaned_text = ' '.join(cleaned_lines)
+            # Split into sentences
+            sentences = re.split(r'(?<=[.])\s+', cleaned_text)
+            for sent in sentences:
+                sent = sent.strip()
+                if not sent:
+                    continue
+                # An obligation contains "shall", "agree to", "covenant", "undertake"
+                if any(x in sent.lower() for x in ["shall", "agree to", "covenant", "undertake"]):
+                    if sent not in obligations:
+                        obligations.append(sent)
+                        if not ob_chunk:
+                            ob_chunk = c
 
         if obligations:
             extractions.append(Extraction(
@@ -183,22 +244,61 @@ class ContractPack:
                 chunk_id=ob_chunk.chunk_id if ob_chunk else chunks[0].chunk_id,
             ))
 
-        # Governing Law
+        # Governing Law — prioritize the governing law section, not party descriptions
         gov_law = ""
         gov_chunk = None
         for c in chunks:
-            # Pattern: "State of New York" or "State of Delaware" — allow multi-word state names
-            m = re.search(r'(?:State of|state of)\s+([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)*)', c.text)
+            # Only look in chunks that mention governing law / construed / laws of
+            # Exclude chunks that are party descriptions (contain "incorporated in", "organized under")
+            text_lower = c.text.lower()
+            if not any(kw in text_lower for kw in ['governing law', 'governed by', 'construed', 'laws of', 'jurisdiction', 'subject to the laws']):
+                continue
+            # Skip party description chunks
+            if any(kw in text_lower for kw in ['incorporated in', 'organized under', 'registered in', 'hereinafter']):
+                continue
+            # "governed by the laws of the State of New York" / "laws of the Province of Ontario"
+            # Find governing law: search for the prefix case-insensitively, then extract jurisdiction name
+            # Two-step: find the position after "laws of [the] [State/Province of]", then capture capitalized words
+            m_prefix = re.search(r'(?:governed\s+by\s+(?:the\s+)?laws\s+of|laws\s+of|construed\s+in\s+accordance\s+with\s+(?:the\s+)?laws\s+of|subject\s+to\s+(?:the\s+)?laws\s+of)\s+(?:the\s+)?(?:State\s+of\s+|Province\s+of\s+)?', c.text, re.IGNORECASE)
+            if m_prefix:
+                # Extract capitalized words after the prefix (case-sensitive, no IGNORECASE)
+                after = c.text[m_prefix.end():]
+                m = re.match(r'([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)', after)
+                if m:
+                    gov_law = m.group(1).strip()
+                    gov_chunk = c
+                    break
+
+            # "Governing Law: New York" (label format)
+            m = re.search(r'(?:governing\s+law|jurisdiction)\s*:?\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)', c.text, re.IGNORECASE)
             if m:
                 gov_law = m.group(1).strip()
                 gov_chunk = c
                 break
-            # Fallback: "governed by the laws of New York"
-            m = re.search(r'(?:governed by|governing law|laws of)\s+(?:the\s+)?(?:State\s+of\s+)?([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)*)', c.text, re.IGNORECASE)
-            if m:
-                gov_law = m.group(1).strip()
-                gov_chunk = c
-                break
+        # Pattern: "New York law governs this agreement" / "X law governs"
+        if not gov_law:
+            for c in chunks:
+                text_lower = c.text.lower()
+                if 'governs' in text_lower or 'governed by' in text_lower:
+                    m = re.search(r'([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+law\s+governs', c.text)
+                    if m:
+                        gov_law = m.group(1).strip()
+                        gov_chunk = c
+                        break
+                    m = re.search(r'governed\s+by\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+law', c.text)
+                    if m:
+                        gov_law = m.group(1).strip()
+                        gov_chunk = c
+                        break
+
+        # Fallback: if no governing law section found, try "State of X" anywhere
+        if not gov_law:
+            for c in chunks:
+                m = re.search(r'(?:State of|Province of)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)', c.text)
+                if m:
+                    gov_law = m.group(1).strip()
+                    gov_chunk = c
+                    break
 
         if gov_law:
             extractions.append(Extraction(
@@ -215,19 +315,19 @@ class ContractPack:
         pay_chunk = None
         for c in chunks:
             # Pattern 1: "within N days" (common in contracts)
-            m = re.search(r'within\s+(\d+\s*days)', c.text, re.IGNORECASE)
+            m = re.search(r'within\s+(\w[\w-]+\s*(?:\(\d+\)\s*)?days|\d+\s*days)', c.text, re.IGNORECASE)
             if m:
                 pay_terms = "within " + m.group(1).strip()
                 pay_chunk = c
                 break
             # Pattern 2: "payment terms: ..." or "terms: ..."
-            m = re.search(r'(?:payment terms|terms)\s*:?\s*(net\s*\d+|due on receipt|immediate|within\s+\d+\s*days)', c.text, re.IGNORECASE)
+            m = re.search(r'(?:payment terms|terms)\s*:?\s*(net\s*\d+|due on receipt|due upon receipt|immediate|within\s+(\w[\w-]+\s*(?:\(\d+\)\s*)?days|\d+\s*days))', c.text, re.IGNORECASE)
             if m:
                 pay_terms = m.group(1).strip()
                 pay_chunk = c
                 break
             # Pattern 3: "paid within N days" or "pay ... within N days"
-            m = re.search(r'(?:paid|pay)\s+(?:within\s+)?(\d+\s*days)', c.text, re.IGNORECASE)
+            m = re.search(r'(?:paid|pay|remit\s+payment)\s+(?:within\s+)?((?:\w[\w-]+\s*(?:\(\d+\)\s*)?days|\d+\s*days))', c.text, re.IGNORECASE)
             if m:
                 pay_terms = "within " + m.group(1).strip()
                 pay_chunk = c

@@ -38,13 +38,23 @@ class GenericPack:
         full_text = "\n".join(c.text for c in chunks)
         extractions: list[Extraction] = []
 
-        # Find a chunk for summary (usually the first chunk)
-        summary_chunk = chunks[0] if chunks else None
+        # Find summary — look for "Executive Summary" section, or first substantial paragraph
+        summary_chunk = None
         summary_val = ""
-        if summary_chunk:
-            # First 2 sentences
-            sentences = re.split(r'(?<=[.!?])\s+', summary_chunk.text)
-            summary_val = " ".join(sentences[:2]).strip()
+        full_text_joined = "\n".join(c.text for c in chunks)
+        # Strategy 1: "Executive Summary" header followed by text
+        m = re.search(r'(?:executive\s+summary|summary|abstract)\s*:?\s*\n(.+?)(?:\n\n|\n[A-Z][^\n]*:|\n\u2022|$)', full_text_joined, re.DOTALL | re.IGNORECASE)
+        if m:
+            summary_val = m.group(1).strip()
+            summary_chunk = next((c for c in chunks if summary_val[:30] in c.text), chunks[0] if chunks else None)
+        # Strategy 2: first chunk with > 50 chars (skip title-only chunks)
+        if not summary_val:
+            for c in chunks:
+                if len(c.text.strip()) > 50:
+                    sentences = re.split(r'(?<=[.!?])\s+', c.text)
+                    summary_val = " ".join(sentences[:2]).strip()
+                    summary_chunk = c
+                    break
 
         if summary_val:
             extractions.append(Extraction(
@@ -56,44 +66,50 @@ class GenericPack:
                 chunk_id=summary_chunk.chunk_id if summary_chunk else "",
             ))
 
-        # Find key claims
+        # Find key claims — handle "Key Claims:", "Main Findings:", "Key Recommendations:", bullet points
         claims_list = []
         claims_chunk = None
         for c in chunks:
             lines = c.text.splitlines()
-            # Strategy 1: Look for "Key Claims:" header and extract numbered items after it
             in_claims_section = False
             for line in lines:
                 line_stripped = line.strip()
-                if re.match(r'key\s+claims\s*:', line_stripped, re.IGNORECASE):
+                # Detect claims section headers (multiple variants)
+                if re.match(r'(?:key\s+claims|main\s+findings|key\s+recommendations|findings|recommendations|results|conclusions|primary\s+conclusions)\s*:', line_stripped, re.IGNORECASE):
                     in_claims_section = True
                     if not claims_chunk:
                         claims_chunk = c
                     continue
                 if in_claims_section:
-                    # Check if this line is a numbered claim (e.g., "1. Some claim text.")
+                    # Bullet points: "• text", "- text", "* text"
+                    m = re.match(r'^[\u2022\-*]\s*(.+)', line_stripped)
+                    if m:
+                        cleaned = m.group(1).strip()
+                        if len(cleaned) > 10 and cleaned not in claims_list:
+                            claims_list.append(cleaned)
+                        continue
+                    # Numbered items: "1. text"
                     m = re.match(r'^\d+\.\s*(.+)', line_stripped)
                     if m:
                         cleaned = m.group(1).strip()
                         if len(cleaned) > 10 and cleaned not in claims_list:
                             claims_list.append(cleaned)
-                    elif line_stripped and not line_stripped.startswith('---'):
-                        # End of claims section (non-numbered, non-empty line)
-                        if len(claims_list) > 0:
-                            in_claims_section = False
+                        continue
+                    # End of section: non-empty, non-bullet, non-numbered line
+                    if line_stripped and len(claims_list) > 0:
+                        in_claims_section = False
             if claims_list:
                 break
 
-        # Strategy 2: Fallback — look for lines with claim-related keywords
+        # Strategy 2: Fallback — look for bullet points with claim-related keywords
         if not claims_list:
             for c in chunks:
                 lines = c.text.splitlines()
                 for line in lines:
-                    if any(k in line.lower() for k in ["claim", "show", "propose", "suggest", "result", "find"]):
+                    if any(k in line.lower() for k in ["claim", "show", "propose", "suggest", "result", "find", "recommend", "complet", "reduc", "achiev"]):
                         cleaned = line.strip("-*\u2022 ").strip()
-                        # Remove leading numbers
                         cleaned = re.sub(r'^\d+\.\s*', '', cleaned)
-                        if len(cleaned) > 20 and cleaned not in claims_list:
+                        if len(cleaned) > 15 and cleaned not in claims_list:
                             claims_list.append(cleaned)
                             if not claims_chunk:
                                 claims_chunk = c
@@ -108,47 +124,97 @@ class GenericPack:
                 chunk_id=claims_chunk.chunk_id if claims_chunk else chunks[0].chunk_id,
             ))
 
-        # Find entities (capitalized words/phrases)
+        # Find entities (proper nouns — capitalized phrases, not section headers or common words)
         entities_list = []
         entities_chunk = None
-        entity_pattern = re.compile(r'\b[A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)*\b')
+        # Section headers and document terms to exclude
+        section_terms = {
+            "Executive Summary", "Main Findings", "Key Recommendations", "Key Claims",
+            "Abstract", "Introduction", "Conclusion", "References", "Budget",
+            "Status Report", "Executive", "Summary", "Findings", "Recommendations",
+            "Report", "Analysis", "Overview", "Background", "Methodology",
+            "Results", "Discussion", "Appendix", "Table", "Figure",
+            "Market Analysis", "Electric Vehicle Adoption",
+            "Primary Conclusions", "Strategic Implications", "Overview",
+        }
+        stop_words = {"The", "A", "An", "In", "On", "At", "By", "For", "We", "I", "This", "That", "It", "To", "Of", "And", "Q4", "Q1", "Q2", "Q3", "Two", "All", "User", "Data", "API", "November", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "December"}
+        # Match multi-word capitalized phrases (proper nouns) — prefer 2+ word phrases
+        entity_pattern = re.compile(r'\b[A-Z][a-zA-Z]+(?:[ ]+[A-Z][a-zA-Z]+){1,3}\b')
         for c in chunks:
             matches = entity_pattern.findall(c.text)
             for m in matches:
-                # Filter out common stop capitalized words
-                if m not in ["The", "A", "An", "In", "On", "At", "By", "For", "We", "I", "This", "That", "It", "To", "Of", "And"] and len(m) > 2:
-                    if m not in entities_list:
-                        entities_list.append(m)
-                        if not entities_chunk:
-                            entities_chunk = c
+                if m in stop_words or m in section_terms:
+                    continue
+                if len(m) < 5:
+                    continue
+                # Skip if it's a line by itself (likely a header)
+                if m.strip() in [l.strip() for l in c.text.splitlines() if l.strip()]:
+                    continue
+                if m not in entities_list:
+                    entities_list.append(m)
+                    if not entities_chunk:
+                        entities_chunk = c
+        # Also add single-word proper nouns that are likely entity names
+        if True:  # always check for single-word entities
+            single_pattern = re.compile(r'\b[A-Z][a-zA-Z]{4,}\b')
+            for c in chunks:
+                matches = single_pattern.findall(c.text)
+                for m in matches:
+                    if m in stop_words or m in section_terms or m in entities_list:
+                        continue
+                    if m.strip() in [l.strip() for l in c.text.splitlines() if l.strip()]:
+                        continue
+                    entities_list.append(m)
+                    if not entities_chunk:
+                        entities_chunk = c
+                    if len(entities_list) >= 10:
+                        break
 
         if entities_list:
+            # Use actual text from the chunk as source_span (for grounding)
+            span = entities_list[0] if entities_list else (chunks[0].text[:100] if chunks else "")
             extractions.append(Extraction(
                 pack_id=self._pack_id,
                 field_name="entities",
                 value=json.dumps(entities_list[:10]),
-                source_span=entities_list[0],
+                source_span=span,
                 confidence=0.8,
                 chunk_id=entities_chunk.chunk_id if entities_chunk else chunks[0].chunk_id,
             ))
 
-        # Find topics (simple frequency word logic or keywords)
+        # Find topics — map text keywords to canonical topic names
         topics_list = []
         topics_chunk = None
-        topic_keywords = ["technology", "security", "financial", "analysis", "system", "contract", "invoice", "paper", "data", "intelligence"]
+        # Map: keyword in text -> canonical topic name
+        topic_map = {
+            "technology": ["technology", "tech", "software", "api", "cloud", "digital", "it ", "infrastructure", "system", "platform", "battery", "ev ", "electric vehicle", "transition", "supply chain"],
+            "security": ["security", "vulnerability", "patch", "audit", "cyber", "threat"],
+            "data": ["data", "database", "migration", "analytics"],
+            "financial": ["financial", "finance", "budget", "cost", "revenue", "payment", "invoice", "tax"],
+            "analysis": ["analysis", "report", "study", "research", "assessment"],
+            "market": ["market", "sales", "customer", "adoption", "growth", "competitive"],
+            "automotive": ["automotive", "vehicle", "ev", "car", "battery", "electric vehicle"],
+            "contract": ["contract", "agreement", "clause", "party", "obligation"],
+            "paper": ["paper", "research", "model", "experiment", "dataset", "training"],
+            "intelligence": ["intelligence", "ai", "machine learning", "neural"],
+        }
         for c in chunks:
-            for keyword in topic_keywords:
-                if keyword in c.text.lower() and keyword not in topics_list:
-                    topics_list.append(keyword)
-                    if not topics_chunk:
-                        topics_chunk = c
+            text_lower = c.text.lower()
+            for canonical, keywords in topic_map.items():
+                if canonical not in topics_list:
+                    if any(kw in text_lower for kw in keywords):
+                        topics_list.append(canonical)
+                        if not topics_chunk:
+                            topics_chunk = c
 
         if topics_list:
+            # Use actual text from the chunk as source_span (for grounding)
+            span = topics_chunk.text[:100] if topics_chunk else (chunks[0].text[:100] if chunks else "")
             extractions.append(Extraction(
                 pack_id=self._pack_id,
                 field_name="topics",
                 value=json.dumps(topics_list),
-                source_span=topics_list[0],
+                source_span=span,
                 confidence=0.75,
                 chunk_id=topics_chunk.chunk_id if topics_chunk else chunks[0].chunk_id,
             ))

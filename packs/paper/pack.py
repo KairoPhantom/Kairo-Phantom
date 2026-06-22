@@ -61,18 +61,43 @@ class PaperPack:
 
         # Authors (usually second line/paragraph of first chunk)
         authors = []
-        authors_chunk = chunks[0] if chunks else None
-        if authors_chunk:
-            lines = [l.strip() for l in authors_chunk.text.splitlines() if l.strip()]
-            if len(lines) > 1:
-                authors = [a.strip() for a in re.split(r'[,;]|\band\b', lines[1]) if a.strip()]
+        authors_chunk = None
+        authors_line = ""
+        # Authors are typically the line after the title, which may be in a separate chunk
+        # Search the first few chunks for a line that looks like author names
+        for c in chunks[:4]:
+            lines = [l.strip() for l in c.text.splitlines() if l.strip()]
+            for line in lines:
+                # Skip title (usually longer, has "Abstract" or section headers)
+                if line.lower() in ('abstract', 'introduction', 'keywords', 'references'):
+                    continue
+                # Author line: contains commas or "and", has 2+ capitalized names, no sentence-ending period
+                if (',' in line or ' and ' in line.lower()) and not line.endswith('.') and len(line) < 200:
+                    # Check it looks like names: 2+ capitalized words
+                    name_parts = re.split(r'[,;]|\s+and\s+', line)
+                    name_parts = [p.strip() for p in name_parts if p.strip()]
+                    cap_count = sum(1 for p in name_parts if p and p[0].isupper())
+                    if cap_count >= 1 and len(name_parts) >= 1:
+                        authors = [a.strip() for a in re.split(r'[,;]|\band\b', line, flags=re.IGNORECASE) if a.strip()]
+                        authors_chunk = c
+                        authors_line = line
+                        break
+            if authors:
+                break
+        # Fallback: if title is line 0 of chunk 0, authors may be line 1 of chunk 0 or chunk 1
+        if not authors and len(chunks) >= 2:
+            lines = [l.strip() for l in chunks[1].text.splitlines() if l.strip()]
+            if lines:
+                authors = [a.strip() for a in re.split(r'[,;]|\band\b', lines[0], flags=re.IGNORECASE) if a.strip()]
+                authors_chunk = chunks[1]
+                authors_line = lines[0]
 
         if authors:
             extractions.append(Extraction(
                 pack_id=self._pack_id,
                 field_name="authors",
                 value=json.dumps(authors),
-                source_span=lines[1] if len(lines) > 1 else "",
+                source_span=authors_line,
                 confidence=0.85,
                 chunk_id=authors_chunk.chunk_id if authors_chunk else "",
             ))
@@ -103,22 +128,33 @@ class PaperPack:
         claims_chunk = None
         for c in chunks:
             lines = c.text.splitlines()
-            # Strategy 1: Look for "Key Claims:" header and extract numbered items
+            # Strategy 1: Look for claims section headers and extract numbered items
             in_claims_section = False
             for line in lines:
                 line_stripped = line.strip()
-                if re.match(r'key\s+claims\s*:', line_stripped, re.IGNORECASE):
+                # Match various claims section headers
+                if re.match(r'(?:key\s+claims|main\s+results|key\s+contributions|results|contributions|findings|conclusions)\s*:', line_stripped, re.IGNORECASE):
                     in_claims_section = True
                     if not claims_chunk:
                         claims_chunk = c
                     continue
                 if in_claims_section:
+                    # Numbered items: "1. text"
                     m = re.match(r'^\d+\.\s*(.+)', line_stripped)
                     if m:
                         cleaned = m.group(1).strip()
                         if len(cleaned) > 10 and cleaned not in claims:
                             claims.append(cleaned)
-                    elif line_stripped and not line_stripped.startswith('---'):
+                        continue
+                    # Bullet points: "- text" or "* text" or "• text"
+                    m = re.match(r'^[-*•]\s*(.+)', line_stripped)
+                    if m:
+                        cleaned = m.group(1).strip()
+                        if len(cleaned) > 10 and cleaned not in claims:
+                            claims.append(cleaned)
+                        continue
+                    # End of section: non-empty, non-bullet, non-numbered line
+                    if line_stripped and not line_stripped.startswith('---'):
                         if len(claims) > 0:
                             in_claims_section = False
             if claims:
@@ -147,15 +183,29 @@ class PaperPack:
                 chunk_id=claims_chunk.chunk_id if claims_chunk else chunks[0].chunk_id,
             ))
 
-        # Methods
+        # Methods — extract individual method sentences from the methodology section
         methods = []
         methods_chunk = None
         for c in chunks:
             if any(x in c.text.lower() for x in ["methodology", "methods", "experimental setup", "proposed approach"]):
+                # Remove the section header line, then split by sentence
                 lines = c.text.splitlines()
-                for line in lines[:5]:
-                    if len(line.strip()) > 15:
-                        methods.append(line.strip())
+                # Skip the header line (first line if it's just the section title)
+                content_lines = []
+                for line in lines:
+                    line_stripped = line.strip()
+                    # Skip section headers
+                    if re.match(r'^(?:methodology|methods|experimental setup|proposed approach)\s*:?$', line_stripped, re.IGNORECASE):
+                        continue
+                    if line_stripped:
+                        content_lines.append(line_stripped)
+                # Join and split by sentence
+                content = ' '.join(content_lines)
+                sentences = re.split(r'(?<=[.])\s+', content)
+                for sent in sentences:
+                    sent = sent.strip()
+                    if len(sent) > 15:
+                        methods.append(sent)
                 methods_chunk = c
                 break
 

@@ -47,6 +47,9 @@ class InvoicePack:
         if vendor_chunk:
             lines = [l.strip() for l in vendor_chunk.text.splitlines() if l.strip()]
             for line in lines[:5]:
+                # Skip border/decorative lines (===, ---, ***, ~~~)
+                if re.match(r'^[=\-*~_]{3,}$', line):
+                    continue
                 # Pattern 1: "INVOICE: Company Name" — extract company name after colon
                 m = re.match(r'^INVOICE\s*:?\s+(.+)', line, re.IGNORECASE)
                 if m:
@@ -60,10 +63,13 @@ class InvoicePack:
                 if len(line) > 3 and not line.lower().startswith("invoice"):
                     vendor_name = line
                     break
-            # Fallback: if vendor_name still empty, try first non-label line
+            # Fallback: if vendor_name still empty, try first non-label, non-border line
             if not vendor_name:
-                for line in lines[:5]:
-                    if len(line) > 3 and not any(x in line.lower() for x in ["invoice", "bill to", "to:", "date:", "due date:", "description", "qty", "unit"]):
+                for line in lines[:8]:
+                    # Skip border/decorative lines
+                    if re.match(r'^[=\-*~_]{3,}$', line):
+                        continue
+                    if len(line) > 3 and not any(x in line.lower() for x in ["invoice", "bill to", "to:", "date:", "due date:", "description", "qty", "unit", "receipt"]):
                         vendor_name = line
                         break
 
@@ -81,14 +87,26 @@ class InvoicePack:
         inv_no = ""
         inv_chunk = None
         for c in chunks:
-            # Pattern 1: "Invoice Number: INV-XXXX" or "Invoice No: XXXX"
-            m = re.search(r'(?:invoice\s+number|invoice\s+no\.?|inv\s+number)\s*:?\s*([A-Za-z0-9][A-Za-z0-9\-]+)', c.text, re.IGNORECASE)
+            # Pattern 1: "Invoice Number: XXXX" or "Invoice No: XXXX" (multilingual labels)
+            m = re.search(r'(?:invoice\s+number|invoice\s+no\.?|inv\s+number|fakturanr|faktura\s+nr|rechnungsnr|invoice\s*#)\s*:?\s*([A-Za-z0-9][A-Za-z0-9\-]+)', c.text, re.IGNORECASE)
             if m:
                 inv_no = m.group(1).strip()
                 inv_chunk = c
                 break
             # Pattern 2: "INV-XXXX" standalone (starts with INV-)
             m = re.search(r'\b(INV-[A-Za-z0-9\-]+)\b', c.text)
+            if m:
+                inv_no = m.group(1).strip()
+                inv_chunk = c
+                break
+            # Pattern 3: labeled "No:" or "Number:" near invoice context (line-start)
+            m = re.search(r'(?:^|\n)\s*(?:invoice|inv|faktura)\s*(?:no|number|nr|#)\s*[:.]?\s*([A-Za-z0-9][A-Za-z0-9\-]+)', c.text, re.IGNORECASE)
+            if m:
+                inv_no = m.group(1).strip()
+                inv_chunk = c
+                break
+            # Pattern 4: generic invoice-number-like token: PREFIX-YYYY-NNNN or YYYY-PREFIX-NNNN
+            m = re.search(r'\b([A-Z]{2,}-\d{4}-\d+|\d{4}-[A-Z]{2,}-\d+|[A-Z]{2,}-\d{4})\b', c.text)
             if m:
                 inv_no = m.group(1).strip()
                 inv_chunk = c
@@ -109,11 +127,11 @@ class InvoicePack:
         due_date = ""
         date_chunk = None
         for c in chunks:
-            dates = re.findall(r'(?:date|issued|billed)\s*:?\s*(\d{4}[-/]\d{2}[-/]\d{2}|\d{1,2}\s+[a-zA-Z]+\s+\d{4}|\w+\s+\d{1,2},?\s+\d{4}|\d{2}/\d{2}/\d{4})', c.text, re.IGNORECASE)
+            dates = re.findall(r'(?:date|issued|billed|fakturadatum|datum|rechnungsdatum)\s*:?\s*(\d{4}[-/]\d{2}[-/]\d{2}|\d{1,2}\s+[a-zA-Z]+\s+\d{4}|\w+\s+\d{1,2},?\s+\d{4}|\d{2}/\d{2}/\d{4})', c.text, re.IGNORECASE)
             if dates:
                 inv_date = dates[0]
                 date_chunk = c
-            due_dates = re.findall(r'(?:due|due date|payment due)\s*:?\s*(\d{4}[-/]\d{2}[-/]\d{2}|\d{1,2}\s+[a-zA-Z]+\s+\d{4}|\w+\s+\d{1,2},?\s+\d{4}|\d{2}/\d{2}/\d{4})', c.text, re.IGNORECASE)
+            due_dates = re.findall(r'(?:due|due date|payment due|förfallodatum|förfallo|fällig|zahlbar bis)\s*:?\s*(\d{4}[-/]\d{2}[-/]\d{2}|\d{1,2}\s+[a-zA-Z]+\s+\d{4}|\w+\s+\d{1,2},?\s+\d{4}|\d{2}/\d{2}/\d{4})', c.text, re.IGNORECASE)
             if due_dates:
                 due_date = due_dates[0]
                 date_chunk = c
@@ -139,57 +157,75 @@ class InvoicePack:
 
         # Find total amount and currency
         total_amt = ""
-        currency = "USD"  # Default
+        currency = ""
         amt_chunk = None
+        # First pass: detect currency from explicit currency labels
+        for c in chunks:
+            m = re.search(r'(?:all\s+amounts\s+in|currency|valuta|währung)\s*:?\s*([A-Z]{3})', c.text, re.IGNORECASE)
+            if m:
+                currency = m.group(1).upper()
+                break
+            m = re.findall(r'\(([A-Z]{3})\)', c.text)
+            if m:
+                currency = m[-1].upper()
+                break
+        currency_symbol = ""
+        if not currency:
+            for c in chunks:
+                if "$" in c.text:
+                    currency = "USD"; currency_symbol = "$"; amt_chunk = c if not amt_chunk else amt_chunk; break
+                elif "€" in c.text:
+                    currency = "EUR"; currency_symbol = "€"; amt_chunk = c if not amt_chunk else amt_chunk; break
+                elif "£" in c.text:
+                    currency = "GBP"; currency_symbol = "£"; amt_chunk = c if not amt_chunk else amt_chunk; break
+        if not currency:
+            currency = "USD"
+
         for c in chunks:
             # Pattern 1: "Total Amount Due: $XXXX" (must NOT match "Subtotal")
-            m = re.search(r'(?:total\s+amount\s+due|total\s+due|grand\s+total|amount\s+due|balance\s+due)\s*:?\s*([$\u20ac\u00a3\u00a5]?\s*[\d,]+\.\d{2})', c.text, re.IGNORECASE)
+            m = re.search(r'(?:total\s+amount\s+due|total\s+due|grand\s+total|amount\s+due|amount\s+payable|total\s+payable|balance\s+due|totalt\s+att\s+betala|gesamtbetrag|total\s+amount)\s*:?\s*([$\u20ac\u00a3\u00a5]?\s*[\d,]+\.\d{2})', c.text, re.IGNORECASE)
             if m:
                 total_str = m.group(1).strip()
                 amt_chunk = c
-                if "$" in total_str:
-                    currency = "USD"
-                elif "\u20ac" in total_str:
-                    currency = "EUR"
-                elif "\u00a3" in total_str:
-                    currency = "GBP"
                 total_val = re.sub(r'[^\d\.]', '', total_str)
                 total_amt = total_val
                 break
-            # Pattern 2: "TOTAL" (all caps, standalone) — handles held-out format
+            # Pattern 2: "TOTAL" (all caps, standalone)
             m = re.search(r'^TOTAL\s+([$\u20ac\u00a3\u00a5]?\s*[\d,]+\.\d{2})', c.text, re.MULTILINE | re.IGNORECASE)
             if m:
                 total_str = m.group(1).strip()
                 amt_chunk = c
-                if "$" in total_str:
-                    currency = "USD"
                 total_val = re.sub(r'[^\d\.]', '', total_str)
                 total_amt = total_val
                 break
-            # Pattern 3: "Total: $XXXX" but NOT "Subtotal"
-            m = re.search(r'(?<!sub)(?<!Sub)total\s*:?\s*([$\u20ac\u00a3\u00a5]?\s*[\d,]+\.\d{2})', c.text, re.IGNORECASE)
+            # Pattern 3: "Total: $XXXX" but NOT "Subtotal" — word boundary
+            m = re.search(r'(?<!\w)(?<!sub)(?<!Sub)(?<!sub-)(?<!Sub-)total\s*:?\s*([$\u20ac\u00a3\u00a5]?\s*[\d,]+\.\d{2})', c.text, re.IGNORECASE)
             if m:
                 total_str = m.group(1).strip()
                 amt_chunk = c
-                if "$" in total_str:
-                    currency = "USD"
                 total_val = re.sub(r'[^\d\.]', '', total_str)
                 total_amt = total_val
                 break
-            # Pattern 4: OCR-tolerant — "T0tal Am0unt Due" (0 instead of o)
+            # Pattern 4: OCR-tolerant
             m = re.search(r't[0o]tal\s*am[0o]unt\s*due\s*:?\s*([$\u20ac\u00a3\u00a5]?\s*[\d,]+\.\d{2})', c.text, re.IGNORECASE)
             if m:
                 total_str = m.group(1).strip()
                 amt_chunk = c
-                if "$" in total_str:
-                    currency = "USD"
                 total_val = re.sub(r'[^\d\.]', '', total_str)
                 total_amt = total_val
                 break
-            # Pattern 5: Calculate from subtotal + tax if total not found
+            # Pattern 5: Swedish "Totalt att betala:"
+            m = re.search(r'(?:totalt\s+att\s+betala|belopp\s+att\s+betala)\s*:?\s*([\d,]+\.\d{2})', c.text, re.IGNORECASE)
+            if m:
+                total_str = m.group(1).strip()
+                amt_chunk = c
+                total_val = re.sub(r'[^\d\.]', '', total_str)
+                total_amt = total_val
+                break
+            # Pattern 6: Calculate from subtotal + tax if total not found
             if not total_amt:
-                sub_m = re.search(r'subtotal\s*:?\s*[$\u20ac\u00a3\u00a5]?\s*([\d,]+\.\d{2})', c.text, re.IGNORECASE)
-                tax_m = re.search(r'tax\s*(?:\([^)]*\))?\s*:?\s*[$\u20ac\u00a3\u00a5]?\s*([\d,]+\.\d{2})', c.text, re.IGNORECASE)
+                sub_m = re.search(r'(?:subtotal|delsumma|zwischensumme)\s*:?\s*[$\u20ac\u00a3\u00a5]?\s*([\d,]+\.\d{2})', c.text, re.IGNORECASE)
+                tax_m = re.search(r'(?:tax|moms|vat|ust)\s*(?:\([^)]*\))?\s*:?\s*[$\u20ac\u00a3\u00a5]?\s*([\d,]+\.\d{2})', c.text, re.IGNORECASE)
                 if sub_m and tax_m:
                     subtotal = float(re.sub(r'[^\d\.]', '', sub_m.group(1)))
                     tax = float(re.sub(r'[^\d\.]', '', tax_m.group(1)))
@@ -206,13 +242,16 @@ class InvoicePack:
                 confidence=0.95,
                 chunk_id=amt_chunk.chunk_id if amt_chunk else "",
             ))
+        if currency:
+            # Use the currency symbol as source_span if detected from symbol (for grounding)
+            span = currency_symbol if currency_symbol else currency
             extractions.append(Extraction(
                 pack_id=self._pack_id,
                 field_name="currency",
                 value=currency,
-                source_span=currency,
+                source_span=span,
                 confidence=0.9,
-                chunk_id=amt_chunk.chunk_id if amt_chunk else "",
+                chunk_id=amt_chunk.chunk_id if amt_chunk else (chunks[0].chunk_id if chunks else ""),
             ))
 
 # Tax amount
@@ -220,7 +259,7 @@ class InvoicePack:
         tax_chunk = None
         for c in chunks:
             # Pattern 1: "Tax: $XX.XX" or "Tax (N%): $XX.XX"
-            m = re.search(r'(?:tax|vat|gst)\s*(?:\([^)]*\))?\s*:?\s*([$\u20ac\u00a3\u00a5]?\s*[\d,]+\.\d{2})', c.text, re.IGNORECASE)
+            m = re.search(r'(?:tax|vat|gst|moms|ust)\s*(?:\([^)]*\))?\s*:?\s*([$\u20ac\u00a3\u00a5]?\s*[\d,]+\.\d{2})', c.text, re.IGNORECASE)
             if m:
                 tax_str = m.group(1).strip()
                 tax_amt = re.sub(r'[^\d\.]', '', tax_str)
@@ -236,47 +275,100 @@ class InvoicePack:
             chunk_id=tax_chunk.chunk_id if tax_chunk else chunks[0].chunk_id,
         ))
 
-        # Payment terms
-        terms = "Net 30"
+        # Payment terms (multilingual: English, Swedish, German)
+        terms = ""
+        terms_source = ""
         terms_chunk = None
         for c in chunks:
-            m = re.search(r'(?:terms|payment terms)\s*:?\s*(net\s*\d+|due on receipt|immediate)', c.text, re.IGNORECASE)
+            # English: "Terms: Net 30", "Payment Terms: Due upon receipt", "2/10 Net 30"
+            m = re.search(r'(?:terms|payment\s+terms|payment)\s*:?\s*(net\s*\d+|due\s+on\s+receipt|due\s+upon\s+receipt|immediate|immediately\s+upon\s+receipt|\d+/\d+\s+net\s*\d+|within\s+\d+\s+days)', c.text, re.IGNORECASE)
+            if m:
+                terms = m.group(1).strip()
+                terms_source = m.group(0)  # use full match for grounding
+                terms_chunk = c
+                break
+            # "Payment due immediately upon receipt" / "due immediately upon receipt"
+            if not terms:
+                m = re.search(r'((?:payment\s+)?due\s+(?:immediately\s+)?(?:upon\s+)?receipt)', c.text, re.IGNORECASE)
+                if m:
+                    terms = "Due on Receipt"
+                    terms_source = m.group(1)  # use actual text for grounding
+                    terms_chunk = c
+                    break
+            # Swedish: "Betalningsvillkor: 30 dagar" -> "30 dagar"
+            m = re.search(r'(?:betalningsvillkor|betalning)\s*:?\s*(\d+\s+dagar|net\s*\d+)', c.text, re.IGNORECASE)
             if m:
                 terms = m.group(1).strip()
                 terms_chunk = c
                 break
+            # German: "Zahlungsbedingungen: 30 Tage"
+            m = re.search(r'(?:zahlungsbedingungen|zahlung)\s*:?\s*(\d+\s+tage|net\s*\d+)', c.text, re.IGNORECASE)
+            if m:
+                terms = m.group(1).strip()
+                terms_chunk = c
+                break
+        if not terms:
+            terms = "Net 30"  # fallback default
 
         extractions.append(Extraction(
             pack_id=self._pack_id,
             field_name="payment_terms",
             value=terms,
-            source_span=terms,
+            source_span=terms_source if terms_source else terms,
             confidence=0.85,
             chunk_id=terms_chunk.chunk_id if terms_chunk else chunks[0].chunk_id,
         ))
 
-        # Line items (dummy list or basic regex parse)
+        # Line items — handle table format and bullet-point format
         line_items = []
+        line_items_chunk = None
         for c in chunks:
-            # Simple line items search: look for lines containing descriptive terms + amounts
             lines = c.text.splitlines()
             for line in lines:
-                m = re.search(r'([a-zA-Z\s]{5,})\s+(\d+)\s+([$€£¥]?\s*[\d,]+\.\d{2})\s+([$€£¥]?\s*[\d,]+\.\d{2})', line)
+                line = line.strip()
+                if not line:
+                    continue
+                # Format 1: table format "description qty price total"
+                m = re.search(r'([a-zA-Z\s]{5,})\s+(\d+)\s+([$\u20ac\u00a3\u00a5]?\s*[\d,]+\.\d{2})\s+([$\u20ac\u00a3\u00a5]?\s*[\d,]+\.\d{2})', line)
                 if m:
                     desc = m.group(1).strip()
                     qty = int(m.group(2))
                     price = float(re.sub(r'[^\d\.]', '', m.group(3)))
                     total = float(re.sub(r'[^\d\.]', '', m.group(4)))
                     line_items.append({"description": desc, "quantity": qty, "unit_price": price, "total": total})
+                    if not line_items_chunk:
+                        line_items_chunk = c
+                    continue
+                # Format 2: bullet format "- description (qty hrs @ $rate/hr) $total"
+                m = re.match(r'^[-\u2022]\s*(.+?)\s+\((\d+)\s+\w+\s+@\s*[$\u20ac\u00a3]?(\d+(?:\.\d+)?)\s*/?\w*\)\s+[$\u20ac\u00a3]?(\d[\d,]*\.\d{2})', line)
+                if m:
+                    desc = m.group(1).strip()
+                    qty = int(m.group(2))
+                    price = float(m.group(3))
+                    total = float(re.sub(r'[^\d\.]', '', m.group(4)))
+                    line_items.append({"description": desc, "quantity": qty, "unit_price": price, "total": total})
+                    if not line_items_chunk:
+                        line_items_chunk = c
+                    continue
+                # Format 3: bullet format "- description $total" (no qty/price)
+                m = re.match(r'^[-\u2022]\s*(.+?)\s+[$\u20ac\u00a3]?(\d[\d,]*\.\d{2})\s*$', line)
+                if m:
+                    desc = m.group(1).strip()
+                    total = float(re.sub(r'[^\d\.]', '', m.group(2)))
+                    line_items.append({"description": desc, "quantity": 1, "unit_price": total, "total": total})
+                    if not line_items_chunk:
+                        line_items_chunk = c
+                    continue
 
-        extractions.append(Extraction(
-            pack_id=self._pack_id,
-            field_name="line_items",
-            value=json.dumps(line_items),
-            source_span=line_items[0]["description"] if line_items else "",
-            confidence=0.8,
-            chunk_id=chunks[0].chunk_id,
-        ))
+        if line_items:
+            extractions.append(Extraction(
+                pack_id=self._pack_id,
+                field_name="line_items",
+                value=json.dumps(line_items),
+                source_span=line_items[0]["description"] if line_items else "",
+                confidence=0.8,
+                chunk_id=line_items_chunk.chunk_id if line_items_chunk else chunks[0].chunk_id,
+            ))
 
         return extractions
 

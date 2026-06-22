@@ -1,0 +1,94 @@
+{
+  "grounded_correct": 74,
+  "grounded_wrong_box": 0,
+  "refusal_correct": 4,
+  "false_refusal": 3,
+  "hallucination": 0,
+  "answerable_total": 77,
+  "unanswerable_total": 4,
+  "total_bad_boxes": 0,
+  "blocked_bad_boxes": 0,
+  "grounded_rate": 96.1,
+  "false_refusal_rate": 3.9,
+  "refusal_correct_rate": 100.0,
+  "halluc_box_blocked_rate": 100.0,
+  "per_doc": {
+    "con_0001": {
+      "grounded": 7,
+      "answerable": 7,
+      "false_refusal": 0,
+      "refusal_correct": 0,
+      "unanswerable": 0
+    },
+    "con_0002": {
+      "grounded": 3,
+      "answerable": 5,
+      "false_refusal": 2,
+      "refusal_correct": 2,
+      "unanswerable": 2
+    },
+    "con_0003": {
+      "grounded": 7,
+      "answerable": 7,
+      "false_refusal": 0,
+      "refusal_correct": 0,
+      "unanswerable": 0
+    },
+    "gen_0001": {
+      "grounded": 4,
+      "answerable": 4,
+      "false_refusal": 0,
+      "refusal_correct": 0,
+      "unanswerable": 0
+    },
+    "gen_0002": {
+      "grounded": 4,
+      "answerable": 4,
+      "false_refusal": 0,
+      "refusal_correct": 0,
+      "unanswerable": 0
+    },
+    "inv_0001": {
+      "grounded": 8,
+      "answerable": 8,
+      "false_refusal": 0,
+      "refusal_correct": 1,
+      "unanswerable": 1
+    },
+    "inv_0002": {
+      "grounded": 8,
+      "answerable": 8,
+      "false_refusal": 0,
+      "refusal_correct": 1,
+      "unanswerable": 1
+    },
+    "inv_0003": {
+      "grounded": 8,
+      "answerable": 9,
+      "false_refusal": 1,
+      "refusal_correct": 0,
+      "unanswerable": 0
+    },
+    "inv_0004": {
+      "grounded": 9,
+      "answerable": 9,
+      "false_refusal": 0,
+      "refusal_correct": 0,
+      "unanswerable": 0
+    },
+    "pap_0001": {
+      "grounded": 8,
+      "answerable": 8,
+      "false_refusal": 0,
+      "refusal_correct": 0,
+      "unanswerable": 0
+    },
+    "pap_0002": {
+      "grounded": 8,
+      "answerable": 8,
+      "false_refusal": 0,
+      "refusal_correct": 0,
+      "unanswerable": 0
+    }
+  }
+}
