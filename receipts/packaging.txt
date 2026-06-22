@@ -1,0 +1,4 @@
+=== T6 MIGRATION TEST ===
+Checksum verification: 241 passed, 0 failed
+Exit code: 0
+Status: PASS
