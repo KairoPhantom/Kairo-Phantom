@@ -71,13 +71,28 @@ class PaperPack:
                 # Skip title (usually longer, has "Abstract" or section headers)
                 if line.lower() in ('abstract', 'introduction', 'keywords', 'references'):
                     continue
+                # Skip lines that look like titles (contain colons — titles often have
+                # "Main Title: Subtitle" format; author lines don't have colons)
+                # BUT: "Authors: Jane Doe, John Smith" has a colon — strip the label prefix first
+                line_for_colon_check = line
+                author_label_match = re.match(r'^(?:authors?|by)\s*:\s*(.+)', line, re.IGNORECASE)
+                if author_label_match:
+                    line_for_colon_check = author_label_match.group(1)
+                if ':' in line_for_colon_check:
+                    continue
+                # Skip lines that end with a period (sentences, not author lists)
+                if line.endswith('.'):
+                    continue
                 # Author line: contains commas or "and", has 2+ capitalized names, no sentence-ending period
-                if (',' in line or ' and ' in line.lower()) and not line.endswith('.') and len(line) < 200:
+                if (',' in line or ' and ' in line.lower()) and len(line) < 200:
                     # Check it looks like names: 2+ capitalized words
                     name_parts = re.split(r'[,;]|\s+and\s+', line)
                     name_parts = [p.strip() for p in name_parts if p.strip()]
                     cap_count = sum(1 for p in name_parts if p and p[0].isupper())
-                    if cap_count >= 1 and len(name_parts) >= 1:
+                    # Author names should be short (typically 2-4 words per person)
+                    # and not contain title-like phrases
+                    looks_like_names = all(len(p.split()) <= 4 for p in name_parts)
+                    if cap_count >= 1 and len(name_parts) >= 1 and looks_like_names:
                         authors = [a.strip() for a in re.split(r'[,;]|\band\b', line, flags=re.IGNORECASE) if a.strip()]
                         authors_chunk = c
                         authors_line = line

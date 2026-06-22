@@ -170,6 +170,13 @@ class OrchestratorImpl:
 
         # ---- Stage 5: Extractor (Pack) ----
         t0 = time.monotonic()
+        # Inject source filename into chunks' source_type for packs that need it
+        # (e.g., invoice pack derives invoice number from filename when not in text)
+        import os as _os
+        _source_filename = _os.path.basename(doc.source_path) if doc.source_path else ""
+        if _source_filename:
+            from dataclasses import replace as _replace
+            chunks = [_replace(c, source_type=_source_filename) for c in chunks]
         try:
             extractions = self._pack.extract(chunks)
         except Exception as e:

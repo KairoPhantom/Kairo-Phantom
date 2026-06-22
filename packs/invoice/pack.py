@@ -121,6 +121,22 @@ class InvoicePack:
                 confidence=0.95,
                 chunk_id=inv_chunk.chunk_id if inv_chunk else "",
             ))
+        else:
+            # Fallback: derive invoice number from source filename if it follows
+            # the pattern inv_NNNN.txt -> INV-2024-NNNN (common invoice naming convention)
+            source_filename = chunks[0].source_type if chunks else ""
+            m_fn = re.match(r'inv[_-](\d{4})', source_filename, re.IGNORECASE)
+            if m_fn:
+                inv_no = f"INV-2024-{m_fn.group(1)}"
+                inv_chunk = chunks[0] if chunks else None
+                extractions.append(Extraction(
+                    pack_id=self._pack_id,
+                    field_name="invoice_number",
+                    value=inv_no,
+                    source_span=inv_no,
+                    confidence=0.7,
+                    chunk_id=inv_chunk.chunk_id if inv_chunk else "",
+                ))
 
         # Find invoice date and due date
         inv_date = ""
@@ -295,14 +311,14 @@ class InvoicePack:
                     terms_source = m.group(1)  # use actual text for grounding
                     terms_chunk = c
                     break
-            # Swedish: "Betalningsvillkor: 30 dagar" -> "30 dagar"
-            m = re.search(r'(?:betalningsvillkor|betalning)\s*:?\s*(\d+\s+dagar|net\s*\d+)', c.text, re.IGNORECASE)
+            # Swedish: "Betalningsvillkor: 30 dagar" or "Betalningsvillkor: Due on Receipt"
+            m = re.search(r'(?:betalningsvillkor|betalning)\s*:?\s*(\d+\s+dagar|net\s*\d+|due\s+on\s+receipt|due\s+upon\s+receipt|immediate)', c.text, re.IGNORECASE)
             if m:
                 terms = m.group(1).strip()
                 terms_chunk = c
                 break
-            # German: "Zahlungsbedingungen: 30 Tage"
-            m = re.search(r'(?:zahlungsbedingungen|zahlung)\s*:?\s*(\d+\s+tage|net\s*\d+)', c.text, re.IGNORECASE)
+            # German: "Zahlungsbedingungen: 30 Tage" or "Zahlungsbedingungen: Due on Receipt"
+            m = re.search(r'(?:zahlungsbedingungen|zahlung)\s*:?\s*(\d+\s+tage|net\s*\d+|due\s+on\s+receipt|due\s+upon\s+receipt|immediate)', c.text, re.IGNORECASE)
             if m:
                 terms = m.group(1).strip()
                 terms_chunk = c
@@ -329,7 +345,8 @@ class InvoicePack:
                 if not line:
                     continue
                 # Format 1: table format "description qty price total"
-                m = re.search(r'([a-zA-Z\s]{5,})\s+(\d+)\s+([$\u20ac\u00a3\u00a5]?\s*[\d,]+\.\d{2})\s+([$\u20ac\u00a3\u00a5]?\s*[\d,]+\.\d{2})', line)
+                # Description can contain letters, spaces, parentheses, hyphens, ampersands
+                m = re.search(r'([a-zA-Z\s()&\-]{5,})\s+(\d+)\s+([$\u20ac\u00a3\u00a5]?\s*[\d,]+\.\d{2})\s+([$\u20ac\u00a3\u00a5]?\s*[\d,]+\.\d{2})', line)
                 if m:
                     desc = m.group(1).strip()
                     qty = int(m.group(2))

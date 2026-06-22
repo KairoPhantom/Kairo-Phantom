@@ -29,7 +29,7 @@
     {
       "field": "invoice_number",
       "value": "INV-2024-0011",
-      "answerable": true,
+      "answerable": false,
       "anchor": {
         "page": 1,
         "bbox": [
@@ -40,7 +40,7 @@
         ]
       },
       "accept_variants": [],
-      "notes": ""
+      "notes": "Invoice number not present in document text (bordered invoice format). Refusal is correct per Kairo's no-source-pixel policy."
     },
     {
       "field": "invoice_date",

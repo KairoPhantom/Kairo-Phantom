@@ -122,27 +122,22 @@ class ContractPack:
         eff_date = ""
         term_date = ""
         date_chunk = None
+        # Two-pass extraction for effective_date:
+        # Pass 1: "commences on <date>" (TERM section — preferred, matches label bbox)
+        # Pass 2: "Effective Date: <date>" or "dated as of / made on <date>" (fallback)
+        # Pass 1: commences on
         for c in chunks:
-            # Effective date: multiple formats
             if not eff_date:
-                # "dated as of the 15th day of January, 2024" or "dated as of <date>"
                 m = re.search(
-                    r'(?:dated\s+)?(?:as\s+of|on)\s+(?:the\s+)?(\d{1,2}(?:st|nd|rd|th)?\s+(?:day\s+of\s+)?[a-zA-Z]+,?\s+\d{4}|\d{4}[-/]\d{2}[-/]\d{2}|\d{1,2}\s+[a-zA-Z]+\s+\d{4}|[a-zA-Z]+\s+\d{1,2},?\s+\d{4})',
+                    r'(?:commences|commenc(?:es|ing)|starts)\s+on\s+(\d{4}[-/]\d{2}[-/]\d{2}|\d{1,2}\s+[a-zA-Z]+\s+\d{4}|[a-zA-Z]+\s+\d{1,2},?\s+\d{4})',
                     c.text, re.IGNORECASE
                 )
                 if m:
                     eff_date = m.group(1).strip()
                     date_chunk = c
-                # "made on the 3rd day of June, 2024" or "made on <date>"
-                if not eff_date:
-                    m = re.search(
-                        r'(?:made|entered)\s+(?:and\s+\w+\s+)?(?:into\s+)?(?:as\s+of|on)\s+(?:the\s+)?(\d{1,2}(?:st|nd|rd|th)?\s+(?:day\s+of\s+)?[a-zA-Z]+,?\s+\d{4}|\d{4}[-/]\d{2}[-/]\d{2}|\d{1,2}\s+[a-zA-Z]+\s+\d{4}|[a-zA-Z]+\s+\d{1,2},?\s+\d{4})',
-                        c.text, re.IGNORECASE
-                    )
-                    if m:
-                        eff_date = m.group(1).strip()
-                        date_chunk = c
-                # "Effective Date: 2024-02-01" (label with colon)
+        # Pass 2: Effective Date label, then dated as of / made on
+        if not eff_date:
+            for c in chunks:
                 if not eff_date:
                     m = re.search(
                         r'(?:effective\s+date|commencement\s+date|date\s+of\s+this\s+agreement)\s*(?:is|of|as\s+of|=|:)?\s*(\d{4}[-/]\d{2}[-/]\d{2}|\d{1,2}\s+[a-zA-Z]+\s+\d{4}|[a-zA-Z]+\s+\d{1,2},?\s+\d{4})',
@@ -151,17 +146,27 @@ class ContractPack:
                     if m:
                         eff_date = m.group(1).strip()
                         date_chunk = c
-                # "commences on <date>"
+        if not eff_date:
+            for c in chunks:
                 if not eff_date:
                     m = re.search(
-                        r'(?:commences|commenc(?:es|ing)|starts)\s+on\s+(\d{4}[-/]\d{2}[-/]\d{2}|\d{1,2}\s+[a-zA-Z]+\s+\d{4}|[a-zA-Z]+\s+\d{1,2},?\s+\d{4})',
+                        r'(?:dated\s+)?(?:as\s+of|on)\s+(?:the\s+)?(\d{1,2}(?:st|nd|rd|th)?\s+(?:day\s+of\s+)?[a-zA-Z]+,?\s+\d{4}|\d{4}[-/]\d{2}[-/]\d{2}|\d{1,2}\s+[a-zA-Z]+\s+\d{4}|[a-zA-Z]+\s+\d{1,2},?\s+\d{4})',
                         c.text, re.IGNORECASE
                     )
                     if m:
                         eff_date = m.group(1).strip()
                         date_chunk = c
+                    if not eff_date:
+                        m = re.search(
+                            r'(?:made|entered)\s+(?:and\s+\w+\s+)?(?:into\s+)?(?:as\s+of|on)\s+(?:the\s+)?(\d{1,2}(?:st|nd|rd|th)?\s+(?:day\s+of\s+)?[a-zA-Z]+,?\s+\d{4}|\d{4}[-/]\d{2}[-/]\d{2}|\d{1,2}\s+[a-zA-Z]+\s+\d{4}|[a-zA-Z]+\s+\d{1,2},?\s+\d{4})',
+                            c.text, re.IGNORECASE
+                        )
+                        if m:
+                            eff_date = m.group(1).strip()
+                            date_chunk = c
 
-            # Termination date: multiple formats
+        # Termination date: separate loop (independent of effective_date)
+        for c in chunks:
             if not term_date:
                 # "terminate on <date>" / "termination date: <date>" / "expiration date: <date>"
                 m2 = re.search(
@@ -171,15 +176,15 @@ class ContractPack:
                 if m2:
                     term_date = m2.group(1).strip()
                     date_chunk = c
-                # "shall remain in effect until <date>" / "in effect until <date>"
-                if not term_date:
-                    m2 = re.search(
-                        r'(?:shall\s+remain\s+in\s+effect|in\s+effect|effective)\s+(?:until|through|to)\s+(\d{4}[-/]\d{2}[-/]\d{2}|\d{1,2}\s+[a-zA-Z]+\s+\d{4}|[a-zA-Z]+\s+\d{1,2},?\s+\d{4})',
-                        c.text, re.IGNORECASE
-                    )
-                    if m2:
-                        term_date = m2.group(1).strip()
-                        date_chunk = c
+            # "shall remain in effect until <date>" / "in effect until <date>"
+            if not term_date:
+                m2 = re.search(
+                    r'(?:shall\s+remain\s+in\s+effect|in\s+effect|effective)\s+(?:until|through|to)\s+(\d{4}[-/]\d{2}[-/]\d{2}|\d{1,2}\s+[a-zA-Z]+\s+\d{4}|[a-zA-Z]+\s+\d{1,2},?\s+\d{4})',
+                    c.text, re.IGNORECASE
+                )
+                if m2:
+                    term_date = m2.group(1).strip()
+                    date_chunk = c
 
         if eff_date:
             extractions.append(Extraction(
