@@ -168,6 +168,28 @@ class OrchestratorImpl:
             duration_ms=elapsed_ms,
         ))
 
+        # ---- Stage 4.5: Context Compression (Kairo Context Compressor) ----
+        t0 = time.monotonic()
+        compression_stats = None
+        try:
+            from kairo.context.compressor import compress_document_chunks, record_compression
+            compressed_chunks, compression_stats = compress_document_chunks(chunks)
+            record_compression(compression_stats)
+            # Use compressed chunks for extraction (preserves bbox/page metadata)
+            extraction_chunks = compressed_chunks
+        except ImportError:
+            extraction_chunks = chunks  # fallback if compressor not available
+        elapsed_ms = (time.monotonic() - t0) * 1000
+        stages.append(TraceStage(
+            name="context_compression",
+            input_data={"chunk_count": len(chunks)},
+            output_data={
+                "compressed_chunk_count": len(extraction_chunks),
+                "reduction_pct": compression_stats.reduction_pct if compression_stats else 0.0,
+            } if compression_stats else {"status": "skipped"},
+            duration_ms=elapsed_ms,
+        ))
+
         # ---- Stage 5: Extractor (Pack) ----
         t0 = time.monotonic()
         # Inject source filename into chunks' source_type for packs that need it
@@ -178,7 +200,7 @@ class OrchestratorImpl:
             from dataclasses import replace as _replace
             chunks = [_replace(c, source_type=_source_filename) for c in chunks]
         try:
-            extractions = self._pack.extract(chunks)
+            extractions = self._pack.extract(extraction_chunks)
         except Exception as e:
             stages.append(TraceStage(
                 name="extractor",

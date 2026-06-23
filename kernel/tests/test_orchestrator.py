@@ -120,7 +120,7 @@ def test_orchestrator_pipeline_success():
     trace = orchestrator.run(doc)
     assert isinstance(trace, Trace)
     assert not trace.halted
-    assert len(trace.stages) == 7  # capture, security, intent, router, extractor, quality, suggest
+    assert len(trace.stages) == 8  # capture, security, intent, router, compression, extractor, quality, suggest
     assert len(trace.extractions) == 1
     assert trace.extractions[0].confidence == 0.9
     assert trace.extractions[0].status == ExtractionStatus.SUGGESTED
@@ -189,6 +189,6 @@ def test_orchestrator_pipeline_halt_quality_block():
     trace = orchestrator.run(doc)
     assert trace.halted
     assert "Quality gate BLOCKED" in trace.halt_reason
-    assert len(trace.stages) == 7  # capture, security, intent, router, extractor, quality, human_review
+    assert len(trace.stages) == 8  # capture, security, intent, router, compression, extractor, quality, human_review
     assert trace.stages[-1].name == "human_review"
     assert trace.extractions[0].status == ExtractionStatus.PENDING_REVIEW

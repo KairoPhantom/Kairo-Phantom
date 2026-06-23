@@ -1,0 +1,23 @@
+# Kairo Phantom v2.2 — Locked Dependencies
+# 100X Upgrade dependencies (added per phase)
+
+# Phase 1: Context Compression
+headroom-ai>=0.27.0
+
+# Phase 2: Grounding Trace + Dashboard (pending)
+# opik>=1.0
+# opentelemetry-instrumentation-fastapi
+# opentelemetry-sdk
+# opentelemetry-exporter-otlp
+
+# Phase 4: Knowledge Graph (pending)
+# networkx>=3.0
+
+# Phase 7: Security Hardening (pending)
+# semgrep>=1.0
+
+# Phase 8: P2P Sync (stretch, pending)
+# syncthing>=0.1
+
+# Existing core dependencies (pre-installed in sandbox):
+# PyMuPDF, fastapi, uvicorn, numpy, Pillow, pytest, httpx

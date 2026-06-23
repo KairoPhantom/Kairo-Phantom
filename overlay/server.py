@@ -242,6 +242,16 @@ if pathlib.Path(".kairo").exists():
     app.mount("/static", StaticFiles(directory=".kairo"), name="static")
 
 
+@app.get("/api/compression/stats")
+async def get_compression_stats():
+    """Return aggregate context compression statistics."""
+    try:
+        from kairo.context.compressor import get_compression_stats
+        return get_compression_stats()
+    except ImportError:
+        return {"error": "Context compressor not available", "total_runs": 0}
+
+
 @app.get("/source/{extraction_id}")
 async def get_source_provenance(extraction_id: str):
     """Retrieve bounding box and page reference for click-to-source verification."""
