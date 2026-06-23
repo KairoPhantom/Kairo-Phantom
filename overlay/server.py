@@ -467,6 +467,40 @@ async def get_graph():
         return {"nodes": [], "edges": [], "stats": {"total_nodes": 0, "total_edges": 0}, "error": str(e)}
 
 
+# ---- Phase 5: Figure Extraction ----
+
+@app.get("/api/figures/{doc_id}")
+async def get_figures(doc_id: str, file: str = ""):
+    """Get figures extracted from a document.
+
+    For PDFs: uses PyMuPDF to detect images, find captions, classify.
+    For text: extracts Figure/Table references from text.
+    """
+    filepath = file
+    if not filepath:
+        raise HTTPException(status_code=400, detail="file parameter is required")
+
+    import os
+    if not os.path.exists(filepath):
+        raise HTTPException(status_code=404, detail=f"File not found: {filepath}")
+
+    if filepath.lower().endswith(".pdf"):
+        from kairo.core.figure_extractor import extract_figures_from_pdf
+        figures = extract_figures_from_pdf(filepath)
+    else:
+        with open(filepath, "r", errors="ignore") as f:
+            text = f.read()
+        from kairo.core.figure_extractor import extract_figures_from_text
+        figures = extract_figures_from_text(text)
+
+    return {
+        "doc_id": doc_id,
+        "file": filepath,
+        "figure_count": len(figures),
+        "figures": [f.to_dict() for f in figures],
+    }
+
+
 @app.get("/source/{extraction_id}")
 async def get_source_provenance(extraction_id: str):
     """Retrieve bounding box and page reference for click-to-source verification."""
