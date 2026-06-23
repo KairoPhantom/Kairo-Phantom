@@ -35,6 +35,9 @@ from kernel.sidecar.orchestrator import OrchestratorImpl
 from kernel.sidecar.quality_gate import LocalQualityGate
 from kernel.sidecar.security_filter import LocalSecurityFilter
 from packs.generic.pack import GenericPack
+from packs.invoice.pack import InvoicePack
+from packs.contract.pack import ContractPack
+from packs.paper.pack import PaperPack
 
 # Initialize FastAPI
 app = FastAPI(title="Kairo Phantom Web Overlay")
@@ -279,6 +282,155 @@ async def get_trace_stats():
         return get_trace_stats()
     except ImportError:
         return {"total_traces": 0, "grounded_pct": 0.0}
+
+
+# ---- Phase 3: Connector Protocol ----
+
+class ExtractDocumentRequest(BaseModel):
+    file: str  # path to document file
+    extraction_schema: dict | None = None  # optional extraction schema
+
+
+@app.post("/api/extract-document")
+async def extract_document(req: ExtractDocumentRequest):
+    """Extract fields from a document with grounding metadata.
+
+    Returns fields with value, grounded status, bbox, cascade method,
+    confidence, and source_link for each extracted field.
+    """
+    import os
+    filepath = req.file
+    if not os.path.exists(filepath):
+        raise HTTPException(status_code=404, detail=f"File not found: {filepath}")
+
+    # Read and classify
+    with open(filepath, "r", errors="ignore") as f:
+        text = f.read()
+
+    from kairo.core.classifier import classify_document, build_source_link
+    doc_type = classify_document(text)
+
+    # Select pack based on type
+    pack_map = {
+        "invoice": InvoicePack,
+        "contract": ContractPack,
+        "paper": PaperPack,
+        "generic": GenericPack,
+    }
+    pack_class = pack_map.get(doc_type, GenericPack)
+
+    # Run extraction pipeline
+    from kernel.core.data_model import Document
+    from kernel.core.provenance import ProvenanceLogImpl
+    from kernel.sidecar.ingestor import IngestorImpl
+    from kernel.sidecar.inference_gateway import TieredInferenceGateway
+    from kernel.sidecar.memory_store import MemoryStoreImpl
+    from kernel.sidecar.quality_gate import LocalQualityGate
+    from kernel.sidecar.security_filter import LocalSecurityFilter
+
+    memory_store = MemoryStoreImpl(":memory:")
+    provenance = ProvenanceLogImpl()
+    ingestor = IngestorImpl()
+    security = LocalSecurityFilter(enable_pii_scan=False)
+    gateway = TieredInferenceGateway(tier3_enabled=False)
+    quality_gate = LocalQualityGate(memory_store)
+    orchestrator = OrchestratorImpl(
+        ingestor=ingestor, security_filter=security, inference_gateway=gateway,
+        quality_gate=quality_gate, provenance_log=provenance,
+        pack=pack_class(), memory_store=memory_store,
+    )
+
+    doc = Document(source_path=filepath)
+    trace = orchestrator.run(doc)
+
+    # Build response with grounding metadata
+    fields = {}
+    refused_fields = []
+    for ext in trace.extractions:
+        bbox = None
+        page = 1
+        if ext.anchors:
+            a = ext.anchors[0]
+            bbox = [a.bbox.x0, a.bbox.y0, a.bbox.x1 - a.bbox.x0, a.bbox.y1 - a.bbox.y0]
+            page = a.page
+
+        grounded = ext.method.value != "block"
+        if grounded:
+            fields[ext.field_name] = {
+                "value": ext.value,
+                "grounded": True,
+                "bbox": bbox,
+                "page": page,
+                "cascade": ext.method.value.upper(),
+                "confidence": ext.confidence,
+                "source_link": build_source_link(doc.doc_id, page, bbox or [0, 0, 0, 0]),
+            }
+        else:
+            refused_fields.append(ext.field_name)
+
+    return {
+        "doc_id": doc.doc_id,
+        "doc_type": doc_type,
+        "fields": fields,
+        "refused_fields": refused_fields,
+        "processing_time_ms": sum(s.duration_ms for s in trace.stages),
+    }
+
+
+@app.post("/api/ask-document")
+async def ask_document(req: dict):
+    """Ask a question about a document. Returns answer with bbox or refusal."""
+    filepath = req.get("file", "")
+    question = req.get("question", "")
+
+    if not filepath:
+        raise HTTPException(status_code=400, detail="file is required")
+
+    import os
+    if not os.path.exists(filepath):
+        raise HTTPException(status_code=404, detail=f"File not found: {filepath}")
+
+    # For now, extract all fields and check if the question matches any
+    extract_req = ExtractDocumentRequest(file=filepath)
+    result = await extract_document(extract_req)
+
+    # Simple keyword matching: find field whose name or value matches question keywords
+    question_lower = question.lower()
+    for field_name, field_data in result["fields"].items():
+        if field_name.replace("_", " ") in question_lower or field_name in question_lower:
+            return {
+                "question": question,
+                "answer": field_data["value"],
+                "grounded": True,
+                "bbox": field_data["bbox"],
+                "page": field_data["page"],
+                "source_link": field_data["source_link"],
+            }
+
+    # No match -> refusal
+    return {
+        "question": question,
+        "answer": None,
+        "grounded": False,
+        "refusal_reason": "No grounded answer found for this question in the document.",
+    }
+
+
+@app.get("/api/source/{doc_id}")
+async def get_source_render(doc_id: str, page: int = 1, x: float = 0, y: float = 0, w: float = 0, h: float = 0):
+    """Render a document page with bbox highlight overlay.
+
+    For text documents, returns the text with the highlighted region marked.
+    For PDFs, would render via PyMuPDF (requires the source file path).
+    """
+    # In a full implementation, this would render the page as PNG via PyMuPDF
+    # and overlay an SVG bbox. For now, return metadata.
+    return {
+        "doc_id": doc_id,
+        "page": page,
+        "highlight_bbox": [x, y, w, h] if w > 0 and h > 0 else None,
+        "render_url": f"kairo://doc/{doc_id}?page={page}&x={x}&y={y}&w={w}&h={h}",
+    }
 
 
 @app.get("/source/{extraction_id}")
