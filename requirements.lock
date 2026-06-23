@@ -4,11 +4,11 @@
 # Phase 1: Context Compression
 headroom-ai>=0.27.0
 
-# Phase 2: Grounding Trace + Dashboard (pending)
-# opik>=1.0
-# opentelemetry-instrumentation-fastapi
-# opentelemetry-sdk
-# opentelemetry-exporter-otlp
+# Phase 2: Grounding Trace + Dashboard
+opik>=2.0.77
+opentelemetry-instrumentation-fastapi>=0.63b1
+opentelemetry-sdk>=1.42.1
+opentelemetry-exporter-otlp>=1.42.1
 
 # Phase 4: Knowledge Graph (pending)
 # networkx>=3.0

@@ -252,6 +252,35 @@ async def get_compression_stats():
         return {"error": "Context compressor not available", "total_runs": 0}
 
 
+@app.get("/dashboard", response_class=HTMLResponse)
+async def get_dashboard():
+    """Serve the Kairo Grounding Trace dashboard."""
+    dashboard_path = BASE_DIR / "kairo" / "observability" / "dashboard.html"
+    if dashboard_path.exists():
+        return HTMLResponse(content=dashboard_path.read_text(), status_code=200)
+    return HTMLResponse(content="<h1>Dashboard not found</h1>", status_code=404)
+
+
+@app.get("/api/traces")
+async def get_traces(limit: int = 50):
+    """Return recent grounding traces for the dashboard."""
+    try:
+        from kairo.observability.trace import get_traces
+        return get_traces(limit=limit)
+    except ImportError:
+        return []
+
+
+@app.get("/api/traces/stats")
+async def get_trace_stats():
+    """Return aggregate grounding trace statistics."""
+    try:
+        from kairo.observability.trace import get_trace_stats
+        return get_trace_stats()
+    except ImportError:
+        return {"total_traces": 0, "grounded_pct": 0.0}
+
+
 @app.get("/source/{extraction_id}")
 async def get_source_provenance(extraction_id: str):
     """Retrieve bounding box and page reference for click-to-source verification."""
