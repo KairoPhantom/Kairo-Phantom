@@ -433,6 +433,40 @@ async def get_source_render(doc_id: str, page: int = 1, x: float = 0, y: float =
     }
 
 
+# ---- Phase 4: Knowledge Graph ----
+
+@app.post("/api/graph/query")
+async def query_graph(req: dict):
+    """Query the grounded knowledge graph by keyword.
+
+    NOT an LLM call — pure keyword + entity matching + graph traversal.
+    Returns matching nodes with bbox provenance.
+    """
+    keyword = req.get("keyword", req.get("query", ""))
+    if not keyword:
+        raise HTTPException(status_code=400, detail="keyword or query is required")
+    try:
+        from kairo.graph.store import GroundedKnowledgeGraph
+        g = GroundedKnowledgeGraph()
+        g.load()  # load persisted graph if available
+        results = g.query(keyword)
+        return {"keyword": keyword, "results": results, "count": len(results)}
+    except Exception as e:
+        return {"keyword": keyword, "results": [], "count": 0, "error": str(e)}
+
+
+@app.get("/api/graph")
+async def get_graph():
+    """Get the full knowledge graph for visualization."""
+    try:
+        from kairo.graph.store import GroundedKnowledgeGraph
+        g = GroundedKnowledgeGraph()
+        g.load()
+        return g.to_dict()
+    except Exception as e:
+        return {"nodes": [], "edges": [], "stats": {"total_nodes": 0, "total_edges": 0}, "error": str(e)}
+
+
 @app.get("/source/{extraction_id}")
 async def get_source_provenance(extraction_id: str):
     """Retrieve bounding box and page reference for click-to-source verification."""

@@ -10,8 +10,8 @@ opentelemetry-instrumentation-fastapi>=0.63b1
 opentelemetry-sdk>=1.42.1
 opentelemetry-exporter-otlp>=1.42.1
 
-# Phase 4: Knowledge Graph (pending)
-# networkx>=3.0
+# Phase 4: Knowledge Graph
+networkx>=3.6.1
 
 # Phase 7: Security Hardening (pending)
 # semgrep>=1.0
