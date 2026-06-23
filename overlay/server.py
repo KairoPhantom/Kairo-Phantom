@@ -501,6 +501,15 @@ async def get_figures(doc_id: str, file: str = ""):
     }
 
 
+# ---- Phase 6: Eval + Monitoring ----
+
+@app.get("/api/eval/report")
+async def get_eval_report():
+    """Get the full eval report with regression and drift alerts."""
+    from kairo.observability.eval import get_eval_report
+    return get_eval_report()
+
+
 @app.get("/source/{extraction_id}")
 async def get_source_provenance(extraction_id: str):
     """Retrieve bounding box and page reference for click-to-source verification."""
