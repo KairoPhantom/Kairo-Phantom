@@ -83,6 +83,26 @@ Every value is anchored to a page + bounding box, or it is refused. The verifier
 
 ---
 
+## Context Compression
+
+The Kairo Context Compressor (Phase 1) reduces token consumption before extraction:
+
+| Metric | Value |
+|---|---|
+| Token reduction (boilerplate) | **84.1%** |
+| Method | Bbox-aware dedup + sentence dedup |
+| Bbox preservation | ✅ All metadata preserved |
+| Stats endpoint | `GET /api/compression/stats` |
+
+## Live Dashboard
+
+The Kairo Grounding Trace dashboard (Phase 2) is available at `GET /dashboard`:
+
+- Live cascade feed (polls every 2s)
+- Cascade waterfall (NORMALIZE → EXACT → FUZZY → SEMANTIC → VISUAL → BLOCK)
+- Stats panel: grounded%, refused%, blocked%, avg cascade depth, avg latency
+- Trace API: `GET /api/traces?limit=50`, `GET /api/traces/stats`
+
 ## Acceptance
 
 ```bash
