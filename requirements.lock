@@ -16,8 +16,8 @@ networkx>=3.6.1
 # Phase 7: Security Hardening
 semgrep>=1.0
 
-# Phase 8: P2P Sync (stretch, pending)
-# syncthing>=0.1
+# Phase 8: P2P Sync (stretch goal)
+syncthing>=0.1  # Python REST client (daemon connection INFRA-PENDING:NETWORK)
 
 # Existing core dependencies (pre-installed in sandbox):
 # PyMuPDF, fastapi, uvicorn, numpy, Pillow, pytest, httpx
