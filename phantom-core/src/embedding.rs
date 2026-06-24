@@ -81,6 +81,11 @@ fn embed_deterministic(text: &str) -> Result<Vec<f32>> {
     use std::collections::hash_map::DefaultHasher;
     use std::hash::{Hash, Hasher};
 
+    // WARNING: This is a NON-SEMANTIC fallback for CI/headless environments.
+    // It produces deterministic vectors but does NOT capture semantic meaning.
+    // "contract termination" and "agreement cancellation" will NOT be similar
+    // under this embedding — only under the real fastembed model.
+    // See INFRA_PENDING.md for enabling real semantic embeddings.
     let mut vec = vec![0.0f32; EMBED_DIM];
     for (i, chunk) in text.as_bytes().chunks(4).enumerate().take(EMBED_DIM) {
         let mut h = DefaultHasher::new();
@@ -472,5 +477,91 @@ mod tests {
         let wrong_dim = vec![0.0f32; 128];
         let result = store.knn_query(&wrong_dim, 5);
         assert!(result.is_err(), "KNN query with wrong dimension should error");
+    }
+
+    // ── SEMANTIC RELEVANCE TEST (requires real fastembed model) ──────────────
+    //
+    // This test proves that the embedding captures SEMANTIC meaning, not just
+    // lexical similarity. It uses a paraphrase query that shares little/no
+    // lexical overlap with the target document:
+    //
+    //   Query:  "how do I cancel my subscription"
+    //   Target: "ending your membership agreement"
+    //   Distractor: "pizza recipe with tomato sauce"
+    //
+    // Under hash embeddings: the query may match the distractor (random hash
+    // proximity) — this test is SKIPPED because hash embeddings are non-semantic.
+    //
+    // Under fastembed (real model): the query MUST retrieve the target, proving
+    // that semantic similarity (not lexical overlap) drives retrieval.
+    //
+    // This test is gated behind `--features local-embeddings` and will FAIL
+    // on hash embeddings if forced to run.
+
+    #[cfg(feature = "local-embeddings")]
+    #[test]
+    fn test_semantic_relevance_paraphrase_retrieval() {
+        let store = VectorStore::in_memory().unwrap();
+
+        // Target: semantically related to "cancel subscription" but different words
+        let target_text = "We regret to inform you that your membership will be terminated at the end of the billing cycle.";
+        let target_emb = embed(target_text).unwrap();
+        store.insert("ep_membership_termination", &target_emb).unwrap();
+
+        // Distractor 1: lexically similar to query but semantically unrelated
+        let distractor1_text = "How to subscribe to our newsletter for weekly updates.";
+        let distractor1_emb = embed(distractor1_text).unwrap();
+        store.insert("ep_newsletter_subscribe", &distractor1_emb).unwrap();
+
+        // Distractor 2: completely unrelated
+        let distractor2_text = "The weather forecast shows rain tomorrow afternoon.";
+        let distractor2_emb = embed(distractor2_text).unwrap();
+        store.insert("ep_weather", &distractor2_emb).unwrap();
+
+        // Query: paraphrase with minimal lexical overlap to target
+        // "cancel" vs "terminated", "subscription" vs "membership"
+        let query_text = "How do I cancel my subscription?";
+        let query_emb = embed(query_text).unwrap();
+
+        let results = store.knn_query(&query_emb, 3).unwrap();
+        assert_eq!(results.len(), 3, "KNN should return 3 results");
+
+        // CRITICAL: The nearest neighbor MUST be the membership termination episode,
+        // NOT the newsletter subscribe episode (which shares "subscribe" with the query).
+        // This proves semantic search works — it matches MEANING, not just words.
+        assert_eq!(
+            results[0].0, "ep_membership_termination",
+            "Semantic retrieval FAILED: query 'cancel subscription' did not retrieve \
+             'membership termination' as top result. Got '{}' instead. \
+             This means the embedding is NOT capturing semantic meaning.",
+            results[0].0
+        );
+    }
+
+    /// This test verifies that hash embeddings are NON-SEMANTIC.
+    /// It documents the known limitation: without the real fastembed model,
+    /// the system cannot do semantic retrieval. This test PASSES on hash
+    /// embeddings (proving the limitation is real, not hidden).
+    #[cfg(not(feature = "local-embeddings"))]
+    #[test]
+    fn test_hash_embeddings_are_non_semantic() {
+        // These two texts are semantically similar but lexically different
+        let text_a = "cancel my subscription";
+        let text_b = "end your membership";
+
+        let emb_a = embed(text_a).unwrap();
+        let emb_b = embed(text_b).unwrap();
+        let sim = cosine_similarity(&emb_a, &emb_b);
+
+        // Under hash embeddings, semantically similar texts will have LOW similarity
+        // (because hash is based on character content, not meaning).
+        // This test documents that fact — it's NOT a failure, it's a known limitation.
+        println!("Hash embedding similarity for semantically-similar texts: {:.4}", sim);
+        println!("NOTE: This similarity is NOT meaningful — hash embeddings are non-semantic.");
+        println!("      Real semantic search requires --features local-embeddings (fastembed model).");
+
+        // The test passes regardless of the similarity value — it's documentation,
+        // not a gate. But it prints the value so we can see the limitation.
+        assert!(sim >= -1.0 && sim <= 1.0, "Cosine similarity out of range");
     }
 }

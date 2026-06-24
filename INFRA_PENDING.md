@@ -44,12 +44,29 @@
 
 ## RESOLVED ITEMS
 
-### 4. fastembed model download (Phase 0.4)
+### 4. fastembed model download (Phase 0.4) — SEMANTIC SEARCH BLOCKER
 - **Blocker**: fastembed AllMiniLML6-v2 (80MB ONNX) requires network to download on first use
-- **Impact**: Production embeddings (`--features local-embeddings`) need this model
-- **Workaround**: Default (CI/headless) path uses deterministic hash-based embeddings — no download needed. All 11 tests pass without the model.
-- **Verification command (on real hardware)**:
+- **Impact**: Without this model, the system uses hash-based embeddings which are NON-SEMANTIC.
+  - Hash embeddings produce deterministic vectors but do NOT capture semantic meaning.
+  - "cancel subscription" and "end membership" will NOT be similar under hash embeddings.
+  - Real semantic search (paraphrase retrieval, meaning-based KNN) is IMPOSSIBLE without the model.
+- **Air-gap status**: NOT yet real. Air-gap currently falls back to hash embeddings (non-semantic).
+  - Real air-gap requires pre-caching the fastembed model (one-time fetch, then fully offline).
+  - The model is cached in ~/.cache/ after first download — subsequent runs work offline.
+  - To enable real air-gap: download model once on a networked machine, copy ~/.cache/ to air-gapped machine.
+- **Workaround**: Default (CI/headless) path uses hash embeddings — sufficient for testing
+  vector store mechanics (insert, KNN, dimension checks) but NOT for semantic retrieval.
+- **Verification command (on real hardware with network)**:
   ```bash
-  cargo build --features local-embeddings  # Triggers download on first run
+  # Build with local-embeddings feature (triggers model download on first test run)
   cargo test --lib -p phantom-core embedding --features local-embeddings
+
+  # The semantic relevance test will run and verify:
+  # query "cancel subscription" retrieves "membership termination" (not "newsletter subscribe")
+  # This test is SKIPPED without --features local-embeddings
+
+  # For air-gap: after first download, copy the cached model:
+  cp -r ~/.cache/fastembed/ /air-gapped-machine/.cache/fastembed/
+  cargo test --lib -p phantom-core embedding --features local-embeddings  # works offline
   ```
+- **Model details**: all-MiniLM-L6-v2, 384-dim (truncated to 256), 80MB ONNX, CPU-only, MIT license

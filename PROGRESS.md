@@ -79,13 +79,21 @@
 - [x] Create phantom-core/src/embedding.rs — embed(), VectorStore, semantic_recall()
 - [x] Add sqlite-vec to MemMachine — vec0 virtual table created
 - [x] semantic_recall method — implemented (combines KNN + content fetch)
-- [x] Tests (embedding, vector memory, air-gap) — 11 tests, all green
+- [x] Tests (embedding, vector memory, air-gap) — 12 tests, all green
+- [x] KNN not-insertion-order test — proves vector search is real
+- [ ] **SEMANTIC RELEVANCE**: test_semantic_relevance_paraphrase_retrieval — PENDING real fastembed model
+  - Test exists, gated behind `--features local-embeddings`
+  - Hash embeddings are NON-SEMANTIC (documented in test_hash_embeddings_are_non_semantic)
+  - **Semantic retrieval verified = PENDING real model; hash path is a NON-SEMANTIC fallback only**
+- [ ] **AIR-GAP SEMANTIC SEARCH = NOT yet real (hash fallback)**
+  - Air-gap currently falls back to hash embeddings which are non-semantic
+  - Real air-gap requires pre-caching the fastembed model (one-time fetch, then offline)
+  - Tracked in INFRA_PENDING.md with exact fetch command
 - [ ] Integration with existing MemMachine recall_contextualized — not yet wired
 - [ ] PR-14 verification with new semantic recall — needs integration
-- **STATUS**: CORE DONE — embedding + vector search proven real; integration pending
-- **EVIDENCE**: `cargo test --lib -p phantom-core embedding → 11 passed` | `cargo test --lib -p phantom-core → 137 passed (no regressions)`
+- **STATUS**: CORE MECHANICS DONE — vector store + KNN proven real; SEMANTIC retrieval PENDING real model
+- **EVIDENCE**: `cargo test --lib -p phantom-core embedding → 12 passed` | `cargo test --lib -p phantom-core → 138 passed (no regressions)`
 - **BUILD IMPACT**: sqlite-vec adds 244KB rlib — negligible
-- **AIR-GAP**: Default path uses deterministic hash embeddings (no download). Production path needs fastembed model download (INFRA_PENDING).
 
 #### Phase 0.5: MCP Server + Messaging Connectors
 - [ ] Enhance kairo-mcp with 12 domain tools
