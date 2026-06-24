@@ -71,16 +71,21 @@
 - [x] Integrate with domain router — ingest() is the first step for non-PDF formats
 - [x] Tests (all 7 formats, routing logic, AGPL guard) — 26 passed, 1 skipped
 - **STATUS**: DONE
-- **EVIDENCE**: `pytest test_phase0_3_markitdown.py → 26 passed, 1 skipped`
-- **NOTE**: pdf_oxide is installed in venv but not system Python — 1 test skipped (pdf_oxide import in system Python). PDF routing uses PyMuPDF fallback which works.
+- **EVIDENCE**: `pytest test_phase0_3_markitdown.py → 27 passed, 0 skipped`
+- **SKIP RESOLVED**: Previously 1 skip (test_pdf_oxide_available) because pdf_oxide was installed in venv but not system Python. Fixed by installing pdf_oxide in system Python. All 27 tests now pass.
 
 #### Phase 0.4: sqlite-vec + fastembed-rs
-- [ ] Install sqlite-vec + cargo add fastembed
-- [ ] Create phantom-core/src/embedding.rs
-- [ ] Add sqlite-vec to MemMachine
-- [ ] semantic_recall method
-- [ ] Tests (embedding, vector memory, air-gap)
-- **STATUS**: NOT STARTED
+- [x] Install sqlite-vec + cargo add fastembed (already existed as optional dep)
+- [x] Create phantom-core/src/embedding.rs — embed(), VectorStore, semantic_recall()
+- [x] Add sqlite-vec to MemMachine — vec0 virtual table created
+- [x] semantic_recall method — implemented (combines KNN + content fetch)
+- [x] Tests (embedding, vector memory, air-gap) — 11 tests, all green
+- [ ] Integration with existing MemMachine recall_contextualized — not yet wired
+- [ ] PR-14 verification with new semantic recall — needs integration
+- **STATUS**: CORE DONE — embedding + vector search proven real; integration pending
+- **EVIDENCE**: `cargo test --lib -p phantom-core embedding → 11 passed` | `cargo test --lib -p phantom-core → 137 passed (no regressions)`
+- **BUILD IMPACT**: sqlite-vec adds 244KB rlib — negligible
+- **AIR-GAP**: Default path uses deterministic hash embeddings (no download). Production path needs fastembed model download (INFRA_PENDING).
 
 #### Phase 0.5: MCP Server + Messaging Connectors
 - [ ] Enhance kairo-mcp with 12 domain tools

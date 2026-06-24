@@ -43,4 +43,13 @@
 ---
 
 ## RESOLVED ITEMS
-(none yet)
+
+### 4. fastembed model download (Phase 0.4)
+- **Blocker**: fastembed AllMiniLML6-v2 (80MB ONNX) requires network to download on first use
+- **Impact**: Production embeddings (`--features local-embeddings`) need this model
+- **Workaround**: Default (CI/headless) path uses deterministic hash-based embeddings — no download needed. All 11 tests pass without the model.
+- **Verification command (on real hardware)**:
+  ```bash
+  cargo build --features local-embeddings  # Triggers download on first run
+  cargo test --lib -p phantom-core embedding --features local-embeddings
+  ```

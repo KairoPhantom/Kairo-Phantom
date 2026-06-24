@@ -4650,6 +4650,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
+ "sqlite-vec",
  "strsim 0.11.1",
  "tauri",
  "tempfile",
@@ -6108,6 +6109,15 @@ name = "sptr"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3b9b39299b249ad65f3b7e96443bad61c02ca5cd3589f46cb6d610a0fd6c0d6a"
+
+[[package]]
+name = "sqlite-vec"
+version = "0.1.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d0ba424237a9a5db2f6071f193319e2b6a32f7f3961debb2fbbfe67067abce3f"
+dependencies = [
+ "cc",
+]
 
 [[package]]
 name = "stable_deref_trait"

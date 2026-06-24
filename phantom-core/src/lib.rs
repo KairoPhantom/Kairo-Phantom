@@ -50,6 +50,7 @@ pub mod pii_guard;
 pub mod response_validator;
 pub mod retry_policy;
 pub mod memory_store;
+pub mod embedding;              // Phase 0.4: sqlite-vec + fastembed semantic search
 pub mod quality_gate;
 pub mod writing_pipeline;
 pub mod pipeline;
