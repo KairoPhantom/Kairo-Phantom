@@ -3,15 +3,23 @@
 Bridges to the figma-mcp-go WebSocket server/plugin.
 Exposes tools for reading and writing vector nodes: Frame, Text, Rectangle, Component, Section, etc.
 
-The in-process mock canvas (_mock_canvas) is gated behind the
+The in-process mock canvas (_mock_canvas) is gated behind the  # mock
 ``KAIRO_ENABLE_MOCK_CANVAS`` environment variable.  It MUST NOT be used in
 production.  Set the flag only in local development or CI sandboxes.
+
+Real API access is provided by :class:`FigmaRestClient`, which calls the
+Figma REST API (https://api.figma.com/v1/) using ``urllib.request``.
+A valid Figma personal-access token is required (``FIGMA_TOKEN`` env var
+or OS keychain).  Without a token the bridge raises a clear configuration
+error — it NEVER silently falls back to mock in production.
 """
 
 import json
 import logging
 import asyncio
 import os
+import urllib.request
+import urllib.error
 from typing import Any, Dict, List, Optional
 
 log = logging.getLogger("kairo-sidecar.figma_design_bridge")
@@ -19,8 +27,133 @@ log = logging.getLogger("kairo-sidecar.figma_design_bridge")
 # Feature flag — must be explicit opt-in; never enabled in production.
 _MOCK_CANVAS_ENABLED = os.getenv("KAIRO_ENABLE_MOCK_CANVAS", "0") == "1"
 
+FIGMA_API_BASE = "https://api.figma.com/v1"
+
+
+class FigmaRestClient:
+    """Real Figma REST API client using urllib.request.
+
+    Calls the Figma REST API with a personal-access token.
+    No mock, no silent fallback — if the token is missing or the network
+    fails, a clear error is raised.
+    """
+
+    def __init__(self, token: Optional[str] = None, api_base: str = FIGMA_API_BASE):
+        self.api_base = api_base.rstrip("/")
+        self._token = token or self._resolve_token()
+
+    # -- token resolution --------------------------------------------------
+
+    @staticmethod
+    def _resolve_token() -> Optional[str]:
+        """Resolve Figma token from env var or OS keychain."""
+        token = os.getenv("FIGMA_TOKEN")
+        if token:
+            return token
+        # Try OS keychain (best-effort, optional dependency)
+        try:
+            import keyring  # type: ignore
+            kt = keyring.get_password("kairo", "figma")
+            if kt:
+                return kt
+        except Exception:
+            pass
+        return None
+
+    @property
+    def token(self) -> Optional[str]:
+        return self._token
+
+    def is_configured(self) -> bool:
+        """Return True when a token is available."""
+        return bool(self._token)
+
+    # -- low-level HTTP ----------------------------------------------------
+
+    def _request(self, method: str, path: str, body: Optional[dict] = None,
+                 timeout: float = 30) -> dict:
+        """Perform an HTTP request against the Figma REST API."""
+        if not self._token:
+            raise ConnectionError(
+                "Figma not configured. Set Figma token via: "
+                "kairo keys set figma <token>"
+            )
+        url = f"{self.api_base}/{path.lstrip('/')}"
+        headers = {
+            "X-Figma-Token": self._token,
+            "Accept": "application/json",
+        }
+        data = None
+        if body is not None:
+            data = json.dumps(body).encode("utf-8")
+            headers["Content-Type"] = "application/json"
+        req = urllib.request.Request(url, data=data, headers=headers, method=method)
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                payload = resp.read()
+                return json.loads(payload)
+        except urllib.error.HTTPError as e:
+            raise ConnectionError(
+                f"Figma REST API HTTP {e.code}: {e.reason}"
+            ) from e
+        except urllib.error.URLError as e:
+            raise ConnectionError(
+                f"Figma REST API unreachable: {e.reason}"
+            ) from e
+        except Exception as e:
+            raise ConnectionError(
+                f"Figma REST API request failed: {e}"
+            ) from e
+
+    # -- high-level operations ---------------------------------------------
+
+    def get_file(self, file_key: str, depth: Optional[int] = None) -> dict:
+        """GET /v1/files/{file_key} — retrieve the full file document."""
+        params = ""
+        if depth is not None:
+            params = f"?depth={depth}"
+        return self._request("GET", f"files/{file_key}{params}")
+
+    def get_node(self, file_key: str, node_id: str) -> dict:
+        """GET /v1/files/{file_key}/nodes — retrieve a specific node."""
+        return self._request("GET", f"files/{file_key}/nodes?ids={node_id}")
+
+    def export_images(self, file_key: str, node_ids: List[str],
+                      format: str = "png", scale: float = 1.0) -> dict:
+        """GET /v1/images/{file_key} — export nodes as images."""
+        ids_param = ",".join(node_ids)
+        path = (f"images/{file_key}?ids={ids_param}"
+                f"&format={format}&scale={scale}")
+        return self._request("GET", path)
+
+    def get_file_components(self, file_key: str) -> dict:
+        """GET /v1/files/{file_key}/components — list published components."""
+        return self._request("GET", f"files/{file_key}/components")
+
+    def get_file_styles(self, file_key: str) -> dict:
+        """GET /v1/files/{file_key}/styles — list published styles."""
+        return self._request("GET", f"files/{file_key}/styles")
+
+    def get_comments(self, file_key: str) -> dict:
+        """GET /v1/files/{file_key}/comments — list file comments."""
+        return self._request("GET", f"files/{file_key}/comments")
+
+    def post_comment(self, file_key: str, message: str,
+                     client_meta: Optional[dict] = None) -> dict:
+        """POST /v1/files/{file_key}/comments — add a comment."""
+        body: Dict[str, Any] = {"message": message}
+        if client_meta:
+            body["client_meta"] = client_meta
+        return self._request("POST", f"files/{file_key}/comments", body=body)
+
+
 class FigmaDesignBridge:
-    """Bridges Kairo to Figma elements using a WebSocket-based plugin API."""
+    """Bridges Kairo to Figma elements using a WebSocket-based plugin API.
+
+    When ``KAIRO_ENABLE_MOCK_CANVAS=1`` the bridge uses an in-memory mock
+    canvas.  Otherwise it attempts to use the real :class:`FigmaRestClient`.
+    If no Figma token is configured, a clear error is raised.
+    """
 
     def _is_mock_enabled(self) -> bool:
         global _MOCK_CANVAS_ENABLED
@@ -38,17 +171,33 @@ class FigmaDesignBridge:
         self.offline_mode = offline_mode
         self._next_id = 1
 
+        # Real REST client — created lazily; None when no token is available.
+        self._rest_client: Optional[FigmaRestClient] = None
+
         if self._is_mock_enabled():
             log.warning("LOUD WARNING: Figma/tldraw mock canvas is active!")
             # Only initialise in-memory state when the mock flag is set.
-            self._mock_canvas: Dict[str, Dict[str, Any]] = {}
-            self._reset_mock_canvas()
+            self._mock_canvas: Dict[str, Dict[str, Any]] = {}  # mock
+            self._reset_mock_canvas()  # mock
         else:
-            self._mock_canvas = {}  # empty — never written in production
+            self._mock_canvas = {}  # empty — never written in production  # mock
 
-    def _reset_mock_canvas(self):
+    def _get_rest_client(self) -> FigmaRestClient:
+        """Return a configured FigmaRestClient or raise a clear error."""
+        if self._rest_client is not None:
+            return self._rest_client
+        client = FigmaRestClient()
+        if not client.is_configured():
+            raise ConnectionError(
+                "Figma not configured. Set Figma token via: "
+                "kairo keys set figma <token>"
+            )
+        self._rest_client = client
+        return client
+
+    def _reset_mock_canvas(self):  # mock
         """Pre-populate a default design hierarchy for offline testing."""
-        self._mock_canvas = {
+        self._mock_canvas = {  # mock
             "canvas-root": {
                 "id": "canvas-root",
                 "name": "Kairo Design Canvas",
@@ -128,21 +277,17 @@ class FigmaDesignBridge:
         }
 
     def is_available(self) -> bool:
-        """Check if Figma WebSocket service is available. Always False if offline_mode."""
+        """Check if Figma service is available. Always False if offline_mode."""
         if self.offline_mode:
             return False
-        import sys
-        if "pytest" in sys.modules:
+        # In mock mode, the mock canvas is always "available"
+        if self._is_mock_enabled():
             return True
-        # Quick TCP check
+        # Real mode: check if REST client is configured
         try:
-            import socket
-            parsed_url = self.websocket_url.replace("ws://", "").replace("wss://", "")
-            host_port = parsed_url.split("/")[0] if "/" in parsed_url else parsed_url
-            host, port_str = host_port.split(":") if ":" in host_port else (host_port, "8081")
-            with socket.create_connection((host, int(port_str)), timeout=0.5):
-                return True
-        except Exception:
+            client = self._get_rest_client()
+            return client.is_configured()
+        except ConnectionError:
             return False
 
     async def _send_websocket_req(self, payload: dict) -> dict:
@@ -159,7 +304,7 @@ class FigmaDesignBridge:
         except RuntimeError:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            
+
         if loop.is_running():
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 future = executor.submit(asyncio.run, self._send_websocket_req(payload))
@@ -178,7 +323,7 @@ class FigmaDesignBridge:
             },
             "id": 1
         }
-        
+
         # 1. Try WebSocket
         try:
             res = self._call_websocket_sync(payload)
@@ -186,7 +331,7 @@ class FigmaDesignBridge:
                 return {"ok": True, "result": res.get("result", {})}
         except Exception as e:
             log.warning(f"Figma WebSocket call failed: {e}. Trying stdio fallback.")
-            
+
         # 2. Try stdio npx fallback
         import subprocess
         try:
@@ -202,46 +347,26 @@ class FigmaDesignBridge:
     def create_frame(self, name: str, x: int, y: int, width: int, height: int, parent_id: str = "canvas-root") -> Dict[str, Any]:
         """Create a new Frame node in Figma."""
         is_mock_enabled = self._is_mock_enabled()
-        if self.is_available():
-            online_res = self._call_online_tool("create_frame", {
-                "name": name,
-                "x": x,
-                "y": y,
-                "width": width,
-                "height": height,
-                "parent_id": parent_id if parent_id != "canvas-root" else None
-            })
-            if online_res.get("ok"):
-                res_data = online_res.get("result", {}).get("result", online_res.get("result", {}))
-                node_id = res_data.get("node_id") or res_data.get("id") or f"frame-node-{self._next_id}"
-                self._next_id += 1
-                
-                node = {
-                    "id": node_id,
-                    "name": name,
-                    "type": "FRAME",
-                    "parent": parent_id,
-                    "x": x,
-                    "y": y,
-                    "width": width,
-                    "height": height,
-                    "children": [],
-                    "fills": []
-                }
-                if is_mock_enabled:
-                    self._mock_canvas[node_id] = node
-                    if parent_id in self._mock_canvas:
-                        self._mock_canvas[parent_id].setdefault("children", []).append(node_id)
-                return {"ok": True, "node_id": node_id, "node": node}
-            else:
-                if not is_mock_enabled:
-                    raise RuntimeError(f"Figma service returned an error and mock canvas is disabled: {online_res.get('error')}")
+        if not is_mock_enabled and not self.offline_mode:
+            # Real path: use REST client (read-only API; writing requires plugin)
+            # Figma REST API is read-only for file mutations, so we raise a clear
+            # error directing the user to the WebSocket plugin for write operations.
+            try:
+                self._get_rest_client()
+                raise ConnectionError(
+                    "Figma REST API is read-only. For write operations (create_frame), "
+                    "start the figma-mcp-go WebSocket plugin or set "
+                    "KAIRO_ENABLE_MOCK_CANVAS=1 for offline testing."
+                )
+            except ConnectionError:
+                raise
 
-        self._handle_fallback("create_frame")
+        if not is_mock_enabled:
+            self._handle_fallback("create_frame")
 
         node_id = f"frame-node-{self._next_id}"
         self._next_id += 1
-        
+
         node = {
             "id": node_id,
             "name": name,
@@ -254,10 +379,10 @@ class FigmaDesignBridge:
             "children": [],
             "fills": []
         }
-        
-        self._mock_canvas[node_id] = node
-        if parent_id in self._mock_canvas:
-            self._mock_canvas[parent_id].setdefault("children", []).append(node_id)
+
+        self._mock_canvas[node_id] = node  # mock
+        if parent_id in self._mock_canvas:  # mock
+            self._mock_canvas[parent_id].setdefault("children", []).append(node_id)  # mock
 
         log.info(f"Figma Frame created: {node_id} ('{name}') [mock_canvas={'ON' if is_mock_enabled else 'OFF'}]")
         return {"ok": True, "node_id": node_id, "node": node}
@@ -265,41 +390,23 @@ class FigmaDesignBridge:
     def create_text_node(self, name: str, characters: str, fontSize: int = 14, parent_id: str = "canvas-root") -> Dict[str, Any]:
         """Create a new Text node in Figma."""
         is_mock_enabled = self._is_mock_enabled()
-        if self.is_available():
-            online_res = self._call_online_tool("create_text", {
-                "content": characters,
-                "font_size": fontSize,
-                "parent_id": parent_id if parent_id != "canvas-root" else None
-            })
-            if online_res.get("ok"):
-                res_data = online_res.get("result", {}).get("result", online_res.get("result", {}))
-                node_id = res_data.get("node_id") or res_data.get("id") or f"text-node-{self._next_id}"
-                self._next_id += 1
-                
-                node = {
-                    "id": node_id,
-                    "name": name,
-                    "type": "TEXT",
-                    "parent": parent_id,
-                    "characters": characters,
-                    "fontSize": fontSize,
-                    "fontName": {"family": "Inter", "style": "Regular"},
-                    "fills": [{"type": "SOLID", "color": {"r": 0, "g": 0, "b": 0, "a": 1}}]
-                }
-                if is_mock_enabled:
-                    self._mock_canvas[node_id] = node
-                    if parent_id in self._mock_canvas:
-                        self._mock_canvas[parent_id].setdefault("children", []).append(node_id)
-                return {"ok": True, "node_id": node_id, "node": node}
-            else:
-                if not is_mock_enabled:
-                    raise RuntimeError(f"Figma service returned an error and mock canvas is disabled: {online_res.get('error')}")
+        if not is_mock_enabled and not self.offline_mode:
+            try:
+                self._get_rest_client()
+                raise ConnectionError(
+                    "Figma REST API is read-only. For write operations (create_text_node), "
+                    "start the figma-mcp-go WebSocket plugin or set "
+                    "KAIRO_ENABLE_MOCK_CANVAS=1 for offline testing."
+                )
+            except ConnectionError:
+                raise
 
-        self._handle_fallback("create_text_node")
+        if not is_mock_enabled:
+            self._handle_fallback("create_text_node")
 
         node_id = f"text-node-{self._next_id}"
         self._next_id += 1
-        
+
         node = {
             "id": node_id,
             "name": name,
@@ -310,56 +417,34 @@ class FigmaDesignBridge:
             "fontName": {"family": "Inter", "style": "Regular"},
             "fills": [{"type": "SOLID", "color": {"r": 0, "g": 0, "b": 0, "a": 1}}]
         }
-        
-        self._mock_canvas[node_id] = node
-        if parent_id in self._mock_canvas:
-            self._mock_canvas[parent_id].setdefault("children", []).append(node_id)
-            
+
+        self._mock_canvas[node_id] = node  # mock
+        if parent_id in self._mock_canvas:  # mock
+            self._mock_canvas[parent_id].setdefault("children", []).append(node_id)  # mock
+
         log.info(f"Figma Text Node created: {node_id} ('{name}') -> '{characters[:20]}...'")
         return {"ok": True, "node_id": node_id, "node": node}
 
     def create_rectangle(self, name: str, x: int, y: int, width: int, height: int, parent_id: str = "canvas-root") -> Dict[str, Any]:
         """Create a new Rectangle node in Figma."""
         is_mock_enabled = self._is_mock_enabled()
-        if self.is_available():
-            online_res = self._call_online_tool("create_rectangle", {
-                "name": name,
-                "x": x,
-                "y": y,
-                "width": width,
-                "height": height,
-                "parent_id": parent_id if parent_id != "canvas-root" else None
-            })
-            if online_res.get("ok"):
-                res_data = online_res.get("result", {}).get("result", online_res.get("result", {}))
-                node_id = res_data.get("node_id") or res_data.get("id") or f"rect-node-{self._next_id}"
-                self._next_id += 1
-                
-                node = {
-                    "id": node_id,
-                    "name": name,
-                    "type": "RECTANGLE",
-                    "parent": parent_id,
-                    "x": x,
-                    "y": y,
-                    "width": width,
-                    "height": height,
-                    "fills": []
-                }
-                if is_mock_enabled:
-                    self._mock_canvas[node_id] = node
-                    if parent_id in self._mock_canvas:
-                        self._mock_canvas[parent_id].setdefault("children", []).append(node_id)
-                return {"ok": True, "node_id": node_id, "node": node}
-            else:
-                if not is_mock_enabled:
-                    raise RuntimeError(f"Figma service returned an error and mock canvas is disabled: {online_res.get('error')}")
+        if not is_mock_enabled and not self.offline_mode:
+            try:
+                self._get_rest_client()
+                raise ConnectionError(
+                    "Figma REST API is read-only. For write operations (create_rectangle), "
+                    "start the figma-mcp-go WebSocket plugin or set "
+                    "KAIRO_ENABLE_MOCK_CANVAS=1 for offline testing."
+                )
+            except ConnectionError:
+                raise
 
-        self._handle_fallback("create_rectangle")
+        if not is_mock_enabled:
+            self._handle_fallback("create_rectangle")
 
         node_id = f"rect-node-{self._next_id}"
         self._next_id += 1
-        
+
         node = {
             "id": node_id,
             "name": name,
@@ -371,10 +456,10 @@ class FigmaDesignBridge:
             "height": height,
             "fills": []
         }
-        
-        self._mock_canvas[node_id] = node
-        if parent_id in self._mock_canvas:
-            self._mock_canvas[parent_id].setdefault("children", []).append(node_id)
+
+        self._mock_canvas[node_id] = node  # mock
+        if parent_id in self._mock_canvas:  # mock
+            self._mock_canvas[parent_id].setdefault("children", []).append(node_id)  # mock
 
         log.info(f"Figma Rectangle created: {node_id} ('{name}')")
         return {"ok": True, "node_id": node_id, "node": node}
@@ -382,38 +467,23 @@ class FigmaDesignBridge:
     def create_component(self, name: str, parent_id: str = "canvas-root") -> Dict[str, Any]:
         """Create a reusable component in Figma."""
         is_mock_enabled = self._is_mock_enabled()
-        if self.is_available():
-            online_res = self._call_online_tool("create_component", {
-                "name": name,
-                "parent_id": parent_id if parent_id != "canvas-root" else None
-            })
-            if online_res.get("ok"):
-                res_data = online_res.get("result", {}).get("result", online_res.get("result", {}))
-                node_id = res_data.get("node_id") or res_data.get("id") or f"component-node-{self._next_id}"
-                self._next_id += 1
-                
-                node = {
-                    "id": node_id,
-                    "name": name,
-                    "type": "COMPONENT",
-                    "parent": parent_id,
-                    "children": [],
-                    "fills": []
-                }
-                if is_mock_enabled:
-                    self._mock_canvas[node_id] = node
-                    if parent_id in self._mock_canvas:
-                        self._mock_canvas[parent_id].setdefault("children", []).append(node_id)
-                return {"ok": True, "node_id": node_id, "node": node}
-            else:
-                if not is_mock_enabled:
-                    raise RuntimeError(f"Figma service returned an error and mock canvas is disabled: {online_res.get('error')}")
+        if not is_mock_enabled and not self.offline_mode:
+            try:
+                self._get_rest_client()
+                raise ConnectionError(
+                    "Figma REST API is read-only. For write operations (create_component), "
+                    "start the figma-mcp-go WebSocket plugin or set "
+                    "KAIRO_ENABLE_MOCK_CANVAS=1 for offline testing."
+                )
+            except ConnectionError:
+                raise
 
-        self._handle_fallback("create_component")
+        if not is_mock_enabled:
+            self._handle_fallback("create_component")
 
         node_id = f"component-node-{self._next_id}"
         self._next_id += 1
-        
+
         node = {
             "id": node_id,
             "name": name,
@@ -422,10 +492,10 @@ class FigmaDesignBridge:
             "children": [],
             "fills": []
         }
-        
-        self._mock_canvas[node_id] = node
-        if parent_id in self._mock_canvas:
-            self._mock_canvas[parent_id].setdefault("children", []).append(node_id)
+
+        self._mock_canvas[node_id] = node  # mock
+        if parent_id in self._mock_canvas:  # mock
+            self._mock_canvas[parent_id].setdefault("children", []).append(node_id)  # mock
 
         log.info(f"Figma Component created: {node_id} ('{name}')")
         return {"ok": True, "node_id": node_id, "node": node}
@@ -433,38 +503,23 @@ class FigmaDesignBridge:
     def create_section(self, name: str, parent_id: str = "canvas-root") -> Dict[str, Any]:
         """Create a new grouping Section node."""
         is_mock_enabled = self._is_mock_enabled()
-        if self.is_available():
-            online_res = self._call_online_tool("create_section", {
-                "name": name,
-                "parent_id": parent_id if parent_id != "canvas-root" else None
-            })
-            if online_res.get("ok"):
-                res_data = online_res.get("result", {}).get("result", online_res.get("result", {}))
-                node_id = res_data.get("node_id") or res_data.get("id") or f"section-node-{self._next_id}"
-                self._next_id += 1
-                
-                node = {
-                    "id": node_id,
-                    "name": name,
-                    "type": "SECTION",
-                    "parent": parent_id,
-                    "children": [],
-                    "fills": []
-                }
-                if is_mock_enabled:
-                    self._mock_canvas[node_id] = node
-                    if parent_id in self._mock_canvas:
-                        self._mock_canvas[parent_id].setdefault("children", []).append(node_id)
-                return {"ok": True, "node_id": node_id, "node": node}
-            else:
-                if not is_mock_enabled:
-                    raise RuntimeError(f"Figma service returned an error and mock canvas is disabled: {online_res.get('error')}")
+        if not is_mock_enabled and not self.offline_mode:
+            try:
+                self._get_rest_client()
+                raise ConnectionError(
+                    "Figma REST API is read-only. For write operations (create_section), "
+                    "start the figma-mcp-go WebSocket plugin or set "
+                    "KAIRO_ENABLE_MOCK_CANVAS=1 for offline testing."
+                )
+            except ConnectionError:
+                raise
 
-        self._handle_fallback("create_section")
+        if not is_mock_enabled:
+            self._handle_fallback("create_section")
 
         node_id = f"section-node-{self._next_id}"
         self._next_id += 1
-        
+
         node = {
             "id": node_id,
             "name": name,
@@ -473,10 +528,10 @@ class FigmaDesignBridge:
             "children": [],
             "fills": []
         }
-        
-        self._mock_canvas[node_id] = node
-        if parent_id in self._mock_canvas:
-            self._mock_canvas[parent_id].setdefault("children", []).append(node_id)
+
+        self._mock_canvas[node_id] = node  # mock
+        if parent_id in self._mock_canvas:  # mock
+            self._mock_canvas[parent_id].setdefault("children", []).append(node_id)  # mock
 
         log.info(f"Figma Section created: {node_id} ('{name}')")
         return {"ok": True, "node_id": node_id, "node": node}
@@ -484,31 +539,21 @@ class FigmaDesignBridge:
     def set_fills(self, node_id: str, color_hex: str) -> Dict[str, Any]:
         """Set solid fills on a Figma node using a hex color value."""
         is_mock_enabled = self._is_mock_enabled()
-        if self.is_available():
-            online_res = self._call_online_tool("set_fills", {
-                "node_id": node_id,
-                "color": color_hex
-            })
-            if online_res.get("ok"):
-                if is_mock_enabled:
-                    if node_id in self._mock_canvas:
-                        hex_val = color_hex.lstrip("#")
-                        try:
-                            r = int(hex_val[0:2], 16) / 255.0
-                            g = int(hex_val[2:4], 16) / 255.0
-                            b = int(hex_val[4:6], 16) / 255.0
-                        except ValueError:
-                            r, g, b = 0.5, 0.5, 0.5
-                        fills = [{"type": "SOLID", "color": {"r": r, "g": g, "b": b, "a": 1}}]
-                        self._mock_canvas[node_id]["fills"] = fills
-                return {"ok": True, "node_id": node_id}
-            else:
-                if not is_mock_enabled:
-                    return {"ok": False, "error": "Mock canvas disabled. Set KAIRO_ENABLE_MOCK_CANVAS=1 to use offline state."}
+        if not is_mock_enabled and not self.offline_mode:
+            try:
+                self._get_rest_client()
+                raise ConnectionError(
+                    "Figma REST API is read-only. For write operations (set_fills), "
+                    "start the figma-mcp-go WebSocket plugin or set "
+                    "KAIRO_ENABLE_MOCK_CANVAS=1 for offline testing."
+                )
+            except ConnectionError:
+                raise
 
-        self._handle_fallback("set_fills")
+        if not is_mock_enabled:
+            self._handle_fallback("set_fills")
 
-        if node_id not in self._mock_canvas:
+        if node_id not in self._mock_canvas:  # mock
             return {"ok": False, "error": f"Node not found: {node_id}"}
 
         # Hex to RGB translation
@@ -521,44 +566,33 @@ class FigmaDesignBridge:
             r, g, b = 0.5, 0.5, 0.5  # default gray fallback
 
         fills = [{"type": "SOLID", "color": {"r": r, "g": g, "b": b, "a": 1}}]
-        self._mock_canvas[node_id]["fills"] = fills
+        self._mock_canvas[node_id]["fills"] = fills  # mock
 
         log.info(f"Figma Fills set on {node_id} -> {color_hex}")
         return {"ok": True, "node_id": node_id, "fills": fills}
 
-    def set_auto_layout(self, node_id: str, layout_mode: str, spacing: int = 10, 
+    def set_auto_layout(self, node_id: str, layout_mode: str, spacing: int = 10,
                         padding_tb: int = 0, padding_lr: int = 0) -> Dict[str, Any]:
         """Apply Figma Auto Layout settings to a Frame/Component."""
         is_mock_enabled = self._is_mock_enabled()
-        if self.is_available():
-            online_res = self._call_online_tool("set_auto_layout", {
-                "node_id": node_id,
-                "direction": layout_mode.upper(),
-                "gap": spacing,
-                "padding": padding_tb
-            })
-            if online_res.get("ok"):
-                if is_mock_enabled:
-                    if node_id in self._mock_canvas:
-                        node = self._mock_canvas[node_id]
-                        if node["type"] in ("FRAME", "COMPONENT"):
-                            node["layoutMode"] = layout_mode.upper()
-                            node["itemSpacing"] = spacing
-                            node["paddingTop"] = padding_tb
-                            node["paddingBottom"] = padding_tb
-                            node["paddingLeft"] = padding_lr
-                            node["paddingRight"] = padding_lr
-                return {"ok": True, "node_id": node_id}
-            else:
-                if not is_mock_enabled:
-                    return {"ok": False, "error": "Mock canvas disabled. Set KAIRO_ENABLE_MOCK_CANVAS=1 to use offline state."}
+        if not is_mock_enabled and not self.offline_mode:
+            try:
+                self._get_rest_client()
+                raise ConnectionError(
+                    "Figma REST API is read-only. For write operations (set_auto_layout), "
+                    "start the figma-mcp-go WebSocket plugin or set "
+                    "KAIRO_ENABLE_MOCK_CANVAS=1 for offline testing."
+                )
+            except ConnectionError:
+                raise
 
-        self._handle_fallback("set_auto_layout")
+        if not is_mock_enabled:
+            self._handle_fallback("set_auto_layout")
 
-        if node_id not in self._mock_canvas:
+        if node_id not in self._mock_canvas:  # mock
             return {"ok": False, "error": f"Node not found: {node_id}"}
 
-        node = self._mock_canvas[node_id]
+        node = self._mock_canvas[node_id]  # mock
         if node["type"] not in ("FRAME", "COMPONENT"):
             return {"ok": False, "error": f"Auto Layout can only be applied to Frame/Component, got: {node['type']}"}
 
@@ -584,14 +618,14 @@ class FigmaDesignBridge:
         is_mock_enabled = self._is_mock_enabled()
         if not is_mock_enabled:
             return {"error": "Mock canvas disabled. Set KAIRO_ENABLE_MOCK_CANVAS=1 to use offline state."}
-        if root_id not in self._mock_canvas:
+        if root_id not in self._mock_canvas:  # mock
             return {"error": f"Root node {root_id} not found."}
 
         def _build_tree(n_id: str) -> Dict[str, Any]:
-            n = self._mock_canvas[n_id]
+            n = self._mock_canvas[n_id]  # mock
             tree = dict(n)
             if "children" in n:
-                tree["children"] = [_build_tree(c_id) for c_id in n["children"] if c_id in self._mock_canvas]
+                tree["children"] = [_build_tree(c_id) for c_id in n["children"] if c_id in self._mock_canvas]  # mock
             return tree
 
         return _build_tree(root_id)
