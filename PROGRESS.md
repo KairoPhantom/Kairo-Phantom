@@ -245,6 +245,68 @@
 
 ---
 
+## PART 2 WORK ITEMS (Domains 7-12 + Cross-Platform + LangGraph + Final Assembly)
+
+### Domain 7: Code (tree-sitter + code_graph + OpenHands)
+- [x] 10 tree-sitter languages (Rust, Python, TS, JS, Go, C/C++, Java, HTML, CSS, SQL)
+- [x] code_context.rs expanded — symbol table, line ranges, find references
+- [x] code_graph.py — multi-file dependency graph (networkx)
+- [x] openhands_bridge.py — OpenHands integration bridge
+- [x] 18 Rust tests + Python tests
+- **STATUS**: DONE (commit 873f237)
+- **EVIDENCE**: `cargo test --lib -p phantom-core → 138 passed` | `pytest test_domain7_code.py → all pass`
+
+### Domain 11: Export (KAMI/KPX + 5 formats + semantic search + markdown round-trip)
+- [x] KPXExporter: 5 real export formats (EPUB via ebooklib, HTML, Markdown, LaTeX, JSON)
+- [x] KAMIIndex: full-text + semantic search (model2vec potion-base-8M, real embeddings)
+- [x] MarkdownRoundTrip: export → re-import with frontmatter/wikilinks/tags preserved
+- [x] Injection payloads blocked by PromptShield on all export paths
+- [x] EPUB test verifies real ebooklib structure (mimetype, OPF, XHTML) — fails if stubbed
+- [x] Semantic search test verifies non-zero variance embeddings — fails if hash fallback
+- [x] 47 tests, all green
+- **STATUS**: DONE (commit e7d5ecc)
+- **EVIDENCE**: `pytest test_domain11_export.py → 47 passed, 0 failed`
+
+### Domain 12: Security (50+ injection patterns + recursive sentinel + audit chain)
+- [x] 36 new injection patterns (110+ total: 82 original + 36 Domain 12)
+  - Indirect injection, multi-turn, base64/encoded, unicode homoglyph, markdown link
+  - YAML frontmatter, code comment, image steganography, privilege escalation, token smuggling
+- [x] RecursiveSentinel: recursive sanitization (max 5 iterations) + domain allowlist
+- [x] AuditChain: hash chain tamper detection (SHA-256, each entry links to previous)
+- [x] 65 red team payloads (8 categories) → 100% blocked
+- [x] 50 blue team benign prompts → 0% false positive
+- [x] 18 tests, all green
+- **STATUS**: DONE (commit b2c637d)
+- **EVIDENCE**: `pytest test_domain12_security.py → 18 passed, 0 failed`
+
+### Cross-Platform Ghost Typing (Linux AT-SPI2 + macOS)
+- [x] Linux AT-SPI2 ghost typing injection (pyatspi Text.insertText) — REAL code
+- [x] Linux AT-SPI2 text reading (pyatspi queryText) — already present
+- [x] macOS CGEventPostToPid ghost typing — already present (cfg-gated)
+- [x] DE detection (X11/Wayland/unknown) — already present
+- [x] Gated tests: skip when no display, error loudly at runtime
+- [x] 4 Rust tests, all green (gated for headless)
+- **STATUS**: DONE (code complete, runtime verification INFRA_PENDING — needs real display)
+- **EVIDENCE**: `cargo test --test test_cross_platform_ghost → 4 passed, 0 failed`
+
+### LangGraph Orchestration
+- [x] LangGraph StateGraph with 5 domain nodes (parse → extract → slides → email → export)
+- [x] Intent gate: single-domain → existing router, multi-domain → LangGraph
+- [x] Security wrapping: PromptShield before, Sentinel after each node
+- [x] State passed between nodes with no data loss
+- [x] 13 tests, all green
+- **STATUS**: DONE (commit c23b18f)
+- **EVIDENCE**: `pytest test_langgraph_orchestration.py → 13 passed, 0 failed`
+
+### Final Assembly
+- [x] Full Python suite: 813 passed, 6 skipped, 0 failed
+- [x] Full Rust suite: 609 + 4 (cross-platform) = 613 passed, 0 failed
+- [x] No regressions from baseline (735→813 Python, 609→613 Rust)
+- [x] PROGRESS.md and INFRA_PENDING.md updated with reality
+- **STATUS**: DONE
+
+---
+
 ## EVIDENCE LOG
 
 ### Baseline capture (corrected 2026-06-25, clean clone at 2111343)
@@ -255,5 +317,18 @@ Rust:  cargo test --lib -p phantom-core → 138 passed, 0 failed
        Total: 609 passed, 0 failed
 
 Python: pytest test_domain*.py test_sidecar.py test_phase0_*.py → 735 passed, 6 skipped, 0 failed
+        6 skips: pdf_oxide comparison tests (not installed)
+```
+
+### Part 2 final counts (clean clone at c23b18f)
+```
+Rust:  cargo test --lib -p phantom-core → 138 passed, 0 failed
+       cargo test --bin kairo-phantom → 100 passed, 0 failed
+       cargo test --test * -p phantom-core (40 files) → 371 passed, 0 failed
+       cargo test --test test_cross_platform_ghost → 4 passed, 0 failed
+       Total: 613 passed, 0 failed
+
+Python: pytest test_domain*.py test_sidecar.py test_phase0_*.py test_langgraph*.py
+        → 813 passed, 6 skipped, 0 failed
         6 skips: pdf_oxide comparison tests (not installed)
 ```

@@ -111,3 +111,22 @@
 - **NOTE**: model2vec (potion-base-8M) installed for REAL semantic embeddings in Domain 10
   - `pip install model2vec` — downloads model from HuggingFace on first use (~10MB)
   - Semantic recall test proves 'cancel subscription' ↔ 'membership termination' retrieval (cosine sim 0.47)
+
+### 7. Cross-platform ghost typing runtime verification (Part 2 — Cross-Platform)
+- **Blocker**: No X11/Wayland display server or AT-SPI2 a11y bus in this sandbox
+- **Impact**: AT-SPI2 ghost typing injection (pyatspi Text.insertText) is implemented in
+  `phantom-core/src/platform/linux.rs` but cannot be runtime-verified without a real desktop display.
+  macOS CGEventPostToPid path needs a real macOS machine.
+- **Workaround**: Implementation is complete and compiles. At runtime, if no a11y bus is available,
+  `try_atspi_inject_text()` returns false (loud) and falls back to clipboard+xdotool. Tests are
+  gated to skip with logged reason when no display is present.
+- **Verification command (on real hardware)**:
+  ```bash
+  # Linux: requires xdotool, pyatspi, DISPLAY set, X11 or Wayland session active
+  cargo test --test test_cross_platform_ghost  # Tests pass (gated)
+  # Manual: run kairo-phantom, trigger Alt+Ctrl+M in a text editor
+  # Verify text appears via AT-SPI2 (not clipboard paste)
+
+  # macOS: requires Accessibility permissions
+  cargo test --target aarch64-apple-darwin --test test_cross_platform_ghost
+  ```
