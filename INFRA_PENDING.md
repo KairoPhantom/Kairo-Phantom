@@ -42,7 +42,18 @@
 
 ---
 
-### 5. Live paperless-ngx + Karakeep integration (Phase 0.7)
+### 5. pdf_oxide not installed (Domain 4 — PDF Enhancement)
+- **Blocker**: `pdf_oxide` (MIT-licensed pure-Rust PDF parser) is not available as a pip package in this sandbox
+- **Impact**: Cannot run pdf_oxide vs PyMuPDF comparison tests on real fixtures
+- **Workaround**: 4 comparison tests are marked `pytest.mark.skip(reason='pdf_oxide not installed')`. Routing table is documented and tested. All other Domain 4 tests (82 passed) use PyMuPDF (real, not mocked).
+- **Verification command (on hardware with pdf_oxide)**:
+  ```bash
+  pip install pdf_oxide
+  python3 -m pytest test_domain4_pdf.py::TestPdfOxideComparison -v --tb=short -p no:asyncio
+  # Remove the skip marks or set env var KAIRO_PDF_OXIDE=1 to activate
+  ```
+
+### 6. Live paperless-ngx + Karakeep integration (Phase 0.7)
 - **Blocker**: Docker is not available in this sandbox — cannot run paperless-ngx or Karakeep instances
 - **Impact**: Bridge logic is tested against mock HTTP servers (clearly labeled as non-production).
   Live integration against real services is not verified here.

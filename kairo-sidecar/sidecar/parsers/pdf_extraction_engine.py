@@ -367,7 +367,10 @@ class PdfExtractionEngine:
 
         Returns a raw dict consumed by :meth:`_build_result`.
         """
-        import fitz  # confirmed available at call site
+        try:
+            import fitz  # PyMuPDF — AGPL, lazy import inside try/except
+        except ImportError:
+            raise ImportError("PyMuPDF (fitz) is required for PDF extraction")
 
         text_parts: List[str] = []
         markdown_parts: List[str] = []

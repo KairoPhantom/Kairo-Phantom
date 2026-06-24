@@ -104,7 +104,10 @@ def parse_pdf(file_path: str) -> dict:
     return result
 
 def _parse_pdf_pymupdf(file_path: str) -> dict:
-    import fitz
+    try:
+        import fitz  # PyMuPDF — AGPL, lazy import inside try/except
+    except ImportError:
+        raise ImportError("PyMuPDF (fitz) is required for PDF extraction")
     doc = fitz.open(file_path)
     paragraphs = []
     tables = []

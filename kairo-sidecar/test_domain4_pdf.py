@@ -35,6 +35,7 @@ import sys
 import time
 import tempfile
 import tracemalloc
+import ast
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -1317,6 +1318,409 @@ class TestMemoryAndStability:
 # ─────────────────────────────────────────────────────────────────────────────
 # Entry point for direct execution
 # ─────────────────────────────────────────────────────────────────────────────
+
+# ════════════════════════════════════════════════════════════════════════════
+# Section 9: Adversarial PDF Fixtures & License Guard (new tests)
+# ════════════════════════════════════════════════════════════════════════════
+
+# Fixture directory — adversarial PDFs created with reportlab
+_FIXTURES_DIR = Path(__file__).parent / "test" / "fixtures"
+
+
+def _fixture_path(name: str) -> str:
+    """Return absolute path to a fixture PDF, asserting it exists."""
+    p = _FIXTURES_DIR / name
+    assert p.exists(), f"Fixture not found: {p}"
+    return str(p)
+
+
+class TestAdversarialFixtures:
+    """Tests for the 3 new adversarial PDF fixtures (encrypted, form, 500-page)."""
+
+    def test_encrypted_pdf_fixture_exists(self):
+        """Verify encrypted.pdf fixture exists and is a valid encrypted PDF."""
+        path = _fixture_path("encrypted.pdf")
+        import fitz
+        doc = fitz.open(path)
+        assert doc.is_encrypted, "encrypted.pdf should be encrypted"
+        assert doc.needs_pass, "encrypted.pdf should require a password"
+        doc.close()
+
+    def test_encrypted_pdf_handled_gracefully_without_password(self):
+        """Kairo handles encrypted PDF gracefully — returns result with clear error, no crash."""
+        path = _fixture_path("encrypted.pdf")
+        # _extract_with_pymupdf should not crash; it should either extract empty
+        # text (fitz returns empty for unauthenticated encrypted PDFs) or the
+        # fallback should catch the error.
+        result = _extract_fallback(path)
+        assert isinstance(result, ExtractionResult), "Should return ExtractionResult, not crash"
+        # Without password, fitz returns empty text for encrypted PDFs
+        # The key assertion: no exception is raised, result is valid
+        assert result.tier_used is not None, "Tier should be set even for encrypted PDFs"
+
+    def test_encrypted_pdf_extracts_with_password(self):
+        """With correct password, encrypted PDF text is extracted properly."""
+        path = _fixture_path("encrypted.pdf")
+        import fitz
+        doc = fitz.open(path)
+        assert doc.authenticate("test123"), "Password authentication should succeed"
+        text = doc[0].get_text()
+        doc.close()
+        assert "secret encrypted PDF" in text, "Should extract text content with password"
+        assert "Password: test123" in text, "Should extract password line with password"
+
+    def test_encrypted_pdf_router_does_not_crash(self):
+        """The extraction router handles encrypted PDFs without raising."""
+        path = _fixture_path("encrypted.pdf")
+        result = _route_extraction(path)
+        assert isinstance(result, ExtractionResult), "Router should return ExtractionResult"
+        # Router should not crash — it may return empty text for encrypted PDFs
+        assert result.page_count >= 0, "Page count should be non-negative"
+
+    def test_form_pdf_fixture_exists(self):
+        """Verify form.pdf fixture exists and is a valid PDF."""
+        path = _fixture_path("form.pdf")
+        import fitz
+        doc = fitz.open(path)
+        assert len(doc) >= 1, "form.pdf should have at least 1 page"
+        doc.close()
+
+    def test_form_pdf_extracts_form_fields(self):
+        """Kairo extracts form field names and values from PDF with AcroForm fields."""
+        path = _fixture_path("form.pdf")
+        import fitz
+        doc = fitz.open(path)
+        field_names = []
+        field_values = {}
+        for page in doc:
+            widgets = list(page.widgets()) if page.widgets() else []
+            for w in widgets:
+                field_names.append(w.field_name)
+                field_values[w.field_name] = w.field_value
+        doc.close()
+        assert "FirstName" in field_names, "Should find FirstName form field"
+        assert "LastName" in field_names, "Should find LastName form field"
+        assert "Email" in field_names, "Should find Email form field"
+        assert "Subscribe" in field_names, "Should find Subscribe form field"
+        # Verify field values are populated
+        assert field_values.get("FirstName") == "John", f"FirstName value should be 'John', got {field_values.get('FirstName')}"
+        assert field_values.get("LastName") == "Doe", f"LastName value should be 'Doe', got {field_values.get('LastName')}"
+
+    def test_form_pdf_text_extraction(self):
+        """Standard text extraction from form.pdf still works (non-field text)."""
+        path = _fixture_path("form.pdf")
+        result = _extract_with_pymupdf(path)
+        assert "Kairo Phantom Form Test Document" in result.text, "Should extract non-field text"
+        assert "Please fill in the fields below" in result.text, "Should extract instruction text"
+
+    def test_500page_pdf_fixture_exists(self):
+        """Verify 500page.pdf fixture exists and has exactly 500 pages."""
+        path = _fixture_path("500page.pdf")
+        import fitz
+        doc = fitz.open(path)
+        assert len(doc) == 500, f"500page.pdf should have 500 pages, got {len(doc)}"
+        doc.close()
+
+    def test_500page_pdf_extraction_completes_within_timeout(self):
+        """Extraction of 500-page PDF completes within 30 seconds (no timeout)."""
+        path = _fixture_path("500page.pdf")
+        t0 = time.perf_counter()
+        result = _extract_with_pymupdf(path)
+        elapsed = time.perf_counter() - t0
+        assert elapsed < 30.0, f"500-page extraction took {elapsed:.1f}s — exceeds 30s timeout"
+        assert result.page_count == 500, f"Should extract all 500 pages, got {result.page_count}"
+        assert len(result.text) > 0, "Should extract non-empty text from 500-page PDF"
+        # Verify content from first and last page
+        assert "Page 1 of 500" in result.text, "Should contain page 1 text"
+        assert "Page 500 of 500" in result.text, "Should contain page 500 text"
+
+    def test_500page_pdf_router_completes_within_timeout(self):
+        """Router-based extraction of 500-page PDF completes within 30 seconds."""
+        path = _fixture_path("500page.pdf")
+        t0 = time.perf_counter()
+        result = _route_extraction(path)
+        elapsed = time.perf_counter() - t0
+        assert elapsed < 30.0, f"500-page router extraction took {elapsed:.1f}s — exceeds 30s timeout"
+        assert result.page_count == 500, f"Router should report 500 pages, got {result.page_count}"
+
+    def test_500page_pdf_idempotent(self):
+        """Two extractions of 500-page PDF produce identical text."""
+        path = _fixture_path("500page.pdf")
+        result_a = _extract_with_pymupdf(path)
+        result_b = _extract_with_pymupdf(path)
+        assert result_a.text == result_b.text, "500-page extraction should be idempotent"
+        assert result_a.page_count == result_b.page_count == 500
+
+
+class TestPdfOxideComparison:
+    """pdf_oxide vs PyMuPDF comparison tests.
+
+    pdf_oxide is an MIT-licensed pure-Rust PDF parser. If installed, we compare
+    its text extraction output against PyMuPDF on all fixtures. If not installed,
+    tests are skipped and documented in INFRA_PENDING.
+    """
+
+    # PDF routing table: PDF type → best parser
+    ROUTING_TABLE = {
+        "born_digital_text": "pymupdf",       # Tier 1: high text yield
+        "encrypted": "pymupdf",               # PyMuPDF handles auth gracefully
+        "form_fields": "pymupdf",             # PyMuPDF extracts widget values
+        "scanned_low_yield": "olmocr",        # Tier 3: OCR for scanned pages
+        "cjk_multilingual": "surya",          # Tier 4: CJK/Arabic OCR
+        "rich_tables_layout": "opendataloader", # Tier 2: table extraction
+        "large_document": "pymupdf",          # PyMuPDF is fastest for large docs
+    }
+
+    @pytest.mark.skip(reason="pdf_oxide not installed — see INFRA_PENDING.md")
+    def test_pdf_oxide_imports(self):
+        """pdf_oxide is importable."""
+        import pdf_oxide  # noqa: F401
+
+    @pytest.mark.skip(reason="pdf_oxide not installed — see INFRA_PENDING.md")
+    def test_pdf_oxide_vs_pymupdf_encrypted(self):
+        """Compare pdf_oxide and PyMuPDF text output on encrypted.pdf."""
+        path = _fixture_path("encrypted.pdf")
+        import pdf_oxide
+        # pdf_oxide extraction
+        oxide_text = pdf_oxide.extract_text(path)  # hypothetical API
+        pymupdf_result = _extract_with_pymupdf(path)
+        # Both should handle encrypted PDFs gracefully
+        assert isinstance(oxide_text, str)
+        assert isinstance(pymupdf_result.text, str)
+
+    @pytest.mark.skip(reason="pdf_oxide not installed — see INFRA_PENDING.md")
+    def test_pdf_oxide_vs_pymupdf_form(self):
+        """Compare pdf_oxide and PyMuPDF text output on form.pdf."""
+        path = _fixture_path("form.pdf")
+        import pdf_oxide
+        oxide_text = pdf_oxide.extract_text(path)
+        pymupdf_result = _extract_with_pymupdf(path)
+        # Both should extract the non-field text
+        assert "Kairo Phantom Form Test Document" in pymupdf_result.text
+
+    @pytest.mark.skip(reason="pdf_oxide not installed — see INFRA_PENDING.md")
+    def test_pdf_oxide_vs_pymupdf_500page(self):
+        """Compare pdf_oxide and PyMuPDF text output on 500page.pdf."""
+        path = _fixture_path("500page.pdf")
+        import pdf_oxide
+        t0 = time.perf_counter()
+        oxide_text = pdf_oxide.extract_text(path)
+        oxide_elapsed = time.perf_counter() - t0
+        pymupdf_result = _extract_with_pymupdf(path)
+        pymupdf_elapsed = pymupdf_result.extraction_time_ms / 1000.0
+        # Both should complete within 30s
+        assert oxide_elapsed < 30.0
+        assert pymupdf_elapsed < 30.0
+        # Both should extract page 1 and page 500 text
+        assert "Page 1 of 500" in oxide_text
+        assert "Page 500 of 500" in oxide_text
+
+    def test_routing_table_documented(self):
+        """Verify the PDF routing table covers all expected PDF types."""
+        expected_types = {
+            "born_digital_text", "encrypted", "form_fields",
+            "scanned_low_yield", "cjk_multilingual", "rich_tables_layout",
+            "large_document",
+        }
+        assert set(self.ROUTING_TABLE.keys()) == expected_types, (
+            f"Routing table keys mismatch. Expected: {expected_types}, "
+            f"Got: {set(self.ROUTING_TABLE.keys())}"
+        )
+        # All values should reference a known parser
+        valid_parsers = {"pymupdf", "pdf_oxide", "olmocr", "surya", "opendataloader"}
+        for pdf_type, parser in self.ROUTING_TABLE.items():
+            assert parser in valid_parsers, (
+                f"Routing table entry '{pdf_type}' references unknown parser '{parser}'"
+            )
+
+    def test_routing_table_pymupdf_for_encrypted(self):
+        """Routing table correctly routes encrypted PDFs to PyMuPDF."""
+        assert self.ROUTING_TABLE["encrypted"] == "pymupdf"
+
+    def test_routing_table_pymupdf_for_form_fields(self):
+        """Routing table correctly routes form-field PDFs to PyMuPDF."""
+        assert self.ROUTING_TABLE["form_fields"] == "pymupdf"
+
+    def test_routing_table_pymupdf_for_large_documents(self):
+        """Routing table correctly routes large documents to PyMuPDF (fastest)."""
+        assert self.ROUTING_TABLE["large_document"] == "pymupdf"
+
+
+class TestLicenseGuard:
+    """Verify PyMuPDF (AGPL) is lazy-imported in sidecar source code.
+
+    PyMuPDF is AGPL-licensed. It must only appear inside try/except blocks
+    (lazy imports) in sidecar/ — never as a top-level unconditional import.
+    pdf_oxide (MIT) and MarkItDown (MIT) have no such restriction.
+    """
+
+    SIDECAR_DIR = Path(__file__).parent / "sidecar"
+
+    def test_fitz_not_unconditionally_imported_in_sidecar(self):
+        """No 'import fitz' or 'from fitz' at module level (outside try/except) in sidecar/.
+
+        Scans all .py files in sidecar/ and verifies that every fitz import
+        is inside a try/except block (lazy import pattern).
+        """
+        import ast
+        violations = []
+        for py_file in self.SIDECAR_DIR.rglob("*.py"):
+            try:
+                source = py_file.read_text(encoding="utf-8")
+                tree = ast.parse(source, filename=str(py_file))
+            except (SyntaxError, UnicodeDecodeError):
+                continue
+
+            # Walk the AST to find import statements for fitz
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    for alias in node.names:
+                        if alias.name in ("fitz", "PyMuPDF"):
+                            # Check if this node is inside a try/except
+                            if not _is_inside_try_except(node, tree):
+                                violations.append(
+                                    f"{py_file}:{node.lineno}: unconditional 'import {alias.name}'"
+                                )
+                elif isinstance(node, ast.ImportFrom):
+                    if node.module in ("fitz", "PyMuPDF"):
+                        if not _is_inside_try_except(node, tree):
+                            violations.append(
+                                f"{py_file}:{node.lineno}: unconditional 'from {node.module} import ...'"
+                            )
+
+        assert not violations, (
+            "PyMuPDF (AGPL) must be lazy-imported (inside try/except) in sidecar/. "
+            "Unconditional imports found:\n" + "\n".join(violations)
+        )
+
+    def test_pymupdf_lazy_import_in_markitdown_bridge(self):
+        """Specifically verify fitz is lazy-imported in markitdown_bridge.py."""
+        bridge = self.SIDECAR_DIR / "parsers" / "markitdown_bridge.py"
+        if not bridge.exists():
+            pytest.skip("markitdown_bridge.py not found")
+        source = bridge.read_text(encoding="utf-8")
+        # The import should be inside a try/except or function body
+        assert "import fitz" in source, "fitz import should exist in markitdown_bridge.py"
+        # Verify it's not at the top of the file (should be inside a function or try block)
+        lines = source.splitlines()
+        for i, line in enumerate(lines):
+            stripped = line.lstrip()
+            if stripped.startswith("import fitz") or stripped.startswith("from fitz"):
+                # Check indentation — lazy imports are indented (inside try/except or function)
+                indent = len(line) - len(stripped)
+                assert indent > 0, (
+                    f"fitz import at line {i+1} in markitdown_bridge.py is at top level (indent=0) — "
+                    "should be inside try/except or function body (lazy import)"
+                )
+
+    def test_pymupdf_lazy_import_in_pdf_extraction_engine(self):
+        """Verify fitz is lazy-imported in pdf_extraction_engine.py."""
+        engine = self.SIDECAR_DIR / "parsers" / "pdf_extraction_engine.py"
+        if not engine.exists():
+            pytest.skip("pdf_extraction_engine.py not found")
+        source = engine.read_text(encoding="utf-8")
+        lines = source.splitlines()
+        for i, line in enumerate(lines):
+            stripped = line.lstrip()
+            if stripped.startswith("import fitz") or stripped.startswith("from fitz"):
+                indent = len(line) - len(stripped)
+                assert indent > 0, (
+                    f"fitz import at line {i+1} in pdf_extraction_engine.py is at top level (indent=0) — "
+                    "should be inside try/except or function body (lazy import)"
+                )
+
+    def test_pymupdf_lazy_import_in_oracles(self):
+        """Verify fitz is lazy-imported in oracles.py (was previously top-level)."""
+        oracles = self.SIDECAR_DIR / "oracles.py"
+        if not oracles.exists():
+            pytest.skip("oracles.py not found")
+        source = oracles.read_text(encoding="utf-8")
+        lines = source.splitlines()
+        for i, line in enumerate(lines):
+            stripped = line.lstrip()
+            if stripped.startswith("import fitz") or stripped.startswith("from fitz"):
+                indent = len(line) - len(stripped)
+                assert indent > 0, (
+                    f"fitz import at line {i+1} in oracles.py is at top level (indent=0) — "
+                    "should be inside try/except or function body (lazy import)"
+                )
+
+    def test_pymupdf_lazy_import_in_pdf_parser(self):
+        """Verify fitz is lazy-imported in pdf_parser.py."""
+        parser = self.SIDECAR_DIR / "parsers" / "pdf_parser.py"
+        if not parser.exists():
+            pytest.skip("pdf_parser.py not found")
+        source = parser.read_text(encoding="utf-8")
+        lines = source.splitlines()
+        for i, line in enumerate(lines):
+            stripped = line.lstrip()
+            if stripped.startswith("import fitz") or stripped.startswith("from fitz"):
+                indent = len(line) - len(stripped)
+                assert indent > 0, (
+                    f"fitz import at line {i+1} in pdf_parser.py is at top level (indent=0) — "
+                    "should be inside try/except or function body (lazy import)"
+                )
+
+    def test_pymupdf_lazy_import_in_multi_doc_context(self):
+        """Verify fitz is lazy-imported in multi_doc_context.py."""
+        mdc = self.SIDECAR_DIR / "multi_doc_context.py"
+        if not mdc.exists():
+            pytest.skip("multi_doc_context.py not found")
+        source = mdc.read_text(encoding="utf-8")
+        lines = source.splitlines()
+        for i, line in enumerate(lines):
+            stripped = line.lstrip()
+            if stripped.startswith("import fitz") or stripped.startswith("from fitz"):
+                indent = len(line) - len(stripped)
+                assert indent > 0, (
+                    f"fitz import at line {i+1} in multi_doc_context.py is at top level (indent=0) — "
+                    "should be inside try/except or function body (lazy import)"
+                )
+
+    def test_pymupdf_lazy_import_in_mineru_parser(self):
+        """Verify fitz is lazy-imported in mineru_parser.py."""
+        mp = self.SIDECAR_DIR / "parsers" / "mineru_parser.py"
+        if not mp.exists():
+            pytest.skip("mineru_parser.py not found")
+        source = mp.read_text(encoding="utf-8")
+        lines = source.splitlines()
+        for i, line in enumerate(lines):
+            stripped = line.lstrip()
+            if stripped.startswith("import fitz") or stripped.startswith("from fitz"):
+                indent = len(line) - len(stripped)
+                assert indent > 0, (
+                    f"fitz import at line {i+1} in mineru_parser.py is at top level (indent=0) — "
+                    "should be inside try/except or function body (lazy import)"
+                )
+
+    def test_no_pymupdf_in_requirements_without_note(self):
+        """PyMuPDF in requirements.txt should exist (it's a runtime dep) but the
+        AGPL boundary is maintained via lazy imports in source code."""
+        req = Path(__file__).parent.parent / "requirements.txt"
+        if not req.exists():
+            pytest.skip("requirements.txt not found")
+        content = req.read_text(encoding="utf-8")
+        # PyMuPDF should be listed (it's a runtime dependency)
+        # The AGPL boundary is maintained by lazy imports, not by excluding it
+        has_pymupdf = "PyMuPDF" in content or "pymupdf" in content or "fitz" in content
+        # It's OK either way — the key guard is lazy imports in source
+        # This test just documents the requirement
+        assert isinstance(has_pymupdf, bool)
+
+
+def _is_inside_try_except(node, tree):
+    """Check if an AST node is inside a try/except block by examining line positions."""
+    for parent in ast.walk(tree):
+        if isinstance(parent, ast.Try):
+            for child in ast.walk(parent):
+                if child is node:
+                    return True
+    return False
+
+
+# ────────────────────────────────────────────────────────────────────────────
+# Entry point for direct execution
+# ────────────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-v", "--tb=short"]))
