@@ -532,6 +532,156 @@ def _estimate_risk_reduction(clause_id: str, stance: str) -> str:
     return stance_map.get(clause_id, stance_map.get("default", "REDUCED"))
 
 
+# ---------------------------------------------------------------------------
+# Clause-by-Clause Redline Comparison (Domain 5 enhancement)
+# ---------------------------------------------------------------------------
+
+def compare_contracts(
+    original_text: str,
+    revised_text: str,
+) -> dict:
+    """
+    Compare two contract versions clause-by-clause using the CUAD extractor.
+
+    Instead of character-by-character diffing, this:
+    1. Extracts all CUAD clauses from both versions (real pattern matching).
+    2. Matches clauses by type across versions.
+    3. Categorizes each as: added, removed, or modified.
+    4. Every redline entry has: source paragraph ref, clause type, confidence.
+
+    Returns:
+        {
+            "ok": True,
+            "data": {
+                "added_clauses": [...],
+                "removed_clauses": [...],
+                "modified_clauses": [...],
+                "unchanged_clauses": [...],
+                "summary": {"added": N, "removed": N, "modified": N, "unchanged": N},
+            }
+        }
+    """
+    from sidecar.parsers.cuad_clause_extractor import CUADExtractor
+
+    extractor = CUADExtractor()
+    orig_clauses = extractor.extract_from_text(original_text)
+    rev_clauses = extractor.extract_from_text(revised_text)
+
+    # Index by clause type — there may be multiple clauses of the same type
+    orig_by_type: dict[str, list] = {}
+    for c in orig_clauses:
+        orig_by_type.setdefault(c.type, []).append(c)
+
+    rev_by_type: dict[str, list] = {}
+    for c in rev_clauses:
+        rev_by_type.setdefault(c.type, []).append(c)
+
+    all_types = set(orig_by_type.keys()) | set(rev_by_type.keys())
+
+    added: list[dict] = []
+    removed: list[dict] = []
+    modified: list[dict] = []
+    unchanged: list[dict] = []
+
+    for clause_type in sorted(all_types):
+        orig_list = orig_by_type.get(clause_type, [])
+        rev_list = rev_by_type.get(clause_type, [])
+
+        if not orig_list and rev_list:
+            # Clauses added in revised version
+            for c in rev_list:
+                added.append({
+                    "clause_type": c.type,
+                    "text": c.text,
+                    "paragraph_ref": c.paragraph_ref,
+                    "confidence": c.confidence,
+                    "version": "revised",
+                })
+
+        elif orig_list and not rev_list:
+            # Clauses removed in revised version
+            for c in orig_list:
+                removed.append({
+                    "clause_type": c.type,
+                    "text": c.text,
+                    "paragraph_ref": c.paragraph_ref,
+                    "confidence": c.confidence,
+                    "version": "original",
+                })
+
+        else:
+            # Both have clauses of this type — compare text
+            # Match by best text similarity
+            import difflib
+            used_rev: set[int] = set()
+            for oc in orig_list:
+                best_ratio = 0.0
+                best_idx = -1
+                for i, rc in enumerate(rev_list):
+                    if i in used_rev:
+                        continue
+                    ratio = difflib.SequenceMatcher(None, oc.text, rc.text).ratio()
+                    if ratio > best_ratio:
+                        best_ratio = ratio
+                        best_idx = i
+
+                if best_idx >= 0:
+                    used_rev.add(best_idx)
+                    rc = rev_list[best_idx]
+                    if best_ratio < 0.95:
+                        modified.append({
+                            "clause_type": clause_type,
+                            "original_text": oc.text,
+                            "original_paragraph_ref": oc.paragraph_ref,
+                            "revised_text": rc.text,
+                            "revised_paragraph_ref": rc.paragraph_ref,
+                            "confidence": min(oc.confidence, rc.confidence),
+                            "similarity": round(best_ratio, 3),
+                        })
+                    else:
+                        unchanged.append({
+                            "clause_type": clause_type,
+                            "text": oc.text,
+                            "paragraph_ref": oc.paragraph_ref,
+                            "confidence": oc.confidence,
+                            "similarity": round(best_ratio, 3),
+                        })
+
+            # Any unmatched revised clauses are additions
+            for i, rc in enumerate(rev_list):
+                if i not in used_rev:
+                    added.append({
+                        "clause_type": rc.type,
+                        "text": rc.text,
+                        "paragraph_ref": rc.paragraph_ref,
+                        "confidence": rc.confidence,
+                        "version": "revised",
+                    })
+
+    summary = {
+        "added": len(added),
+        "removed": len(removed),
+        "modified": len(modified),
+        "unchanged": len(unchanged),
+    }
+
+    log.info(
+        "compare_contracts: added=%d, removed=%d, modified=%d, unchanged=%d",
+        summary["added"], summary["removed"], summary["modified"], summary["unchanged"],
+    )
+
+    return {
+        "ok": True,
+        "data": {
+            "added_clauses": added,
+            "removed_clauses": removed,
+            "modified_clauses": modified,
+            "unchanged_clauses": unchanged,
+            "summary": summary,
+        },
+    }
+
+
 def _error(msg: str) -> dict:
     log.error("LegalRedline error: %s", msg)
     return {"ok": False, "data": None, "error": msg}
