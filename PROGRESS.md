@@ -138,51 +138,68 @@
 - **EVIDENCE**: `pytest test_phase0_7_bridges.py → 17 passed`
 
 ### Domain 1: Word / DOCX
-- [ ] Coverage to 80% (word_master.py + prompt_builder.py)
-- [ ] RTF and ODT support
-- [ ] Yjs collaborative editing upgrade
-- [ ] PR-01 (Word Style Conformance) passes
-- **STATUS**: NOT STARTED
+- [x] RTF parser (striprtf) — rtf_parser.py created
+- [x] ODT parser (odfpy) — odt_parser.py created
+- [x] load_document() auto-detects .docx/.rtf/.odt — integrated in word_master.py
+- [x] Error-path tests (corrupted docx, missing styles, disk full, mail merge, TOC) — 25+ new tests
+- [ ] Coverage to 80% (word_master.py + prompt_builder.py) — not measured (pytest-cov not installed)
+- [ ] Yjs collaborative editing upgrade — PENDING (needs Node.js + Yjs library)
+- [ ] PR-01 (Word Style Conformance) — needs PR gate runner
+- **STATUS**: RTF/ODT + ERROR PATHS DONE — coverage measurement + Yjs PENDING
+- **EVIDENCE**: `pytest test_domain1_word.py → 62 passed` (existing tests, new tests in separate run)
 
 ### Domain 2: Excel / Spreadsheet
-- [ ] LibreOffice headless recompute
-- [ ] Coverage to 80%
-- [ ] Conditional formatting, tables, sparklines
-- [ ] PR-06 (Excel Formula Validation) passes
-- **STATUS**: NOT STARTED
+- [x] LibreOffice headless recompute — libreoffice_recompute.py created (real soffice subprocess)
+- [x] Conditional formatting tests (data bars, color scales, icon sets) — added
+- [x] Excel table (ListObject) creation and styling — tested
+- [x] Error-path tests (invalid syntax, circular refs, empty ranges) — 15+ new tests
+- [x] LibreOffice recompute test — verifies computed values match expected
+- [ ] Coverage to 80% — not measured (pytest-cov not installed)
+- [ ] PR-06 (Excel Formula Validation) — needs PR gate runner
+- **STATUS**: LIBREOFFICE RECOMPUTE + CONDITIONAL FORMATTING + ERROR PATHS DONE
+- **EVIDENCE**: `pytest test_domain2_excel.py → 101 passed`
 
 ### Domain 3: PowerPoint
-- [ ] DeepPresenter integration
-- [ ] Un-mock image generation
-- [ ] FigMirror charts
-- [ ] Office PowerPoint MCP Server study
-- [ ] Tests (real assets, mock gating, injection)
-- **STATUS**: NOT STARTED
+- [x] Mock image generation gated behind KAIRO_IMAGE_GENERATION=mock env flag
+- [x] ImageGenerationUnavailableError — raised in production when no backend available
+- [x] FigMirror bridge — figmirror_bridge.py (real HTTP client, fails loudly)
+- [x] DeepPresenter bridge — preserved original with fallback + LLM outline generation
+- [x] Injection tests — 10 payloads blocked by PromptShield
+- [ ] DeepPresenter running locally with Ollama — INFRA_PENDING (needs Ollama + PPTAgent)
+- [ ] PPTX output with real visual assets — INFRA_PENDING (needs DeepPresenter running)
+- **STATUS**: MOCK GATED + BRIDGES REAL + INJECTION TESTED — live DeepPresenter PENDING
+- **EVIDENCE**: `pytest test_domain3_pptx.py → 77 passed`
 
 ### Domain 4: PDF
-- [ ] pdf_oxide on adversarial fixtures
-- [ ] 3 new adversarial fixtures (encrypted, form, 500page)
-- [ ] MarkItDown PDF path testing
-- [ ] License guard (AGPL)
-- **STATUS**: NOT STARTED
+- [x] 3 new adversarial fixtures (encrypted.pdf, form.pdf, 500page.pdf) — created with reportlab
+- [x] Tests for new fixtures (encrypted handled gracefully, form fields extracted, 500page within timeout)
+- [x] License guard — PyMuPDF lazy import verified (AGPL boundary maintained)
+- [x] Fixed non-lazy fitz imports in oracles.py, pdf_extraction_engine.py, pdf_parser.py
+- [ ] pdf_oxide comparison — pdf_oxide not installed (4 tests skipped, INFRA_PENDING)
+- [x] Routing table documented
+- **STATUS**: ADVERSARIAL FIXTURES + LICENSE GUARD DONE — pdf_oxide comparison PENDING
+- **EVIDENCE**: `pytest test_domain4_pdf.py → 82 passed, 5 skipped`
 
 ### Domain 5: Legal
-- [ ] CUAD clause extractor
-- [ ] Enhance legal_redline.py
-- [ ] Citation graph (networkx)
-- [ ] Standalone legal test suite
-- [ ] OpenContracts MCP integration
-- **STATUS**: NOT STARTED
+- [x] CUAD clause extractor — cuad_clause_extractor.py (41 clause types, real pattern matching)
+- [x] Citation graph — legal_citation_graph.py (networkx DiGraph, JSON serialization)
+- [x] Enhanced legal_redline.py — clause-by-clause comparison using CUAD extractor
+- [x] Standalone legal test suite — test_domain5_legal.py (83 tests)
+- [x] 50 injection payloads — all blocked by PromptShield
+- [x] Provenance — every clause has paragraph_ref
+- [ ] OpenContracts MCP integration — PENDING (needs OpenContracts server)
+- **STATUS**: CUAD + CITATION GRAPH + STANDALONE TESTS DONE
+- **EVIDENCE**: `pytest test_domain5_legal.py → 83 passed`
 
 ### Domain 6: Design (CRITICAL — UN-MOCK)
-- [ ] Un-mock figma_design_bridge.py (real Figma REST API)
-- [ ] Un-mock tldraw_bridge.py (real WebSocket protocol)
-- [ ] Verify ComfyUI bridge (already real)
-- [ ] Excalidraw lightweight fallback
-- [ ] Split design tests: (a) mock-mode smoke, (b) real-mode production gate
-- [ ] Codebase scan: zero mock references in production paths
-- **STATUS**: NOT STARTED
-- **BASELINE**: 44 tests RED-BY-DESIGN (Figma/tldraw bridges correctly error when mock disabled)
+- [x] FigmaRestClient — real Figma REST API (urllib, X-Figma-Token header)
+- [x] TldrawWebSocketClient — real WebSocket client (fails loudly when server down)
+- [x] ExcalidrawBridge — zero-setup fallback (pure JSON, no API key/server)
+- [x] Mock gated behind KAIRO_ENABLE_MOCK_CANVAS=1 (test-only)
+- [x] Test split: mock-env tests + real-mode tests (clear error without token/server)
+- [x] Codebase scan: zero mock references in production paths
+- **STATUS**: UN-MOCKED — Figma + tldraw + Excalidraw all real or fail loudly
+- **EVIDENCE**: `pytest test_domain5_design.py → 75 passed` | `grep mock scan → zero production references`
 
 ---
 
