@@ -60,6 +60,11 @@ pub fn detect_language(ext: &str) -> String {
         "java" => "java".to_string(),
         "ts" | "tsx" => "typescript".to_string(),
         "js" | "jsx" => "javascript".to_string(),
+        "c" | "h" => "c".to_string(),
+        "cpp" | "cc" | "cxx" | "hpp" | "hh" | "hxx" => "cpp".to_string(),
+        "html" | "htm" => "html".to_string(),
+        "css" | "scss" | "sass" | "less" => "css".to_string(),
+        "sql" => "sql".to_string(),
         _ => "plaintext".to_string(),
     }
 }
@@ -173,6 +178,16 @@ fn extract_brace_context(
                     imports.push(trimmed.to_string());
                 }
             }
+            "c" | "cpp" => {
+                if trimmed.starts_with("#include") {
+                    imports.push(trimmed.to_string());
+                }
+            }
+            "css" => {
+                if trimmed.starts_with("@import") {
+                    imports.push(trimmed.to_string());
+                }
+            }
             _ => {
                 if trimmed.starts_with("import ") || trimmed.starts_with("using ") || trimmed.starts_with("include ") || trimmed.starts_with("require(") {
                     imports.push(trimmed.to_string());
@@ -228,7 +243,18 @@ fn extract_brace_context(
                     is_func = true;
                     let after_func = &trimmed[func_idx + 5..].trim();
                     if after_func.starts_with('(') {
+                        // Method with receiver: func (r *Type) Method()
                         if let Some(close_paren) = after_func.find(')') {
+                            let receiver = &after_func[1..close_paren];
+                            // Extract type name from receiver (e.g., "g *Greeter" → "Greeter")
+                            let receiver_parts: Vec<&str> = receiver.split_whitespace().collect();
+                            if let Some(&last) = receiver_parts.last() {
+                                let type_name = last.trim_start_matches('*').trim_start_matches('&').to_string();
+                                if !type_name.is_empty() {
+                                    // Store as enclosing class hint via a nearby symbol
+                                    nearby_symbols.push(format!("impl:{}", type_name));
+                                }
+                            }
                             let after_recv = &after_func[close_paren + 1..].trim();
                             name = after_recv.split(|c: char| !c.is_alphanumeric() && c != '_').next().unwrap_or("").to_string();
                         }
@@ -246,6 +272,91 @@ fn extract_brace_context(
                 if parts.len() > 1 && parts[0] == "type" {
                     name = parts[1].to_string();
                 }
+            }
+        } else if language == "c" || language == "cpp" {
+            // C/C++ imports
+            if trimmed.starts_with("#include") {
+                imports.push(trimmed.to_string());
+            }
+            // C/C++ function/class detection
+            if trimmed.starts_with("class ") && trimmed.contains('{') {
+                is_cls = true;
+                let parts: Vec<&str> = trimmed.split("class ").collect();
+                if parts.len() > 1 {
+                    name = parts[1].split_whitespace().next().unwrap_or("").trim_end_matches('{').trim().to_string();
+                }
+            } else if trimmed.starts_with("struct ") && trimmed.contains('{') {
+                // Only match if struct is at the start of the line (not in function params)
+                is_cls = true;
+                let parts: Vec<&str> = trimmed.split("struct ").collect();
+                if parts.len() > 1 {
+                    name = parts[1].split_whitespace().next().unwrap_or("").trim_end_matches('{').trim().to_string();
+                }
+            } else if (trimmed.contains('(') && trimmed.contains(')'))
+                && (trimmed.contains("void ")
+                    || trimmed.contains("int ")
+                    || trimmed.contains("float ")
+                    || trimmed.contains("double ")
+                    || trimmed.contains("char ")
+                    || trimmed.contains("bool ")
+                    || trimmed.contains("auto ")
+                    || trimmed.contains("const ")
+                    || trimmed.contains("static ")
+                    || (language == "cpp" && (trimmed.contains("std::") || trimmed.contains("template")))
+                    || trimmed.ends_with("{")
+                    || trimmed.ends_with(")"))
+                && !trimmed.starts_with("//")
+                && !trimmed.starts_with("#")
+                && !trimmed.contains(";")
+                && !trimmed.contains("if ")
+                && !trimmed.contains("for ")
+                && !trimmed.contains("while ")
+                && !trimmed.contains("switch ")
+            {
+                is_func = true;
+                // Extract function name: last word before '('
+                let before_paren = trimmed.split('(').next().unwrap_or("");
+                let name_words: Vec<&str> = before_paren.split_whitespace().collect();
+                if let Some(&n) = name_words.last() {
+                    name = n.trim_start_matches('*').trim_end_matches('&').to_string();
+                }
+            }
+        } else if language == "sql" {
+            // SQL: no imports, but detect CREATE TABLE, CREATE PROCEDURE, CREATE FUNCTION
+            let upper = trimmed.to_uppercase();
+            if upper.starts_with("CREATE TABLE") {
+                is_cls = true;
+                let parts: Vec<&str> = trimmed.split_whitespace().collect();
+                if parts.len() > 2 {
+                    name = parts[2].trim_end_matches('(').trim_end_matches(';').to_string();
+                }
+            } else if upper.starts_with("CREATE PROCEDURE") || upper.starts_with("CREATE FUNCTION") {
+                is_func = true;
+                let parts: Vec<&str> = trimmed.split_whitespace().collect();
+                if parts.len() > 2 {
+                    name = parts[2].trim_end_matches('(').trim_end_matches(';').to_string();
+                }
+            }
+        } else if language == "html" {
+            // HTML: detect <script> and <style> blocks as "functions" (code blocks)
+            if trimmed.starts_with("<script") || trimmed.starts_with("<style") {
+                is_func = true;
+                name = if trimmed.starts_with("<script") { "script_block" } else { "style_block" }.to_string();
+            }
+        } else if language == "css" {
+            // CSS: detect selectors as "classes" (style rules)
+            if (trimmed.ends_with('{') || trimmed.contains('{'))
+                && !trimmed.starts_with("/*")
+                && !trimmed.starts_with("//")
+                && !trimmed.starts_with("@media")
+                && !trimmed.starts_with("@import")
+                && !trimmed.starts_with("@keyframes")
+            {
+                is_cls = true;
+                name = trimmed.trim_end_matches('{').trim().to_string();
+            }
+            if trimmed.starts_with("@import") {
+                imports.push(trimmed.to_string());
             }
         } else {
             if trimmed.contains("class ") {
