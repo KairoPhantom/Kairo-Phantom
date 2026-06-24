@@ -303,6 +303,33 @@ fn sync_repository_skills_to_home() {
     }
 }
 
+
+/// Focus a window by HWND value — Windows-specific.
+/// On non-Windows platforms this is a no-op (window focusing is handled
+/// by the platform injector's focus_window method instead).
+#[cfg(windows)]
+fn focus_target_window(hwnd_val: isize) {
+    use windows::Win32::Foundation::HWND;
+    use windows::Win32::UI::WindowsAndMessaging::{
+        SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE, IsIconic,
+    };
+    let h = HWND(hwnd_val as *mut std::ffi::c_void);
+    unsafe {
+        if IsIconic(h).as_bool() {
+            let _ = ShowWindow(h, SW_RESTORE);
+        }
+        let _ = BringWindowToTop(h);
+        let _ = SetForegroundWindow(h);
+    }
+}
+
+#[cfg(not(windows))]
+fn focus_target_window(_hwnd_val: isize) {
+    // On Linux, window focusing is handled by xdotool in the platform injector.
+    // This is a no-op here — the injector.inject_replace_line() call that
+    // follows handles the actual text injection via xdotool.
+}
+
 fn main() -> Result<()> {
     // Run everything on the pre-allocated global runtime to avoid guard generation overhead
     crate::perf_engine::global_runtime().block_on(async_main())
@@ -975,46 +1002,76 @@ async fn async_main() -> Result<()> {
                 //    the window to be focused. We can read these from any valid HWND.
                 //    DO NOT call ShowWindow/BringWindowToTop/SetForegroundWindow here!
                 //    Focusing the window now would trigger Alt key release → ribbon activation.
-                let (captured_process, captured_title) = unsafe {
-                    use windows::Win32::Foundation::HWND;
-                    use windows::Win32::UI::WindowsAndMessaging::{
-                        GetWindowTextW, GetWindowThreadProcessId,
-                    };
-                    use windows::Win32::System::Threading::{
-                        OpenProcess, PROCESS_QUERY_LIMITED_INFORMATION,
-                        QueryFullProcessImageNameW, PROCESS_NAME_WIN32,
-                    };
+                let (captured_process, captured_title) = {
+                    #[cfg(windows)]
+                    {
+                        unsafe {
+                            use windows::Win32::Foundation::HWND;
+                            use windows::Win32::UI::WindowsAndMessaging::{
+                                GetWindowTextW, GetWindowThreadProcessId,
+                            };
+                            use windows::Win32::System::Threading::{
+                                OpenProcess, PROCESS_QUERY_LIMITED_INFORMATION,
+                                QueryFullProcessImageNameW, PROCESS_NAME_WIN32,
+                            };
 
-                    let hwnd = HWND(target_hwnd_val as *mut std::ffi::c_void);
+                            let hwnd = HWND(target_hwnd_val as *mut std::ffi::c_void);
 
-                    // Read window title (no focus needed)
-                    let mut title_buf = [0u16; 512];
-                    let title_len = GetWindowTextW(hwnd, &mut title_buf);
-                    let title = String::from_utf16_lossy(&title_buf[..title_len as usize]);
+                            // Read window title (no focus needed)
+                            let mut title_buf = [0u16; 512];
+                            let title_len = GetWindowTextW(hwnd, &mut title_buf);
+                            let title = String::from_utf16_lossy(&title_buf[..title_len as usize]);
 
-                    // Read process name (no focus needed)
-                    let mut pid = 0u32;
-                    GetWindowThreadProcessId(hwnd, Some(&mut pid));
-                    let proc_name = if let Ok(handle) = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid) {
-                        let mut path_buf = [0u16; 1024];
-                        let mut path_len = path_buf.len() as u32;
-                        if QueryFullProcessImageNameW(
-                            handle,
-                            PROCESS_NAME_WIN32,
-                            windows::core::PWSTR(path_buf.as_mut_ptr()),
-                            &mut path_len,
-                        ).is_ok() {
-                            let full_path = String::from_utf16_lossy(&path_buf[..path_len as usize]);
-                            std::path::Path::new(&full_path)
-                                .file_name()
-                                .and_then(|n| n.to_str())
-                                .unwrap_or("Unknown")
-                                .to_string()
-                        } else { "Unknown".to_string() }
-                    } else { "Unknown".to_string() };
+                            // Read process name (no focus needed)
+                            let mut pid = 0u32;
+                            GetWindowThreadProcessId(hwnd, Some(&mut pid));
+                            let proc_name = if let Ok(handle) = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid) {
+                                let mut path_buf = [0u16; 1024];
+                                let mut path_len = path_buf.len() as u32;
+                                if QueryFullProcessImageNameW(
+                                    handle,
+                                    PROCESS_NAME_WIN32,
+                                    windows::core::PWSTR(path_buf.as_mut_ptr()),
+                                    &mut path_len,
+                                ).is_ok() {
+                                    let full_path = String::from_utf16_lossy(&path_buf[..path_len as usize]);
+                                    std::path::Path::new(&full_path)
+                                        .file_name()
+                                        .and_then(|n| n.to_str())
+                                        .unwrap_or("Unknown")
+                                        .to_string()
+                                } else { "Unknown".to_string() }
+                            } else { "Unknown".to_string() };
 
-                    info!("🖥️  Target app: '{}' | Title: '{}'", proc_name, title);
-                    (proc_name, title)
+                            info!("🖥️  Target app: '{}' | Title: '{}'", proc_name, title);
+                            (proc_name, title)
+                        }
+                    }
+                    #[cfg(not(windows))]
+                    {
+                        // Linux: use xdotool to get active window title and process name
+                        let title = std::process::Command::new("xdotool")
+                            .args(["getactivewindow", "getwindowname"])
+                            .output()
+                            .ok()
+                            .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+                            .unwrap_or_else(|| "Unknown".to_string());
+
+                        let proc_name = std::process::Command::new("xdotool")
+                            .args(["getactivewindow", "getwindowpid"])
+                            .output()
+                            .ok()
+                            .and_then(|o| {
+                                let pid_str = String::from_utf8_lossy(&o.stdout).trim().to_string();
+                                let pid: u32 = pid_str.parse().ok()?;
+                                std::fs::read_to_string(format!("/proc/{}/comm", pid)).ok()
+                            })
+                            .map(|s| s.trim().to_string())
+                            .unwrap_or_else(|| "Unknown".to_string());
+
+                        info!("🖥️  Target app: '{}' | Title: '{}'", proc_name, title);
+                        (proc_name, title)
+                    }
                 };
 
                 // C. Read text from target app
@@ -1442,10 +1499,7 @@ async fn async_main() -> Result<()> {
                         let hwnd_val = crate::hotkey::CAPTURED_HWND.load(std::sync::atomic::Ordering::SeqCst);
                         let _ = crate::injector::HumanizedInjector::set_clipboard(&report);
                         if hwnd_val != 0 {
-                            use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE};
-                            use windows::Win32::Foundation::HWND;
-                            let h = HWND(hwnd_val as *mut std::ffi::c_void);
-                            unsafe { if windows::Win32::UI::WindowsAndMessaging::IsIconic(h).as_bool() { let _ = windows::Win32::UI::WindowsAndMessaging::ShowWindow(h, windows::Win32::UI::WindowsAndMessaging::SW_RESTORE); } let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
+                            focus_target_window(hwnd_val);
                             tokio::time::sleep(std::time::Duration::from_millis(400)).await;
                         }
                         injector.inject_replace_line();
@@ -1475,16 +1529,7 @@ async fn async_main() -> Result<()> {
                         let hwnd_val = crate::hotkey::CAPTURED_HWND.load(std::sync::atomic::Ordering::SeqCst);
                         let _ = crate::injector::HumanizedInjector::set_clipboard(&query_result);
                         if hwnd_val != 0 {
-                            use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop};
-                            use windows::Win32::Foundation::HWND;
-                            let h = HWND(hwnd_val as *mut std::ffi::c_void);
-                            unsafe {
-                                if windows::Win32::UI::WindowsAndMessaging::IsIconic(h).as_bool() {
-                                    let _ = windows::Win32::UI::WindowsAndMessaging::ShowWindow(h, windows::Win32::UI::WindowsAndMessaging::SW_RESTORE);
-                                }
-                                let _ = BringWindowToTop(h);
-                                let _ = SetForegroundWindow(h);
-                            }
+                            focus_target_window(hwnd_val);
                             tokio::time::sleep(std::time::Duration::from_millis(400)).await;
                         }
                         injector.inject_replace_line();
@@ -1581,10 +1626,7 @@ async fn async_main() -> Result<()> {
                         let hwnd_val = crate::hotkey::CAPTURED_HWND.load(std::sync::atomic::Ordering::SeqCst);
                         let _ = crate::injector::HumanizedInjector::set_clipboard(&kami_msg);
                         if hwnd_val != 0 {
-                            use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE};
-                            use windows::Win32::Foundation::HWND;
-                            let h = HWND(hwnd_val as *mut std::ffi::c_void);
-                            unsafe { if windows::Win32::UI::WindowsAndMessaging::IsIconic(h).as_bool() { let _ = windows::Win32::UI::WindowsAndMessaging::ShowWindow(h, windows::Win32::UI::WindowsAndMessaging::SW_RESTORE); } let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
+                            focus_target_window(hwnd_val);
                             tokio::time::sleep(std::time::Duration::from_millis(400)).await;
                         }
                         injector.inject_replace_line();
@@ -1625,10 +1667,7 @@ async fn async_main() -> Result<()> {
                         let hwnd_val = crate::hotkey::CAPTURED_HWND.load(std::sync::atomic::Ordering::SeqCst);
                         let _ = crate::injector::HumanizedInjector::set_clipboard(&plan_output);
                         if hwnd_val != 0 {
-                            use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE};
-                            use windows::Win32::Foundation::HWND;
-                            let h = HWND(hwnd_val as *mut std::ffi::c_void);
-                            unsafe { if windows::Win32::UI::WindowsAndMessaging::IsIconic(h).as_bool() { let _ = windows::Win32::UI::WindowsAndMessaging::ShowWindow(h, windows::Win32::UI::WindowsAndMessaging::SW_RESTORE); } let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
+                            focus_target_window(hwnd_val);
                             tokio::time::sleep(std::time::Duration::from_millis(400)).await;
                         }
                         injector.inject_replace_line();
@@ -1663,10 +1702,7 @@ async fn async_main() -> Result<()> {
                     let hwnd_val = crate::hotkey::CAPTURED_HWND.load(std::sync::atomic::Ordering::SeqCst);
                     let _ = crate::injector::HumanizedInjector::set_clipboard(&bullets);
                     if hwnd_val != 0 {
-                        use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE};
-                        use windows::Win32::Foundation::HWND;
-                        let h = HWND(hwnd_val as *mut std::ffi::c_void);
-                        unsafe { if windows::Win32::UI::WindowsAndMessaging::IsIconic(h).as_bool() { let _ = windows::Win32::UI::WindowsAndMessaging::ShowWindow(h, windows::Win32::UI::WindowsAndMessaging::SW_RESTORE); } let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
+                        focus_target_window(hwnd_val);
                         tokio::time::sleep(std::time::Duration::from_millis(400)).await;
                     }
                     injector.inject_replace_line();
@@ -1726,17 +1762,7 @@ async fn async_main() -> Result<()> {
                     let hwnd_val = crate::hotkey::CAPTURED_HWND.load(std::sync::atomic::Ordering::SeqCst);
                     let _ = crate::injector::HumanizedInjector::set_clipboard(&contract_report);
                     if hwnd_val != 0 {
-                        use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop};
-                        use windows::Win32::Foundation::HWND;
-                        let h = HWND(hwnd_val as *mut std::ffi::c_void);
-                        unsafe {
-                            if windows::Win32::UI::WindowsAndMessaging::IsIconic(h).as_bool() {
-                                let _ = windows::Win32::UI::WindowsAndMessaging::ShowWindow(
-                                    h, windows::Win32::UI::WindowsAndMessaging::SW_RESTORE
-                                );
-                            }
-                            let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h);
-                        }
+                        focus_target_window(hwnd_val);
                         tokio::time::sleep(std::time::Duration::from_millis(400)).await;
                     }
                     injector.inject_replace_line();
@@ -1757,10 +1783,7 @@ async fn async_main() -> Result<()> {
                         let hwnd_val = crate::hotkey::CAPTURED_HWND.load(std::sync::atomic::Ordering::SeqCst);
                         let _ = crate::injector::HumanizedInjector::set_clipboard(&explain_text);
                         if hwnd_val != 0 {
-                            use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE};
-                            use windows::Win32::Foundation::HWND;
-                            let h = HWND(hwnd_val as *mut std::ffi::c_void);
-                            unsafe { if windows::Win32::UI::WindowsAndMessaging::IsIconic(h).as_bool() { let _ = windows::Win32::UI::WindowsAndMessaging::ShowWindow(h, windows::Win32::UI::WindowsAndMessaging::SW_RESTORE); } let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
+                            focus_target_window(hwnd_val);
                             tokio::time::sleep(std::time::Duration::from_millis(400)).await;
                         }
                         injector.inject_replace_line();
@@ -1781,10 +1804,7 @@ async fn async_main() -> Result<()> {
                         let hwnd_val = crate::hotkey::CAPTURED_HWND.load(std::sync::atomic::Ordering::SeqCst);
                         let _ = crate::injector::HumanizedInjector::set_clipboard(&formula_clean);
                         if hwnd_val != 0 {
-                            use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE};
-                            use windows::Win32::Foundation::HWND;
-                            let h = HWND(hwnd_val as *mut std::ffi::c_void);
-                            unsafe { if windows::Win32::UI::WindowsAndMessaging::IsIconic(h).as_bool() { let _ = windows::Win32::UI::WindowsAndMessaging::ShowWindow(h, windows::Win32::UI::WindowsAndMessaging::SW_RESTORE); } let _ = BringWindowToTop(h); let _ = SetForegroundWindow(h); }
+                            focus_target_window(hwnd_val);
                             tokio::time::sleep(std::time::Duration::from_millis(400)).await;
                         }
                         injector.inject_replace_line();
@@ -2063,16 +2083,7 @@ async fn async_main() -> Result<()> {
                             let _ = crate::injector::HumanizedInjector::set_clipboard(&plan_doc_str);
                             let hwnd_val = crate::hotkey::CAPTURED_HWND.load(std::sync::atomic::Ordering::SeqCst);
                             if hwnd_val != 0 {
-                                use windows::Win32::UI::WindowsAndMessaging::{SetForegroundWindow, BringWindowToTop, ShowWindow, SW_RESTORE};
-                                use windows::Win32::Foundation::HWND;
-                                let h = HWND(hwnd_val as *mut std::ffi::c_void);
-                                unsafe { 
-                                    if windows::Win32::UI::WindowsAndMessaging::IsIconic(h).as_bool() { 
-                                        let _ = windows::Win32::UI::WindowsAndMessaging::ShowWindow(h, windows::Win32::UI::WindowsAndMessaging::SW_RESTORE); 
-                                    } 
-                                    let _ = BringWindowToTop(h); 
-                                    let _ = SetForegroundWindow(h); 
-                                 }
+                                focus_target_window(hwnd_val);
                                 tokio::time::sleep(std::time::Duration::from_millis(400)).await;
                             }
                             injector.inject_replace_line();
@@ -3469,21 +3480,7 @@ Do NOT include any markdown formatting. Output ONLY the GAP instruction or VERIF
                             // 3. Focus the target window (only restore if minimized)
                             let hwnd_val = crate::hotkey::CAPTURED_HWND.load(std::sync::atomic::Ordering::SeqCst);
                             if hwnd_val != 0 {
-                                use windows::Win32::UI::WindowsAndMessaging::{
-                                    SetForegroundWindow, BringWindowToTop, ShowWindow,
-                                    SW_RESTORE, IsIconic, GetForegroundWindow,
-                                };
-                                use windows::Win32::Foundation::HWND;
-                                let h = HWND(hwnd_val as *mut std::ffi::c_void);
-                                unsafe {
-                                    // Only call SW_RESTORE if actually minimized — otherwise leave
-                                    // maximized/normal state alone
-                                    if IsIconic(h).as_bool() {
-                                        let _ = ShowWindow(h, SW_RESTORE);
-                                    }
-                                    let _ = BringWindowToTop(h);
-                                    let _ = SetForegroundWindow(h);
-                                }
+                                focus_target_window(hwnd_val);
 
                                 // Wait for OS to grant keyboard focus to the document body
                                 tokio::time::sleep(std::time::Duration::from_millis(500)).await;
@@ -3491,13 +3488,18 @@ Do NOT include any markdown formatting. Output ONLY the GAP instruction or VERIF
                                 // Verify Word actually has focus — if language switcher or another
                                 // window stole it, re-focus
                                 #[cfg(windows)]
-                                unsafe {
-                                    let fg = GetForegroundWindow();
-                                    if fg.0 != h.0 {
-                                        info!("⚠️ Word lost focus (fg={:?}), re-focusing...", fg.0);
-                                        let _ = BringWindowToTop(h);
-                                        let _ = SetForegroundWindow(h);
-                                        tokio::time::sleep(std::time::Duration::from_millis(300)).await;
+                                {
+                                    use windows::Win32::UI::WindowsAndMessaging::{GetForegroundWindow, BringWindowToTop, SetForegroundWindow};
+                                    use windows::Win32::Foundation::HWND;
+                                    let h = HWND(hwnd_val as *mut std::ffi::c_void);
+                                    unsafe {
+                                        let fg = GetForegroundWindow();
+                                        if fg.0 != h.0 {
+                                            info!("⚠️ Word lost focus (fg={:?}), re-focusing...", fg.0);
+                                            let _ = BringWindowToTop(h);
+                                            let _ = SetForegroundWindow(h);
+                                            tokio::time::sleep(std::time::Duration::from_millis(300)).await;
+                                        }
                                     }
                                 }
                                 info!("✅ Window focused: HWND={}", hwnd_val);

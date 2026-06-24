@@ -366,6 +366,94 @@ impl PlatformInjector for LinuxPlatformInjector {
     fn inject_via_value_pattern(&self, _text: &str) -> bool { false }
     fn select_backward(&self, _count: usize) {}
     fn focus_window(&self, _hwnd: isize) -> bool { false }
+
+    /// Replace the current line with clipboard contents.
+    ///
+    /// Uses xdotool to send Home + Shift+End + Ctrl+V — the Linux equivalent
+    /// of the Windows inject_replace_line implementation.  If xdotool is not
+    /// installed or no display server is available, logs a loud error.
+    fn inject_replace_line(&self) {
+        // Verify xdotool is available before attempting keystroke injection
+        let xdotool_check = std::process::Command::new("which")
+            .arg("xdotool")
+            .output();
+
+        match xdotool_check {
+            Ok(out) if out.status.success() => {
+                tracing::info!("inject_replace_line: sending Home+Shift+End+Ctrl+V via xdotool");
+
+                // Home — move cursor to start of line
+                let _ = std::process::Command::new("xdotool")
+                    .args(["key", "Home"])
+                    .output();
+
+                // Shift+End — select to end of line
+                let _ = std::process::Command::new("xdotool")
+                    .args(["key", "shift+End"])
+                    .output();
+
+                // Ctrl+V — paste clipboard over selection
+                let _ = std::process::Command::new("xdotool")
+                    .args(["key", "ctrl+v"])
+                    .output();
+
+                tracing::info!("inject_replace_line complete");
+            }
+            _ => {
+                tracing::error!(
+                    "inject_replace_line: xdotool not found or no display server. \
+                     Linux ghost-typing requires xdotool and an active X11/Wayland session. \
+                     Install with: apt install xdotool"
+                );
+            }
+        }
+    }
+
+    /// Erase `count` characters from the current line.
+    ///
+    /// Uses xdotool to send Home + Shift+End + Delete — selecting the current
+    /// line and deleting it.  The `count` parameter is logged but the
+    /// implementation selects the entire line (matching the Windows behaviour
+    /// which also uses line-level selection rather than per-character backspace).
+    fn erase_prompt(&self, count: usize) {
+        let xdotool_check = std::process::Command::new("which")
+            .arg("xdotool")
+            .output();
+
+        match xdotool_check {
+            Ok(out) if out.status.success() => {
+                tracing::info!(
+                    "erase_prompt({}) called — using Home+Shift+End+Delete via xdotool",
+                    count
+                );
+
+                // Home — move cursor to start of line
+                let _ = std::process::Command::new("xdotool")
+                    .args(["key", "Home"])
+                    .output();
+
+                // Shift+End — select to end of line
+                let _ = std::process::Command::new("xdotool")
+                    .args(["key", "shift+End"])
+                    .output();
+
+                // Delete — remove selection
+                let _ = std::process::Command::new("xdotool")
+                    .args(["key", "Delete"])
+                    .output();
+
+                tracing::info!("erase_prompt complete");
+            }
+            _ => {
+                tracing::error!(
+                    "erase_prompt({}): xdotool not found or no display server. \
+                     Linux ghost-typing requires xdotool and an active X11/Wayland session. \
+                     Install with: apt install xdotool",
+                    count
+                );
+            }
+        }
+    }
 }
 
 pub struct LinuxPlatformCuaDriver;

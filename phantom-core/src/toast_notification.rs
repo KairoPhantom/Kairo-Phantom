@@ -25,7 +25,10 @@ struct OverlayData {
 
 static PENDING_OVERLAY_DATA: Lazy<Mutex<Option<OverlayData>>> = Lazy::new(|| Mutex::new(None));
 static OVERLAY_HWND: AtomicIsize = AtomicIsize::new(0);
+#[cfg(windows)]
 const WM_SHOWOVERLAY: u32 = windows::Win32::UI::WindowsAndMessaging::WM_USER + 2;
+#[cfg(not(windows))]
+const WM_SHOWOVERLAY: u32 = 0;
 
 // ─── Native Windows Balloon Notification Backend ──────────────────────────────
 // Keep original balloon code as fallback or for tray icon registration if needed.
