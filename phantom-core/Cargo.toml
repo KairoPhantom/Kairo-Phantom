@@ -128,7 +128,7 @@ hex = "0.4"                  # MIT/Apache-2.0 — SHA-256 fingerprint encoding (
 
 # Real offline embeddings — all-MiniLM-L6-v2 (80 MB ONNX, <5 ms/embed, zero API calls)
 # Gated behind "local-embeddings" feature so CI stays fast; enable for production builds.
-fastembed = { version = "3", optional = true }
+fastembed = { version = "4", optional = true }
 aes-gcm = "0.10.3"
 pbkdf2 = "0.12.2"
 tauri = { version = "2.0.0", optional = true }

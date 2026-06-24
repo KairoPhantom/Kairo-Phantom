@@ -60,12 +60,12 @@ pub fn run() {
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
-            let window = app.get_webview_window("main").unwrap();
+            let _window = app.get_webview_window("main").unwrap();
 
             // Apply Windows Acrylic/Mica blur behind the overlay
             #[cfg(windows)]
             {
-                apply_acrylic(&window, Some((18, 18, 18, 200)))
+                apply_acrylic(&_window, Some((18, 18, 18, 200)))
                     .expect("Failed to apply acrylic blur");
             }
 

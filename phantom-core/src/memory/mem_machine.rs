@@ -27,11 +27,10 @@ mod embed_engine {
     pub fn embed(text: &str) -> Result<Vec<f32>> {
         let engine = ENGINE.get_or_try_init(|| {
             tracing::info!("🧠 MemMachine: Initialising fastembed all-MiniLM-L6-v2 …");
-            TextEmbedding::try_new(InitOptions {
-                model_name: EmbeddingModel::AllMiniLML6V2,
-                show_download_progress: false,
-                ..Default::default()
-            })
+            TextEmbedding::try_new(
+                InitOptions::new(EmbeddingModel::AllMiniLML6V2)
+                    .with_show_download_progress(false)
+            )
         })?;
         let mut results = engine.embed(vec![text], None)?;
         let mut vec = results.into_iter().next().unwrap_or_else(|| vec![0.0f32; DIM]);
