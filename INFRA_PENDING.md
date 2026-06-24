@@ -65,28 +65,8 @@
   export KARAKEEP_TOKEN=<real_token>
   python3 -m pytest test_phase0_7_bridges.py -v
   ```
-- **Blocker**: fastembed AllMiniLML6-v2 (80MB ONNX) requires network to download on first use
-- **Impact**: Without this model, the system uses hash-based embeddings which are NON-SEMANTIC.
-  - Hash embeddings produce deterministic vectors but do NOT capture semantic meaning.
-  - "cancel subscription" and "end membership" will NOT be similar under hash embeddings.
-  - Real semantic search (paraphrase retrieval, meaning-based KNN) is IMPOSSIBLE without the model.
-- **Air-gap status**: NOT yet real. Air-gap currently falls back to hash embeddings (non-semantic).
-  - Real air-gap requires pre-caching the fastembed model (one-time fetch, then fully offline).
-  - The model is cached in ~/.cache/ after first download — subsequent runs work offline.
-  - To enable real air-gap: download model once on a networked machine, copy ~/.cache/ to air-gapped machine.
-- **Workaround**: Default (CI/headless) path uses hash embeddings — sufficient for testing
-  vector store mechanics (insert, KNN, dimension checks) but NOT for semantic retrieval.
-- **Verification command (on real hardware with network)**:
-  ```bash
-  # Build with local-embeddings feature (triggers model download on first test run)
-  cargo test --lib -p phantom-core embedding --features local-embeddings
-
-  # The semantic relevance test will run and verify:
-  # query "cancel subscription" retrieves "membership termination" (not "newsletter subscribe")
-  # This test is SKIPPED without --features local-embeddings
-
-  # For air-gap: after first download, copy the cached model:
-  cp -r ~/.cache/fastembed/ /air-gapped-machine/.cache/fastembed/
-  cargo test --lib -p phantom-core embedding --features local-embeddings  # works offline
-  ```
-- **Model details**: all-MiniLM-L6-v2, 384-dim (truncated to 256), 80MB ONNX, CPU-only, MIT license
+- **RESOLVED**: fastembed AllMiniLML6-v2 (86MB ONNX) successfully downloaded via scripts/download_models.sh
+  - Model cached in ~/.cache/fastembed/ — subsequent runs work offline
+  - Semantic relevance test passes: `cargo test --lib -p phantom-core embedding --features local-embeddings → 12 passed`
+  - fastembed upgraded from v3 to v4 to fix ort-sys/ureq TLS compile error
+  - For air-gap: copy ~/.cache/fastembed/ to air-gapped machine, then run with --features local-embeddings
