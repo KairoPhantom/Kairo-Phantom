@@ -150,6 +150,74 @@ except Exception as e:
         None
     }
 
+    /// AT-SPI2 ghost typing: inject text directly via the a11y text interface.
+    /// No clipboard, no keystroke simulation — uses pyatspi's Text.insertText.
+    /// Requires: AT-SPI2 bus (real desktop display + a11y bus).
+    /// Returns false (loud) if no a11y bus is available — never silently succeeds.
+    fn try_atspi_inject_text(text: &str) -> bool {
+        let bus_addr = std::env::var("AT_SPI_BUS_ADDRESS").ok()
+            .or_else(|| {
+                Command::new("dbus-send")
+                    .args([
+                        "--print-reply",
+                        "--dest=org.a11y.Bus",
+                        "/org/a11y/bus",
+                        "org.a11y.Bus.GetAddress"
+                    ])
+                    .output()
+                    .ok()
+                    .filter(|o| o.status.success())
+                    .and_then(|o| {
+                        let out = String::from_utf8_lossy(&o.stdout).to_string();
+                        out.split_whitespace()
+                            .find(|s| s.starts_with("\"unix:") || s.starts_with("\"tcp:"))
+                            .map(|s| s.trim_matches('"').to_string())
+                    })
+            });
+
+        if bus_addr.is_none() {
+            warn!("[Linux/AT-SPI2] No a11y bus — cannot inject via AT-SPI2. Falling back to clipboard.");
+            return false;
+        }
+
+        let escaped_text = text.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n");
+        let result = Command::new("python3")
+            .args([
+                "-c",
+                &format!(r#"
+import sys
+try:
+    import pyatspi
+    desktop = pyatspi.Registry.getDesktop(0)
+    for app in desktop:
+        for obj in pyatspi.findDescendant(app, lambda x: x.getState().contains(pyatspi.STATE_FOCUSED), False):
+            text_iface = obj.queryText()
+            caret = text_iface.caretOffset
+            text_iface.insertText(caret, '{}', len('{}'))
+            sys.exit(0)
+    sys.exit(1)
+except Exception as e:
+    sys.stderr.write(str(e))
+    sys.exit(1)
+"#, escaped_text, escaped_text)
+            ])
+            .output()
+            .ok();
+
+        match result {
+            Some(r) if r.status.success() => true,
+            Some(r) => {
+                let err = String::from_utf8_lossy(&r.stderr);
+                warn!("[Linux/AT-SPI2] inject failed: {}", err.trim());
+                false
+            }
+            None => {
+                warn!("[Linux/AT-SPI2] python3 not available for a11y injection");
+                false
+            }
+        }
+    }
+
     pub fn read_clipboard() -> Option<String> {
         let server = detect_display_server();
         if server == "wayland" {
@@ -213,6 +281,13 @@ except Exception as e:
     }
 
     pub fn inject_text(text: &str) -> bool {
+        // Try AT-SPI2 direct text insertion first (no clipboard, no keystrokes)
+        if try_atspi_inject_text(text) {
+            info!("[Linux/AT-SPI2] Injected {} chars via a11y text interface", text.len());
+            return true;
+        }
+
+        // Fallback: clipboard + paste
         if !write_clipboard(text) { return false; }
         std::thread::sleep(std::time::Duration::from_millis(50));
 
