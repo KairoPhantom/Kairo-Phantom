@@ -11,6 +11,7 @@ from sidecar.schemas.domain_schemas import (
     EmailResponse, NotesResponse, DesignResponse, MediaResponse, DataResponse
 )
 from sidecar.schemas.pptx_schema import SlideResponse
+from sidecar.observability.opik_tracer import track
 
 log = logging.getLogger("kairo-sidecar.other_masters")
 
@@ -226,6 +227,7 @@ OUTPUT (JSON only):
             validated_ops.append(op_dict)
         return validated_ops
 
+    @track("pptx", "apply_operations")
     def apply_operations(self, file_path: str, operations: list) -> dict:
         """Apply validated slide operations to a .pptx file via the PPTX writer.
 
@@ -614,6 +616,7 @@ class PDFMaster:
     def __init__(self):
         self._weknora = WeKnoraPipeline()
 
+    @track("pdf", "extract_context")
     def extract_context(self, file_path: str, cursor_info: Any) -> dict:
         context = {
             "extraction_tier": "PyMuPDF",

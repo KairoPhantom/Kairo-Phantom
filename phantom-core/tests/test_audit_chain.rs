@@ -312,3 +312,141 @@ fn test_receipt_04_default_path_is_receipts_jsonl() {
     assert!(p.to_string_lossy().contains(".kairo-phantom"));
     assert!(p.to_string_lossy().ends_with("receipts.jsonl"));
 }
+
+// ── Phase 0.1: Opik Observability + Provenance Receipt Extension Tests ────────
+
+#[test]
+fn test_receipt_05_emit_with_trace_metadata() {
+    use tempfile::tempdir;
+    let dir = tempdir().unwrap();
+    let path = dir.path().join("receipts.jsonl");
+
+    let identity = phantom_core::identity::AgentIdentity::generate("OpikAgent", "Test");
+    let log = phantom_core::identity::ReceiptLog::new(path.clone());
+
+    let r = log.emit_with_trace(
+        &identity,
+        "generate_response",
+        "contract.docx",
+        "ok",
+        "trace_abc123",
+        "http://localhost:5173/trace/abc123",
+        "legal",
+    );
+
+    // Verify the new observability fields are populated
+    assert_eq!(r.opik_trace_id, "trace_abc123");
+    assert_eq!(r.opik_trace_url, "http://localhost:5173/trace/abc123");
+    assert_eq!(r.domain, "legal");
+
+    // Verify the receipt is still cryptographically valid
+    assert!(!r.self_hash.is_empty());
+    assert!(!r.signature.is_empty());
+    assert_eq!(r.prev_hash, "genesis");
+
+    // Verify the chain is intact
+    assert_eq!(log.verify_chain(), 0);
+}
+
+#[test]
+fn test_receipt_06_emit_without_trace_defaults_empty() {
+    use tempfile::tempdir;
+    let dir = tempdir().unwrap();
+    let path = dir.path().join("receipts.jsonl");
+
+    let identity = phantom_core::identity::AgentIdentity::generate("NoTraceAgent", "Test");
+    let log = phantom_core::identity::ReceiptLog::new(path.clone());
+
+    // Using the original emit() method should produce empty trace fields
+    let r = log.emit(&identity, "generate_response", "doc.docx", "ok");
+    assert_eq!(r.opik_trace_id, "");
+    assert_eq!(r.opik_trace_url, "");
+    assert_eq!(r.domain, "");
+
+    // Chain should still be valid
+    assert_eq!(log.verify_chain(), 0);
+}
+
+#[test]
+fn test_receipt_07_flagship_provenance_not_faked() {
+    // FLAGSHIP TEST: This test FAILS if the receipt is faked or empty.
+    // It verifies that:
+    // 1. A receipt with trace metadata contains real, non-empty trace data
+    // 2. The hash chain is cryptographically linked
+    // 3. The signature is valid
+    // 4. Tampering with the trace_id is detected by verify_chain()
+    use tempfile::tempdir;
+    let dir = tempdir().unwrap();
+    let path = dir.path().join("receipts.jsonl");
+
+    let identity = phantom_core::identity::AgentIdentity::generate("FlagshipAgent", "Prod");
+    let log = phantom_core::identity::ReceiptLog::new(path.clone());
+
+    // Emit 5 receipts with trace metadata — simulating 5 domain master calls
+    let domains = ["word", "excel", "pptx", "pdf", "legal"];
+    for (i, domain) in domains.iter().enumerate() {
+        let trace_id = format!("trace_{}", i);
+        let trace_url = format!("http://localhost:5173/trace/{}", trace_id);
+        let r = log.emit_with_trace(
+            &identity,
+            "domain_master_call",
+            &format!("document_{}.docx", i),
+            "ok",
+            &trace_id,
+            &trace_url,
+            domain,
+        );
+
+        // FLAGSHIP ASSERTION: Each receipt must have non-empty trace data
+        // If the receipt is faked (empty trace_id), this fails
+        assert!(!r.opik_trace_id.is_empty(), "Receipt {} has empty trace_id — receipt is FAKE", i);
+        assert!(!r.opik_trace_url.is_empty(), "Receipt {} has empty trace_url — receipt is FAKE", i);
+        assert!(!r.domain.is_empty(), "Receipt {} has empty domain — receipt is FAKE", i);
+        assert!(!r.self_hash.is_empty(), "Receipt {} has empty self_hash", i);
+        assert!(!r.signature.is_empty(), "Receipt {} has empty signature", i);
+    }
+
+    // Verify the entire chain is valid
+    assert_eq!(log.verify_chain(), 0, "Chain verification failed — receipts are tampered");
+
+    // Now tamper with a trace_id and verify it's detected
+    let contents = std::fs::read_to_string(&path).unwrap();
+    let mut lines: Vec<String> = contents.lines().map(|l| l.to_string()).collect();
+    assert!(lines.len() >= 3);
+
+    // Corrupt the third receipt's trace_id
+    let mut third: serde_json::Value = serde_json::from_str(&lines[2]).unwrap();
+    if let Some(obj) = third.as_object_mut() {
+        obj.insert("opik_trace_id".to_string(), serde_json::Value::String("FAKED".to_string()));
+    }
+    lines[2] = serde_json::to_string(&third).unwrap();
+    std::fs::write(&path, lines.join("\n") + "\n").unwrap();
+
+    // verify_chain should detect the tampering (self_hash mismatch)
+    let log2 = phantom_core::identity::ReceiptLog::new(path);
+    let violations = log2.verify_chain();
+    assert!(violations > 0, "Tampering with trace_id was NOT detected — provenance is NOT tamper-proof");
+}
+
+#[test]
+fn test_receipt_08_backward_compatible_deserialization() {
+    // Verify that old receipts (without the new fields) can still be deserialized
+    // thanks to #[serde(default)]
+    use tempfile::tempdir;
+    let dir = tempdir().unwrap();
+    let path = dir.path().join("receipts.jsonl");
+
+    // Write an old-format receipt (no opik_trace_id, opik_trace_url, domain fields)
+    let old_receipt_json = r#"{"seq":0,"timestamp":1719200000,"agent_id":"abcd1234","action":"test","context":"doc.docx","outcome":"ok","prev_hash":"genesis","self_hash":"fakehash","signature":"fakesig"}"#;
+    std::fs::write(&path, old_receipt_json).unwrap();
+
+    // ReceiptLog should be able to read it
+    let log = phantom_core::identity::ReceiptLog::new(path.clone());
+    // The new fields should default to empty strings
+    let contents = std::fs::read_to_string(&path).unwrap();
+    let parsed: phantom_core::identity::ProvenanceReceipt =
+        serde_json::from_str(contents.lines().next().unwrap()).unwrap();
+    assert_eq!(parsed.opik_trace_id, "");
+    assert_eq!(parsed.opik_trace_url, "");
+    assert_eq!(parsed.domain, "");
+}

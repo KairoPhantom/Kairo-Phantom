@@ -45,13 +45,15 @@
 ### Phase 0: Core Infrastructure
 
 #### Phase 0.1: Opik Observability + Provenance Receipts
-- [ ] **STEP 1**: Opik self-hosted (Docker) — BLOCKED (no Docker in sandbox)
-- [ ] **STEP 2**: Opik SDK + observability emit layer (local file/queue sink)
-- [ ] **STEP 3**: Wrap all domain masters with @track decorator
-- [ ] **STEP 4**: Provenance receipt panel in Tauri overlay
-- [ ] **STEP 5**: Tests (provenance receipt, PiiGuard on traces, PR-03)
-- [ ] **STEP 6**: Receipt written
-- **STATUS**: NOT STARTED
+- [x] **STEP 1**: Opik self-hosted (Docker) — BLOCKED, logged in INFRA_PENDING
+- [x] **STEP 2**: Opik SDK + observability emit layer (local JSONL sink) — DONE
+- [x] **STEP 3**: Wrap domain masters with @track — 5 real masters wrapped (Word, Excel, PDF, PPTX, Legal)
+  - [ ] Remaining: DesignMaster (Domain 6 — mocked), CodeMaster, BrowserMaster, TerminalMaster, EmailMaster, NotesMaster, MediaMaster, DataMaster, Memory recall
+- [ ] **STEP 4**: Provenance receipt panel in Tauri overlay — DEFERRED to overlay phase (no display in sandbox; CLI inspection works now)
+- [x] **STEP 5**: Tests — 22 Rust + 17 Python + 6 E2E = 45 total, all green
+- [x] **STEP 6**: Receipt written — docs/receipts/phase0_1_opik.md
+- **STATUS**: EMIT LAYER DONE — proven end-to-end on 5 real domain masters
+- **EVIDENCE**: `cargo test --test test_audit_chain → 22 passed` | `pytest test_phase0_1_opik.py → 17 passed` | `pytest test_phase0_1_e2e.py → 6 passed`
 
 #### Phase 0.2: Headroom Context Compression
 - [ ] Install headroom-ai

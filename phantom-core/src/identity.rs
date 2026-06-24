@@ -376,6 +376,15 @@ pub struct ProvenanceReceipt {
     pub self_hash: String,
     /// Ed25519 signature (hex) over `self_hash` bytes, signed with `agent_id`'s key.
     pub signature: String,
+    /// Phase 0.1: Opik observability trace ID (empty string if observability not configured).
+    #[serde(default)]
+    pub opik_trace_id: String,
+    /// Phase 0.1: Opik trace URL (clickable link to trace view, empty if not configured).
+    #[serde(default)]
+    pub opik_trace_url: String,
+    /// Phase 0.1: Domain name that produced this receipt (e.g. "word", "excel", "legal").
+    #[serde(default)]
+    pub domain: String,
 }
 
 impl ProvenanceReceipt {
@@ -386,6 +395,9 @@ impl ProvenanceReceipt {
         context: &str,
         outcome: &str,
         prev_hash: &str,
+        opik_trace_id: &str,
+        opik_trace_url: &str,
+        domain: &str,
     ) -> Self {
         let timestamp = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
@@ -402,6 +414,9 @@ impl ProvenanceReceipt {
             prev_hash: prev_hash.to_string(),
             self_hash: String::new(),
             signature: String::new(),
+            opik_trace_id: opik_trace_id.to_string(),
+            opik_trace_url: opik_trace_url.to_string(),
+            domain: domain.to_string(),
         };
         // Compute self_hash over all fields except self_hash and signature
         let canonical = serde_json::to_string(&r).unwrap_or_default();
@@ -465,6 +480,21 @@ impl ReceiptLog {
         context: &str,
         outcome: &str,
     ) -> ProvenanceReceipt {
+        self.emit_with_trace(identity, action, context, outcome, "", "", "")
+    }
+
+    /// Emit a receipt with Opik observability trace metadata.
+    /// Phase 0.1: Extends the existing provenance system with observability data.
+    pub fn emit_with_trace(
+        &self,
+        identity: &AgentIdentity,
+        action: &str,
+        context: &str,
+        outcome: &str,
+        opik_trace_id: &str,
+        opik_trace_url: &str,
+        domain: &str,
+    ) -> ProvenanceReceipt {
         let mut last = self.last_hash.lock().unwrap();
         let mut seq_guard = self.next_seq.lock().unwrap();
 
@@ -475,6 +505,9 @@ impl ReceiptLog {
             context,
             outcome,
             &last,
+            opik_trace_id,
+            opik_trace_url,
+            domain,
         );
         receipt.signature = identity.sign(receipt.self_hash.as_bytes()).unwrap_or_default();
 

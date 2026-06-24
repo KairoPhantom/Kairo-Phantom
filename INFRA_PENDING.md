@@ -38,6 +38,7 @@
   ```bash
   cargo test --workspace  # Should complete without OOM on a machine with ≥8GB RAM
   ```
+- **NOTE**: Full Rust suite (478 tests) IS reproducible in this sandbox by compiling targets individually. The OOM only affects the single `--workspace --no-run` command that tries to compile everything at once.
 
 ---
 

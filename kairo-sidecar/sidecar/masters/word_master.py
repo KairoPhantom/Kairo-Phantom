@@ -10,6 +10,7 @@ from docx import Document
 from docx.enum.style import WD_STYLE_TYPE
 
 from sidecar.constants import KAIRO_BACKUP_SUFFIX
+from sidecar.observability.opik_tracer import track
 
 log = logging.getLogger("kairo-sidecar.word_master")
 
@@ -845,6 +846,7 @@ class WordMaster:
                     log.warning(f"WordMaster rejected op: {result.error}")
         return validated
 
+    @track("word", "apply_operations")
     def apply_operations(self, file_path: str, operations: list, context: WordContext = None) -> dict:
         """Write validated operations to the .docx file atomically."""
         if context is None:

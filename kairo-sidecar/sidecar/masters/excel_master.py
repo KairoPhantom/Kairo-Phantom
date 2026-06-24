@@ -12,6 +12,7 @@ from openpyxl.styles import Font, PatternFill
 from openpyxl.utils import get_column_letter, column_index_from_string
 
 from sidecar.parsers.forge_bridge import ForgeValidator  # Single canonical source
+from sidecar.observability.opik_tracer import track
 
 log = logging.getLogger("kairo-sidecar.excel_master")
 
@@ -726,6 +727,7 @@ OUTPUT (JSON only):
                     log.warning(f"ExcelMaster rejected op: {result.error}")
         return validated
 
+    @track("excel", "apply_operations")
     def apply_operations(self, file_path: str, operations: list) -> dict:
         """Write validated operations to the .xlsx file atomically."""
         return self._writer.apply_operations(file_path, operations)

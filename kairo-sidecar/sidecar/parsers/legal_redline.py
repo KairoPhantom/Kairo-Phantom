@@ -21,6 +21,8 @@ import re
 import traceback
 from typing import Any
 
+from sidecar.observability.opik_tracer import track
+
 log = logging.getLogger("kairo-sidecar.legal_redline")
 
 # ---------------------------------------------------------------------------
@@ -404,6 +406,7 @@ def generate_contract_summary(
     }
 
 
+@track("legal", "analyze_contract")
 def analyze_contract(file_text: str, paragraphs: list[dict] | None = None) -> dict:
     """
     Full contract analysis pipeline:
