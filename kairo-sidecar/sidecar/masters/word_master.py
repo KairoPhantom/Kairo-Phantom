@@ -866,6 +866,95 @@ class WordMaster:
                 )
         return self._writer.apply_operations(file_path, operations, context)
 
+    # --- RTF / ODT multi-format support ---------------------------------------
+
+    def load_document(self, file_path: str) -> dict:
+        """
+        Load a document from .docx, .rtf, or .odt format.
+
+        Detects format by file extension and dispatches to the appropriate
+        parser. Returns a Kairo internal representation dict.
+
+        Returns:
+            {"ok": True, "data": {paragraphs, styles, ...}} on success
+            {"ok": False, "error": str} on failure
+        """
+        ext = os.path.splitext(file_path)[1].lower()
+
+        if ext == ".docx":
+            # Use existing python-docx path via WordContextExtractor
+            try:
+                ctx = self._extractor.extract(file_path, 0)
+                return {
+                    "ok": True,
+                    "data": ctx.to_dict(),
+                }
+            except Exception as exc:
+                return {"ok": False, "error": f"Failed to load .docx: {exc}"}
+
+        elif ext == ".rtf":
+            from sidecar.parsers.rtf_parser import rtf_to_kairo_context
+            return rtf_to_kairo_context(file_path, 0)
+
+        elif ext == ".odt":
+            from sidecar.parsers.odt_parser import odt_to_kairo_context
+            return odt_to_kairo_context(file_path, 0)
+
+        else:
+            return {"ok": False, "error": f"Unsupported file format: {ext}"}
+
+    def save_document(self, file_path: str, paragraphs: list, format: str = None) -> dict:
+        """
+        Save paragraphs to a document in the specified or detected format.
+
+        Args:
+            file_path: Output file path
+            paragraphs: List of paragraph dicts with text, style, bold, italic
+            format: Optional format override ("docx", "rtf", "odt").
+                    If None, detected from file_path extension.
+
+        Returns:
+            {"ok": True, "data": {"path": file_path}} on success
+            {"ok": False, "error": str} on failure
+        """
+        if format is None:
+            ext = os.path.splitext(file_path)[1].lower().lstrip(".")
+            format = ext
+
+        format = format.lower()
+
+        if format == "docx":
+            # Use python-docx to create a new document
+            try:
+                doc = Document()
+                for para in paragraphs:
+                    text = para.get("text", "")
+                    style = para.get("style", "Normal")
+                    p = doc.add_paragraph()
+                    try:
+                        p.style = doc.styles[style]
+                    except Exception:
+                        p.style = doc.styles["Normal"]
+                    if text:
+                        run = p.add_run(text)
+                        run.bold = para.get("bold", False)
+                        run.italic = para.get("italic", False)
+                doc.save(file_path)
+                return {"ok": True, "data": {"path": file_path, "paragraph_count": len(paragraphs)}}
+            except Exception as exc:
+                return {"ok": False, "error": f"Failed to save .docx: {exc}"}
+
+        elif format == "rtf":
+            from sidecar.parsers.rtf_parser import save_rtf
+            return save_rtf(file_path, paragraphs)
+
+        elif format == "odt":
+            from sidecar.parsers.odt_parser import save_odt
+            return save_odt(file_path, paragraphs)
+
+        else:
+            return {"ok": False, "error": f"Unsupported save format: {format}"}
+
     def get_schema_class(self):
         """Return the Pydantic schema class for LLM structured output."""
         from sidecar.schemas.docx_schema import DocxResponse
