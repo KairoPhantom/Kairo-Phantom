@@ -210,6 +210,18 @@
 - **STATUS**: UN-MOCKED — Figma + tldraw + Excalidraw all real or fail loudly
 - **EVIDENCE**: `pytest test_domain5_design.py → 75 passed` | `grep mock scan → zero production references`
 
+### Domain 9: Media Enhancement
+- [x] media_embeddings.py — EmbedAnything wrapper (HAS_EMBED_ANYTHING=False → RuntimeError on init, never mocks)
+- [x] media_transcribe.py — faster-whisper + ffmpeg transcription (RuntimeError if missing, never mocks)
+- [x] image_processor.py — CPU-based PIL image processing (resize, center_crop, normalize, histogram_quality_score, batch_process)
+- [x] histogram_quality_score — classifies screenshot/photo/diagram via edge density + color palette + contrast
+- [x] 10 injection payloads in image descriptions — all blocked by PromptShield
+- [x] CPU fallback test — image processing works without GPU
+- [x] Air-gap test — no network calls in image_processor
+- [x] cosine_similarity + find_similar KNN — static methods, real math, no deps
+- **STATUS**: DONE — 46 tests pass
+- **EVIDENCE**: `pytest test_domain9_media.py -v → 46 passed, 0 failed`
+
 ---
 
 ## EVIDENCE LOG

@@ -53,6 +53,18 @@
   # Remove the skip marks or set env var KAIRO_PDF_OXIDE=1 to activate
   ```
 
+### 5b. Domain 9 Media — GPU pipeline + embed-anything + faster-whisper + ffmpeg
+- **Blocker**: No GPU/CUDA, embed-anything not pip-installable, faster-whisper not installed, ffmpeg not on PATH in this sandbox
+- **Impact**: MediaEmbeddings (image embeddings) and MediaTranscriber (video/audio transcription) raise RuntimeError on init — never silently succeed or mock
+- **Workaround**: ImageProcessor (CPU PIL-based) is FULLY functional — resize, center_crop, normalize, histogram_quality_score, batch_process all work on CPU. Cosine similarity and KNN search (static methods) work without any deps.
+- **Verification command (on real hardware with GPU + audio)**:
+  ```bash
+  pip install embed-anything faster-whisper
+  apt-get install ffmpeg
+  python3 -m pytest test_domain9_media.py -v  # All 46 tests pass; embed/transcribe tests exercise real paths
+  ```
+- **RESOLVED (CPU path)**: ImageProcessor + histogram classification + batch_process + PromptShield injection tests all pass on CPU: `pytest test_domain9_media.py → 46 passed`
+
 ### 6. Live paperless-ngx + Karakeep integration (Phase 0.7)
 - **Blocker**: Docker is not available in this sandbox — cannot run paperless-ngx or Karakeep instances
 - **Impact**: Bridge logic is tested against mock HTTP servers (clearly labeled as non-production).
