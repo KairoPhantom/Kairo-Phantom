@@ -115,19 +115,27 @@
 - **SECURITY**: Fail-closed design. If PromptShield unavailable → BLOCK. Air-gap → BLOCK.
 
 #### Phase 0.6: Repo Slimming + Installer
-- [ ] Identify large artifacts
-- [ ] Git LFS configuration
-- [ ] Model download script
-- [ ] Tauri installer config
-- [ ] First-run wizard
-- **STATUS**: NOT STARTED
+- [x] Identify large artifacts — target_check_tmp (401MB), playground/target (89MB), graphify-out/graph.json (17MB)
+- [x] Remove from git tracking — git rm --cached on all build artifacts
+- [x] Update .gitignore — prevent re-tracking
+- [x] MEASURED blob-filtered clone: 101MB total (8.2MB .git + 93MB working tree) — UNDER 500MB ✅
+- [ ] Model download script (scripts/download_models.sh) — not yet done
+- [ ] Tauri installer build config — not yet verified
+- [ ] Installer signing/notarization — INFRA_PENDING (needs real secrets)
+- **STATUS**: REPO SLIMMING DONE (101MB < 500MB) — installer + model script pending
+- **EVIDENCE**: `git clone --filter=blob:none → 101MB total (was 749MB before slimming)`
 
 #### Phase 0.7: Paperless-ngx + Karakeep Bridges
-- [ ] Paperless-ngx bridge
-- [ ] Karakeep bridge
-- [ ] docker-compose.kairo-paperless.yml
-- [ ] Tests (bridges, air-gap, injection)
-- **STATUS**: NOT STARTED
+- [x] Paperless-ngx bridge — real API client (urllib, auth, JSON parsing)
+- [x] Karakeep bridge — real API client (urllib, auth, JSON parsing)
+- [x] Both bridges FAIL LOUDLY when service unreachable — never silently no-op
+- [x] Both bridges disabled by default
+- [x] Document content treated as untrusted (PromptShield screening)
+- [x] Tests — 17 tests, all green (mock HTTP servers clearly labeled as non-production)
+- [ ] docker-compose.kairo-paperless.yml — not yet created (needs Docker, INFRA_PENDING)
+- [ ] Live integration against real paperless-ngx/Karakeep — INFRA_PENDING (needs Docker)
+- **STATUS**: BRIDGE LOGIC DONE — real API clients tested against mock servers; live integration pending Docker
+- **EVIDENCE**: `pytest test_phase0_7_bridges.py → 17 passed`
 
 ### Domain 1: Word / DOCX
 - [ ] Coverage to 80% (word_master.py + prompt_builder.py)

@@ -42,9 +42,29 @@
 
 ---
 
-## RESOLVED ITEMS
+### 5. Live paperless-ngx + Karakeep integration (Phase 0.7)
+- **Blocker**: Docker is not available in this sandbox — cannot run paperless-ngx or Karakeep instances
+- **Impact**: Bridge logic is tested against mock HTTP servers (clearly labeled as non-production).
+  Live integration against real services is not verified here.
+- **Workaround**: Bridge code is REAL (real urllib HTTP client, real auth, real JSON parsing).
+  Mock servers simulate the API responses. The bridges FAIL LOUDLY (raise ConnectionError)
+  when the real service is unreachable — they never silently no-op or fake success.
+- **Verification command (on real hardware with Docker)**:
+  ```bash
+  # Start paperless-ngx
+  docker compose up -d  # with paperless-ngx docker-compose.yml
+  export KAIRO_CONNECTORS=paperless
+  export PAPERLESS_URL=http://localhost:8000
+  export PAPERLESS_TOKEN=<real_token>
+  python3 -m pytest test_phase0_7_bridges.py -v  # All tests should pass against real service
 
-### 4. fastembed model download (Phase 0.4) — SEMANTIC SEARCH BLOCKER
+  # Start Karakeep
+  docker run -p 3000:3000 karakeep/karakeep
+  export KAIRO_CONNECTORS=karakeep
+  export KARAKEEP_URL=http://localhost:3000
+  export KARAKEEP_TOKEN=<real_token>
+  python3 -m pytest test_phase0_7_bridges.py -v
+  ```
 - **Blocker**: fastembed AllMiniLML6-v2 (80MB ONNX) requires network to download on first use
 - **Impact**: Without this model, the system uses hash-based embeddings which are NON-SEMANTIC.
   - Hash embeddings produce deterministic vectors but do NOT capture semantic meaning.
