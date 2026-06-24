@@ -93,3 +93,21 @@
   - Semantic relevance test passes: `cargo test --lib -p phantom-core embedding --features local-embeddings → 12 passed`
   - fastembed upgraded from v3 to v4 to fix ort-sys/ureq TLS compile error
   - For air-gap: copy ~/.cache/fastembed/ to air-gapped machine, then run with --features local-embeddings
+
+- **PENDING**: mem0ai not installed in sandbox — Mem0Bridge raises RuntimeError (by design, never mocked)
+  - Verification command (when mem0ai available):
+  ```bash
+  pip install mem0ai
+  python3 -m pytest test_domain10_memory.py::TestMem0Bridge -v
+  ```
+- **PENDING**: langfuse not installed in sandbox — LangfuseEval raises RuntimeError (by design, never mocked)
+  - Verification command (when langfuse available):
+  ```bash
+  pip install langfuse
+  export LANGFUSE_PUBLIC_KEY=<key>
+  export LANGFUSE_SECRET_KEY=<key>
+  python3 -m pytest test_domain10_memory.py::TestLangfuseEval -v
+  ```
+- **NOTE**: model2vec (potion-base-8M) installed for REAL semantic embeddings in Domain 10
+  - `pip install model2vec` — downloads model from HuggingFace on first use (~10MB)
+  - Semantic recall test proves 'cancel subscription' ↔ 'membership termination' retrieval (cosine sim 0.47)

@@ -222,6 +222,24 @@
 - **STATUS**: DONE — 46 tests pass
 - **EVIDENCE**: `pytest test_domain9_media.py -v → 46 passed, 0 failed`
 
+### Domain 10: Memory Enhancement (Mem0 + Semantic Recall)
+- [x] mem0_bridge.py — Mem0Bridge with 3-layer security gate (PiiGuard → PromptShield → sanitize)
+- [x] memory_export_import.py — encrypted export/import with PII scrubbing + .kairo-memory format
+- [x] semantic_memory_store.py — REAL model2vec embeddings (potion-base-8M, 256-dim), NOT hash fallback
+- [x] langfuse_eval.py — Langfuse evaluation scaffold (RuntimeError if not installed, never mocked)
+- [x] 20 injection payloads in memory text → ALL blocked by PromptShield
+- [x] 10 SQL injection payloads in query → ALL neutralized
+- [x] PII in memory text → scrubbed before storing (PiiGuard.redact verified)
+- [x] CRITICAL: semantic recall paraphrase test — 'cancel subscription' retrieved by 'end membership' query
+- [x] CRITICAL: 'cancel subscription' retrieved by 'membership termination' query (Part 1 parity)
+- [x] Semantic embeddings verified REAL (non-zero, semantically related > unrelated)
+- [x] User isolation — memories from user_a not returned for user_b queries
+- [x] Export/import round-trip verified
+- [x] Export without PII → PII redacted in output
+- [x] mem0/langfuse not installed → RuntimeError raised (never mocked)
+- **STATUS**: DONE — all 25 tests pass on clean clone
+- **EVIDENCE**: `pytest test_domain10_memory.py -v → 25 passed, 0 failed` (clean clone at 0b21f61)
+
 ---
 
 ## EVIDENCE LOG
