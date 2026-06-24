@@ -96,13 +96,19 @@
 - **BUILD IMPACT**: sqlite-vec adds 244KB rlib — negligible
 
 #### Phase 0.5: MCP Server + Messaging Connectors
-- [ ] Enhance kairo-mcp with 12 domain tools
-- [ ] Telegram connector
-- [ ] Discord connector
-- [ ] Email connector
-- [ ] Air-gap enforcement
-- [ ] Tests (MCP tools, connectors, security, PII)
-- **STATUS**: NOT STARTED
+- [x] Telegram connector — security pipeline (PromptShield + PiiGuard) implemented and tested
+- [x] Discord connector — reuses telegram security pipeline, tested
+- [x] Email connector — reuses telegram security pipeline, tested
+- [x] Air-gap enforcement — all 3 connectors blocked when air-gap ON
+- [x] InjectionGuard on inbound — 6 injection tests, all BLOCKED
+- [x] PiiGuard on outbound — SSN/email/phone redacted
+- [x] Tests — 20 tests, all green
+- [ ] MCP server: expose 12 domain tools — not yet done
+- [ ] MCP manifest submission — not yet done
+- [ ] Live bot testing — needs real tokens (INFRA_PENDING)
+- **STATUS**: CONNECTOR SECURITY DONE — InjectionGuard proven on all 3 connectors
+- **EVIDENCE**: `pytest test_phase0_5_connectors.py → 20 passed`
+- **SECURITY**: Fail-closed design. If PromptShield unavailable → BLOCK. Air-gap → BLOCK.
 
 #### Phase 0.6: Repo Slimming + Installer
 - [ ] Identify large artifacts
