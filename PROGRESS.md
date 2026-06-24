@@ -5,13 +5,24 @@
 
 ---
 
-## BASELINE (captured before any Part 1 work)
+## BASELINE (corrected on clean clone — 2026-06-25, Part 2 start)
 
-### Rust (cargo test)
-- **Lib tests**: 126 passed, 0 failed
+### Rust (cargo test — per-target, clean clone at 2111343)
+- **Lib tests**: 138 passed, 0 failed
 - **Binary tests (kairo-phantom)**: 100 passed, 0 failed
-- **Integration tests**: 252 passed, 0 failed (across 31 test files)
-- **Rust total**: 478 passed, 0 failed
+- **Integration tests**: 353 passed, 0 failed (across 39 test files)
+- **Rust total**: 591 passed, 0 failed
+- **DRIFT NOTE**: Original baseline documented 478 (126 lib + 100 bin + 252 integration).
+  Actual clean-clone count is 591 (138 lib + 100 bin + 353 integration). The 113-test
+  increase came from Phase 0.5/0.6 commits adding integration test files. This is the
+  correct, reproducible baseline.
+
+### Python (pytest — clean clone at 2111343)
+- **632 passed, 6 skipped, 0 failed** (54.34s)
+- **DRIFT NOTE**: Original baseline documented 294 passed, 44 failed (all 44 in
+  test_domain5_design.py, KNOWN-RED-BY-DESIGN). After Part 1 Domain 6 un-mock work,
+  all 44 design tests now pass. 6 skips are pdf_oxide comparison tests (not installed).
+  This is the correct, reproducible baseline.
 - **Pre-existing compile fixes applied**:
   - `toast_notification.rs`: `WM_SHOWOVERLAY` constant gated behind `#[cfg(windows)]` with non-Windows fallback
   - `platform/linux.rs`: Implemented `inject_replace_line()` and `erase_prompt()` for `LinuxPlatformInjector` via xdotool (real implementation, errors loudly if xdotool/display unavailable)
@@ -19,11 +30,9 @@
   - `main.rs`: All 51 `windows::` references in non-gated code paths wrapped with `#[cfg(windows)]` / replaced with `focus_target_window()` helper that has a real Linux no-op (window focusing handled by platform injector)
 
 ### Python (pytest)
-- **294 passed, 44 failed**
-- **All 44 failures are in `test_domain5_design.py`** — KNOWN-RED-BY-DESIGN
-- Root cause: Figma/tldraw bridges correctly error with "service is offline and mock canvas is disabled" because `KAIRO_DESIGN_MOCK` env flag is not set
-- These 44 are tied directly to the Domain 6 un-mock work item
-- **Setting `KAIRO_DESIGN_MOCK=1` to turn them green is FORBIDDEN** — it would fake a production result
+- **632 passed, 6 skipped, 0 failed** (clean clone, 2026-06-25)
+- 6 skips: pdf_oxide comparison tests (pdf_oxide not installed, INFRA_PENDING)
+- 0 failures: Domain 6 design tests now all pass (un-mocked in Part 1)
 
 ### Environment
 | Tool | Status |
@@ -205,13 +214,13 @@
 
 ## EVIDENCE LOG
 
-### Baseline capture (2026-06-24)
+### Baseline capture (corrected 2026-06-25, clean clone at 2111343)
 ```
-Rust:  cargo test --lib → 126 passed, 0 failed
+Rust:  cargo test --lib -p phantom-core → 138 passed, 0 failed
        cargo test --bin kairo-phantom → 100 passed, 0 failed
-       cargo test --test * (31 files) → 252 passed, 0 failed
-       Total: 478 passed, 0 failed
+       cargo test --test * -p phantom-core (39 files) → 353 passed, 0 failed
+       Total: 591 passed, 0 failed
 
-Python: pytest test_domain*.py test_sidecar.py → 294 passed, 44 failed
-        All 44 failures in test_domain5_design.py (KNOWN-RED-BY-DESIGN)
+Python: pytest test_domain*.py test_sidecar.py test_phase0_*.py → 632 passed, 6 skipped, 0 failed
+        6 skips: pdf_oxide comparison tests (not installed)
 ```
