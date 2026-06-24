@@ -10,6 +10,27 @@ from typing import Optional, List, Dict
 
 log = logging.getLogger("kairo-sidecar.slide_image_gen")
 
+
+class ImageGenerationUnavailableError(ConnectionError):
+    """Raised when no real image-generation backend is available and mock is disabled.
+
+    Inherits from ConnectionError so existing tests checking ConnectionError still pass.
+    """
+
+    def __init__(self, message: str, install_hints: str = ""):
+        self.install_hints = install_hints
+        full_msg = f"{message}\nInstall hints: {install_hints}" if install_hints else message
+        super().__init__(full_msg)
+
+
+def _mock_enabled() -> bool:
+    """Return True if mock image generation is explicitly enabled via env flags (test-only)."""
+    return (
+        os.getenv("KAIRO_IMAGE_GENERATION", "") == "mock"
+        or os.getenv("KAIRO_SLIDE_IMAGE_MOCK", "0") == "1"
+    )
+
+
 class ImageBackend(Enum):
     COMFYUI = "comfyui"        # Local, offline
     GPT_IMAGE_2 = "gpt_image_2"  # OpenAI, cloud, best text rendering
@@ -21,8 +42,12 @@ class SlideImageGenerator:
 
     def __init__(self, offline_mode: bool = True):
         self.offline_mode = offline_mode
-        if os.getenv("KAIRO_SLIDE_IMAGE_MOCK", "0") == "1":
-            log.warning("LOUD WARNING: Slide image mock is active!")
+        if _mock_enabled():
+            log.warning(
+                "LOUD WARNING: Slide image mock is active! "
+                "KAIRO_IMAGE_GENERATION=mock or KAIRO_SLIDE_IMAGE_MOCK=1 is set. "
+                "This should NEVER be used in production."
+            )
 
     def generate_slide_image(self,
                              slide_content: dict,
