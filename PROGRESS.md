@@ -102,12 +102,16 @@
 - [x] Air-gap enforcement — all 3 connectors blocked when air-gap ON
 - [x] InjectionGuard on inbound — 6 injection tests, all BLOCKED
 - [x] PiiGuard on outbound — SSN/email/phone redacted
-- [x] Tests — 20 tests, all green
-- [ ] MCP server: expose 12 domain tools — not yet done
-- [ ] MCP manifest submission — not yet done
-- [ ] Live bot testing — needs real tokens (INFRA_PENDING)
-- **STATUS**: CONNECTOR SECURITY DONE — InjectionGuard proven on all 3 connectors
-- **EVIDENCE**: `pytest test_phase0_5_connectors.py → 20 passed`
+- [x] Pattern parity — Python PromptShield has 84 patterns (29 Rust hard + 27 Rust soft + 28 additional)
+  - Parity test (test_phase0_5_parity.py) verifies every Rust pattern is covered by Python
+  - Sync: when guardrails.rs is updated, update prompt_shield.py and run parity test
+- [x] E2E connector injection test — malicious messages blocked through all 3 connector handlers
+- [x] Tests — 34 tests (13 parity + 21 connector), all green
+- [ ] MCP server: expose 12 domain tools — PENDING (not yet done)
+- [ ] MCP manifest submission — PENDING (not yet done)
+- [ ] Live bot testing — PENDING (needs real tokens, INFRA_PENDING)
+- **STATUS**: CONNECTOR SECURITY DONE + PATTERN PARITY PROVEN — MCP server tools + live bots PENDING
+- **EVIDENCE**: `pytest test_phase0_5_parity.py test_phase0_5_connectors.py → 34 passed`
 - **SECURITY**: Fail-closed design. If PromptShield unavailable → BLOCK. Air-gap → BLOCK.
 
 #### Phase 0.6: Repo Slimming + Installer
