@@ -261,7 +261,7 @@ class CitationGraph:
 
     def to_json(self) -> str:
         """Serialize the entire graph to a JSON string."""
-        data = nx.node_link_data(self.graph)
+        data = nx.node_link_data(self.graph, edges="links")
         return json.dumps(data, indent=2, ensure_ascii=False)
 
     @classmethod
@@ -269,7 +269,10 @@ class CitationGraph:
         """Deserialize a graph from a JSON string."""
         cg = cls()
         data = json.loads(json_str)
-        cg.graph = nx.node_link_graph(data, directed=True)
+        # Handle both "links" (networkx <3.6 default) and "edges" (future default) keys
+        if "edges" in data and "links" not in data:
+            data["links"] = data.pop("edges")
+        cg.graph = nx.node_link_graph(data, edges="links", directed=True)
         return cg
 
     def to_dict(self) -> dict:

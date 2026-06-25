@@ -32,7 +32,7 @@ Your competitors generate fluent text and occasionally lie. Kairo's entire franc
 ```bash
 git clone https://github.com/KairoPhantom/Kairo-Phantom.git
 cd Kairo-Phantom
-pip install -r requirements.lock
+pip install -r requirements.lock  # includes numpy, PyMuPDF, openpyxl, and more
 python -m bench.blind_bench  # verify 100% blind grounded
 ```
 
@@ -79,6 +79,18 @@ See [BENCHMARKS.md](BENCHMARKS.md) for full details and [FAILURE_TAXONOMY.md](FA
 - **Secret scan**: no key leakage in config files
 
 See [NETWORK_AUDIT.md](NETWORK_AUDIT.md) for the full security audit.
+
+## Development
+
+```bash
+make run          # start the sidecar + kernel together
+make test         # run the full test suite
+cargo build       # build the Rust core
+```
+
+The Python sidecar exists because OCR, layout analysis, and document parsing
+engines (Docling, PyMuPDF, pdfplumber) are Python-native — reimplementing them
+in Rust would be a massive undertaking with no marginal benefit.
 
 ## License
 

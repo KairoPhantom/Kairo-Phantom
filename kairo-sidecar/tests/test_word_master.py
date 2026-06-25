@@ -4,6 +4,12 @@ import tempfile
 import time
 import shutil
 import pytest
+import sys
+
+_skip_not_windows = pytest.mark.skipif(
+    sys.platform != "win32",
+    reason="pythoncom is Windows-only COM module"
+)
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -282,6 +288,7 @@ def test_file_locked_fallback(temp_docx):
             assert "locked" in res["error"]
 
 # --- Test 14: Track changes injection via Adeu bridge ---
+@_skip_not_windows
 def test_track_changes_adeu_routing():
     # Verify that COM writer routes to adeu operations when track changes is active
     writer = WordWriter()

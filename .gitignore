@@ -75,3 +75,6 @@ session_report_*.md
 clippy_*.txt
 gauntlet_*.txt
 stress_results.json
+
+# Oracle signing private key (never commit)
+kairo-sidecar/sidecar/oracles.py.private

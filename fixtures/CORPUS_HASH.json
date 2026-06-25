@@ -1,6 +1,6 @@
 {
-  "version": "1.1.0",
-  "fingerprint": "d945b0bfd6f2044b4bdedcd3c092a1aad8badd63ba1b0c0c8064098d542162f6",
+  "version": "1.2.0",
+  "fingerprint": "f6a7cbc702d28810d16f69884f330850dfc39a31faf08f1a36282d7d727c1736",
   "files": {
     "adversarial": {
       "embedded_instructions.txt": "64f4bdb035f998d11929e07f6dba2337baa5d1e017f68c6d740d1b65629a0382",
@@ -10,8 +10,23 @@
       "prompt_injection_qa.txt": "744e4fb1597d2e27fbd96e38b044f1f0ec09363d6aeda3d2fad3c8026d858df4",
       "tool_url_trigger.txt": "23ab70d45159e6e6d4793d4a308017d1120b56015e0ee675639b2ec3bb440a4f"
     },
+    "blind_holdout": {
+      "BLIND_HASH.json": "5028a88a3fba9f0ac3e158986def39ae3d3e6e9c0dffa34b757ab23f3a533c5b",
+      "blind_contract_01.txt": "a288ad5012b9a602beb01a9b2603ef0560d5dd12645660b9f3eff52f79daae72",
+      "blind_contract_02.txt": "f3bbdb626f96b21fb1dc0e0d2b94f2d93337cdf3df0c252dfb7f79cd42713373",
+      "blind_contract_03.txt": "fb6dae4b8b17fd67500e666fb64874d8e174193fa42e1f9e3d909df31a080c3e",
+      "blind_generic_01.txt": "a5b3c5e5cb8fa08138e31f1f7fc0727143c57248b631cce453b3dddc83a92ed2",
+      "blind_generic_02.txt": "4b56e73cc40ef1f7353325a65f21378a218dc278760d07dda68969d893e9e5e6",
+      "blind_invoice_01.txt": "3f04a3d025f716025c8d5f4934b1a25e7cb03e42cf056f5c67f102bf8ee1b7f6",
+      "blind_invoice_02.txt": "4a8e4cbb354a14416fa9c83a86139c21e8213875462f1cb51dd912c7ff8ed0b7",
+      "blind_invoice_03.txt": "a688ea9d62f8d87bf658c56d6cc0382764df22407b9152b5600173438ea5ebe5",
+      "blind_invoice_04.txt": "959b773fe03adf0da2540f53a7cf69093b5de43c55766dff18c38021f87f5c6d",
+      "blind_paper_01.txt": "63e13d9c0c3d888409bf68c3af1a0f1edaa32027cc61f384d8256b0109392ec9",
+      "blind_paper_02.txt": "16a68f7027b83e239a8bd2a2136eb5f79b262e76b6bc3cb5c2ab76355815f5e7",
+      "ground_truth.json": "96a4cb6adff1696a056d7d5f42da0e5b4e8c9c17596ad6de61138e86d0400d13"
+    },
     "contract": {
-      "ground_truth.json": "5ccecb9232aa4213f2592b1affc8c71f1afc8d6854b6a69b5d49bcaf6034d710",
+      "ground_truth.json": "8be89d2f88f180a143d1af6638ff76eb6f93312bdd129ce398d85e52d6b711e7",
       "sample_contract_01.txt": "9a8ad174351078e5b4822ae283a525e4e1932990f75ef9560e0899ebdb57a1e0",
       "sample_contract_02.txt": "105c35af3babed68dfc3d4cec31cf4bdd1c3503719d66e300c5e1c492ecb6985",
       "sample_contract_03.txt": "bb82d3afd14a25f645479fb639c4225ed151a930968705d4c019ae01b1fd18af"

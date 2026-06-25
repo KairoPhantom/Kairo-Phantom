@@ -25,7 +25,7 @@ log = logging.getLogger("kairo.fix_loop")
 
 ORACLES_PUBLIC_KEY_PEM = (
     b"-----BEGIN PUBLIC KEY-----\n"
-    b"MCowBQYDK2VwAyEAxGsHo/naps3vs1rIIypGzJFn0EygDN99+yvC/K+8Mfc=\n"
+    b"MCowBQYDK2VwAyEAdN5sj0iAlSqs4nIniU+utRMrwm70c4yfZzgR0MCv/+8=\n"
     b"-----END PUBLIC KEY-----\n"
 )
 

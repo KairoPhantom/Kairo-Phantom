@@ -1,4 +1,10 @@
 import pytest
+import sys
+
+_skip_not_windows = pytest.mark.skipif(
+    sys.platform != "win32",
+    reason="os.startfile is Windows-only API"
+)
 from unittest.mock import patch, MagicMock
 import tempfile
 import os
@@ -57,6 +63,7 @@ def test_docx_creator():
         assert table.rows[1].cells[0].text == "Row 1 Col 1"
         assert table.rows[1].cells[1].text == "Row 1 Col 2"
 
+@_skip_not_windows
 def test_docx_creator_create_and_open():
     creator = DocxCreator()
     content = {"title": "Test Open"}
@@ -113,6 +120,7 @@ def test_xlsx_creator():
         # Ad-hoc cell
         assert ws["C1"].value == "Ad-hoc"
 
+@_skip_not_windows
 def test_xlsx_creator_create_and_open():
     creator = XlsxCreator()
     content = {"title": "Test Open"}
@@ -165,6 +173,7 @@ def test_pptx_creator():
         assert tf.paragraphs[0].text == "Bullet 1"
         assert tf.paragraphs[1].text == "Bullet 2"
 
+@_skip_not_windows
 def test_pptx_creator_create_and_open():
     creator = PptxCreator()
     content = {"title": "Test Open"}

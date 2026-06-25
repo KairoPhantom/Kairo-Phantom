@@ -222,7 +222,7 @@ class CodeGraph:
         Uses ``node_link_data`` so the full structure (nodes, edges,
         attributes) is preserved.
         """
-        data = nx.node_link_data(self.graph)
+        data = nx.node_link_data(self.graph, edges="links")
         return json.dumps(data, ensure_ascii=False)
 
     @classmethod
@@ -233,10 +233,12 @@ class CodeGraph:
         Returns a ``nx.DiGraph``.
         """
         data = json.loads(json_str)
-        # networkx 3.x uses "edges" key; older versions used "links"
-        if "links" in data and "edges" not in data:
-            data["edges"] = data.pop("links")
-        return nx.node_link_graph(data)
+        # networkx 3.6 defaults to edges="links" (will change to "edges" in future).
+        # to_json writes with edges="links", so from_json reads with edges="links" for consistency.
+        # Also handle data written by newer networkx that may use "edges" key.
+        if "edges" in data and "links" not in data:
+            data["links"] = data.pop("edges")
+        return nx.node_link_graph(data, edges="links")
 
     # ── Python AST parsing ─────────────────────────────────────────────
 
