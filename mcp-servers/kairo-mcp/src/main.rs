@@ -443,7 +443,20 @@ fn list_tools() -> Value {
                     "properties": {}
                 }
             }
-        ]
+        ,
+        {"name": "kairo_word_process", "description": "Word/DOCX domain: extract context, generate response, apply operations.", "inputSchema": {"type": "object", "properties": {"file_path": {"type": "string"}, "instruction": {"type": "string"}}, "required": ["instruction"]}},
+        {"name": "kairo_excel_process", "description": "Excel/spreadsheet domain: extract context, generate formulas, validate.", "inputSchema": {"type": "object", "properties": {"file_path": {"type": "string"}, "instruction": {"type": "string"}}, "required": ["instruction"]}},
+        {"name": "kairo_pptx_process", "description": "PowerPoint domain: extract slide context, generate content.", "inputSchema": {"type": "object", "properties": {"file_path": {"type": "string"}, "instruction": {"type": "string"}}, "required": ["instruction"]}},
+        {"name": "kairo_pdf_process", "description": "PDF domain: extract text, tables, form fields.", "inputSchema": {"type": "object", "properties": {"file_path": {"type": "string"}, "instruction": {"type": "string"}}, "required": ["file_path"]}},
+        {"name": "kairo_legal_process", "description": "Legal domain: CUAD clause extraction, citation graph, redline.", "inputSchema": {"type": "object", "properties": {"file_path": {"type": "string"}, "instruction": {"type": "string"}}, "required": ["instruction"]}},
+        {"name": "kairo_design_process", "description": "Design domain: Figma/tldraw bridge, canvas operations.", "inputSchema": {"type": "object", "properties": {"file_path": {"type": "string"}, "instruction": {"type": "string"}}, "required": ["instruction"]}},
+        {"name": "kairo_code_process", "description": "Code domain: tree-sitter parsing, code graph, analysis.", "inputSchema": {"type": "object", "properties": {"file_path": {"type": "string"}, "instruction": {"type": "string"}}, "required": ["instruction"]}},
+        {"name": "kairo_media_process", "description": "Media domain: image processing, embeddings, transcription.", "inputSchema": {"type": "object", "properties": {"file_path": {"type": "string"}, "instruction": {"type": "string"}}, "required": ["instruction"]}},
+        {"name": "kairo_browser_process", "description": "Browser domain: web page context, automation guidance.", "inputSchema": {"type": "object", "properties": {"url": {"type": "string"}, "instruction": {"type": "string"}}, "required": ["instruction"]}},
+        {"name": "kairo_terminal_process", "description": "Terminal domain: safe command generation, shell context.", "inputSchema": {"type": "object", "properties": {"instruction": {"type": "string"}}, "required": ["instruction"]}},
+        {"name": "kairo_email_process", "description": "Email domain: drafting, subject validation, PII redaction.", "inputSchema": {"type": "object", "properties": {"instruction": {"type": "string"}}, "required": ["instruction"]}},
+        {"name": "kairo_notes_process", "description": "Notes domain: Obsidian/Logseq/Markdown management.", "inputSchema": {"type": "object", "properties": {"file_path": {"type": "string"}, "instruction": {"type": "string"}}, "required": ["instruction"]}}
+]
     })
 }
 
@@ -498,6 +511,26 @@ async fn main() {
                     "kairo_generate_image_inject" => kairo_generate_image_inject(id, &args).await,
                     "kairo_batch_execute" => kairo_batch_execute(id, &args).await,
                     "kairo_list_agents" => kairo_list_agents(id, &args).await,
+                    // 12 Domain Tools — route through sidecar HTTP API
+                    "kairo_word_process" | "kairo_excel_process" | "kairo_pptx_process" |
+                    "kairo_pdf_process" | "kairo_legal_process" | "kairo_design_process" |
+                    "kairo_code_process" | "kairo_media_process" | "kairo_browser_process" |
+                    "kairo_terminal_process" | "kairo_email_process" | "kairo_notes_process" => {
+                        let instruction = args.get("instruction").and_then(|v| v.as_str()).unwrap_or("");
+                        let file_path = args.get("file_path").or(args.get("url")).and_then(|v| v.as_str()).unwrap_or("");
+                        let domain = tool_name.strip_prefix("kairo_").unwrap_or("").strip_suffix("_process").unwrap_or("");
+                        let prompt = format!("Domain: {}\nFile: {}\nInstruction: {}", domain, file_path, instruction);
+                        let client = reqwest::Client::new();
+                        match client.post("http://localhost:7437/ask").json(&json!({"prompt": prompt})).send().await {
+                            Ok(r) => {
+                                let text = r.text().await.unwrap_or_default();
+                                ok(id, json!({"content": [{"type": "text", "text": format!("Domain '{}' tool executed.\nResponse: {}", domain, text)}]}));
+                            }
+                            Err(e) => {
+                                ok(id, json!({"content": [{"type": "text", "text": format!("Domain '{}' tool called but sidecar not reachable: {}. Start sidecar with: cd kairo-sidecar && python sidecar.py", domain, e)}]}));
+                            }
+                        }
+                    }
                     other => err(id, &format!("Unknown tool: {}", other)),
                 }
             }
