@@ -104,6 +104,7 @@ class MemMachineClient:
         conn.execute("PRAGMA journal_mode=WAL")
         return conn
 
+    @track("memory", "query")
     def query(
         self,
         user_id: str = "local",
