@@ -104,6 +104,72 @@ class MemMachineClient:
         conn.execute("PRAGMA journal_mode=WAL")
         return conn
 
+
+    def recall_contextualized(self, query_text: str, domain: str = "", limit: int = 5) -> str:
+        """
+        Semantic recall using model2vec embeddings.
+
+        Finds interactions with semantically similar user_prompt/style_notes,
+        not just keyword matches. Uses cosine similarity over model2vec embeddings.
+
+        Falls back to keyword-based query() if model2vec is not available.
+        """
+        try:
+            from model2vec import StaticModel
+            import numpy as np
+        except ImportError:
+            # model2vec not installed — fall back to keyword query
+            return self.query(domain=domain, limit=limit)
+
+        # Get or create the model (lazy load, cached as class attribute)
+        if not hasattr(self.__class__, '_m2v_model'):
+            try:
+                self.__class__._m2v_model = StaticModel("minishlab/potion-base-8M")
+            except Exception:
+                return self.query(domain=domain, limit=limit)
+
+        model = self.__class__._m2v_model
+
+        # Encode the query
+        query_emb = model.encode(query_text)
+
+        # Get all interactions from the database
+        conn = self._get_conn()
+        rows = conn.execute(
+            "SELECT domain, task_type, user_prompt, style_notes FROM interactions ORDER BY timestamp DESC LIMIT 1000"
+        ).fetchall()
+        conn.close()
+
+        if not rows:
+            return ""
+
+        # Encode all stored prompts
+        texts = [f"{r['user_prompt']} {r['style_notes']}" for r in rows]
+        stored_embs = model.encode(texts)
+
+        # Compute cosine similarity
+        query_norm = query_emb / (np.linalg.norm(query_emb) + 1e-8)
+        stored_norms = stored_embs / (np.linalg.norm(stored_embs, axis=1, keepdims=True) + 1e-8)
+        similarities = stored_norms @ query_norm
+
+        # Filter by domain if specified
+        if domain:
+            domain_mask = np.array([1 if r['domain'] == domain else 0 for r in rows])
+            similarities = similarities * domain_mask
+
+        # Get top-k results
+        top_indices = np.argsort(similarities)[::-1][:limit]
+
+        # Build context string from top results
+        context_parts = []
+        for idx in top_indices:
+            if similarities[idx] > 0.1:  # Minimum similarity threshold
+                row = rows[idx]
+                context_parts.append(row['style_notes'])
+
+        return " ".join(context_parts) if context_parts else ""
+
+
     @track("memory", "query")
     def query(
         self,
