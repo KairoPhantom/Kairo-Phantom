@@ -182,7 +182,7 @@ class VlmGroundingEngine:
         Returns:
             (response_text, latency_ms)
         """
-        model = model_name or self.config.selected_model.ollama_name
+        model = model_name or self.config.selected_model.ollama_pull_tag or self.config.selected_model.ollama_name
         images = [self._encode_image(p) for p in image_paths]
 
         payload = {

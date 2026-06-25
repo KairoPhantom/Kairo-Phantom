@@ -37,12 +37,13 @@ class VlmModelSpec:
     size_gb: float            # Approximate download/disk size
     min_vram_gb: float        # Minimum VRAM for GPU inference
     quant: str                # Quantization level
-    description: str          # Human-readable description
+    description: str
+    ollama_pull_tag: str = ""          # Human-readable description
 
 
 # Primary model: 7B Q4_K_M — best accuracy, needs ≥6 GB VRAM
 VLM_7B_Q4 = VlmModelSpec(
-    ollama_name="kairo-vlm-7b",
+    ollama_name="kairo-vlm-7b", ollama_pull_tag="qwen2.5vl:7b",
     gguf_filename="qwen2.5-vl-7b-instruct-Q4_K_M.gguf",
     hf_repo="bartowski/Qwen2.5-VL-7B-Instruct-GGUF",
     hf_filename="Qwen2.5-VL-7B-Instruct-Q4_K_M.gguf",
@@ -54,7 +55,7 @@ VLM_7B_Q4 = VlmModelSpec(
 
 # Fallback model: 3B Q4_K_M — lower VRAM, good for simple GUIs
 VLM_3B_Q4 = VlmModelSpec(
-    ollama_name="kairo-vlm-3b",
+    ollama_name="kairo-vlm-3b", ollama_pull_tag="qwen2.5vl:3b",
     gguf_filename="qwen2.5-vl-3b-instruct-Q4_K_M.gguf",
     hf_repo="bartowski/Qwen2.5-VL-3B-Instruct-GGUF",
     hf_filename="Qwen2.5-VL-3B-Instruct-Q4_K_M.gguf",
