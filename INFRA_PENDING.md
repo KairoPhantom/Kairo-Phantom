@@ -147,3 +147,102 @@
   python3 -m pytest tests/ -v  # Full tests/ directory
   cd phantom-core && cargo test --workspace  # Full Rust suite
   ```
+
+---
+
+### 10. Phase C: Testing Gauntlet — Full-Run Items (Part 3)
+- **Blocker**: 3.8GB RAM sandbox cannot run full gauntlet layers
+- **Impact**: Coverage measurement, full mutation testing, fuzzing, and full E2E not verified in this session
+- **Workaround**: Security-critical layers verified (pip-audit, cargo-audit, parity, tamper test). Full runs need ≥8GB RAM.
+
+### 11. Phase C: Mutation Testing (cargo-mutants)
+- **Blocker**: cargo-mutants compilation OOMs in 3.8GB sandbox
+- **Verification command (on machine with ≥8GB RAM)**:
+  ```bash
+  cargo install cargo-mutants
+  cd phantom-core
+  cargo mutants --file src/guardrails.rs
+  cargo mutants --file src/sentinel.rs
+  cargo mutants --file src/audit_chain.rs
+  ```
+
+### 12. Phase C: Coverage Measurement (cargo-tarpaulin + pytest-cov)
+- **Blocker**: cargo-tarpaulin requires Linux with perf events; pytest-cov not installed
+- **Verification command**:
+  ```bash
+  pip install pytest-cov
+  python3 -m pytest --cov=kairo-sidecar/sidecar --cov-report=term-missing
+  cargo install cargo-tarpaulin
+  cargo tarpaulin --workspace --out html
+  ```
+
+### 13. Phase C: Fuzz Testing
+- **Blocker**: Fuzzing requires sustained CPU time (>30min) and memory
+- **Verification command**:
+  ```bash
+  cargo install cargo-fuzz
+  cargo fuzz run parser_fuzz -- -max_total_time=300
+  ```
+
+### 14. Phase C: Full E2E Test Suite
+- **Blocker**: E2E tests need real display, audio, GPU, Docker
+- **Verification command**:
+  ```bash
+  python3 -m pytest kairo-sidecar/e2e_tests.py -v
+  ```
+
+---
+
+## REAL-HARDWARE VERIFICATION RUNBOOK
+
+> Every remaining item with the ONE command that closes it.
+
+### Display/GPU Items
+| Item | Command |
+|------|---------|
+| Linux ghost typing | `cargo test --test test_cross_platform_ghost` (needs X11/Wayland display) |
+| macOS ghost typing | `cargo test --target aarch64-apple-darwin --test test_cross_platform_ghost` |
+| GPU benchmarks (Tier 1) | `python3 -m pytest tests/test_hardware_check.py -v` (needs Vulkan/CUDA GPU) |
+| DeepPresenter images | `python3 -m pytest kairo-sidecar/test_domain3_pptx.py -k deep_presenter` (needs Ollama+GPU) |
+
+### Docker/Container Items
+| Item | Command |
+|------|---------|
+| Opik self-hosted | `cd /data/opik && docker compose up -d && curl http://localhost:5173` |
+| Paperless-ngx bridge | `docker compose up -d && python3 -m pytest test_phase0_7_bridges.py -v` |
+| Karakeep bridge | `docker run -p 3000:3000 karakeep/karakeep && python3 -m pytest test_phase0_7_bridges.py -v` |
+
+### Audio/Video Items
+| Item | Command |
+|------|---------|
+| Voice transcription (faster-whisper) | `pip install faster-whisper && python3 -m pytest test_domain8_voice.py -v` |
+| Media embeddings (embed-anything) | `pip install embed-anything && python3 -m pytest test_domain9_media.py -k embed -v` |
+| Audio VAD (silero-vad) | `pip install silero-vad && python3 -m pytest test_domain8_voice.py -k vad -v` |
+
+### Signing/Secrets Items
+| Item | Command |
+|------|---------|
+| Oracle signing key → secret manager | `export KAIRO_ORACLE_SIGNING_KEY=<key> && python3 sign_oracles.py --key-from-env` |
+| Tauri installer signing | `npx tauri build --signing-key <cert>` (needs code signing cert) |
+| MCP server auth tokens | `kairo mcp get-key && kairo mcp rotate-key` (needs running server) |
+
+### Full Test Suite Items
+| Item | Command |
+|------|---------|
+| Full Python suite | `python3 -m pytest tests/ kairo-sidecar/test_*.py kairo-sidecar/tests/ -v` (needs ≥8GB RAM) |
+| Full Rust suite | `cargo test --workspace` (needs ≥8GB RAM) |
+| Coverage (Python) | `python3 -m pytest --cov=kairo-sidecar/sidecar --cov-report=term-missing` |
+| Coverage (Rust) | `cargo tarpaulin --workspace --out html` |
+| Mutation (Python) | `mutmut run --paths-to-mutate kairo-sidecar/sidecar/security/` |
+| Mutation (Rust) | `cargo mutants --file src/guardrails.rs` |
+| Fuzzing | `cargo fuzz run parser_fuzz -- -max_total_time=300` |
+| pip-audit (full) | `pip-audit -r requirements-test.txt` |
+| cargo-audit (full) | `cargo audit` |
+
+### Live Integration Items
+| Item | Command |
+|------|---------|
+| Telegram bot | `KAIRO_CONNECTORS=telegram python3 -m pytest test_phase0_5_connectors.py -k telegram -v` |
+| Discord bot | `KAIRO_CONNECTORS=discord python3 -m pytest test_phase0_5_connectors.py -k discord -v` |
+| Email connector | `KAIRO_CONNECTORS=email python3 -m pytest test_phase0_5_connectors.py -k email -v` |
+| LibreOffice recompute | `python3 -m pytest test_domain2_excel.py -k recompute -v` (needs soffice) |

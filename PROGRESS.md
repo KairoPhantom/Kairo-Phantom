@@ -391,3 +391,39 @@ Python: pytest test_domain*.py test_sidecar.py test_phase0_*.py test_langgraph*.
 | A10: Community Seeding | docs/community-seeding.md with pre-launch plan | Doc committed | None |
 
 **Phase B total: 37 tests passed, 2 strategy docs committed, 0 failures**
+
+---
+
+## PHASE C: Security-Critical Gauntlet (2026-06-25)
+
+| Layer | Result | Details |
+|-------|--------|---------|
+| C1: pip-audit | 14 CVEs found | All in deps behind 3-layer gate (Mem0 not installed) |
+| C2: cargo-audit | 0 Rust CVEs | Clean |
+| C3: Mutation test | INFRA_PENDING | cargo-mutants OOMs in 3.8GB (logged with command) |
+| C4: Injection parity | PASS | Python 84+ patterns ≥ Rust 56+ patterns |
+| C5: Audit chain tamper | PASS | Oracle signature verifies, tamper detected |
+
+### Phase C INFRA_PENDING:
+- Full coverage measurement (cargo-tarpaulin + pytest-cov)
+- Full mutation testing (cargo-mutants on all security modules)
+- Fuzz testing (cargo-fuzz on parsers)
+- Full E2E suite (needs display/GPU/Docker)
+
+---
+
+## PHASE D: Production Readiness Checklist (2026-06-25)
+
+| Item | Status | Evidence |
+|------|--------|----------|
+| C.1 Code Quality | PARTIAL | Tests pass, coverage INFRA_PENDING, no TODO/FIXME scan done |
+| C.2 Security | DONE | PromptShield 84+ patterns, PiiGuard 50+ types, Sentinel recursive, MCP auth |
+| C.3 Functionality | DONE | All 12 domains functional, no mocks in production paths |
+| C.4 Performance | PARTIAL | CPU benchmarks done, GPU benchmarks INFRA_PENDING |
+| C.5 Infrastructure | PARTIAL | Repo <500MB, installer builds, CI INFRA_PENDING |
+| C.6 Documentation | PARTIAL | README, ARCHITECTURE, SECURITY done; BENCHMARKS partial |
+| C.7 Community | DONE | traction-strategy.md, community-seeding.md committed |
+| C.8 Final Verification | PARTIAL | Clean clone works, 14 gates partial, INFRA_PENDING for full run |
+
+### Real-Hardware Verification Runbook:
+See INFRA_PENDING.md for the consolidated runbook with exact commands for every remaining item.
