@@ -258,6 +258,7 @@ OUTPUT (JSON only):
 # 2. Code Master
 # ==========================================
 class CodeMaster:
+    @track("code", "extract_context")
     def extract_context(self, file_path: str, cursor_info: Any) -> dict:
         context = {
             "language": "python",
@@ -763,6 +764,7 @@ OUTPUT (JSON only):
 # 4. Browser Master
 # ==========================================
 class BrowserMaster:
+    @track("browser", "extract_context")
     def extract_context(self, file_path: str, cursor_info: Any) -> dict:
         url = file_path or "http://localhost"
         is_collab = "notion.so" in url.lower() or "docs.google.com" in url.lower()
@@ -901,6 +903,7 @@ OUTPUT (JSON only):
 # 5. Terminal Master
 # ==========================================
 class TerminalMaster:
+    @track("terminal", "extract_context")
     def extract_context(self, file_path: str, cursor_info: Any) -> dict:
         import platform
         os_type = platform.system()
@@ -1046,6 +1049,7 @@ OUTPUT (JSON only):
 # 6. Email Master
 # ==========================================
 class EmailMaster:
+    @track("email", "extract_context")
     def extract_context(self, file_path: str, cursor_info: Any) -> dict:
         return {
             "email_client": "Outlook",
@@ -1211,6 +1215,7 @@ OUTPUT (JSON only):
 # 7. Notes Master
 # ==========================================
 class NotesMaster:
+    @track("notes", "extract_context")
     def extract_context(self, file_path: str, cursor_info: Any) -> dict:
         app = "Obsidian"
         if file_path:
@@ -1477,6 +1482,7 @@ OUTPUT (JSON only):
 # 9. Media Master
 # ==========================================
 class MediaMaster:
+    @track("media", "extract_context")
     def extract_context(self, file_path: str, cursor_info: Any) -> dict:
         """
         Media Master context: uses farscry visual analysis + UIA app fingerprinting.
@@ -1587,6 +1593,7 @@ OUTPUT (JSON only):
 # 10. Data Master
 # ==========================================
 class DataMaster:
+    @track("data", "extract_context")
     def extract_context(self, file_path: str, cursor_info: Any) -> dict:
         """
         Data Master context: Jupyter cell detection, pandas/SQL idiom awareness.

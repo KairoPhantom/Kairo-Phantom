@@ -22,6 +22,17 @@ if sys.platform != "win32" and "win32com" not in sys.modules:
     sys.modules["win32com"] = _win32com
     sys.modules["win32com.client"] = _win32com_client
 
+# Cross-platform: stub os.startfile on non-Windows so patch("os.startfile") works.
+if sys.platform != "win32" and not hasattr(os, "startfile"):
+    os.startfile = lambda *a, **kw: None
+
+# Cross-platform: stub pythoncom on non-Windows so patch("pythoncom.CoInitialize") works.
+if sys.platform != "win32" and "pythoncom" not in sys.modules:
+    _pythoncom = types.ModuleType("pythoncom")
+    _pythoncom.CoInitialize = lambda *a, **kw: None
+    _pythoncom.CoUninitialize = lambda *a, **kw: None
+    sys.modules["pythoncom"] = _pythoncom
+
 
 def pytest_runtest_setup(item):
     # Enforce no skipped or xfailed tests at runtime via markers

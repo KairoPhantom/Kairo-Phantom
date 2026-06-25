@@ -4,6 +4,7 @@ import logging
 import time
 from typing import Optional, List, Dict, Any
 from pathlib import Path
+from sidecar.observability.opik_tracer import track
 
 log = logging.getLogger("kairo-sidecar.mem_machine")
 
@@ -366,5 +367,4 @@ class MemSyncManager:
             task_type=task_type,
             limit=limit,
         )
-
 

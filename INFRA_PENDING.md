@@ -130,3 +130,20 @@
   # macOS: requires Accessibility permissions
   cargo test --target aarch64-apple-darwin --test test_cross_platform_ghost
   ```
+---
+
+### 8. Oracle signing private key (Part 3 — baseline reconciliation)
+- **Blocker**: Private key stored in gitignored file (oracles.py.private) with deterministic seed
+- **Impact**: Anyone with this private key can forge provenance receipts for oracles.py
+- **Workaround**: Key is gitignored and derived from a documented seed. Signature verification works correctly.
+- **Resolution**: Move private key to a proper secret manager (env var, HSM, or sealed secret) before any public release. Rotate the key and re-sign oracles.py with the new properly-stored key.
+
+### 9. Incomplete baseline verification due to 3.8GB RAM (Part 3)
+- **Blocker**: Sandbox has 3.8GB RAM, 2 cores, no swap. Large pytest batches and full Rust workspace compilation OOM-kill.
+- **Impact**: tests/ files 17-49 (~33 files) and Rust integration tests (~361 tests across ~39 files) not verified in this session.
+- **Workaround**: These are re-verification of EXISTING Part 1/2 code that passed on the previous account's sandbox with 8GB+ RAM. The code has not changed.
+- **Verification command (on machine with ≥8GB RAM)**:
+  ```bash
+  python3 -m pytest tests/ -v  # Full tests/ directory
+  cd phantom-core && cargo test --workspace  # Full Rust suite
+  ```
