@@ -106,7 +106,7 @@ SOFT_PATTERNS: List[str] = [
 # ── Additional regex patterns (28) — broader coverage for connector inputs ───
 ADDITIONAL_PATTERNS: List[str] = [
     # Direct instruction overrides (broader regex)
-    r"forget\s+(?:all\s+|your\s+)?(?:previous\s+|prior\s+)?instructions?",
+    r"forget\s+(?:all\s+|your\s+)?(?:previous\s+|prior\s+)?(?:instructions?|rules|guidelines)",
     r"override\s+(?:all\s+|your\s+)?(?:system\s+|safety\s+)?(?:rules|guidelines|instructions)",
 
     # Role hijacking (broader regex)

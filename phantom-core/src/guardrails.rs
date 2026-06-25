@@ -56,6 +56,7 @@ impl PromptGuard {
                 "ignore previous instructions",
                 "disregard all previous",
                 "forget all previous instructions",
+                "forget all rules",
                 "override your training",
                 "bypass your guidelines",
                 // Role jailbreaks
