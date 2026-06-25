@@ -124,9 +124,9 @@ class MemMachineClient:
         query_emb = np.array(embed_text(query_text))
 
         # Get all interactions from the database
-        conn = self._get_conn()
+        conn = self._connect()
         rows = conn.execute(
-            "SELECT domain, task_type, user_prompt, style_notes FROM interactions ORDER BY timestamp DESC LIMIT 1000"
+            "SELECT domain, task_type, user_prompt, style_notes FROM interactions ORDER BY created_at DESC LIMIT 1000"
         ).fetchall()
         conn.close()
 
