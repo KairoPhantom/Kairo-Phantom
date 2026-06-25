@@ -115,23 +115,13 @@ class MemMachineClient:
         Falls back to keyword-based query() if model2vec is not available.
         """
         try:
-            from model2vec import StaticModel
             import numpy as np
+            from sidecar.embeddings import embed_text, embed_texts
         except ImportError:
-            # model2vec not installed — fall back to keyword query
             return self.query(domain=domain, limit=limit)
 
-        # Get or create the model (lazy load, cached as class attribute)
-        if not hasattr(self.__class__, '_m2v_model'):
-            try:
-                self.__class__._m2v_model = StaticModel("minishlab/potion-base-8M")
-            except Exception:
-                return self.query(domain=domain, limit=limit)
-
-        model = self.__class__._m2v_model
-
-        # Encode the query
-        query_emb = model.encode(query_text)
+        # Encode the query using the existing embeddings module
+        query_emb = np.array(embed_text(query_text))
 
         # Get all interactions from the database
         conn = self._get_conn()
@@ -143,9 +133,9 @@ class MemMachineClient:
         if not rows:
             return ""
 
-        # Encode all stored prompts
+        # Encode all stored prompts using the existing embeddings module
         texts = [f"{r['user_prompt']} {r['style_notes']}" for r in rows]
-        stored_embs = model.encode(texts)
+        stored_embs = np.array(embed_texts(texts))
 
         # Compute cosine similarity
         query_norm = query_emb / (np.linalg.norm(query_emb) + 1e-8)
