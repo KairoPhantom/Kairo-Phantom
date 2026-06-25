@@ -17,6 +17,9 @@ class TestCrossPlatformFallback:
 
     def test_xdotool_fallback_when_no_display(self):
         """When DISPLAY is unset, xdotool path must fail loudly, not silently succeed."""
+        import shutil
+        if shutil.which("xdotool") is None:
+            pytest.skip("xdotool not installed in this sandbox (INFRA_PENDING)")
         env = os.environ.copy()
         env.pop("DISPLAY", None)
         result = subprocess.run(

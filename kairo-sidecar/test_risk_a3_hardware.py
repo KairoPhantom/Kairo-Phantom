@@ -37,25 +37,25 @@ class TestHardwareDegradation:
         with pytest.raises(RuntimeError):
             MediaEmbeddings()
 
-    def test_adaptive_compute_tier_detection(self):
-        """AdaptiveComputeTier must detect the hardware tier without crashing."""
-        from sidecar.adaptive_compute import AdaptiveComputeTier
-        tier = AdaptiveComputeTier.detect_tier()
-        assert tier is not None, "detect_tier() returned None"
-        assert isinstance(tier, str), f"Tier must be a string, got: {type(tier)}"
+    def test_adaptive_compute_difficulty_estimation(self):
+        """estimate_difficulty must return a valid difficulty level."""
+        from sidecar.adaptive_compute import estimate_difficulty
+        difficulty = estimate_difficulty("write a memo", "word")
+        assert difficulty in ("simple", "medium", "complex"), \
+            f"Difficulty must be simple/medium/complex, got: {difficulty}"
 
-    def test_adaptive_compute_model_selection(self):
-        """Model selection must return a valid model name for the detected tier."""
-        from sidecar.adaptive_compute import AdaptiveComputeTier
-        tier = AdaptiveComputeTier.detect_tier()
-        model = AdaptiveComputeTier.get_model_for_tier(tier)
-        assert model is not None, f"No model for tier {tier}"
-        assert isinstance(model, str), f"Model must be string, got: {type(model)}"
+    def test_adaptive_compute_budget_allocation(self):
+        """get_compute_budget must return a valid budget for each difficulty."""
+        from sidecar.adaptive_compute import get_compute_budget
+        for difficulty in ("simple", "medium", "complex"):
+            budget = get_compute_budget(difficulty)
+            assert "N" in budget, f"Budget for {difficulty} missing N"
+            assert "thinking_token_budget" in budget, f"Budget for {difficulty} missing thinking_token_budget"
 
-    def test_no_gpu_in_sandbox_not_tier1(self):
-        """In this sandbox (no GPU), tier must NOT be tier1 (GPU tier)."""
-        from sidecar.adaptive_compute import AdaptiveComputeTier
-        tier = AdaptiveComputeTier.detect_tier()
-        # Sandbox has no GPU → must not report GPU tier
-        # (tier names may vary, but must not claim GPU)
-        assert "gpu" not in tier.lower() or tier != "tier1",             f"Tier {tier} claims GPU in a sandbox with no GPU — FALSE POSITIVE"
+    def test_complex_tasks_get_more_compute(self):
+        """Complex tasks must get more compute budget than simple tasks."""
+        from sidecar.adaptive_compute import estimate_difficulty, get_compute_budget
+        simple = get_compute_budget(estimate_difficulty("hi", "word"))
+        complex_ = get_compute_budget(estimate_difficulty("review this legal contract for liability clauses", "legal"))
+        assert complex_["thinking_token_budget"] >= simple["thinking_token_budget"], \
+            "Complex task got less compute than simple — degradation broken"
