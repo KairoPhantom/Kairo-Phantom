@@ -160,7 +160,7 @@ class VlmGroundingEngine:
         if self._client is None or self._client.is_closed:
             self._client = httpx.AsyncClient(
                 base_url=self.config.ollama_url,
-                timeout=httpx.Timeout(5.0, read=60.0),  # 60s for VLM inference
+                timeout=httpx.Timeout(10.0, read=300.0),  # 300s read: cold GGUF load + first inference can exceed 60s
             )
         return self._client
 
@@ -194,7 +194,7 @@ class VlmGroundingEngine:
                     "images": images,
                 }
             ],
-            "options": self.config.to_ollama_options(),
+            "options": self.config.to_ollama_options(), "keep_alive": self.config.keep_alive,
             "stream": False,
         }
 
