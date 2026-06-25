@@ -1,0 +1,2 @@
+faster-whisper>=1.2.0
+embed-anything>=0.7.0
