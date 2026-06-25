@@ -372,3 +372,22 @@ Python: pytest test_domain*.py test_sidecar.py test_phase0_*.py test_langgraph*.
 - Private key: kairo-sidecar/sidecar/oracles.py.private (gitignored, verified)
 - Public key: pinned in test_fix_loop.py ORACLES_PUBLIC_KEY_PEM
 - **GAP**: Private key must move to proper secret manager before launch (see INFRA_PENDING.md)
+
+---
+
+## PHASE B: Risk Solutions A1–A10 (2026-06-25)
+
+| Risk | Mitigation | Test Result | INFRA_PENDING |
+|------|-----------|-------------|---------------|
+| A1: Cross-Platform UI | Fallback chain test: no display → xdotool → both fail → loud error | 4 passed | Real display verification (INFRA_PENDING) |
+| A2: AGPL License | PyMuPDF lazy import verified, paperless bridge HTTP-only, AST scan for top-level imports | 5 passed | None |
+| A3: Hardware Variability | CPU PIL pipeline works, GPU path raises RuntimeError, tier detection works | 5 passed | GPU benchmark (INFRA_PENDING) |
+| A4: Repo Size | <500MB verified, no >10MB files, gitignore covers artifacts | 3 passed | None |
+| A5: Virality | docs/traction-strategy.md with honest probability bands | Doc committed | None |
+| A6: Mem0 Security | 3-layer gate (PromptShield+PiiGuard+Sentinel) blocks all untrusted input | 6 passed | pip-audit on real hardware |
+| A7: Air-Gap | No ungated network calls, no telemetry phone-home, connectors gated | 4 passed | Real air-gap network test |
+| A8: Compression Quality | ≥0.70 similarity on legal/code/text, no hallucinations | 5 passed | None |
+| A9: MCP Security | Injection blocked, unknown tools rejected, 12 tools verified | 5 passed | None |
+| A10: Community Seeding | docs/community-seeding.md with pre-launch plan | Doc committed | None |
+
+**Phase B total: 37 tests passed, 2 strategy docs committed, 0 failures**
