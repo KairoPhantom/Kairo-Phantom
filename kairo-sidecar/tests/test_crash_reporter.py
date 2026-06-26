@@ -1,9 +1,8 @@
 """Tests for crash reporter module."""
+
 import sys
 import os
 import json
-import tempfile
-from pathlib import Path
 from unittest.mock import patch
 import pytest
 
@@ -16,11 +15,14 @@ def _clear_offline_env(monkeypatch):
     monkeypatch.delenv("KAIRO_OFFLINE", raising=False)
 
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import sidecar.crash_reporter as crash_module
 from sidecar.crash_reporter import (
-    install_crash_handler, _write_crash_report, write_manual_crash, _crash_handler
+    install_crash_handler,
+    _write_crash_report,
+    write_manual_crash,
+    _crash_handler,
 )
 
 
@@ -111,10 +113,10 @@ def test_crash_reporter_offline_mode(tmp_path):
                 exc_type, exc_value, exc_tb = sys.exc_info()
                 crash_file = _write_crash_report(exc_type, exc_value, exc_tb)
             assert crash_file is None
-            
+
             manual_file = write_manual_crash("manual offline error")
             assert manual_file is None
-            
+
             files = list(tmp_path.glob("crash_*.json"))
             assert len(files) == 0
 
@@ -125,7 +127,7 @@ def test_crash_reporter_source_map_hashes():
     except ValueError:
         exc_type, exc_value, exc_tb = sys.exc_info()
         frames = crash_module._build_source_map(exc_tb)
-    
+
     assert len(frames) > 0
     test_frame = frames[-1]
     assert test_frame["file"].endswith("test_crash_reporter.py")

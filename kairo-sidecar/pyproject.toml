@@ -24,6 +24,11 @@ extend-exclude = [
     ".venv",
     "build",
     "dist",
+    # oracles.py is Ed25519-signed (oracles.py.sig) — immutability is a security
+    # guardrail (Guardrail 2: Oracle Immutability). Reformatting or auto-fixing
+    # it breaks the cryptographic signature and fails test_fix_loop / test_oracles.
+    # The unused `sys` import and formatting are intentional and must not change.
+    "sidecar/oracles.py",
 ]
 
 [tool.ruff.lint]
@@ -151,5 +156,7 @@ module = [
     "win32gui.*",
     "pythoncom.*",
     "uiautomation.*",
+    "requests.*",
+    "yaml.*",
 ]
 ignore_missing_imports = true
