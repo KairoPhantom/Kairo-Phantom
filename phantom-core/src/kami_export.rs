@@ -1,7 +1,7 @@
-use std::path::PathBuf;
-use std::fs;
 use chrono::Utc;
 use std::collections::HashMap;
+use std::fs;
+use std::path::PathBuf;
 
 #[derive(Debug, PartialEq)]
 pub enum KamiCommand {
@@ -38,7 +38,9 @@ impl CommandParser {
             if first_line.starts_with("// kami ") {
                 let cmd_str = first_line.strip_prefix("// kami ").unwrap_or("").trim();
                 let parts: Vec<&str> = cmd_str.split_whitespace().collect();
-                if parts.is_empty() { return None; }
+                if parts.is_empty() {
+                    return None;
+                }
 
                 let command = match parts[0].to_lowercase().as_str() {
                     "pdf" => KamiCommand::Pdf,
@@ -49,9 +51,12 @@ impl CommandParser {
                     "linkedin" => KamiCommand::LinkedIn,
                     "tweet" | "tweet-thread" => KamiCommand::TweetThread,
                     "podcast" => {
-                        if parts.contains(&"--local") { KamiCommand::PodcastLocal }
-                        else { KamiCommand::Podcast }
-                    },
+                        if parts.contains(&"--local") {
+                            KamiCommand::PodcastLocal
+                        } else {
+                            KamiCommand::Podcast
+                        }
+                    }
                     "subtitles" => KamiCommand::Subtitles,
                     "quiz" => KamiCommand::Quiz,
                     "flashcards" => KamiCommand::Flashcards,
@@ -62,9 +67,13 @@ impl CommandParser {
                     "notion" => KamiCommand::Notion,
                     "summary" => KamiCommand::Summary,
                     "translate" => {
-                        let lang = if parts.len() > 1 { parts[1].to_string() } else { "Spanish".to_string() };
+                        let lang = if parts.len() > 1 {
+                            parts[1].to_string()
+                        } else {
+                            "Spanish".to_string()
+                        };
                         KamiCommand::Translate(lang)
-                    },
+                    }
                     "proofread" => KamiCommand::Proofread,
                     _ => return None,
                 };
@@ -97,72 +106,136 @@ impl KamiExporter {
             KamiCommand::Pdf => {
                 Self::show_toast("Kairo: exporting as professional PDF...");
                 let result = crate::sidecar_client::kami_export_sidecar(
-                    "pdf", &HashMap::new(), &content, &title,
-                ).await.map_err(|e| e.to_string())?;
-                let notif = result.get("notification").and_then(|v| v.as_str()).unwrap_or("PDF exported");
+                    "pdf",
+                    &HashMap::new(),
+                    &content,
+                    &title,
+                )
+                .await
+                .map_err(|e| e.to_string())?;
+                let notif = result
+                    .get("notification")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("PDF exported");
                 Self::show_toast(notif);
                 Ok(())
             }
             KamiCommand::Epub => {
                 Self::show_toast("Kairo: exporting as EPUB e-book...");
                 let result = crate::sidecar_client::kami_export_sidecar(
-                    "epub", &HashMap::new(), &content, &title,
-                ).await.map_err(|e| e.to_string())?;
-                let notif = result.get("notification").and_then(|v| v.as_str()).unwrap_or("EPUB exported");
+                    "epub",
+                    &HashMap::new(),
+                    &content,
+                    &title,
+                )
+                .await
+                .map_err(|e| e.to_string())?;
+                let notif = result
+                    .get("notification")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("EPUB exported");
                 Self::show_toast(notif);
                 Ok(())
             }
             KamiCommand::Slides => {
                 Self::show_toast("Kairo: exporting as RevealJS slides...");
                 let result = crate::sidecar_client::kami_export_sidecar(
-                    "slides", &HashMap::new(), &content, &title,
-                ).await.map_err(|e| e.to_string())?;
-                let notif = result.get("notification").and_then(|v| v.as_str()).unwrap_or("Slides exported");
+                    "slides",
+                    &HashMap::new(),
+                    &content,
+                    &title,
+                )
+                .await
+                .map_err(|e| e.to_string())?;
+                let notif = result
+                    .get("notification")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("Slides exported");
                 Self::show_toast(notif);
                 Ok(())
             }
             KamiCommand::Book => {
                 Self::show_toast("Kairo: exporting as HTML book...");
                 let result = crate::sidecar_client::kami_export_sidecar(
-                    "book", &HashMap::new(), &content, &title,
-                ).await.map_err(|e| e.to_string())?;
-                let notif = result.get("notification").and_then(|v| v.as_str()).unwrap_or("Book exported");
+                    "book",
+                    &HashMap::new(),
+                    &content,
+                    &title,
+                )
+                .await
+                .map_err(|e| e.to_string())?;
+                let notif = result
+                    .get("notification")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("Book exported");
                 Self::show_toast(notif);
                 Ok(())
             }
             KamiCommand::Email => {
                 Self::show_toast("Kairo: formatting as email...");
                 let result = crate::sidecar_client::kami_export_sidecar(
-                    "email", &HashMap::new(), &content, &title,
-                ).await.map_err(|e| e.to_string())?;
-                let notif = result.get("notification").and_then(|v| v.as_str()).unwrap_or("Email copied to clipboard");
+                    "email",
+                    &HashMap::new(),
+                    &content,
+                    &title,
+                )
+                .await
+                .map_err(|e| e.to_string())?;
+                let notif = result
+                    .get("notification")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("Email copied to clipboard");
                 Self::show_toast(notif);
                 Ok(())
             }
             KamiCommand::LinkedIn => {
                 Self::show_toast("Kairo: formatting for LinkedIn...");
                 let result = crate::sidecar_client::kami_export_sidecar(
-                    "linkedin", &HashMap::new(), &content, &title,
-                ).await.map_err(|e| e.to_string())?;
-                let notif = result.get("notification").and_then(|v| v.as_str()).unwrap_or("LinkedIn post copied");
+                    "linkedin",
+                    &HashMap::new(),
+                    &content,
+                    &title,
+                )
+                .await
+                .map_err(|e| e.to_string())?;
+                let notif = result
+                    .get("notification")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("LinkedIn post copied");
                 Self::show_toast(notif);
                 Ok(())
             }
             KamiCommand::TweetThread => {
                 Self::show_toast("Kairo: formatting tweet thread...");
                 let result = crate::sidecar_client::kami_export_sidecar(
-                    "tweet", &HashMap::new(), &content, &title,
-                ).await.map_err(|e| e.to_string())?;
-                let notif = result.get("notification").and_then(|v| v.as_str()).unwrap_or("Tweet thread copied");
+                    "tweet",
+                    &HashMap::new(),
+                    &content,
+                    &title,
+                )
+                .await
+                .map_err(|e| e.to_string())?;
+                let notif = result
+                    .get("notification")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("Tweet thread copied");
                 Self::show_toast(notif);
                 Ok(())
             }
             KamiCommand::Podcast => {
                 Self::show_toast("Kairo: generating podcast dialogue (cloud)...");
                 let result = crate::sidecar_client::kami_export_sidecar(
-                    "podcast", &HashMap::new(), &content, &title,
-                ).await.map_err(|e| e.to_string())?;
-                let notif = result.get("notification").and_then(|v| v.as_str()).unwrap_or("Podcast exported");
+                    "podcast",
+                    &HashMap::new(),
+                    &content,
+                    &title,
+                )
+                .await
+                .map_err(|e| e.to_string())?;
+                let notif = result
+                    .get("notification")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("Podcast exported");
                 Self::show_toast(notif);
                 Ok(())
             }
@@ -170,82 +243,150 @@ impl KamiExporter {
                 Self::show_toast("Kairo: generating local podcast dialogue...");
                 let mut args = HashMap::new();
                 args.insert("local".to_string(), "true".to_string());
-                let result = crate::sidecar_client::kami_export_sidecar(
-                    "podcast", &args, &content, &title,
-                ).await.map_err(|e| e.to_string())?;
-                let notif = result.get("notification").and_then(|v| v.as_str()).unwrap_or("Local podcast exported");
+                let result =
+                    crate::sidecar_client::kami_export_sidecar("podcast", &args, &content, &title)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                let notif = result
+                    .get("notification")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("Local podcast exported");
                 Self::show_toast(notif);
                 Ok(())
             }
             KamiCommand::Subtitles => {
                 Self::show_toast("Kairo: generating subtitles...");
                 let result = crate::sidecar_client::kami_export_sidecar(
-                    "subtitles", &HashMap::new(), &content, &title,
-                ).await.map_err(|e| e.to_string())?;
-                let notif = result.get("notification").and_then(|v| v.as_str()).unwrap_or("Subtitles exported");
+                    "subtitles",
+                    &HashMap::new(),
+                    &content,
+                    &title,
+                )
+                .await
+                .map_err(|e| e.to_string())?;
+                let notif = result
+                    .get("notification")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("Subtitles exported");
                 Self::show_toast(notif);
                 Ok(())
             }
             KamiCommand::Quiz => {
                 Self::show_toast("Kairo: generating quiz...");
                 let result = crate::sidecar_client::kami_export_sidecar(
-                    "quiz", &HashMap::new(), &content, &title,
-                ).await.map_err(|e| e.to_string())?;
-                let notif = result.get("notification").and_then(|v| v.as_str()).unwrap_or("Quiz generated");
+                    "quiz",
+                    &HashMap::new(),
+                    &content,
+                    &title,
+                )
+                .await
+                .map_err(|e| e.to_string())?;
+                let notif = result
+                    .get("notification")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("Quiz generated");
                 Self::show_toast(notif);
                 Ok(())
             }
             KamiCommand::Flashcards => {
                 Self::show_toast("Kairo: generating flashcards...");
                 let result = crate::sidecar_client::kami_export_sidecar(
-                    "flashcards", &HashMap::new(), &content, &title,
-                ).await.map_err(|e| e.to_string())?;
-                let notif = result.get("notification").and_then(|v| v.as_str()).unwrap_or("Flashcards generated");
+                    "flashcards",
+                    &HashMap::new(),
+                    &content,
+                    &title,
+                )
+                .await
+                .map_err(|e| e.to_string())?;
+                let notif = result
+                    .get("notification")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("Flashcards generated");
                 Self::show_toast(notif);
                 Ok(())
             }
             KamiCommand::Mindmap => {
                 Self::show_toast("Kairo: generating mind map...");
                 let result = crate::sidecar_client::kami_export_sidecar(
-                    "mindmap", &HashMap::new(), &content, &title,
-                ).await.map_err(|e| e.to_string())?;
-                let notif = result.get("notification").and_then(|v| v.as_str()).unwrap_or("Mind map generated");
+                    "mindmap",
+                    &HashMap::new(),
+                    &content,
+                    &title,
+                )
+                .await
+                .map_err(|e| e.to_string())?;
+                let notif = result
+                    .get("notification")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("Mind map generated");
                 Self::show_toast(notif);
                 Ok(())
             }
             KamiCommand::Html => {
                 Self::show_toast("Kairo: exporting as HTML...");
                 let result = crate::sidecar_client::kami_export_sidecar(
-                    "html", &HashMap::new(), &content, &title,
-                ).await.map_err(|e| e.to_string())?;
-                let notif = result.get("notification").and_then(|v| v.as_str()).unwrap_or("HTML exported");
+                    "html",
+                    &HashMap::new(),
+                    &content,
+                    &title,
+                )
+                .await
+                .map_err(|e| e.to_string())?;
+                let notif = result
+                    .get("notification")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("HTML exported");
                 Self::show_toast(notif);
                 Ok(())
             }
             KamiCommand::All => {
                 Self::show_toast("Kairo: batch exporting all formats...");
                 let result = crate::sidecar_client::kami_export_sidecar(
-                    "all", &HashMap::new(), &content, &title,
-                ).await.map_err(|e| e.to_string())?;
-                let notif = result.get("notification").and_then(|v| v.as_str()).unwrap_or("All formats exported");
+                    "all",
+                    &HashMap::new(),
+                    &content,
+                    &title,
+                )
+                .await
+                .map_err(|e| e.to_string())?;
+                let notif = result
+                    .get("notification")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("All formats exported");
                 Self::show_toast(notif);
                 Ok(())
             }
             KamiCommand::PressRelease => {
                 Self::show_toast("Kairo: formatting as press release...");
                 let result = crate::sidecar_client::kami_export_sidecar(
-                    "press_release", &HashMap::new(), &content, &title,
-                ).await.map_err(|e| e.to_string())?;
-                let notif = result.get("notification").and_then(|v| v.as_str()).unwrap_or("Press release copied");
+                    "press_release",
+                    &HashMap::new(),
+                    &content,
+                    &title,
+                )
+                .await
+                .map_err(|e| e.to_string())?;
+                let notif = result
+                    .get("notification")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("Press release copied");
                 Self::show_toast(notif);
                 Ok(())
             }
             KamiCommand::Summary => {
                 Self::show_toast("Kairo: generating summary...");
                 let result = crate::sidecar_client::kami_export_sidecar(
-                    "summary", &HashMap::new(), &content, &title,
-                ).await.map_err(|e| e.to_string())?;
-                let notif = result.get("notification").and_then(|v| v.as_str()).unwrap_or("Summary exported");
+                    "summary",
+                    &HashMap::new(),
+                    &content,
+                    &title,
+                )
+                .await
+                .map_err(|e| e.to_string())?;
+                let notif = result
+                    .get("notification")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("Summary exported");
                 Self::show_toast(notif);
                 Ok(())
             }
@@ -294,7 +435,10 @@ impl KamiExporter {
         }
         #[cfg(not(target_os = "windows"))]
         {
-            eprintln!("[KAIRO clipboard] {}...", &text[..std::cmp::min(text.len(), 60)]);
+            eprintln!(
+                "[KAIRO clipboard] {}...",
+                &text[..std::cmp::min(text.len(), 60)]
+            );
         }
     }
 }

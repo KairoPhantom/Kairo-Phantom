@@ -48,7 +48,10 @@ pub fn insert_after_heading_str(
     for (i, line) in lines.iter().enumerate() {
         let trimmed = line.trim();
         if trimmed.starts_with(&heading_prefix)
-            && trimmed[heading_prefix.len()..].trim().to_lowercase().contains(&heading_lower)
+            && trimmed[heading_prefix.len()..]
+                .trim()
+                .to_lowercase()
+                .contains(&heading_lower)
         {
             target_idx = Some(i);
             break;
@@ -58,7 +61,10 @@ pub fn insert_after_heading_str(
     let insert_after_idx = match target_idx {
         None => {
             // Heading not found — append to end
-            tracing::warn!("MD writer: heading '{}' not found — appending to end", heading_text);
+            tracing::warn!(
+                "MD writer: heading '{}' not found — appending to end",
+                heading_text
+            );
             lines.len()
         }
         Some(h_idx) => {
@@ -165,7 +171,11 @@ pub fn replace_section(md_path: &str, heading_text: &str, new_content: &str) -> 
     result_lines.push("");
     result_lines.extend_from_slice(&lines[section_end..]);
 
-    let line_ending = if original.contains("\r\n") { "\r\n" } else { "\n" };
+    let line_ending = if original.contains("\r\n") {
+        "\r\n"
+    } else {
+        "\n"
+    };
     let output = result_lines.join(line_ending);
 
     let tmp = path.with_extension("md.tmp");
@@ -180,7 +190,8 @@ mod tests {
 
     #[test]
     fn test_insert_after_heading() {
-        let md = "# Title\n\nIntro text.\n\n## Section A\n\nContent A.\n\n## Section B\n\nContent B.\n";
+        let md =
+            "# Title\n\nIntro text.\n\n## Section A\n\nContent A.\n\n## Section B\n\nContent B.\n";
         let result = insert_after_heading_str(md, "Section A", 2, "- New bullet\n- Another bullet");
         assert!(result.contains("- New bullet"));
         assert!(result.contains("- Another bullet"));

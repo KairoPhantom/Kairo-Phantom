@@ -180,19 +180,24 @@ impl VlmBridge {
             "action": "vlm_status",
         });
         let response_str = self.send_request(&request.to_string()).await?;
-        
+
         let resp: serde_json::Value = serde_json::from_str(&response_str)
             .map_err(|e| VlmBridgeError::ParseError(e.to_string()))?;
-        
+
         if resp.get("ok").and_then(|v| v.as_bool()).unwrap_or(false) {
             if let Some(data) = resp.get("data") {
                 serde_json::from_value(data.clone())
                     .map_err(|e| VlmBridgeError::ParseError(e.to_string()))
             } else {
-                Err(VlmBridgeError::ParseError("Missing data field in successful response".to_string()))
+                Err(VlmBridgeError::ParseError(
+                    "Missing data field in successful response".to_string(),
+                ))
             }
         } else {
-            let err_msg = resp.get("error").and_then(|v| v.as_str()).unwrap_or("Unknown sidecar error");
+            let err_msg = resp
+                .get("error")
+                .and_then(|v| v.as_str())
+                .unwrap_or("Unknown sidecar error");
             Err(VlmBridgeError::IpcError(err_msg.to_string()))
         }
     }
@@ -215,10 +220,7 @@ impl VlmBridge {
     ) -> Result<VlmGroundResponse, VlmBridgeError> {
         let req_id = uuid::Uuid::new_v4().to_string();
         let payload = VlmGroundRequest {
-            screenshot: screenshot_path
-                .as_ref()
-                .to_string_lossy()
-                .to_string(),
+            screenshot: screenshot_path.as_ref().to_string_lossy().to_string(),
             description: description.to_string(),
         };
         let req = serde_json::json!({
@@ -227,14 +229,14 @@ impl VlmBridge {
             "payload": payload,
         });
 
-        let request_json = serde_json::to_string(&req)
-            .map_err(|e| VlmBridgeError::IpcError(e.to_string()))?;
+        let request_json =
+            serde_json::to_string(&req).map_err(|e| VlmBridgeError::IpcError(e.to_string()))?;
 
         let response_str = self.send_request(&request_json).await?;
 
         let resp: serde_json::Value = serde_json::from_str(&response_str)
             .map_err(|e| VlmBridgeError::ParseError(e.to_string()))?;
-        
+
         if resp.get("ok").and_then(|v| v.as_bool()).unwrap_or(false) {
             if let Some(data) = resp.get("data") {
                 serde_json::from_value(data.clone())
@@ -243,7 +245,10 @@ impl VlmBridge {
                 Err(VlmBridgeError::ParseError("Missing data field".to_string()))
             }
         } else {
-            let err_msg = resp.get("error").and_then(|v| v.as_str()).unwrap_or("Unknown sidecar error");
+            let err_msg = resp
+                .get("error")
+                .and_then(|v| v.as_str())
+                .unwrap_or("Unknown sidecar error");
             Err(VlmBridgeError::IpcError(err_msg.to_string()))
         }
     }
@@ -263,14 +268,8 @@ impl VlmBridge {
     ) -> Result<VlmVerifyResponse, VlmBridgeError> {
         let req_id = uuid::Uuid::new_v4().to_string();
         let payload = VlmVerifyRequest {
-            before_screenshot: before_screenshot
-                .as_ref()
-                .to_string_lossy()
-                .to_string(),
-            after_screenshot: after_screenshot
-                .as_ref()
-                .to_string_lossy()
-                .to_string(),
+            before_screenshot: before_screenshot.as_ref().to_string_lossy().to_string(),
+            after_screenshot: after_screenshot.as_ref().to_string_lossy().to_string(),
             expected_result: expected_result.to_string(),
         };
         let req = serde_json::json!({
@@ -279,14 +278,14 @@ impl VlmBridge {
             "payload": payload,
         });
 
-        let request_json = serde_json::to_string(&req)
-            .map_err(|e| VlmBridgeError::IpcError(e.to_string()))?;
+        let request_json =
+            serde_json::to_string(&req).map_err(|e| VlmBridgeError::IpcError(e.to_string()))?;
 
         let response_str = self.send_request(&request_json).await?;
 
         let resp: serde_json::Value = serde_json::from_str(&response_str)
             .map_err(|e| VlmBridgeError::ParseError(e.to_string()))?;
-        
+
         if resp.get("ok").and_then(|v| v.as_bool()).unwrap_or(false) {
             if let Some(data) = resp.get("data") {
                 serde_json::from_value(data.clone())
@@ -295,7 +294,10 @@ impl VlmBridge {
                 Err(VlmBridgeError::ParseError("Missing data field".to_string()))
             }
         } else {
-            let err_msg = resp.get("error").and_then(|v| v.as_str()).unwrap_or("Unknown sidecar error");
+            let err_msg = resp
+                .get("error")
+                .and_then(|v| v.as_str())
+                .unwrap_or("Unknown sidecar error");
             Err(VlmBridgeError::IpcError(err_msg.to_string()))
         }
     }
@@ -313,11 +315,8 @@ impl VlmBridge {
             #[cfg(target_os = "windows")]
             {
                 use std::fs::OpenOptions;
-                
-                let file = OpenOptions::new()
-                    .read(true)
-                    .write(true)
-                    .open(&pipe_name);
+
+                let file = OpenOptions::new().read(true).write(true).open(&pipe_name);
 
                 match file {
                     Ok(mut f) => {
@@ -342,7 +341,7 @@ impl VlmBridge {
             {
                 // Unix domain socket fallback for development/testing
                 use std::os::unix::net::UnixStream;
-                
+
                 match UnixStream::connect("/tmp/kairo.sock") {
                     Ok(mut stream) => {
                         stream

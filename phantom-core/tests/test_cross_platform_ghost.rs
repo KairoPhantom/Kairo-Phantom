@@ -65,10 +65,14 @@ mod tests {
             // No display — injection must fail (return false), not silently succeed
             // We test this by checking that the a11y bus detection returns None
             let bus_available = has_atspi_bus();
-            assert!(!bus_available,
+            assert!(
+                !bus_available,
                 "AT-SPI2 bus should NOT be available in headless sandbox — \
-                 if it is, the test environment has changed");
-            eprintln!("VERIFIED: No AT-SPI2 bus in headless environment — injection would fail loudly");
+                 if it is, the test environment has changed"
+            );
+            eprintln!(
+                "VERIFIED: No AT-SPI2 bus in headless environment — injection would fail loudly"
+            );
         }
         #[cfg(not(target_os = "linux"))]
         {
@@ -84,7 +88,9 @@ mod tests {
         #[cfg(target_os = "macos")]
         {
             eprintln!("SKIP: macOS test needs real macOS machine with Accessibility permissions");
-            eprintln!("VERIFY: cargo test --target aarch64-apple-darwin test_macos_ghost_typing_compiles");
+            eprintln!(
+                "VERIFY: cargo test --target aarch64-apple-darwin test_macos_ghost_typing_compiles"
+            );
         }
         #[cfg(not(target_os = "macos"))]
         {
@@ -102,10 +108,17 @@ mod tests {
             // Check environment variables
             let has_x11 = std::env::var("DISPLAY").is_ok();
             let has_wayland = std::env::var("WAYLAND_DISPLAY").is_ok();
-            let detected = if has_wayland { "wayland" }
-                else if has_x11 { "x11" }
-                else { "unknown" };
-            eprintln!("DE detection: {} (X11={}, Wayland={})", detected, has_x11, has_wayland);
+            let detected = if has_wayland {
+                "wayland"
+            } else if has_x11 {
+                "x11"
+            } else {
+                "unknown"
+            };
+            eprintln!(
+                "DE detection: {} (X11={}, Wayland={})",
+                detected, has_x11, has_wayland
+            );
             // In headless sandbox, should be "unknown"
             if !has_display() {
                 assert_eq!(detected, "unknown");

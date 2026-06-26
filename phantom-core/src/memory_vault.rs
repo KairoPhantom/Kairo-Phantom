@@ -21,7 +21,7 @@ impl MemoryVault {
             .unwrap_or_else(|| PathBuf::from("."))
             .join(".kairo-phantom")
             .join("memory");
-        
+
         Self { base_path: path }
     }
 
@@ -55,16 +55,28 @@ impl MemoryVault {
 
         let mut content = format!("# Daily Log: {}\n\n", date);
 
-        let today_timestamp = chrono::Local::now().date_naive().and_hms_opt(0, 0, 0).unwrap().and_utc().timestamp() as u64;
+        let today_timestamp = chrono::Local::now()
+            .date_naive()
+            .and_hms_opt(0, 0, 0)
+            .unwrap()
+            .and_utc()
+            .timestamp() as u64;
 
         for interaction in &memory.interactions {
             // Only add interactions from today (heuristic approximation here)
             // Just outputting the most recent ones if they happened today.
             if interaction.timestamp >= today_timestamp {
-                let status = if interaction.accepted { "✅ Accepted" } else { "❌ Rejected" };
+                let status = if interaction.accepted {
+                    "✅ Accepted"
+                } else {
+                    "❌ Rejected"
+                };
                 content.push_str(&format!("## [{}] App: {}\n", status, interaction.app));
                 content.push_str(&format!("**Prompt:** {}\n\n", interaction.prompt));
-                content.push_str(&format!("**Response:** {}\n\n---\n\n", interaction.response));
+                content.push_str(&format!(
+                    "**Response:** {}\n\n---\n\n",
+                    interaction.response
+                ));
             }
         }
 
@@ -76,11 +88,14 @@ impl MemoryVault {
     fn save_knowledge_concepts(&self, memory: &KairoMemory) {
         for node in &memory.graph.nodes {
             let safe_node = node.replace(|c: char| !c.is_alphanumeric(), "_");
-            let node_path = self.base_path.join("knowledge/concepts").join(format!("{}.md", safe_node));
-            
+            let node_path = self
+                .base_path
+                .join("knowledge/concepts")
+                .join(format!("{}.md", safe_node));
+
             let mut content = format!("# Concept: {}\n\n", node);
             content.push_str("## Relationships\n");
-            
+
             for (from, to, rel) in &memory.graph.edges {
                 if let Some(from_node) = memory.graph.nodes.get(*from) {
                     if let Some(to_node) = memory.graph.nodes.get(*to) {
@@ -100,12 +115,18 @@ impl MemoryVault {
     }
 
     fn save_knowledge_prefs(&self, memory: &KairoMemory) {
-        let prefs_path = self.base_path.join("knowledge/prefs").join("user_preferences.md");
+        let prefs_path = self
+            .base_path
+            .join("knowledge/prefs")
+            .join("user_preferences.md");
         let mut content = String::from("# User Preferences\n\n");
 
         content.push_str("## Core Preferences\n");
         for pref in &memory.preferences {
-            content.push_str(&format!("- **{}**: {} (weight: {})\n", pref.key, pref.value, pref.weight));
+            content.push_str(&format!(
+                "- **{}**: {} (weight: {})\n",
+                pref.key, pref.value, pref.weight
+            ));
         }
 
         content.push_str("\n## App Bias\n");
@@ -131,10 +152,19 @@ impl MemoryVault {
     fn save_index(&self, memory: &KairoMemory) {
         let index_path = self.base_path.join("index.md");
         let mut content = String::from("# Kairo Memory Index\n\n");
-        
-        content.push_str(&format!("- Interactions recorded: {}\n", memory.interactions.len()));
-        content.push_str(&format!("- Concepts tracked: {}\n", memory.graph.nodes.len()));
-        content.push_str(&format!("- Preferences mapped: {}\n", memory.preferences.len()));
+
+        content.push_str(&format!(
+            "- Interactions recorded: {}\n",
+            memory.interactions.len()
+        ));
+        content.push_str(&format!(
+            "- Concepts tracked: {}\n",
+            memory.graph.nodes.len()
+        ));
+        content.push_str(&format!(
+            "- Preferences mapped: {}\n",
+            memory.preferences.len()
+        ));
         content.push_str("\n## Quick Links\n");
         content.push_str("- [Daily Logs](daily/)\n");
         content.push_str("- [Concepts](knowledge/concepts/)\n");
@@ -163,7 +193,7 @@ impl MemoryVault {
             .args(["add", "."])
             .current_dir(&self.base_path)
             .output();
-        
+
         if let Err(e) = add_status {
             warn!("Failed to git add in memory vault: {}", e);
             return;
@@ -174,7 +204,7 @@ impl MemoryVault {
             .args(["commit", "-m", message])
             .current_dir(&self.base_path)
             .output();
-        
+
         info!("📚 Memory vault updated and git-versioned.");
     }
 }

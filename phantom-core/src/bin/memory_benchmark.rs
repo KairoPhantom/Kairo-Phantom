@@ -29,9 +29,21 @@ use tempfile::tempdir;
 fn score_format(text: &str, want: &str) -> f64 {
     let has_bullets = text.contains("- ") || text.contains("* ");
     match want {
-        "bullet" => if has_bullets { 1.0 } else { 0.0 },
-        "prose"  => if !has_bullets { 1.0 } else { 0.0 },
-        _        => 0.5,
+        "bullet" => {
+            if has_bullets {
+                1.0
+            } else {
+                0.0
+            }
+        }
+        "prose" => {
+            if !has_bullets {
+                1.0
+            } else {
+                0.0
+            }
+        }
+        _ => 0.5,
     }
 }
 
@@ -43,39 +55,54 @@ fn score_tone(text: &str, want: &str) -> f64 {
             // Both prose and bullet status updates should score well on formality.
             // Count positive formal signals (any of these keywords = professional copy).
             let formal_hits = [
-                "project status", "status update", "engineering team",
-                "completed", "in progress", "task a", "task b", "progress",
+                "project status",
+                "status update",
+                "engineering team",
+                "completed",
+                "in progress",
+                "task a",
+                "task b",
+                "progress",
             ]
             .iter()
             .filter(|k| lower.contains(*k))
             .count();
             // Penalise casual language
-            let informal = ["hey ", "hi team", "btw", "lol"].iter()
+            let informal = ["hey ", "hi team", "btw", "lol"]
+                .iter()
                 .filter(|k| lower.contains(*k))
                 .count();
-            let raw = 0.5 + (formal_hits as f64 * 0.15).min(0.5)
-                         - (informal as f64 * 0.2).min(0.4);
+            let raw = 0.5 + (formal_hits as f64 * 0.15).min(0.5) - (informal as f64 * 0.2).min(0.4);
             raw.clamp(0.4, 1.0)
         }
         "casual" => {
-            if lower.contains("hey ") || lower.contains("hi team") { 0.9 } else { 0.5 }
+            if lower.contains("hey ") || lower.contains("hi team") {
+                0.9
+            } else {
+                0.5
+            }
         }
         _ => 0.7,
     }
 }
-
 
 /// Returns a length-appropriateness score.
 fn score_length(text: &str, want: &str) -> f64 {
     let words = text.split_whitespace().count();
     match want {
         "concise" => match words {
-            0..=15  => 1.0,
+            0..=15 => 1.0,
             16..=25 => 0.85,
             26..=40 => 0.65,
-            _       => 0.4,
+            _ => 0.4,
         },
-        "detailed" => if words > 20 { 1.0 } else { 0.5 },
+        "detailed" => {
+            if words > 20 {
+                1.0
+            } else {
+                0.5
+            }
+        }
         _ => 0.7,
     }
 }
@@ -91,9 +118,8 @@ fn simulate_llm(memory_context: &str) -> String {
 
     // The key signal the memory system should surface after a few correction
     // sessions is "bullet" (stored in the content field via remember()).
-    let learned_bullets = lower.contains("bullet")
-        || lower.contains("- project")
-        || lower.contains("- task");
+    let learned_bullets =
+        lower.contains("bullet") || lower.contains("- project") || lower.contains("- task");
 
     if learned_bullets {
         // The model has the preference hint → generates bullet output
@@ -109,9 +135,7 @@ fn simulate_llm(memory_context: &str) -> String {
 #[tokio::main]
 async fn main() {
     // Suppress noisy tracing output during the benchmark
-    let _ = tracing_subscriber::fmt()
-        .with_env_filter("warn")
-        .try_init();
+    let _ = tracing_subscriber::fmt().with_env_filter("warn").try_init();
 
     println!("=== Kairo Phantom Memory Benchmark (Production / Genuine) ===");
     println!();
@@ -124,21 +148,23 @@ async fn main() {
     let optimizer = MemoryOptimizer::new();
 
     // ── Scenario ─────────────────────────────────────────────────────────────
-    let app     = "Microsoft Word";
+    let app = "Microsoft Word";
     let section = "status_update";
-    let prompt  = "Write a project status update for the engineering team";
+    let prompt = "Write a project status update for the engineering team";
 
     // Hidden target the memory system must learn by observing user corrections
     let target_format = "bullet";
-    let target_tone   = "formal";
+    let target_tone = "formal";
     let target_length = "concise";
 
     let mut feedback_history: Vec<FeedbackSignal> = Vec::new();
     let mut total_composite = 0.0_f64;
     let mut first_learned_session: Option<usize> = None;
 
-    println!("{:<8} {:<14} {:<12} {:<14} {:<10} learned", 
-             "session", "format_score", "tone_score", "length_score", "composite");
+    println!(
+        "{:<8} {:<14} {:<12} {:<14} {:<10} learned",
+        "session", "format_score", "tone_score", "length_score", "composite"
+    );
     println!("{}", "-".repeat(70));
 
     for session in 1..=30 {
@@ -156,10 +182,10 @@ async fn main() {
         let ai_output = simulate_llm(&memory_context);
 
         // ── 4. Score output against (hidden) target preference ────────────────
-        let fmt_score  = score_format(&ai_output, target_format);
+        let fmt_score = score_format(&ai_output, target_format);
         let tone_score = score_tone(&ai_output, target_tone);
-        let len_score  = score_length(&ai_output, target_length);
-        let composite  = (fmt_score + tone_score + len_score) / 3.0;
+        let len_score = score_length(&ai_output, target_length);
+        let composite = (fmt_score + tone_score + len_score) / 3.0;
 
         // ── 5. Simulate user feedback ─────────────────────────────────────────
         // The user rejects prose and rewrites it as bullet points.
@@ -176,20 +202,26 @@ async fn main() {
         for s in &signals {
             feedback_history.push(s.clone());
         }
-        let _confidence =
-            ConfidenceEngine::unified_confidence(app, &ai_output, &feedback_history, 0, "", 0.5, false);
-
+        let _confidence = ConfidenceEngine::unified_confidence(
+            app,
+            &ai_output,
+            &feedback_history,
+            0,
+            "",
+            0.5,
+            false,
+        );
 
         // ── 7. Store ground-truth episode (Upgrade 1) ─────────────────────────
         // Content is the user's final version (with bullet keywords so the
         // distiller can detect the preference on next recall).
         mem_machine
             .remember(
-                &corrected,          // Final text the user kept (bullet content)
-                Some(&ai_output),    // Original AI suggestion stored as episode
+                &corrected,       // Final text the user kept (bullet content)
+                Some(&ai_output), // Original AI suggestion stored as episode
                 app,
                 Some(section),
-                accepted,            // is_ground_truth = true when user accepted
+                accepted, // is_ground_truth = true when user accepted
                 vec!["benchmark", "engineering", "status_update"],
             )
             .await
@@ -226,11 +258,14 @@ async fn main() {
 
     println!("{}", "-".repeat(70));
     println!();
-    println!("Final Average Composite Score (30 sessions): {:.4}", final_avg);
+    println!(
+        "Final Average Composite Score (30 sessions): {:.4}",
+        final_avg
+    );
 
     match first_learned_session {
         Some(s) => println!("Memory converged to bullet preference at session {}", s),
-        None    => println!("⚠  Memory never converged — check recall/distil pipeline"),
+        None => println!("⚠  Memory never converged — check recall/distil pipeline"),
     }
     println!();
 
@@ -247,6 +282,8 @@ async fn main() {
             "❌ TARGET NOT MET ({:.4}): recall_contextualized may be returning empty results.",
             final_avg
         );
-        println!("   Debug: add eprintln! inside simulate_llm to verify memory_context is populated.");
+        println!(
+            "   Debug: add eprintln! inside simulate_llm to verify memory_context is populated."
+        );
     }
 }

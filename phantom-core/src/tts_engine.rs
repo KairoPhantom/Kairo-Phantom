@@ -34,9 +34,9 @@ impl TtsEngine {
             None
         };
 
-        let sherpa_model_dir = sherpa_bin.as_ref().and_then(|_| {
-            Self::find_sherpa_model(&config.sherpa_model)
-        });
+        let sherpa_model_dir = sherpa_bin
+            .as_ref()
+            .and_then(|_| Self::find_sherpa_model(&config.sherpa_model));
 
         if let Some(ref bin) = sherpa_bin {
             info!("🔊 TtsEngine: sherpa-onnx found at {:?}", bin);
@@ -44,9 +44,11 @@ impl TtsEngine {
             info!("🔊 TtsEngine: sherpa-onnx not found, using platform TTS fallback");
         }
 
-        info!("🔊 TtsEngine initialized (enabled: {}, sherpa: {})",
+        info!(
+            "🔊 TtsEngine initialized (enabled: {}, sherpa: {})",
             config.enabled,
-            sherpa_bin.is_some());
+            sherpa_bin.is_some()
+        );
 
         TtsEngine {
             config,
@@ -59,13 +61,25 @@ impl TtsEngine {
     /// Check if sherpa-onnx is available with a loaded model.
     pub fn is_sherpa_available(&self) -> bool {
         self.config.sherpa_enabled
-            && self.sherpa_bin.as_ref().map(|p| p.exists()).unwrap_or(false)
-            && self.sherpa_model_dir.as_ref().map(|d| d.exists()).unwrap_or(false)
+            && self
+                .sherpa_bin
+                .as_ref()
+                .map(|p| p.exists())
+                .unwrap_or(false)
+            && self
+                .sherpa_model_dir
+                .as_ref()
+                .map(|d| d.exists())
+                .unwrap_or(false)
     }
 
     /// Check if TTS is enabled and available on this platform.
     pub fn is_available(&self) -> bool {
-        self.config.enabled && (self.is_sherpa_available() || cfg!(windows) || cfg!(target_os = "macos") || cfg!(unix))
+        self.config.enabled
+            && (self.is_sherpa_available()
+                || cfg!(windows)
+                || cfg!(target_os = "macos")
+                || cfg!(unix))
     }
 
     /// Check if currently speaking.
@@ -87,7 +101,10 @@ impl TtsEngine {
         }
 
         self.speaking.store(true, Ordering::SeqCst);
-        info!("🔊 Speaking: '{}'", text.chars().take(60).collect::<String>());
+        info!(
+            "🔊 Speaking: '{}'",
+            text.chars().take(60).collect::<String>()
+        );
 
         let result = self.platform_speak(text).await;
 
@@ -138,7 +155,9 @@ impl TtsEngine {
                 let s = String::from_utf8_lossy(&out.stdout);
                 if let Some(line) = s.lines().next() {
                     let p = PathBuf::from(line.trim());
-                    if p.exists() { return Some(p); }
+                    if p.exists() {
+                        return Some(p);
+                    }
                 }
             }
         }
@@ -160,9 +179,13 @@ impl TtsEngine {
     }
 
     async fn speak_via_sherpa(&self, text: &str) -> Result<()> {
-        let sherpa_bin = self.sherpa_bin.as_ref()
+        let sherpa_bin = self
+            .sherpa_bin
+            .as_ref()
             .ok_or_else(|| anyhow::anyhow!("sherpa-onnx not found"))?;
-        let model_dir = self.sherpa_model_dir.as_ref()
+        let model_dir = self
+            .sherpa_model_dir
+            .as_ref()
             .ok_or_else(|| anyhow::anyhow!("sherpa-onnx model not found"))?;
 
         let tmp_wav = std::env::temp_dir().join("kairo_tts_output.wav");
@@ -210,7 +233,8 @@ impl TtsEngine {
         {
             let _ = tokio::process::Command::new("afplay")
                 .arg(wav_path)
-                .status().await;
+                .status()
+                .await;
             return Ok(());
         }
         #[cfg(all(not(windows), not(target_os = "macos")))]
@@ -274,7 +298,10 @@ impl TtsEngine {
             Ok(s) if s.success() => Ok(()),
             _ => {
                 // Fallback: try without voice selection
-                warn!("⚠️ SAPI voice '{}' not found, using default", self.config.voice_model);
+                warn!(
+                    "⚠️ SAPI voice '{}' not found, using default",
+                    self.config.voice_model
+                );
                 let fallback_cmd = format!(
                     "Add-Type -AssemblyName System.Speech; \
                      $synth = New-Object System.Speech.Synthesis.SpeechSynthesizer; \
@@ -294,10 +321,7 @@ impl TtsEngine {
 
     #[cfg(target_os = "macos")]
     async fn platform_speak(&self, text: &str) -> Result<()> {
-        let _ = tokio::process::Command::new("say")
-            .arg(text)
-            .status()
-            .await;
+        let _ = tokio::process::Command::new("say").arg(text).status().await;
         Ok(())
     }
 

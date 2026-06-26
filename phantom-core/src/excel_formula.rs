@@ -29,13 +29,19 @@ impl FormulaExplanation {
 pub struct ExcelFormulaEngine;
 
 impl ExcelFormulaEngine {
-    pub fn new() -> Self { Self }
+    pub fn new() -> Self {
+        Self
+    }
 
     /// Detect if user prompt is asking about Excel formulas.
     pub fn should_handle(prompt: &str, doc_kind: &str) -> bool {
-        if !doc_kind.to_lowercase().contains("excel") { return false; }
-        let kw = ["=", "formula", "vlookup", "sumif", "countif", "index", "match",
-                   "sum(", "if(", "iferror", "xlookup", "average"];
+        if !doc_kind.to_lowercase().contains("excel") {
+            return false;
+        }
+        let kw = [
+            "=", "formula", "vlookup", "sumif", "countif", "index", "match", "sum(", "if(",
+            "iferror", "xlookup", "average",
+        ];
         let pl = prompt.to_lowercase();
         kw.iter().any(|k| pl.contains(k))
     }
@@ -122,25 +128,63 @@ impl ExcelFormulaEngine {
 
         match fname.as_str() {
             "VLOOKUP" if args.len() >= 3 => {
-                if let Some(a) = args.first() { parts.push((a.trim().into(), "Lookup value — what you're searching for".into())); }
-                if let Some(a) = args.get(1) { parts.push((a.trim().into(), "Table array — the range to search in".into())); }
-                if let Some(a) = args.get(2) { parts.push((a.trim().into(), "Column index — which column to return (1=first)".into())); }
-                if let Some(a) = args.get(3) { parts.push((a.trim().into(), "Match type — FALSE for exact match".into())); }
+                if let Some(a) = args.first() {
+                    parts.push((
+                        a.trim().into(),
+                        "Lookup value — what you're searching for".into(),
+                    ));
+                }
+                if let Some(a) = args.get(1) {
+                    parts.push((
+                        a.trim().into(),
+                        "Table array — the range to search in".into(),
+                    ));
+                }
+                if let Some(a) = args.get(2) {
+                    parts.push((
+                        a.trim().into(),
+                        "Column index — which column to return (1=first)".into(),
+                    ));
+                }
+                if let Some(a) = args.get(3) {
+                    parts.push((a.trim().into(), "Match type — FALSE for exact match".into()));
+                }
             }
             "XLOOKUP" if args.len() >= 3 => {
-                if let Some(a) = args.first() { parts.push((a.trim().into(), "Lookup value".into())); }
-                if let Some(a) = args.get(1) { parts.push((a.trim().into(), "Lookup array".into())); }
-                if let Some(a) = args.get(2) { parts.push((a.trim().into(), "Return array".into())); }
+                if let Some(a) = args.first() {
+                    parts.push((a.trim().into(), "Lookup value".into()));
+                }
+                if let Some(a) = args.get(1) {
+                    parts.push((a.trim().into(), "Lookup array".into()));
+                }
+                if let Some(a) = args.get(2) {
+                    parts.push((a.trim().into(), "Return array".into()));
+                }
             }
             "SUMIF" if args.len() >= 2 => {
-                if let Some(a) = args.first() { parts.push((a.trim().into(), "Range to evaluate for criteria".into())); }
-                if let Some(a) = args.get(1) { parts.push((a.trim().into(), "Criteria / condition".into())); }
-                if let Some(a) = args.get(2) { parts.push((a.trim().into(), "Range to sum (if different from criteria range)".into())); }
+                if let Some(a) = args.first() {
+                    parts.push((a.trim().into(), "Range to evaluate for criteria".into()));
+                }
+                if let Some(a) = args.get(1) {
+                    parts.push((a.trim().into(), "Criteria / condition".into()));
+                }
+                if let Some(a) = args.get(2) {
+                    parts.push((
+                        a.trim().into(),
+                        "Range to sum (if different from criteria range)".into(),
+                    ));
+                }
             }
             "IF" if args.len() >= 2 => {
-                if let Some(a) = args.first() { parts.push((a.trim().into(), "Condition to test".into())); }
-                if let Some(a) = args.get(1) { parts.push((a.trim().into(), "Value if condition is TRUE".into())); }
-                if let Some(a) = args.get(2) { parts.push((a.trim().into(), "Value if condition is FALSE".into())); }
+                if let Some(a) = args.first() {
+                    parts.push((a.trim().into(), "Condition to test".into()));
+                }
+                if let Some(a) = args.get(1) {
+                    parts.push((a.trim().into(), "Value if condition is TRUE".into()));
+                }
+                if let Some(a) = args.get(2) {
+                    parts.push((a.trim().into(), "Value if condition is FALSE".into()));
+                }
             }
             _ => {}
         }
@@ -151,7 +195,7 @@ impl ExcelFormulaEngine {
 /// Extract top-level arguments from a function call string.
 fn extract_top_level_args(formula: &str) -> Vec<String> {
     let inner = match formula.find('(') {
-        Some(i) => &formula[i+1..],
+        Some(i) => &formula[i + 1..],
         None => return vec![],
     };
     // Strip trailing )
@@ -161,17 +205,32 @@ fn extract_top_level_args(formula: &str) -> Vec<String> {
     let mut current = String::new();
     for ch in inner.chars() {
         match ch {
-            '(' => { depth += 1; current.push(ch); }
-            ')' => { depth -= 1; current.push(ch); }
-            ',' if depth == 0 => { args.push(current.trim().to_string()); current = String::new(); }
+            '(' => {
+                depth += 1;
+                current.push(ch);
+            }
+            ')' => {
+                depth -= 1;
+                current.push(ch);
+            }
+            ',' if depth == 0 => {
+                args.push(current.trim().to_string());
+                current = String::new();
+            }
             _ => current.push(ch),
         }
     }
-    if !current.trim().is_empty() { args.push(current.trim().to_string()); }
+    if !current.trim().is_empty() {
+        args.push(current.trim().to_string());
+    }
     args
 }
 
-impl Default for ExcelFormulaEngine { fn default() -> Self { Self::new() } }
+impl Default for ExcelFormulaEngine {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -179,8 +238,14 @@ mod tests {
 
     #[test]
     fn test_should_handle_excel() {
-        assert!(ExcelFormulaEngine::should_handle("explain this =VLOOKUP(A2,B:D,3,FALSE)", "Excel"));
-        assert!(!ExcelFormulaEngine::should_handle("write an email", "Microsoft Word"));
+        assert!(ExcelFormulaEngine::should_handle(
+            "explain this =VLOOKUP(A2,B:D,3,FALSE)",
+            "Excel"
+        ));
+        assert!(!ExcelFormulaEngine::should_handle(
+            "write an email",
+            "Microsoft Word"
+        ));
     }
 
     #[test]

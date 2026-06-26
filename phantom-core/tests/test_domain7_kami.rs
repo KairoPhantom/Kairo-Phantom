@@ -186,7 +186,11 @@ mod domain7_kami_tests {
         for mode in modes {
             let hint = mode.system_hint();
             assert!(!hint.is_empty(), "Empty system_hint for {:?}", mode);
-            assert!(hint.contains("KAMI"), "system_hint for {:?} should mention KAMI", mode);
+            assert!(
+                hint.contains("KAMI"),
+                "system_hint for {:?} should mention KAMI",
+                mode
+            );
         }
     }
 

@@ -6,11 +6,9 @@
 //! Uses mock backends — no physical display or input device required.
 //! Tests are deterministic and work in headless CI environments.
 
+use phantom_core::cua::cua_gate::{is_blocked_window, validate_action, CuaGateError, RateLimiter};
 use phantom_core::cua::{
-    CuaAction, CuaBackend, CuaContext, CuaResult, MouseButton, WindowRect, TargetingSource,
-};
-use phantom_core::cua::cua_gate::{
-    validate_action, RateLimiter, CuaGateError, is_blocked_window,
+    CuaAction, CuaBackend, CuaContext, CuaResult, MouseButton, TargetingSource, WindowRect,
 };
 use tokio_util::sync::CancellationToken;
 
@@ -159,13 +157,9 @@ async fn test_executor_keyboard_type_success() {
     // The test verifies the control flow (cancellation check, fallback, result type)
     // We test with a Screenshot action which is always a no-op
     let action = CuaAction::Screenshot;
-    let result = phantom_core::cua::cua_executor::execute(
-        &action,
-        &ctx,
-        &CuaBackend::Enigo,
-        &cancellation,
-    )
-    .await;
+    let result =
+        phantom_core::cua::cua_executor::execute(&action, &ctx, &CuaBackend::Enigo, &cancellation)
+            .await;
 
     // Screenshot action should not return Cancelled
     assert!(
@@ -185,13 +179,9 @@ async fn test_executor_fallback() {
     let action = CuaAction::Screenshot;
 
     // Test Enigo backend (will gracefully handle no-display case)
-    let result = phantom_core::cua::cua_executor::execute(
-        &action,
-        &ctx,
-        &CuaBackend::Enigo,
-        &cancellation,
-    )
-    .await;
+    let result =
+        phantom_core::cua::cua_executor::execute(&action, &ctx, &CuaBackend::Enigo, &cancellation)
+            .await;
 
     // Should get either Success or Failed, not panic
     assert!(
@@ -277,13 +267,9 @@ async fn test_esc_stops_executor() {
     // Cancel BEFORE executing
     cancellation.cancel();
 
-    let result = phantom_core::cua::cua_executor::execute(
-        &action,
-        &ctx,
-        &CuaBackend::Enigo,
-        &cancellation,
-    )
-    .await;
+    let result =
+        phantom_core::cua::cua_executor::execute(&action, &ctx, &CuaBackend::Enigo, &cancellation)
+            .await;
 
     assert!(
         matches!(result, CuaResult::Cancelled),
@@ -301,7 +287,9 @@ async fn test_esc_cancels_all_pending_actions() {
     cancellation.cancel();
 
     let actions = vec![
-        CuaAction::KeyboardType { text: "line 1".to_string() },
+        CuaAction::KeyboardType {
+            text: "line 1".to_string(),
+        },
         CuaAction::MouseClick {
             x: 100,
             y: 100,
@@ -309,7 +297,9 @@ async fn test_esc_cancels_all_pending_actions() {
             targeting_source: TargetingSource::Coordinate,
             targeting_confidence: 0.0,
         },
-        CuaAction::KeyboardType { text: "line 2".to_string() },
+        CuaAction::KeyboardType {
+            text: "line 2".to_string(),
+        },
     ];
 
     for action in &actions {
@@ -333,13 +323,31 @@ async fn test_esc_cancels_all_pending_actions() {
 /// Test the is_blocked_window helper (used by UI for display purposes)
 #[test]
 fn test_blocked_window_detection() {
-    assert!(is_blocked_window("Task Manager"), "Task Manager must be blocked");
-    assert!(is_blocked_window("Registry Editor - HKEY_LOCAL_MACHINE"), "Registry Editor must be blocked");
-    assert!(is_blocked_window("1Password 8 - My Vault"), "1Password must be blocked");
+    assert!(
+        is_blocked_window("Task Manager"),
+        "Task Manager must be blocked"
+    );
+    assert!(
+        is_blocked_window("Registry Editor - HKEY_LOCAL_MACHINE"),
+        "Registry Editor must be blocked"
+    );
+    assert!(
+        is_blocked_window("1Password 8 - My Vault"),
+        "1Password must be blocked"
+    );
     assert!(is_blocked_window("Bitwarden"), "Bitwarden must be blocked");
-    assert!(!is_blocked_window("Microsoft Word"), "Word must NOT be blocked");
-    assert!(!is_blocked_window("Google Chrome"), "Chrome must NOT be blocked");
-    assert!(!is_blocked_window("Canva - My Design"), "Canva must NOT be blocked");
+    assert!(
+        !is_blocked_window("Microsoft Word"),
+        "Word must NOT be blocked"
+    );
+    assert!(
+        !is_blocked_window("Google Chrome"),
+        "Chrome must NOT be blocked"
+    );
+    assert!(
+        !is_blocked_window("Canva - My Design"),
+        "Canva must NOT be blocked"
+    );
     assert!(!is_blocked_window("Notepad"), "Notepad must NOT be blocked");
 }
 
@@ -348,7 +356,7 @@ fn test_blocked_window_detection() {
 async fn test_dpi_scaling_applied_to_mouse_coordinates() {
     use phantom_core::cua::cua_executor::LAST_MOUSE_MOVE;
     let cancellation = CancellationToken::new();
-    
+
     // Clear last mouse move first
     if let Ok(mut guard) = LAST_MOUSE_MOVE.lock() {
         *guard = None;
@@ -359,13 +367,9 @@ async fn test_dpi_scaling_applied_to_mouse_coordinates() {
 
     let action = CuaAction::MouseMove { x: 100, y: 200 };
 
-    let _result = phantom_core::cua::cua_executor::execute(
-        &action,
-        &ctx,
-        &CuaBackend::Enigo,
-        &cancellation,
-    )
-    .await;
+    let _result =
+        phantom_core::cua::cua_executor::execute(&action, &ctx, &CuaBackend::Enigo, &cancellation)
+            .await;
 
     // Retrieve scaled coordinates
     let coords = if let Ok(guard) = LAST_MOUSE_MOVE.lock() {
@@ -390,13 +394,9 @@ async fn test_executor_fails_closed_when_verification_unavailable() {
 
     let action = CuaAction::Screenshot;
 
-    let result = phantom_core::cua::cua_executor::execute(
-        &action,
-        &ctx,
-        &CuaBackend::Enigo,
-        &cancellation,
-    )
-    .await;
+    let result =
+        phantom_core::cua::cua_executor::execute(&action, &ctx, &CuaBackend::Enigo, &cancellation)
+            .await;
 
     println!("DEBUG RESULT: {:?}", result);
 
@@ -405,4 +405,3 @@ async fn test_executor_fails_closed_when_verification_unavailable() {
         "Should fail closed with 'Unverified' when screenshot verification is unavailable"
     );
 }
-

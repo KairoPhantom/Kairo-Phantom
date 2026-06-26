@@ -1,6 +1,6 @@
+use std::path::Path;
 use wasmtime::*;
 use wasmtime_wasi::WasiCtxBuilder;
-use std::path::Path;
 
 pub struct WasmSandbox {
     engine: Engine,
@@ -36,7 +36,7 @@ impl WasmSandbox {
         let module = Module::from_file(&self.engine, wasm_path)?;
 
         let instance = linker.instantiate(&mut store, &module)?;
-        
+
         let run_func = instance.get_typed_func::<(), ()>(&mut store, "run")?;
         run_func.call(&mut store, ())?;
 

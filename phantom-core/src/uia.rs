@@ -16,7 +16,9 @@ pub struct UiaReader;
 
 #[cfg(not(target_os = "windows"))]
 impl UiaReader {
-    pub fn new() -> Self { UiaReader }
+    pub fn new() -> Self {
+        UiaReader
+    }
     pub fn get_focused_text(&self) -> anyhow::Result<String> {
         crate::platform::new_reader().get_focused_text()
     }

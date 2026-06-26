@@ -4,8 +4,12 @@ use crate::plugin::SwarmAgent;
 
 pub struct ContentAgent;
 impl SwarmAgent for ContentAgent {
-    fn id(&self) -> &str { "content" }
-    fn name(&self) -> &str { "Content & All-Rounder Specialist" }
+    fn id(&self) -> &str {
+        "content"
+    }
+    fn name(&self) -> &str {
+        "Content & All-Rounder Specialist"
+    }
     fn build_system_prompt(&self, doc_ctx: &DocumentContext) -> String {
         let base = crate::ai::KAIRO_SYSTEM_PROMPT;
         let doc_fragment = doc_ctx.to_system_prompt_fragment();
@@ -19,13 +23,19 @@ impl SwarmAgent for ContentAgent {
             base, doc_fragment
         )
     }
-    fn match_score(&self, _doc_ctx: &DocumentContext) -> u8 { 10 } // Default fallback score
+    fn match_score(&self, _doc_ctx: &DocumentContext) -> u8 {
+        10
+    } // Default fallback score
 }
 
 pub struct StudentTutorAgent;
 impl SwarmAgent for StudentTutorAgent {
-    fn id(&self) -> &str { "student" }
-    fn name(&self) -> &str { "Student & Beginner Tutor" }
+    fn id(&self) -> &str {
+        "student"
+    }
+    fn name(&self) -> &str {
+        "Student & Beginner Tutor"
+    }
     fn build_system_prompt(&self, doc_ctx: &DocumentContext) -> String {
         let base = crate::ai::KAIRO_SYSTEM_PROMPT;
         let doc_fragment = doc_ctx.to_system_prompt_fragment();
@@ -41,9 +51,18 @@ impl SwarmAgent for StudentTutorAgent {
     }
     fn match_score(&self, doc_ctx: &DocumentContext) -> u8 {
         let p = doc_ctx.prompt_text.to_lowercase();
-        if p.contains("explain") || p.contains("what is") || p.contains("how does")
-            || p.contains("essay") || p.contains("assignment") || p.contains("homework")
-            || p.contains("study") || p.contains("understand") { 85 }
-        else { 5 }
+        if p.contains("explain")
+            || p.contains("what is")
+            || p.contains("how does")
+            || p.contains("essay")
+            || p.contains("assignment")
+            || p.contains("homework")
+            || p.contains("study")
+            || p.contains("understand")
+        {
+            85
+        } else {
+            5
+        }
     }
 }

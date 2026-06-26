@@ -1,14 +1,13 @@
+use crate::guardrails::PromptGuard;
+use crate::sentinel::SentinelSanitizer;
 /// AI backends v2 — Production-grade streaming with Application Awareness.
 /// Supports: OpenAI / NVIDIA NIM / Anthropic / Gemini / Ollama
 /// All backends implement proper SSE streaming for real-time ghost-typing.
-
 use anyhow::{Context, Result};
 use reqwest::Client;
 use serde::Deserialize;
 use std::sync::Arc;
-use tracing::{info, error};
-use crate::sentinel::SentinelSanitizer;
-use crate::guardrails::PromptGuard;
+use tracing::{error, info};
 
 use crate::config::ModelConfig;
 
@@ -93,14 +92,16 @@ impl AiBackend for SafeAiBackend {
     async fn complete(&self, system: &str, user: &str) -> Result<String> {
         let guard = PromptGuard::new();
         if guard.detect_injection(user).is_injection {
-            return Err(anyhow::anyhow!("Security violation: Potential prompt injection detected"));
+            return Err(anyhow::anyhow!(
+                "Security violation: Potential prompt injection detected"
+            ));
         }
 
         let sanitizer = SentinelSanitizer::new();
         let wrapped_system = sanitizer.wrap_system_prompt(system);
-        
+
         let response = self.inner.complete(&wrapped_system, user).await?;
-        
+
         if !sanitizer.scan_output(&response) {
             error!("System prompt leakage detected in complete()!");
             return Err(anyhow::anyhow!("Security violation: System prompt leaked"));
@@ -108,9 +109,11 @@ impl AiBackend for SafeAiBackend {
 
         if !sanitizer.verify_response(user, &response).await {
             error!("NLI verification failed for response!");
-            return Err(anyhow::anyhow!("Security violation: Response failed NLI verification"));
+            return Err(anyhow::anyhow!(
+                "Security violation: Response failed NLI verification"
+            ));
         }
-        
+
         Ok(response)
     }
 
@@ -122,12 +125,14 @@ impl AiBackend for SafeAiBackend {
     ) -> Result<()> {
         let guard = PromptGuard::new();
         if guard.detect_injection(user).is_injection {
-            return Err(anyhow::anyhow!("Security violation: Potential prompt injection detected"));
+            return Err(anyhow::anyhow!(
+                "Security violation: Potential prompt injection detected"
+            ));
         }
 
         let sanitizer = SentinelSanitizer::new();
         let wrapped_system = sanitizer.wrap_system_prompt(system);
-        
+
         self.inner.stream_complete(&wrapped_system, user, tx).await
     }
 }
@@ -149,7 +154,11 @@ impl AiBackend for FallbackChainBackend {
     async fn complete(&self, system: &str, user: &str) -> Result<String> {
         let mut last_err = anyhow::anyhow!("No backends in fallback chain");
         for (i, backend) in self.backends.iter().enumerate() {
-            tracing::info!("🔄 Trying backend {}/{} in fallback chain...", i + 1, self.backends.len());
+            tracing::info!(
+                "🔄 Trying backend {}/{} in fallback chain...",
+                i + 1,
+                self.backends.len()
+            );
             match backend.complete(system, user).await {
                 Ok(res) => {
                     tracing::info!("✅ Backend {} succeeded", i + 1);
@@ -172,11 +181,15 @@ impl AiBackend for FallbackChainBackend {
     ) -> Result<()> {
         let mut last_err = anyhow::anyhow!("No backends in fallback chain");
         for (i, backend) in self.backends.iter().enumerate() {
-            tracing::info!("🔄 Trying streaming backend {}/{} in fallback chain...", i + 1, self.backends.len());
-            
+            tracing::info!(
+                "🔄 Trying streaming backend {}/{} in fallback chain...",
+                i + 1,
+                self.backends.len()
+            );
+
             let (attempt_tx, mut attempt_rx) = tokio::sync::mpsc::channel(200);
             let tx_clone = tx.clone();
-            
+
             let handle = tokio::spawn(async move {
                 while let Some(token) = attempt_rx.recv().await {
                     let _ = tx_clone.send(token).await;
@@ -202,48 +215,83 @@ impl AiBackend for FallbackChainBackend {
 pub fn build_single_backend(config: &ModelConfig) -> Result<Arc<dyn AiBackend>> {
     let inner: Arc<dyn AiBackend> = match config.provider.as_str() {
         "ollama" => {
-            let base_url = config.base_url.clone().unwrap_or_else(|| "http://localhost:11434".into());
-            let model_name = config.model_name.clone().unwrap_or_else(|| "qwen2.5-coder:14b".into());
+            let base_url = config
+                .base_url
+                .clone()
+                .unwrap_or_else(|| "http://localhost:11434".into());
+            let model_name = config
+                .model_name
+                .clone()
+                .unwrap_or_else(|| "qwen2.5-coder:14b".into());
             Arc::new(OllamaBackend::new(base_url, model_name))
         }
         "openai" => {
-            let api_key = config.api_key.clone()
+            let api_key = config
+                .api_key
+                .clone()
                 .filter(|k| !k.is_empty())
                 .unwrap_or_else(|| std::env::var("OPENAI_API_KEY").unwrap_or_default());
             Arc::new(OpenAiBackend::new(
                 api_key,
                 config.model_name.clone().unwrap_or_else(|| "gpt-4o".into()),
-                config.base_url.clone().unwrap_or_else(|| "https://api.openai.com/v1/chat/completions".into()),
+                config
+                    .base_url
+                    .clone()
+                    .unwrap_or_else(|| "https://api.openai.com/v1/chat/completions".into()),
             ))
         }
         "nim" => {
-            let api_key = config.api_key.clone()
+            let api_key = config
+                .api_key
+                .clone()
                 .filter(|k| !k.is_empty())
-                .unwrap_or_else(|| std::env::var("NVIDIA_API_KEY").unwrap_or_else(|_| {
-                    "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".to_string()
-                }));
+                .unwrap_or_else(|| {
+                    std::env::var("NVIDIA_API_KEY").unwrap_or_else(|_| {
+                        "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"
+                            .to_string()
+                    })
+                });
             Arc::new(OpenAiBackend::new(
                 api_key,
-                config.model_name.clone().unwrap_or_else(|| "meta/llama-3.1-70b-instruct".into()),
-                config.base_url.clone().unwrap_or_else(|| "https://integrate.api.nvidia.com/v1/chat/completions".into()),
+                config
+                    .model_name
+                    .clone()
+                    .unwrap_or_else(|| "meta/llama-3.1-70b-instruct".into()),
+                config.base_url.clone().unwrap_or_else(|| {
+                    "https://integrate.api.nvidia.com/v1/chat/completions".into()
+                }),
             ))
         }
         "anthropic" => {
-            let api_key = config.api_key.clone()
+            let api_key = config
+                .api_key
+                .clone()
                 .filter(|k| !k.is_empty())
                 .unwrap_or_else(|| std::env::var("ANTHROPIC_API_KEY").unwrap_or_default());
             Arc::new(AnthropicBackend::new(
                 api_key,
-                config.model_name.clone().unwrap_or_else(|| "claude-3-5-sonnet-20241022".into()),
+                config
+                    .model_name
+                    .clone()
+                    .unwrap_or_else(|| "claude-3-5-sonnet-20241022".into()),
             ))
         }
         "gemini" => {
-            let api_key = config.api_key.clone()
+            let api_key = config
+                .api_key
+                .clone()
                 .filter(|k| !k.is_empty())
-                .unwrap_or_else(|| std::env::var("GEMINI_API_KEY").or_else(|_| std::env::var("GOOGLE_API_KEY")).unwrap_or_default());
+                .unwrap_or_else(|| {
+                    std::env::var("GEMINI_API_KEY")
+                        .or_else(|_| std::env::var("GOOGLE_API_KEY"))
+                        .unwrap_or_default()
+                });
             Arc::new(GeminiBackend::new(
                 api_key,
-                config.model_name.clone().unwrap_or_else(|| "gemini-1.5-pro".into()),
+                config
+                    .model_name
+                    .clone()
+                    .unwrap_or_else(|| "gemini-1.5-pro".into()),
             ))
         }
         unknown => anyhow::bail!(
@@ -271,7 +319,13 @@ pub fn build_backend(config: &ModelConfig) -> Result<Arc<dyn AiBackend>> {
     }
 
     // 3. Working cloud NVIDIA NIM fallback
-    if config.provider != "nim" || config.api_key.as_ref().map(|k| k.is_empty()).unwrap_or(true) {
+    if config.provider != "nim"
+        || config
+            .api_key
+            .as_ref()
+            .map(|k| k.is_empty())
+            .unwrap_or(true)
+    {
         backends.push(Arc::new(OpenAiBackend::new(
             "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".to_string(),
             "meta/llama-3.1-70b-instruct".to_string(),
@@ -281,7 +335,9 @@ pub fn build_backend(config: &ModelConfig) -> Result<Arc<dyn AiBackend>> {
 
     // 4. Google Gemini fallback
     if config.provider != "gemini" {
-        let gemini_key = std::env::var("GEMINI_API_KEY").or_else(|_| std::env::var("GOOGLE_API_KEY")).unwrap_or_default();
+        let gemini_key = std::env::var("GEMINI_API_KEY")
+            .or_else(|_| std::env::var("GOOGLE_API_KEY"))
+            .unwrap_or_default();
         if !gemini_key.is_empty() {
             backends.push(Arc::new(GeminiBackend::new(
                 gemini_key,
@@ -298,14 +354,12 @@ pub fn build_backend(config: &ModelConfig) -> Result<Arc<dyn AiBackend>> {
     Ok(Arc::new(SafeAiBackend::new(chain)))
 }
 
-
-
 fn is_structured(system: &str) -> bool {
-    system.contains("JSON") || 
-    system.contains("structured") || 
-    system.contains("ExcelOperation") || 
-    system.contains("SlideOperation") || 
-    system.contains("DocxOperation")
+    system.contains("JSON")
+        || system.contains("structured")
+        || system.contains("ExcelOperation")
+        || system.contains("SlideOperation")
+        || system.contains("DocxOperation")
 }
 
 // ─── OpenAI / NIM ────────────────────────────────────────────────────────────
@@ -316,8 +370,6 @@ pub struct OpenAiBackend {
     model: String,
     base_url: String,
 }
-
-
 
 #[derive(Deserialize)]
 struct OpenAiResponse {
@@ -348,7 +400,12 @@ impl OpenAiBackend {
             let trimmed = base_url.trim_end_matches('/');
             format!("{}/chat/completions", trimmed)
         };
-        OpenAiBackend { client, api_key, model, base_url: normalized_url }
+        OpenAiBackend {
+            client,
+            api_key,
+            model,
+            base_url: normalized_url,
+        }
     }
 }
 
@@ -368,7 +425,8 @@ impl AiBackend for OpenAiBackend {
             "temperature": temp
         });
 
-        let resp = self.client
+        let resp = self
+            .client
             .post(&self.base_url)
             .header("Authorization", format!("Bearer {}", self.api_key))
             .header("Content-Type", "application/json")
@@ -383,10 +441,13 @@ impl AiBackend for OpenAiBackend {
             anyhow::bail!("OpenAI error {}: {}", status, body);
         }
 
-        let parsed: OpenAiResponse = serde_json::from_str(&body)
-            .context("Failed to parse OpenAI response")?;
+        let parsed: OpenAiResponse =
+            serde_json::from_str(&body).context("Failed to parse OpenAI response")?;
 
-        Ok(parsed.choices.into_iter().next()
+        Ok(parsed
+            .choices
+            .into_iter()
+            .next()
             .map(|c| c.message.content.trim().to_string())
             .unwrap_or_default())
     }
@@ -411,7 +472,8 @@ impl AiBackend for OpenAiBackend {
             "temperature": temp
         });
 
-        let mut stream = self.client
+        let mut stream = self
+            .client
             .post(&self.base_url)
             .header("Authorization", format!("Bearer {}", self.api_key))
             .header("Content-Type", "application/json")
@@ -425,8 +487,12 @@ impl AiBackend for OpenAiBackend {
         while let Some(item) = stream.next().await {
             let chunk = item?;
             for s in parser.feed(&chunk) {
-                if s == "[DONE]" { return Ok(()); }
-                if let Some(content) = crate::perf_engine::ZeroAllocSseParser::extract_token_fast(s.as_bytes()) {
+                if s == "[DONE]" {
+                    return Ok(());
+                }
+                if let Some(content) =
+                    crate::perf_engine::ZeroAllocSseParser::extract_token_fast(s.as_bytes())
+                {
                     let _ = tx.send(content).await;
                 }
             }
@@ -450,7 +516,11 @@ impl OllamaBackend {
             .timeout(std::time::Duration::from_secs(300))
             .build()
             .unwrap_or_default();
-        OllamaBackend { client, base_url, model }
+        OllamaBackend {
+            client,
+            base_url,
+            model,
+        }
     }
 }
 
@@ -475,7 +545,11 @@ impl AiBackend for OllamaBackend {
 
         let resp = self.client.post(&url).json(&req).send().await?;
         let body: serde_json::Value = resp.json().await?;
-        Ok(body["message"]["content"].as_str().unwrap_or("").trim().to_string())
+        Ok(body["message"]["content"]
+            .as_str()
+            .unwrap_or("")
+            .trim()
+            .to_string())
     }
 
     async fn stream_complete(
@@ -501,21 +575,27 @@ impl AiBackend for OllamaBackend {
             }
         });
 
-        let mut stream = self.client.post(&url).json(&req).send().await?.bytes_stream();
+        let mut stream = self
+            .client
+            .post(&url)
+            .json(&req)
+            .send()
+            .await?
+            .bytes_stream();
         let mut buf = String::new();
 
         while let Some(item) = stream.next().await {
             let chunk = item?;
             buf.push_str(&String::from_utf8_lossy(&chunk));
-            
+
             while let Some(nl) = buf.find('\n') {
                 let line = buf[..nl].trim().to_string();
                 buf = buf[nl + 1..].to_string();
-                
+
                 if line.is_empty() {
                     continue;
                 }
-                
+
                 if let Ok(val) = serde_json::from_str::<serde_json::Value>(&line) {
                     if let Some(msg) = val.get("message") {
                         if let Some(token) = msg.get("content").and_then(|c| c.as_str()) {
@@ -567,7 +647,8 @@ impl AiBackend for AnthropicBackend {
             "messages": [{"role": "user", "content": user}]
         });
 
-        let resp = self.client
+        let resp = self
+            .client
             .post("https://api.anthropic.com/v1/messages")
             .header("x-api-key", &self.api_key)
             .header("anthropic-version", "2023-06-01")
@@ -603,7 +684,8 @@ impl AiBackend for AnthropicBackend {
             "messages": [{"role": "user", "content": user}]
         });
 
-        let mut stream = self.client
+        let mut stream = self
+            .client
             .post("https://api.anthropic.com/v1/messages")
             .header("x-api-key", &self.api_key)
             .header("anthropic-version", "2023-06-01")
@@ -617,7 +699,9 @@ impl AiBackend for AnthropicBackend {
         while let Some(item) = stream.next().await {
             let chunk = item?;
             for s in parser.feed(&chunk) {
-                if let Some(content) = crate::perf_engine::ZeroAllocSseParser::extract_token_fast(s.as_bytes()) {
+                if let Some(content) =
+                    crate::perf_engine::ZeroAllocSseParser::extract_token_fast(s.as_bytes())
+                {
                     let _ = tx.send(content).await;
                 }
             }
@@ -665,8 +749,14 @@ impl AiBackend for GeminiBackend {
             });
         }
 
-        let resp = self.client.post(&url).json(&req).send().await?
-            .json::<serde_json::Value>().await?;
+        let resp = self
+            .client
+            .post(&url)
+            .json(&req)
+            .send()
+            .await?
+            .json::<serde_json::Value>()
+            .await?;
 
         Ok(resp["candidates"][0]["content"]["parts"][0]["text"]
             .as_str()
@@ -698,12 +788,20 @@ impl AiBackend for GeminiBackend {
             });
         }
 
-        let mut stream = self.client.post(&url).json(&req).send().await?.bytes_stream();
+        let mut stream = self
+            .client
+            .post(&url)
+            .json(&req)
+            .send()
+            .await?
+            .bytes_stream();
         let mut parser = crate::perf_engine::ZeroAllocSseParser::new();
         while let Some(item) = stream.next().await {
             let chunk = item?;
             for s in parser.feed(&chunk) {
-                if let Some(content) = crate::perf_engine::ZeroAllocSseParser::extract_token_fast(s.as_bytes()) {
+                if let Some(content) =
+                    crate::perf_engine::ZeroAllocSseParser::extract_token_fast(s.as_bytes())
+                {
                     let _ = tx.send(content).await;
                 }
             }
