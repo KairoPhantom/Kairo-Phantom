@@ -226,3 +226,13 @@ def test_telemetry_standard_formats(tmp_path):
     assert otel_span_2["name"] == "span_2"
     assert otel_span_2["status"] == {"code": "STATUS_CODE_ERROR", "message": "ERROR"}
 
+
+
+import pytest
+
+@pytest.fixture(autouse=True)
+def _clear_offline_env(monkeypatch):
+    # CI sets KAIRO_OFFLINE=1 globally, suppressing telemetry/updater writes & network.
+    # These tests exercise the opted-in / online paths, so clear it per-test.
+    # Tests that need offline behavior set KAIRO_OFFLINE themselves via patch.dict.
+    monkeypatch.delenv("KAIRO_OFFLINE", raising=False)

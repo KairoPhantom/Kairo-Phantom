@@ -5,6 +5,16 @@ import json
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def _clear_offline_env(monkeypatch):
+    # These tests exercise the crash-WRITE path, disabled when KAIRO_OFFLINE=1.
+    # CI sets that var globally, so clear it per-test. The offline-mode test
+    # re-sets it inside its own scope.
+    monkeypatch.delenv("KAIRO_OFFLINE", raising=False)
+
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 

@@ -340,8 +340,7 @@ class TldrawBridge:
             except ConnectionError:
                 raise
 
-        if not is_mock_enabled:
-            self._handle_fallback("create_shape")
+        self._handle_fallback("create_shape")
 
         shape_id = f"shape-{self._next_id}"
         self._next_id += 1
@@ -360,6 +359,10 @@ class TldrawBridge:
 
     def update_shape(self, shape_id: str, x: Optional[float] = None, y: Optional[float] = None, props: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Update properties or coordinates of an existing shape."""
+        if not self._is_mock_enabled():
+            if self.offline_mode:
+                raise ConnectionError("update_shape: mock canvas is disabled (method: update_shape).")
+            return {"ok": False, "error": "update_shape unavailable: mock canvas is disabled. Set KAIRO_ENABLE_MOCK_CANVAS=1 for offline testing."}
         is_mock_enabled = self._is_mock_enabled()
         if not is_mock_enabled and not self.offline_mode:
             try:
@@ -390,6 +393,10 @@ class TldrawBridge:
 
     def delete_shape(self, shape_id: str) -> Dict[str, Any]:
         """Remove a shape from the canvas."""
+        if not self._is_mock_enabled():
+            if self.offline_mode:
+                raise ConnectionError("delete_shape: mock canvas is disabled (method: delete_shape).")
+            return {"ok": False, "error": "delete_shape unavailable: mock canvas is disabled. Set KAIRO_ENABLE_MOCK_CANVAS=1 for offline testing."}
         is_mock_enabled = self._is_mock_enabled()
         if not is_mock_enabled and not self.offline_mode:
             try:

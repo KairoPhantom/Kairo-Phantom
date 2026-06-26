@@ -361,8 +361,7 @@ class FigmaDesignBridge:
             except ConnectionError:
                 raise
 
-        if not is_mock_enabled:
-            self._handle_fallback("create_frame")
+        self._handle_fallback("create_frame")
 
         node_id = f"frame-node-{self._next_id}"
         self._next_id += 1
@@ -538,6 +537,10 @@ class FigmaDesignBridge:
 
     def set_fills(self, node_id: str, color_hex: str) -> Dict[str, Any]:
         """Set solid fills on a Figma node using a hex color value."""
+        if not self._is_mock_enabled():
+            if self.offline_mode:
+                raise ConnectionError("set_fills: mock canvas is disabled (method: set_fills).")
+            return {"ok": False, "error": "set_fills unavailable: mock canvas is disabled. Set KAIRO_ENABLE_MOCK_CANVAS=1 for offline testing."}
         is_mock_enabled = self._is_mock_enabled()
         if not is_mock_enabled and not self.offline_mode:
             try:

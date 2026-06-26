@@ -1,0 +1,22 @@
+{
+  "agent": "test_agent",
+  "label": "Test Agent",
+  "total": 2,
+  "passed": 2,
+  "failed": 0,
+  "fallbacks": 0,
+  "pct": 100.0,
+  "status": "PASS",
+  "passed_scenarios": [
+    {
+      "id": "TEST1",
+      "message": "Pending - Skipped"
+    },
+    {
+      "id": "TEST2",
+      "message": "mock pass"
+    }
+  ],
+  "failed_scenarios": [],
+  "fallback_scenarios": []
+}

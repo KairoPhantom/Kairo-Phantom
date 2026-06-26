@@ -262,3 +262,13 @@ def test_verify_installer_signature_command_failure():
         assert verify_installer_signature("dummy_installer.exe") is False
 
 
+
+
+import pytest
+
+@pytest.fixture(autouse=True)
+def _clear_offline_env(monkeypatch):
+    # CI sets KAIRO_OFFLINE=1 globally, suppressing telemetry/updater writes & network.
+    # These tests exercise the opted-in / online paths, so clear it per-test.
+    # Tests that need offline behavior set KAIRO_OFFLINE themselves via patch.dict.
+    monkeypatch.delenv("KAIRO_OFFLINE", raising=False)
