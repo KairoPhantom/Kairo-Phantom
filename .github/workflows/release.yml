@@ -115,7 +115,7 @@ jobs:
 
       # ── Regenerate SBOM in-run (deterministic, no cross-run artifact dependency) ──
       - name: Generate CycloneDX SBOM (in-run)
-        uses: anchore/sbom-action@f8b57238804167525748f1ffd0c29c7e4dc6cb7f # v0.17.0
+        uses: anchore/sbom-action@d94f46e13c6c62f59525ac9a1e147a99dc0b9bf5 # v0.17.0
         with:
           path: .
           format: cyclonedx-json
