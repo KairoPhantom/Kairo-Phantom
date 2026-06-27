@@ -2536,40 +2536,60 @@ async fn async_main() -> Result<()> {
                     if cua_escalate {
                         info!("🚀 CUA Escalation triggered! Formulating CUA Context...");
 
-                        let mut rect = windows::Win32::Foundation::RECT::default();
-                        let hwnd = windows::Win32::Foundation::HWND(
-                            target_hwnd_val as *mut std::ffi::c_void,
-                        );
-                        let _ = unsafe {
-                            windows::Win32::UI::WindowsAndMessaging::GetWindowRect(hwnd, &mut rect)
-                        };
-                        let hdc = unsafe { windows::Win32::Graphics::Gdi::GetDC(hwnd) };
-                        let dpi = if hdc.is_invalid() {
-                            96
-                        } else {
-                            let val = unsafe {
-                                windows::Win32::Graphics::Gdi::GetDeviceCaps(
-                                    hdc,
-                                    windows::Win32::Graphics::Gdi::LOGPIXELSX,
+                        #[cfg(target_os = "windows")]
+                        let mut cua_ctx = {
+                            let mut rect = windows::Win32::Foundation::RECT::default();
+                            let hwnd = windows::Win32::Foundation::HWND(
+                                target_hwnd_val as *mut std::ffi::c_void,
+                            );
+                            let _ = unsafe {
+                                windows::Win32::UI::WindowsAndMessaging::GetWindowRect(
+                                    hwnd, &mut rect,
                                 )
                             };
-                            unsafe {
-                                let _ = windows::Win32::Graphics::Gdi::ReleaseDC(hwnd, hdc);
-                            }
-                            val
-                        };
-                        let dpi_scale = if dpi == 0 { 1.0 } else { dpi as f32 / 96.0 };
+                            let hdc = unsafe { windows::Win32::Graphics::Gdi::GetDC(hwnd) };
+                            let dpi = if hdc.is_invalid() {
+                                96
+                            } else {
+                                let val = unsafe {
+                                    windows::Win32::Graphics::Gdi::GetDeviceCaps(
+                                        hdc,
+                                        windows::Win32::Graphics::Gdi::LOGPIXELSX,
+                                    )
+                                };
+                                unsafe {
+                                    let _ = windows::Win32::Graphics::Gdi::ReleaseDC(hwnd, hdc);
+                                }
+                                val
+                            };
+                            let dpi_scale = if dpi == 0 { 1.0 } else { dpi as f32 / 96.0 };
 
+                            crate::cua::CuaContext {
+                                hwnd: target_hwnd_val,
+                                window_title: captured_title.clone(),
+                                window_rect: crate::cua::WindowRect {
+                                    left: rect.left,
+                                    top: rect.top,
+                                    right: rect.right,
+                                    bottom: rect.bottom,
+                                },
+                                dpi_scale,
+                                app_name: captured_process.clone(),
+                                before_screenshot_path: None,
+                            }
+                        };
+
+                        #[cfg(not(target_os = "windows"))]
                         let mut cua_ctx = crate::cua::CuaContext {
                             hwnd: target_hwnd_val,
                             window_title: captured_title.clone(),
                             window_rect: crate::cua::WindowRect {
-                                left: rect.left,
-                                top: rect.top,
-                                right: rect.right,
-                                bottom: rect.bottom,
+                                left: 0,
+                                top: 0,
+                                right: 0,
+                                bottom: 0,
                             },
-                            dpi_scale,
+                            dpi_scale: 1.0,
                             app_name: captured_process.clone(),
                             before_screenshot_path: None,
                         };
