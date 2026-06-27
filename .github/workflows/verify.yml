@@ -186,7 +186,7 @@ jobs:
       - name: Install Linux system deps (for CUA / clipboard tests)
         run: |
           sudo apt-get update -q
-          sudo apt-get install -y xdotool xclip at-spi2-core xvfb
+          sudo apt-get install -y xdotool xclip at-spi2-core libx11-dev libxtst-dev libxi-dev libxrandr-dev libxinerama-dev libxcursor-dev libxkbcommon-dev libxdo-dev pkg-config xvfb
 
       - name: Run no-skip static gate (BLOCKING — forbidden patterns scan)
         run: python scripts/ci/no_skip_gates.py
@@ -280,7 +280,7 @@ jobs:
       - name: Install Linux system deps
         run: |
           sudo apt-get update -q
-          sudo apt-get install -y xdotool xclip at-spi2-core xvfb
+          sudo apt-get install -y xdotool xclip at-spi2-core libx11-dev libxtst-dev libxi-dev libxrandr-dev libxinerama-dev libxcursor-dev libxkbcommon-dev libxdo-dev pkg-config xvfb
 
       - name: Cache Cargo
         uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6 # v2.7.8
