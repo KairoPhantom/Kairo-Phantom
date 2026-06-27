@@ -106,12 +106,13 @@ impl WazaSkillManager {
             if let Some(sig) = &manifest.signature {
                 tracing::info!("🔐 Verifying Ed25519 signature for {}", manifest.id);
                 Self::verify_wasm_signature(&wasm_bytes, sig)?;
+            } else if allow_unsigned {
+                tracing::warn!(
+                    "⚠️  Skill '{}' has no WASM signature — using anyway (--allow-unsigned passed)",
+                    manifest.id
+                );
             } else {
-                if allow_unsigned {
-                    tracing::warn!("⚠️  Skill '{}' has no WASM signature — using anyway (--allow-unsigned passed)", manifest.id);
-                } else {
-                    anyhow::bail!("WASM signature verification failed: skill is unsigned but signatures are required");
-                }
+                anyhow::bail!("WASM signature verification failed: skill is unsigned but signatures are required");
             }
 
             std::fs::write(skill_dir.join("plugin.wasm"), &wasm_bytes)?;
@@ -153,9 +154,9 @@ impl WazaSkillManager {
         let skill_dir = self.skills_dir.join(skill_id);
         if skill_dir.exists() {
             std::fs::remove_dir_all(&skill_dir)?;
-            println!("✅ Removed skill: {}", skill_id);
+            println!("✅ Removed skill: {skill_id}");
         } else {
-            anyhow::bail!("Skill '{}' not found", skill_id);
+            anyhow::bail!("Skill '{skill_id}' not found");
         }
         Ok(())
     }
@@ -178,12 +179,11 @@ impl WazaSkillManager {
         std::fs::write(
             skill_dir.join("SKILL.md"),
             format!(
-                "# {}\n\n## What this skill does\n\nDescribe your skill here.\n\n\
+                "# {name}\n\n## What this skill does\n\nDescribe your skill here.\n\n\
              ## Activation\n\nThis skill activates when the user types:\n\n\
-             ```\n// {}: <your prompt here>\n```\n\n\
+             ```\n// {safe_name}: <your prompt here>\n```\n\n\
              ## System Prompt\n\n```\nYou are a specialist in...\n```\n\n\
-             ## Examples\n\n- Input: `// {}: improve tone`\n- Output: ...\n",
-                name, safe_name, safe_name
+             ## Examples\n\n- Input: `// {safe_name}: improve tone`\n- Output: ...\n"
             ),
         )?;
 
@@ -191,17 +191,16 @@ impl WazaSkillManager {
         std::fs::write(
             skill_dir.join("manifest.toml"),
             format!(
-                r#"id = "{}"
-name = "{}"
+                r#"id = "{safe_name}"
+name = "{name}"
 version = "0.1.0"
 description = "A Kairo skill for ..."
 author = "Your Name"
 category = "general"
-skill_md_url = "https://github.com/YOUR/REPO/raw/main/skills/{}/SKILL.md"
+skill_md_url = "https://github.com/YOUR/REPO/raw/main/skills/{safe_name}/SKILL.md"
 requires_kairo = "0.3.0"
 tags = ["custom"]
-"#,
-                safe_name, name, safe_name
+"#
             ),
         )?;
 
@@ -209,13 +208,12 @@ tags = ["custom"]
         std::fs::write(
             skill_dir.join("test.toml"),
             format!(
-                r#"# KMB-1 compatible test cases for {}
+                r#"# KMB-1 compatible test cases for {name}
 [[tests]]
 input = "sample input that triggers this skill"
 expected_contains = ["expected keyword in output"]
 max_words = 100
-"#,
-                name
+"#
             ),
         )?;
 
@@ -229,7 +227,7 @@ max_words = 100
             skill_dir.join("manifest.toml").display()
         );
         println!("   Run: kairo skill list   (to see it appear)");
-        println!("   Run: kairo skill test {} to validate", safe_name);
+        println!("   Run: kairo skill test {safe_name} to validate");
 
         Ok(skill_dir)
     }

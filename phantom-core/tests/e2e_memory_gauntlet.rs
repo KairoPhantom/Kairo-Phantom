@@ -186,7 +186,7 @@ fn ground_truth_episode(app: &str, fmt: &str, tone: &str, length: &str) -> Strin
         (_, "prose", "casual", "concise") => "Hey team 👋 quick update — everything looks good!".to_string(),
         (_, "prose", "casual", "standard") => "Hey team 👋 quick update on progress — we're looking good and on track. Thanks for all the hard work this week. Really appreciate the team's efforts!".to_string(),
         (_, "prose", "technical", "concise") => "Component follows design system. Accessibility check complete. API function returns Result<T>.".to_string(),
-        _ => format!("Output aligned to {} preference ({}): task completed successfully.", fmt, tone),
+        _ => format!("Output aligned to {fmt} preference ({tone}): task completed successfully."),
     }
 }
 
@@ -686,28 +686,21 @@ async fn e2e_memory_gauntlet_39_scenarios() {
     );
     println!("Passed: {}/{}", passed, all.len());
     if !failed.is_empty() {
-        println!("Failed scenario IDs: {:?}", failed);
+        println!("Failed scenario IDs: {failed:?}");
     }
     println!();
 
     if global_avg >= 0.95 {
         println!("✅ GAUNTLET PASSED: Post-learning memory quality is production-ready across all 6 apps.");
     } else if global_avg >= 0.85 {
-        println!(
-            "🟡 NEAR PASS ({:.4}): Strong. Minor tuning needed.",
-            global_avg
-        );
+        println!("🟡 NEAR PASS ({global_avg:.4}): Strong. Minor tuning needed.");
     } else {
-        println!(
-            "❌ GAUNTLET FAILED ({:.4}): Learning transfer not working.",
-            global_avg
-        );
+        println!("❌ GAUNTLET FAILED ({global_avg:.4}): Learning transfer not working.");
     }
 
     assert!(
         global_avg >= 0.85,
-        "Global post-learning composite {:.4} below 0.85 threshold",
-        global_avg
+        "Global post-learning composite {global_avg:.4} below 0.85 threshold"
     );
     assert!(
         passed >= (all.len() as u32 * 80 / 100),
@@ -733,11 +726,8 @@ async fn gauntlet_chaos_concurrent_apps() {
             for s in 0..5u8 {
                 let _ = m
                     .remember(
-                        &format!(
-                            "App {} session {}: content block status update project team",
-                            i, s
-                        ),
-                        Some(&format!("episode {} {}", i, s)),
+                        &format!("App {i} session {s}: content block status update project team"),
+                        Some(&format!("episode {i} {s}")),
                         &a,
                         Some("bullet"),
                         false,

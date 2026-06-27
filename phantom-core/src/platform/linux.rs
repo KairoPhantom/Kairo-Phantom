@@ -69,7 +69,7 @@ mod linux_impl {
             return None;
         }
 
-        let comm = std::fs::read_to_string(format!("/proc/{}/comm", pid)).ok()?;
+        let comm = std::fs::read_to_string(format!("/proc/{pid}/comm")).ok()?;
         Some(comm.trim().to_string())
     }
 
@@ -126,11 +126,7 @@ mod linux_impl {
                         .find(|s| s.starts_with("\"unix:") || s.starts_with("\"tcp:"))
                         .map(|s| s.trim_matches('"').to_string())
                 })
-        });
-
-        if bus_addr.is_none() {
-            return None;
-        }
+        })?;
 
         let result = Command::new("python3")
             .args([
@@ -206,13 +202,13 @@ try:
         for obj in pyatspi.findDescendant(app, lambda x: x.getState().contains(pyatspi.STATE_FOCUSED), False):
             text_iface = obj.queryText()
             caret = text_iface.caretOffset
-            text_iface.insertText(caret, '{}', len('{}'))
+            text_iface.insertText(caret, '{escaped_text}', len('{escaped_text}'))
             sys.exit(0)
     sys.exit(1)
 except Exception as e:
     sys.stderr.write(str(e))
     sys.exit(1)
-"#, escaped_text, escaped_text)
+"#)
             ])
             .output()
             .ok();

@@ -60,7 +60,7 @@ impl SkillManager {
     pub fn skill_summary(&self) -> Vec<String> {
         self.skills
             .keys()
-            .map(|mode| format!("  · {:?} — SKILL.md loaded", mode))
+            .map(|mode| format!("  · {mode:?} — SKILL.md loaded"))
             .collect()
     }
 

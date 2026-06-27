@@ -397,13 +397,13 @@ impl KamiExporter {
                 Ok(())
             }
             KamiCommand::Translate(lang) => {
-                Self::show_toast(&format!("Kairo: translating to {}...", lang));
-                Self::copy_to_clipboard(&format!("[Kairo Translation to {}]\n\n{}", lang, content));
+                Self::show_toast(&format!("Kairo: translating to {lang}..."));
+                Self::copy_to_clipboard(&format!("[Kairo Translation to {lang}]\n\n{content}"));
                 Ok(())
             }
             KamiCommand::Proofread => {
                 Self::show_toast("Kairo: proofreading...");
-                Self::copy_to_clipboard(&format!("[Kairo Proofread]\n\n{}", content));
+                Self::copy_to_clipboard(&format!("[Kairo Proofread]\n\n{content}"));
                 Ok(())
             }
         }
@@ -414,13 +414,13 @@ impl KamiExporter {
         dirs::document_dir()
             .unwrap_or_else(|| PathBuf::from("."))
             .join("Kairo Exports")
-            .join(format!("kairo-export-{}.{}", timestamp, ext))
+            .join(format!("kairo-export-{timestamp}.{ext}"))
     }
 
     fn show_toast(msg: &str) {
         // Production: integrates with toast_notification.rs or system tray.
         // For CLI/test: write to stderr so it doesn't pollute stdout.
-        eprintln!("[KAIRO] {}", msg);
+        eprintln!("[KAIRO] {msg}");
     }
 
     fn copy_to_clipboard(text: &str) {

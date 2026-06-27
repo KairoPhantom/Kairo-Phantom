@@ -14,7 +14,7 @@ impl SwarmAgent for ImageAgent {
         let base = crate::ai::KAIRO_SYSTEM_PROMPT;
         let doc_fragment = doc_ctx.to_system_prompt_fragment();
         format!(
-            "{}\n\n[DOCUMENT INTELLIGENCE]\n{}\n\n*** SWARM ROLE: IMAGE GENERATION AGENT ***\n\
+            "{base}\n\n[DOCUMENT INTELLIGENCE]\n{doc_fragment}\n\n*** SWARM ROLE: IMAGE GENERATION AGENT ***\n\
             You generate and optimize prompts for AI image generation.\n\
             When asked to add/create/generate an image:\n\
             1. Output exactly: [IMAGE: <detailed photorealistic prompt>] on its own line\n\
@@ -23,8 +23,7 @@ impl SwarmAgent for ImageAgent {
             4. For diagrams: 'clean technical diagram, labeled arrows, white background'\n\
             5. For infographics: 'modern data visualization, brand colors, clean layout'\n\
             6. For portraits/headshots: 'professional headshot, studio lighting, sharp focus'\n\
-            Always follow [IMAGE: ...] with one brief caption sentence.",
-            base, doc_fragment
+            Always follow [IMAGE: ...] with one brief caption sentence."
         )
     }
     fn match_score(&self, doc_ctx: &DocumentContext) -> u8 {

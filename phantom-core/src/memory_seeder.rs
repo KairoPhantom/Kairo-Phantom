@@ -44,10 +44,8 @@ impl MemorySeeder {
 
             // Store inferred preferences as MemMachine episodes
             for (pref_key, pref_val) in &style {
-                let content = format!(
-                    "Style preference from existing docs: {} = {}",
-                    pref_key, pref_val
-                );
+                let content =
+                    format!("Style preference from existing docs: {pref_key} = {pref_val}");
                 let _ = mem
                     .remember(
                         &content,
@@ -170,7 +168,7 @@ fn walkdir_simple(folder: &Path) -> Vec<PathBuf> {
 pub async fn run_seed_command(folder_str: &str) -> Result<()> {
     let folder = PathBuf::from(folder_str);
     if !folder.exists() {
-        anyhow::bail!("Folder not found: {}", folder_str);
+        anyhow::bail!("Folder not found: {folder_str}");
     }
 
     println!("🌱 Kairo Memory Seeding");
@@ -182,7 +180,7 @@ pub async fn run_seed_command(folder_str: &str) -> Result<()> {
     let mem = MemMachine::new(mem_vault)?;
     let count = MemorySeeder::seed_from_folder(&folder, &mem).await?;
 
-    println!("✅ Done! Seeded {} documents into MemMachine.", count);
+    println!("✅ Done! Seeded {count} documents into MemMachine.");
     println!("   Kairo now understands your writing style from day one.");
     Ok(())
 }

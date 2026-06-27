@@ -210,7 +210,7 @@ impl SwarmOrchestrator {
         let memory_fragment = self.optimizer.optimize_memory(&self.memory, &app_name);
         let ground_truth = self.context7.fetch_ground_truth(&doc_ctx.prompt_text).await;
         let ground_truth_fragment = ground_truth
-            .map(|gt| format!("\n\n## GROUND TRUTH (Context7)\n{}", gt))
+            .map(|gt| format!("\n\n## GROUND TRUTH (Context7)\n{gt}"))
             .unwrap_or_default();
 
         // Fetch deep app context if an adapter is available
@@ -222,8 +222,7 @@ impl SwarmOrchestrator {
                 .await
             {
                 if let Ok(ctx) = adapter.get_deep_context().await {
-                    deep_context_fragment =
-                        format!("\n\n## DEEP APP CONTEXT ({})\n{}", app_id, ctx);
+                    deep_context_fragment = format!("\n\n## DEEP APP CONTEXT ({app_id})\n{ctx}");
                 }
             }
         }
@@ -237,14 +236,7 @@ impl SwarmOrchestrator {
         let persona_fragment = persona_aware_ctx.persona.build_prompt_fragment();
 
         let system_directive = format!(
-            "<system>\n{}\n\n{}\n\n{}\n\n{}\n\n{}\n\n{}\n\n## COMMAND PROTOCOL\n{}\n\nCRITICAL: Output ONLY within <output> tags. No conversational preamble.\n</system>",
-            base_directive,
-            persona_fragment,
-            memory_fragment,
-            ground_truth_fragment,
-            deep_context_fragment,
-            skill_directive,
-            command_hint
+            "<system>\n{base_directive}\n\n{persona_fragment}\n\n{memory_fragment}\n\n{ground_truth_fragment}\n\n{deep_context_fragment}\n\n{skill_directive}\n\n## COMMAND PROTOCOL\n{command_hint}\n\nCRITICAL: Output ONLY within <output> tags. No conversational preamble.\n</system>"
         );
 
         let agent_type = match agent_id.as_str() {
@@ -299,7 +291,7 @@ impl SwarmOrchestrator {
             .map(|a| a.build_system_prompt(doc_ctx))
             .unwrap_or_else(|| crate::ai::KAIRO_SYSTEM_PROMPT.to_string());
 
-        let system_directive = format!("<system>\n{}\n\nCRITICAL: Output ONLY within <output> tags. No conversational preamble.\n</system>", base_directive);
+        let system_directive = format!("<system>\n{base_directive}\n\nCRITICAL: Output ONLY within <output> tags. No conversational preamble.\n</system>");
 
         let profile = AgentProfile {
             agent_type: agent_type.clone(),
@@ -462,7 +454,7 @@ impl SwarmOrchestrator {
                     let result = backend
                         .complete(&sys_prompt, &prompt)
                         .await
-                        .unwrap_or_else(|e| format!("[{} failed: {}]", agent_id, e));
+                        .unwrap_or_else(|e| format!("[{agent_id} failed: {e}]"));
                     (agent_id, result)
                 }
             })

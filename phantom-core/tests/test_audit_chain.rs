@@ -280,8 +280,7 @@ fn test_receipt_02_chain_integrity() {
     let violations = log.verify_chain();
     assert_eq!(
         violations, 0,
-        "Expected clean chain, got {} violation(s)",
-        violations
+        "Expected clean chain, got {violations} violation(s)"
     );
 
     let contents = std::fs::read_to_string(&path).unwrap();
@@ -394,12 +393,12 @@ fn test_receipt_07_flagship_provenance_not_faked() {
     // Emit 5 receipts with trace metadata — simulating 5 domain master calls
     let domains = ["word", "excel", "pptx", "pdf", "legal"];
     for (i, domain) in domains.iter().enumerate() {
-        let trace_id = format!("trace_{}", i);
-        let trace_url = format!("http://localhost:5173/trace/{}", trace_id);
+        let trace_id = format!("trace_{i}");
+        let trace_url = format!("http://localhost:5173/trace/{trace_id}");
         let r = log.emit_with_trace(
             &identity,
             "domain_master_call",
-            &format!("document_{}.docx", i),
+            &format!("document_{i}.docx"),
             "ok",
             &trace_id,
             &trace_url,
@@ -410,21 +409,18 @@ fn test_receipt_07_flagship_provenance_not_faked() {
         // If the receipt is faked (empty trace_id), this fails
         assert!(
             !r.opik_trace_id.is_empty(),
-            "Receipt {} has empty trace_id — receipt is FAKE",
-            i
+            "Receipt {i} has empty trace_id — receipt is FAKE"
         );
         assert!(
             !r.opik_trace_url.is_empty(),
-            "Receipt {} has empty trace_url — receipt is FAKE",
-            i
+            "Receipt {i} has empty trace_url — receipt is FAKE"
         );
         assert!(
             !r.domain.is_empty(),
-            "Receipt {} has empty domain — receipt is FAKE",
-            i
+            "Receipt {i} has empty domain — receipt is FAKE"
         );
-        assert!(!r.self_hash.is_empty(), "Receipt {} has empty self_hash", i);
-        assert!(!r.signature.is_empty(), "Receipt {} has empty signature", i);
+        assert!(!r.self_hash.is_empty(), "Receipt {i} has empty self_hash");
+        assert!(!r.signature.is_empty(), "Receipt {i} has empty signature");
     }
 
     // Verify the entire chain is valid

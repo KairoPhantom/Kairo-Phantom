@@ -65,7 +65,7 @@ impl McpBridgeClient {
 
         let mut child = cmd
             .spawn()
-            .with_context(|| format!("Failed to spawn {} — is Python installed?", server_id))?;
+            .with_context(|| format!("Failed to spawn {server_id} — is Python installed?"))?;
 
         let stdin = child
             .stdin
@@ -141,7 +141,7 @@ impl McpBridgeClient {
             );
 
             let resp: JsonRpcResponse = serde_json::from_str(line)
-                .with_context(|| format!("Failed to parse MCP response: {}", line))?;
+                .with_context(|| format!("Failed to parse MCP response: {line}"))?;
 
             if resp.id == Some(id) {
                 if let Some(err) = resp.error {

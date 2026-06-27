@@ -383,7 +383,7 @@ async fn generate_image(
         })),
         Err(e) => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Image generation failed: {}", e),
+            format!("Image generation failed: {e}"),
         )),
     }
 }
@@ -550,10 +550,10 @@ pub async fn start_api_server(state: ApiState) {
         .route("/capabilities", get(get_capabilities))
         .with_state(state);
 
-    let addr = format!("127.0.0.1:{}", PORT);
+    let addr = format!("127.0.0.1:{PORT}");
     let listener = TcpListener::bind(&addr)
         .await
-        .unwrap_or_else(|_| panic!("Failed to bind to {}", addr));
+        .unwrap_or_else(|_| panic!("Failed to bind to {addr}"));
 
     info!("🌐 HTTP API listening on http://{}", addr);
     axum::serve(listener, app).await.unwrap();

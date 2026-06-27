@@ -28,8 +28,7 @@ mod test_sprint5_hardening {
         let msg = result.unwrap_err();
         assert!(
             msg.contains("unavailable") || msg.contains("Kairo Pro"),
-            "Error must mention unavailability: got '{}'",
-            msg
+            "Error must mention unavailability: got '{msg}'"
         );
         // Prompt must remain unmodified
         assert_eq!(prompt, "Hello");
@@ -46,8 +45,7 @@ mod test_sprint5_hardening {
         let msg = result.unwrap_err();
         assert!(
             msg.contains("unavailable") || msg.contains("Kairo Pro"),
-            "Error must mention unavailability: got '{}'",
-            msg
+            "Error must mention unavailability: got '{msg}'"
         );
     }
 

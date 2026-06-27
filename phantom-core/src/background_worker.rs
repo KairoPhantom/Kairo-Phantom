@@ -42,7 +42,7 @@ pub async fn start_document_scanner(
                                 .to_string();
                             memory.app_bias.insert(
                                 filename.clone(),
-                                format!("Context from background document: {}", filename),
+                                format!("Context from background document: {filename}"),
                             );
                         }
 

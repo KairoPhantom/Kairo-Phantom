@@ -528,16 +528,13 @@ impl SwarmAgent for LegalPlusAgent {
             } else {
                 format!("\n\n### Suggested Redlines\n{}", redlines.join("\n"))
             };
-            format!(
-                "\n\n### PRE-COMPUTED RISK ANALYSIS\n{}{}",
-                scan, redline_str
-            )
+            format!("\n\n### PRE-COMPUTED RISK ANALYSIS\n{scan}{redline_str}")
         } else {
             String::new()
         };
 
         format!(
-            "{}\n\n[DOCUMENT INTELLIGENCE]\n{}{}\n\n*** SWARM ROLE: LEGAL DOCUMENT AGENT ***\n\
+            "{base}\n\n[DOCUMENT INTELLIGENCE]\n{doc_fragment}{cuad_report}\n\n*** SWARM ROLE: LEGAL DOCUMENT AGENT ***\n\
             \n## LEGAL INTELLIGENCE RULES\n\
             You assist with legal document DRAFTING only (NOT legal advice). \
             Always append disclaimer at end of any substantive draft.\n\
@@ -566,8 +563,7 @@ impl SwarmAgent for LegalPlusAgent {
             Structure documents with numbered sections and subsections (1.1, 1.2, etc.).\n\
             Use CAPS for defined terms after first definition.\n\
             Append: [LEGAL DISCLAIMER: This draft is for reference only — review with qualified legal counsel.]\n\n\
-            COMMAND: Execute the user request. START with [REPLACE] if replacing document text.",
-            base, doc_fragment, cuad_report
+            COMMAND: Execute the user request. START with [REPLACE] if replacing document text."
         )
     }
     fn match_score(&self, doc_ctx: &DocumentContext) -> u8 {

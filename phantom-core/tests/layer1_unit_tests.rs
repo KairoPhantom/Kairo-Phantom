@@ -185,8 +185,7 @@ async fn unit_document_graph_reindexing_on_modification() {
     let entities = doc_graph.list_entities().unwrap();
     assert!(
         entities.contains("Rust Language"),
-        "Should contain Rust Language entity initially: {}",
-        entities
+        "Should contain Rust Language entity initially: {entities}"
     );
 
     // 4. Modify the document content
@@ -210,8 +209,7 @@ async fn unit_document_graph_reindexing_on_modification() {
         .unwrap();
     assert!(
         content.contains("C++ language"),
-        "Document content should be updated to C++ language, but was: {}",
-        content
+        "Document content should be updated to C++ language, but was: {content}"
     );
 
     // Verify edges are deleted and replaced:

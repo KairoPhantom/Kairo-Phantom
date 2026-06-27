@@ -140,7 +140,7 @@ impl PdfDocumentContext {
 
         if !self.text.is_empty() {
             let preview: String = self.text.chars().take(500).collect();
-            frag.push_str(&format!("\nContent preview:\n{}\n", preview));
+            frag.push_str(&format!("\nContent preview:\n{preview}\n"));
         }
 
         frag

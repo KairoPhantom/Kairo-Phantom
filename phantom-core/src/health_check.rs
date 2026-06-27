@@ -92,8 +92,7 @@ impl DocumentHealthChecker {
                     category: HealthCategory::PassiveVoice,
                     severity: "suggestion",
                     description: format!(
-                        "Passive voice detected: \"{}\" — consider active voice",
-                        pattern
+                        "Passive voice detected: \"{pattern}\" — consider active voice"
                     ),
                     location_hint: None,
                 });
@@ -134,8 +133,7 @@ impl DocumentHealthChecker {
                 category: HealthCategory::Consistency,
                 severity: "suggestion",
                 description: format!(
-                    "Heavy use of ALL CAPS ({} words) — consider title case for professional tone",
-                    all_caps_count
+                    "Heavy use of ALL CAPS ({all_caps_count} words) — consider title case for professional tone"
                 ),
                 location_hint: None,
             });
@@ -176,7 +174,7 @@ impl DocumentHealthChecker {
             issues.push(HealthIssue {
                 category: HealthCategory::StructureIssue,
                 severity: "info",
-                description: format!("Short document ({} words) — is this a draft?", word_count),
+                description: format!("Short document ({word_count} words) — is this a draft?"),
                 location_hint: None,
             });
         }

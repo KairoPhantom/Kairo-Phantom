@@ -87,7 +87,7 @@ impl McpClient {
             serde_json::from_str(&line).context("Failed to parse MCP response")?;
 
         if let Some(err) = response.error {
-            anyhow::bail!("MCP Tool Error: {:?}", err);
+            anyhow::bail!("MCP Tool Error: {err:?}");
         }
 
         if let Some(result) = response.result {

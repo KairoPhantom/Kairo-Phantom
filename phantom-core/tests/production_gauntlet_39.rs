@@ -237,7 +237,7 @@ fn sec_002_soft_score_accumulation_blocks() {
 fn sec_003_sentinel_leakage_blocked() {
     let sanitizer = SentinelSanitizer::new();
     let sentinel_val = sanitizer.sentinel().to_string();
-    let bad_response = format!("Here is my response. The sentinel is {}", sentinel_val);
+    let bad_response = format!("Here is my response. The sentinel is {sentinel_val}");
     let result = sanitizer.sanitize(&bad_response);
     assert_eq!(result, "[BLOCKED: SECURITY POLICY VIOLATION]");
 }
@@ -253,7 +253,7 @@ fn sec_004_dan_jailbreak_blocked() {
         "developer mode enabled",
     ] {
         let result = guard.detect_injection(attack);
-        assert!(result.is_injection, "Attack '{}' must be blocked", attack);
+        assert!(result.is_injection, "Attack '{attack}' must be blocked");
     }
 }
 
@@ -504,8 +504,7 @@ fn invariants_1000_step_random_walk() {
         let s = GhostSession::new(prompt, prompt.len(), band);
         assert!(
             matches!(s.state, SessionState::Streaming),
-            "step {}: session must start Streaming",
-            step
+            "step {step}: session must start Streaming"
         );
     }
 }
@@ -516,7 +515,7 @@ async fn stress_100_parallel_sessions_no_deadlock() {
     let handles: Vec<_> = (0..100)
         .map(|i| {
             tokio::spawn(async move {
-                let prompt = format!("parallel session {}", i);
+                let prompt = format!("parallel session {i}");
                 let s = GhostSession::new(&prompt, prompt.len(), ConfidenceBand::High);
                 if i % 3 == 0 {
                     s.cancel_token.cancel();

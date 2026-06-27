@@ -19,7 +19,7 @@ impl FormulaExplanation {
         if !self.breakdown.is_empty() {
             out.push_str("🔍 Component breakdown:\n");
             for (comp, desc) in &self.breakdown {
-                out.push_str(&format!("  • {} → {}\n", comp, desc));
+                out.push_str(&format!("  • {comp} → {desc}\n"));
             }
         }
         out
@@ -79,8 +79,7 @@ impl ExcelFormulaEngine {
             "Generate an Excel formula for the following request. \
              Output ONLY the formula starting with = and nothing else. \
              If multiple formulas could work, give the most modern Excel 365 version.\n\n\
-             Request: {}",
-            user_request
+             Request: {user_request}"
         )
     }
 
@@ -116,7 +115,7 @@ impl ExcelFormulaEngine {
         } else if fl.starts_with("LEFT(") || fl.starts_with("RIGHT(") || fl.starts_with("MID(") {
             "Extract a specified number of characters from a text string.".into()
         } else {
-            format!("Excel formula: {}", formula)
+            format!("Excel formula: {formula}")
         }
     }
 

@@ -53,7 +53,7 @@ fn run_simulation(seed: u64) -> Result<(), u64> {
     };
 
     // Build prompt from seed (deterministic)
-    let prompt = format!("simulation test seed={} len={}", seed, prompt_len);
+    let prompt = format!("simulation test seed={seed} len={prompt_len}");
 
     // Create session — must not panic
     let session = GhostSession::new(&prompt, prompt.len(), confidence);
@@ -91,8 +91,7 @@ fn sim_1000_seeds_zero_panics() {
             Err(failed_seed) => {
                 failures.push(failed_seed);
                 eprintln!(
-                    "SIMULATION FAILURE: seed={} — reproduce with run_simulation({})",
-                    failed_seed, failed_seed
+                    "SIMULATION FAILURE: seed={failed_seed} — reproduce with run_simulation({failed_seed})"
                 );
             }
         }
@@ -100,9 +99,8 @@ fn sim_1000_seeds_zero_panics() {
 
     assert!(
         failures.is_empty(),
-        "Simulation failures at seeds: {:?}\n\
-         Reproduce any failure with: run_simulation(<seed>)",
-        failures
+        "Simulation failures at seeds: {failures:?}\n\
+         Reproduce any failure with: run_simulation(<seed>)"
     );
 }
 
@@ -114,7 +112,7 @@ fn sim_ghost_lifecycle_500_seeds() {
     for seed in 1000..1500u64 {
         let mut rng = DeterministicRng::new(seed);
 
-        let prompt = format!("ghost lifecycle seed {}", seed);
+        let prompt = format!("ghost lifecycle seed {seed}");
         let confidence = match rng.next_range(3) {
             0 => ConfidenceBand::High,
             1 => ConfidenceBand::Medium,
@@ -127,22 +125,19 @@ fn sim_ghost_lifecycle_500_seeds() {
         assert_eq!(
             session.prompt_char_count,
             prompt.len(),
-            "Invariant broken at seed={}",
-            seed
+            "Invariant broken at seed={seed}"
         );
 
         // Invariant: original_prompt always preserved
         assert_eq!(
             session.original_prompt, prompt,
-            "Prompt data corrupted at seed={}",
-            seed
+            "Prompt data corrupted at seed={seed}"
         );
 
         // Invariant: cancel token starts uncancelled
         assert!(
             !session.cancel_token.is_cancelled(),
-            "Token starts cancelled at seed={}",
-            seed
+            "Token starts cancelled at seed={seed}"
         );
     }
 }
@@ -160,15 +155,14 @@ fn sim_config_stability_200_seeds() {
 
         // Serialize → deserialize must be lossless
         let toml_str = toml::to_string_pretty(&cfg)
-            .unwrap_or_else(|e| panic!("seed={} serialize failed: {}", seed, e));
+            .unwrap_or_else(|e| panic!("seed={seed} serialize failed: {e}"));
 
         let restored: PhantomConfig = toml::from_str(&toml_str)
-            .unwrap_or_else(|e| panic!("seed={} deserialize failed: {}", seed, e));
+            .unwrap_or_else(|e| panic!("seed={seed} deserialize failed: {e}"));
 
         assert_eq!(
             restored.typing_delay_ms, cfg.typing_delay_ms,
-            "Config unstable at seed={}",
-            seed
+            "Config unstable at seed={seed}"
         );
     }
 }
@@ -184,7 +178,7 @@ async fn sim_concurrent_sessions_50_seeds() {
 
         let handles: Vec<_> = (0..n_sessions)
             .map(|i| {
-                let prompt = format!("seed={} session={}", seed, i);
+                let prompt = format!("seed={seed} session={i}");
                 tokio::spawn(async move {
                     let session = GhostSession::new(&prompt, prompt.len(), ConfidenceBand::High);
                     session.cancel_token.cancel();

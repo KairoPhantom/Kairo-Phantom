@@ -11,7 +11,6 @@
 #![allow(unused_imports)]
 #![allow(unused_variables)]
 #![allow(clippy::empty_line_after_doc_comments)]
-#![allow(clippy::manual_is_multiple_of)]
 
 pub mod ai;
 pub mod api;

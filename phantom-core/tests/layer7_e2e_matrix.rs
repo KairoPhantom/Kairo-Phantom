@@ -15,7 +15,7 @@ async fn execute_universal_test_matrix() {
     let is_chaos_enabled = env::var("KAIRO_ENABLE_CHAOS").is_ok();
 
     println!("🚀 Deploying Kairo Phantom E2E Swarm");
-    println!("⚙️ Target Iterations: {}", iterations);
+    println!("⚙️ Target Iterations: {iterations}");
     println!(
         "🌪️ Chaos Engineering: {}",
         if is_chaos_enabled {
@@ -26,7 +26,7 @@ async fn execute_universal_test_matrix() {
     );
 
     for i in 1..=iterations {
-        println!("\n--- 🏁 Iteration {}/{} ---", i, iterations);
+        println!("\n--- 🏁 Iteration {i}/{iterations} ---");
 
         run_t1_basic_ghost_write().await;
         run_t2_streaming_cancel().await;
@@ -40,10 +40,7 @@ async fn execute_universal_test_matrix() {
         run_t8_macos_background_injection().await;
     }
 
-    println!(
-        "\n✅ All {} E2E iterations completed successfully across the matrix.",
-        iterations
-    );
+    println!("\n✅ All {iterations} E2E iterations completed successfully across the matrix.");
 }
 
 // ─── Scenarios ─────────────────────────────────────────────────────────────

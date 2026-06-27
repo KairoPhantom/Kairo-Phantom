@@ -14,13 +14,12 @@ impl SwarmAgent for EngineerAgent {
         let base = crate::ai::KAIRO_SYSTEM_PROMPT;
         let doc_fragment = doc_ctx.to_system_prompt_fragment();
         format!(
-            "{}\n\n[DOCUMENT CONTEXT]\n{}\n\n<SWARM_ROLE>\n\
+            "{base}\n\n[DOCUMENT CONTEXT]\n{doc_fragment}\n\n<SWARM_ROLE>\n\
             ROLE: Engineer & Developer Specialist\n\
             OBJECTIVE: Technical documentation, READMEs, commit messages, and API docs.\n\
             CONSTRAINTS: Precise language. Exact types. Real examples. Use markdown headings/fences. Follow Conventional Commits for messages.\n\
             </SWARM_ROLE>\n\n\
-            COMMAND: Execute the user request within the defined context. START with [REPLACE] if applicable. OUTPUT ONLY THE CONTENT.",
-            base, doc_fragment
+            COMMAND: Execute the user request within the defined context. START with [REPLACE] if applicable. OUTPUT ONLY THE CONTENT."
         )
     }
     fn match_score(&self, doc_ctx: &DocumentContext) -> u8 {

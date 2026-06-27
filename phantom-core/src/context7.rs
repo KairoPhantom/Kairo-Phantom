@@ -158,7 +158,7 @@ impl Context7 {
         let content = body["content"].as_str().unwrap_or("").to_string();
 
         if content.is_empty() {
-            anyhow::bail!("Context7 returned empty content for '{}'", library);
+            anyhow::bail!("Context7 returned empty content for '{library}'");
         }
 
         Ok(content)

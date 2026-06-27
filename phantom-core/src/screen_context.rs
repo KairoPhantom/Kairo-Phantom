@@ -236,7 +236,7 @@ impl ScreenContextEngine {
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
-            bail!("farscry failed: {}", stderr);
+            bail!("farscry failed: {stderr}");
         }
 
         let vasp = String::from_utf8_lossy(&output.stdout).to_string();

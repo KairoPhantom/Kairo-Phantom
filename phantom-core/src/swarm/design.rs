@@ -14,7 +14,7 @@ impl SwarmAgent for DesignAgent {
         let base = crate::ai::KAIRO_SYSTEM_PROMPT;
         let doc_fragment = doc_ctx.to_system_prompt_fragment();
         format!(
-            "{}\n\n[DOCUMENT INTELLIGENCE]\n{}\n\n*** SWARM ROLE: DESIGN & MEDIA AGENT ***\n\
+            "{base}\n\n[DOCUMENT INTELLIGENCE]\n{doc_fragment}\n\n*** SWARM ROLE: DESIGN & MEDIA AGENT ***\n\
             \n## DESIGN INTELLIGENCE\n\
             You apply professional design principles to every output. Your job is NOT to generate generic \
             AI-looking content but to produce design-grade work.\n\
@@ -55,8 +55,7 @@ impl SwarmAgent for DesignAgent {
             For slides: Title line then bullet points starting with '- '. Max 12 words per bullet.\n\
             For images: Use [IMAGE: <detailed photorealistic prompt>] for visuals.\n\
             For design critiques: List violations, then suggest fixes.\n\
-            Prioritize visual storytelling over text density.",
-            base, doc_fragment
+            Prioritize visual storytelling over text density."
         )
     }
     fn match_score(&self, doc_ctx: &DocumentContext) -> u8 {

@@ -247,20 +247,19 @@ fn test_kmb1_score_above_threshold() {
     println!("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     println!("  KMB-1 Memory Benchmark Results");
     println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    println!("  Style Retention:       {:.4}", retention);
-    println!("  Semantic Coherence:    {:.4}", coherence);
-    println!("  Format Fidelity:       {:.4}", fidelity);
-    println!("  Personalisation Delta: {:.4}", delta);
+    println!("  Style Retention:       {retention:.4}");
+    println!("  Semantic Coherence:    {coherence:.4}");
+    println!("  Format Fidelity:       {fidelity:.4}");
+    println!("  Personalisation Delta: {delta:.4}");
     println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    println!("  Score: {:.4} — Kairo has learned your style", score);
+    println!("  Score: {score:.4} — Kairo has learned your style");
     println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
     assert!(
         score >= 0.88,
-        "KMB-1 score {:.4} is below the 0.88 Jaccard-mode gate. \
+        "KMB-1 score {score:.4} is below the 0.88 Jaccard-mode gate. \
          For full 0.9872 score: cargo test --features local-embeddings. \
-         A score below 0.88 means memory quality has structurally degraded.",
-        score
+         A score below 0.88 means memory quality has structurally degraded."
     );
 }
 
@@ -303,8 +302,7 @@ fn test_kmb1_style_retention_above_90_percent() {
     let score = style_retention_score(SESSIONS);
     assert!(
         score >= 0.90,
-        "Style retention {:.4} below 90% — classifier quality has degraded",
-        score
+        "Style retention {score:.4} below 90% — classifier quality has degraded"
     );
 }
 
@@ -313,8 +311,7 @@ fn test_kmb1_format_fidelity_is_perfect() {
     let score = format_fidelity_score(SESSIONS);
     assert!(
         score >= 0.95,
-        "Format fidelity {:.4} below 95% — corpus has malformed sentences",
-        score
+        "Format fidelity {score:.4} below 95% — corpus has malformed sentences"
     );
 }
 
@@ -326,18 +323,15 @@ fn test_kmb1_corpus_has_all_three_style_families() {
 
     assert!(
         formal_count >= 5,
-        "Need at least 5 formal sessions, got {}",
-        formal_count
+        "Need at least 5 formal sessions, got {formal_count}"
     );
     assert!(
         casual_count >= 5,
-        "Need at least 5 casual sessions, got {}",
-        casual_count
+        "Need at least 5 casual sessions, got {casual_count}"
     );
     assert!(
         legal_count >= 3,
-        "Need at least 3 legal sessions, got {}",
-        legal_count
+        "Need at least 3 legal sessions, got {legal_count}"
     );
     assert_eq!(
         SESSIONS.len(),
@@ -353,7 +347,6 @@ fn test_kmb1_personalisation_delta_exceeds_baseline() {
     // Delta > 0.50 means Kairo is ≥50% better than a baseline no-memory model
     assert!(
         delta > 0.50,
-        "Personalisation delta {:.4} too low — memory learning is not effective",
-        delta
+        "Personalisation delta {delta:.4} too low — memory learning is not effective"
     );
 }

@@ -10,8 +10,7 @@ fn test_cross_platform_report_verification() {
 
     assert!(
         report_path.exists(),
-        "CROSS_PLATFORM_REPORT.md does not exist at {:?}",
-        report_path
+        "CROSS_PLATFORM_REPORT.md does not exist at {report_path:?}"
     );
 
     let content =

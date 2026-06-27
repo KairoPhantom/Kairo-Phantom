@@ -523,8 +523,7 @@ impl IntentGate {
         for path in &system_paths {
             if prompt_lower.contains(path) {
                 return RiskLevel::Blocked(format!(
-                    "System path detected in prompt ('{}') — blocked for security",
-                    path
+                    "System path detected in prompt ('{path}') — blocked for security"
                 ));
             }
         }
@@ -542,8 +541,7 @@ impl IntentGate {
         for pat in &credential_patterns {
             if prompt_lower.contains(pat) {
                 return RiskLevel::Blocked(format!(
-                    "Credential pattern detected ('{}') — blocked",
-                    pat
+                    "Credential pattern detected ('{pat}') — blocked"
                 ));
             }
         }
@@ -561,8 +559,7 @@ impl IntentGate {
         for pat in &jailbreak_patterns {
             if prompt_lower.contains(pat) {
                 return RiskLevel::Blocked(format!(
-                    "Potential prompt injection detected ('{}') — blocked",
-                    pat
+                    "Potential prompt injection detected ('{pat}') — blocked"
                 ));
             }
         }
@@ -582,8 +579,7 @@ impl IntentGate {
         for pat in &pii_patterns {
             if doc_lower.contains(pat) {
                 return RiskLevel::Advisory(format!(
-                    "PII detected in document ('{}') — will be redacted before LLM call",
-                    pat
+                    "PII detected in document ('{pat}') — will be redacted before LLM call"
                 ));
             }
         }
@@ -599,8 +595,7 @@ impl IntentGate {
         for term in &compliance_terms {
             if doc_lower.contains(term) || prompt_lower.contains(term) {
                 return RiskLevel::Advisory(format!(
-                    "Compliance-sensitive term detected ('{}') — audit trail activated",
-                    term
+                    "Compliance-sensitive term detected ('{term}') — audit trail activated"
                 ));
             }
         }
@@ -735,8 +730,7 @@ mod tests {
 
         assert!(
             elapsed_ms < 50,
-            "Intent gate took {}ms — must be < 50ms",
-            elapsed_ms
+            "Intent gate took {elapsed_ms}ms — must be < 50ms"
         );
         assert_eq!(result.intent_type, IntentType::Rewrite);
         assert!(result.confidence > 0.5);

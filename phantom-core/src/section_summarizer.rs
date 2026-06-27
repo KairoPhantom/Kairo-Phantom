@@ -100,7 +100,7 @@ impl SectionSummarizer {
                 .iter()
                 .take(3)
                 .enumerate()
-                .map(|(i, s)| format!("• {}", s))
+                .map(|(i, s)| format!("• {s}"))
                 .collect::<Vec<_>>()
                 .join("\n");
         }

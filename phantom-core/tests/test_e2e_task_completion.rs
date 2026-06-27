@@ -243,7 +243,7 @@ fn test_task_completion_rate_ci_gate() {
         rate * 100.0,
         MIN_COMPLETION_RATE * 100.0
     );
-    println!("📄 Report written to: {}", REPORT_PATH);
+    println!("📄 Report written to: {REPORT_PATH}");
 
     // CI gate — fail if below threshold
     assert!(

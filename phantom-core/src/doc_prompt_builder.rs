@@ -245,7 +245,7 @@ pub fn format_docx_context(ctx: &DocxContext, command: &str) -> String {
     } else {
         let text_preview = if ctx.full_text.chars().count() > 2000 {
             let cut: String = ctx.full_text.chars().take(2000).collect();
-            format!("{}...[truncated]", cut)
+            format!("{cut}...[truncated]")
         } else {
             ctx.full_text.clone()
         };
@@ -253,7 +253,7 @@ pub fn format_docx_context(ctx: &DocxContext, command: &str) -> String {
         parts.push(text_preview);
     }
 
-    parts.push(format!("\n## User Command\n{}", command));
+    parts.push(format!("\n## User Command\n{command}"));
     parts.join("\n")
 }
 
@@ -270,10 +270,10 @@ pub fn format_xlsx_context(ctx: &ExcelContext, command: &str) -> String {
         let header_str = ctx
             .headers
             .iter()
-            .map(|(col, name)| format!("{}={}", col, name))
+            .map(|(col, name)| format!("{col}={name}"))
             .collect::<Vec<_>>()
             .join(", ");
-        parts.push(format!("## Column Headers: {}", header_str));
+        parts.push(format!("## Column Headers: {header_str}"));
     }
 
     // Grid (show surrounding cells)
@@ -297,7 +297,7 @@ pub fn format_xlsx_context(ctx: &ExcelContext, command: &str) -> String {
         parts.push(row_str);
     }
 
-    parts.push(format!("\n## User Command\n{}", command));
+    parts.push(format!("\n## User Command\n{command}"));
     parts.join("\n")
 }
 
@@ -308,15 +308,12 @@ pub fn format_generic_context(data: &Value, command: &str) -> String {
     // UTF-8 safe truncation
     let preview = if full_text.chars().count() > 3000 {
         let cut: String = full_text.chars().take(3000).collect();
-        format!("{}...[truncated]", cut)
+        format!("{cut}...[truncated]")
     } else {
         full_text.to_string()
     };
 
-    format!(
-        "## Document Content\n{}\n\n## User Command\n{}",
-        preview, command
-    )
+    format!("## Document Content\n{preview}\n\n## User Command\n{command}")
 }
 
 // ─── Prompt builder ───────────────────────────────────────────────────────────
@@ -336,8 +333,7 @@ impl DocumentPrompt {
         distilled_memories: &str,
     ) -> Self {
         let app_context = format!(
-            "=== APP CONTEXT ===\nApplication Name: Microsoft Word\nApplication Type: Word Processor\nFile Path: {}",
-            file_path
+            "=== APP CONTEXT ===\nApplication Name: Microsoft Word\nApplication Type: Word Processor\nFile Path: {file_path}"
         );
 
         let mut doc_parts = vec![];
@@ -366,7 +362,7 @@ impl DocumentPrompt {
         } else {
             let text_preview = if ctx.full_text.chars().count() > 2000 {
                 let cut: String = ctx.full_text.chars().take(2000).collect();
-                format!("{}...[truncated]", cut)
+                format!("{cut}...[truncated]")
             } else {
                 ctx.full_text.clone()
             };
@@ -380,10 +376,8 @@ impl DocumentPrompt {
         } else {
             distilled_memories
         };
-        let memory_context = format!(
-            "=== MEMORY CONTEXT ===\nUser Writing Preferences:\n{}",
-            mem_str
-        );
+        let memory_context =
+            format!("=== MEMORY CONTEXT ===\nUser Writing Preferences:\n{mem_str}");
 
         let classification =
             "=== INTENT CLASSIFICATION ===\nIntent Classification: Document Operation Generation";
@@ -393,8 +387,7 @@ impl DocumentPrompt {
         let user_command = format!("User Instruction: {}\nGenerate the JSON response conforming to the DocxResponse schema. Remember: ONLY the raw JSON output is allowed. No markdown fences.", strip_prompt_prefix(command));
 
         let user_prompt = format!(
-            "{}\n\n{}\n\n{}\n\n{}\n\n{}\n\n{}",
-            app_context, doc_context, memory_context, classification, json_reminder, user_command
+            "{app_context}\n\n{doc_context}\n\n{memory_context}\n\n{classification}\n\n{json_reminder}\n\n{user_command}"
         );
 
         DocumentPrompt {
@@ -412,8 +405,7 @@ impl DocumentPrompt {
         distilled_memories: &str,
     ) -> Self {
         let app_context = format!(
-            "=== APP CONTEXT ===\nApplication Name: Microsoft Excel\nApplication Type: Spreadsheet\nFile Path: {}",
-            file_path
+            "=== APP CONTEXT ===\nApplication Name: Microsoft Excel\nApplication Type: Spreadsheet\nFile Path: {file_path}"
         );
 
         let mut doc_parts = vec![];
@@ -434,7 +426,7 @@ impl DocumentPrompt {
                 })
                 .collect::<Vec<_>>()
                 .join(", ");
-            doc_parts.push(format!("Column Headers: {}", header_str));
+            doc_parts.push(format!("Column Headers: {header_str}"));
         }
 
         doc_parts.push("Surrounding Data (10x10 grid)".to_string());
@@ -463,10 +455,8 @@ impl DocumentPrompt {
         } else {
             distilled_memories
         };
-        let memory_context = format!(
-            "=== MEMORY CONTEXT ===\nUser Writing Preferences:\n{}",
-            mem_str
-        );
+        let memory_context =
+            format!("=== MEMORY CONTEXT ===\nUser Writing Preferences:\n{mem_str}");
 
         let classification = "=== INTENT CLASSIFICATION ===\nIntent Classification: Spreadsheet Formula / Data Operation Generation";
 
@@ -475,8 +465,7 @@ impl DocumentPrompt {
         let user_command = format!("User Instruction: {}\nGenerate the JSON response conforming to the ExcelResponse schema. Remember: ONLY the raw JSON output is allowed. No markdown fences.", strip_prompt_prefix(command));
 
         let user_prompt = format!(
-            "{}\n\n{}\n\n{}\n\n{}\n\n{}\n\n{}",
-            app_context, doc_context, memory_context, classification, json_reminder, user_command
+            "{app_context}\n\n{doc_context}\n\n{memory_context}\n\n{classification}\n\n{json_reminder}\n\n{user_command}"
         );
 
         DocumentPrompt {
@@ -494,22 +483,19 @@ impl DocumentPrompt {
         distilled_memories: &str,
     ) -> Self {
         let app_context = format!(
-            "=== APP CONTEXT ===\nApplication Name: Microsoft PowerPoint\nApplication Type: Presentation\nFile Path: {}",
-            file_path
+            "=== APP CONTEXT ===\nApplication Name: Microsoft PowerPoint\nApplication Type: Presentation\nFile Path: {file_path}"
         );
 
         let slide_info = serde_json::to_string_pretty(data).unwrap_or_default();
-        let doc_context = format!("=== DOCUMENT CONTEXT ===\nSlide Inventory\n{}", slide_info);
+        let doc_context = format!("=== DOCUMENT CONTEXT ===\nSlide Inventory\n{slide_info}");
 
         let mem_str = if distilled_memories.is_empty() {
             "No writing preferences learned yet. Use professional defaults."
         } else {
             distilled_memories
         };
-        let memory_context = format!(
-            "=== MEMORY CONTEXT ===\nUser Writing Preferences:\n{}",
-            mem_str
-        );
+        let memory_context =
+            format!("=== MEMORY CONTEXT ===\nUser Writing Preferences:\n{mem_str}");
 
         let classification = "=== INTENT CLASSIFICATION ===\nIntent Classification: Presentation Slide Operation Generation";
 
@@ -518,8 +504,7 @@ impl DocumentPrompt {
         let user_command = format!("User Instruction: {}\nGenerate the JSON response conforming to the SlideOperation schema. Remember: ONLY the raw JSON output is allowed. No markdown fences.", strip_prompt_prefix(command));
 
         let user_prompt = format!(
-            "{}\n\n{}\n\n{}\n\n{}\n\n{}\n\n{}",
-            app_context, doc_context, memory_context, classification, json_reminder, user_command
+            "{app_context}\n\n{doc_context}\n\n{memory_context}\n\n{classification}\n\n{json_reminder}\n\n{user_command}"
         );
 
         DocumentPrompt {
@@ -538,16 +523,12 @@ impl DocumentPrompt {
         distilled_memories: &str,
     ) -> Self {
         let app_context = format!(
-            "=== APP CONTEXT ===\nApplication Name: Microsoft Word\nApplication Type: Word Processor (Track Changes Mode)\nFile Path: {}",
-            file_path
+            "=== APP CONTEXT ===\nApplication Name: Microsoft Word\nApplication Type: Word Processor (Track Changes Mode)\nFile Path: {file_path}"
         );
 
         let full_text = if ctx.full_text.chars().count() > 4000 {
             let cut: String = ctx.full_text.chars().take(4000).collect();
-            format!(
-                "{}...[truncated — use target_text from visible text only]",
-                cut
-            )
+            format!("{cut}...[truncated — use target_text from visible text only]")
         } else {
             ctx.full_text.clone()
         };
@@ -570,10 +551,8 @@ impl DocumentPrompt {
         } else {
             distilled_memories
         };
-        let memory_context = format!(
-            "=== MEMORY CONTEXT ===\nUser Writing Preferences:\n{}",
-            mem_str
-        );
+        let memory_context =
+            format!("=== MEMORY CONTEXT ===\nUser Writing Preferences:\n{mem_str}");
 
         let classification = "=== INTENT CLASSIFICATION ===\nIntent Classification: Surgical Document Editing (Track Changes)";
 
@@ -582,8 +561,7 @@ impl DocumentPrompt {
         let user_command = format!("User Instruction: {}\nGenerate the JSON response conforming to the TrackChangeEdit schema. Remember: ONLY the raw JSON output is allowed. No markdown fences.", strip_prompt_prefix(command));
 
         let user_prompt = format!(
-            "{}\n\n{}\n\n{}\n\n{}\n\n{}\n\n{}",
-            app_context, doc_context, memory_context, classification, json_reminder, user_command
+            "{app_context}\n\n{doc_context}\n\n{memory_context}\n\n{classification}\n\n{json_reminder}\n\n{user_command}"
         );
 
         DocumentPrompt {
@@ -608,8 +586,7 @@ impl DocumentPrompt {
 
         DocumentPrompt {
             system: format!(
-                "You are Kairo Document Engine. {}\n\nRULES:\n- NEVER invent facts not in the document\n- NEVER fabricate statistics or quotes\n- Use hedging language for uncertain specifics",
-                format_hint
+                "You are Kairo Document Engine. {format_hint}\n\nRULES:\n- NEVER invent facts not in the document\n- NEVER fabricate statistics or quotes\n- Use hedging language for uncertain specifics"
             ),
             user: format_generic_context(data, command),
             is_structured: false,

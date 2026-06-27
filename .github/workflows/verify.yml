@@ -274,7 +274,7 @@ jobs:
       - name: Install Rust (pinned via rust-toolchain.toml)
         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
-          toolchain: "1.81.0"
+          toolchain: "1.88.0"
           components: rustfmt,clippy
 
       - name: Install Linux system deps
@@ -353,7 +353,7 @@ jobs:
       - name: Install Rust (for cargo-deny)
         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
-          toolchain: "1.81.0"
+          toolchain: "1.88.0"
 
       - name: Install cargo-deny (advisory + license check — reads deny.toml)
         uses: taiki-e/install-action@682e7d9e49c5e653d371fc6adbda67653461378a # v2
@@ -416,7 +416,7 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
-          toolchain: "1.81.0"
+          toolchain: "1.88.0"
           components: rustfmt,clippy
 
       - name: Cache Cargo

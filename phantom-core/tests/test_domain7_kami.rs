@@ -158,7 +158,7 @@ mod domain7_kami_tests {
             CommandMode::Kami,
         ];
         for mode in kami_modes {
-            assert!(mode.is_command(), "Expected {:?} to be a command", mode);
+            assert!(mode.is_command(), "Expected {mode:?} to be a command");
         }
     }
 
@@ -185,11 +185,10 @@ mod domain7_kami_tests {
         ];
         for mode in modes {
             let hint = mode.system_hint();
-            assert!(!hint.is_empty(), "Empty system_hint for {:?}", mode);
+            assert!(!hint.is_empty(), "Empty system_hint for {mode:?}");
             assert!(
                 hint.contains("KAMI"),
-                "system_hint for {:?} should mention KAMI",
-                mode
+                "system_hint for {mode:?} should mention KAMI"
             );
         }
     }

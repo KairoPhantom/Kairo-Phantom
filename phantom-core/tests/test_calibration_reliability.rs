@@ -202,8 +202,7 @@ fn test_calibration_generates_reliability_data() {
     md.push_str("**Coefficients:** slope=0.88, intercept=0.06  \n");
     md.push_str("**Abstention Threshold:** 60%  \n");
     md.push_str(&format!(
-        "**Expected Calibration Error (ECE):** {:.4}  \n\n",
-        ece
+        "**Expected Calibration Error (ECE):** {ece:.4}  \n\n"
     ));
     md.push_str("## Reliability Diagram Data\n\n");
     md.push_str("| Bin | Mean Confidence | Empirical Accuracy | Δ (Cal. Error) | Samples |\n");
@@ -231,13 +230,10 @@ fn test_calibration_generates_reliability_data() {
     std::fs::write(CALIBRATION_REPORT, &md).expect("Failed to write reliability_report.md");
 
     println!("\n📊 Calibration Report:");
-    println!("  Total samples: {}", total_samples);
+    println!("  Total samples: {total_samples}");
     println!("  ECE: {:.4} ({:.2}%)", ece, ece * 100.0);
     println!("  Bins: {}", bins.len());
-    println!(
-        "  Written to: {} and {}",
-        CALIBRATION_JSON, CALIBRATION_REPORT
-    );
+    println!("  Written to: {CALIBRATION_JSON} and {CALIBRATION_REPORT}");
 
     // Assert ECE is reasonable (< 25% — generous bound for synthetic data)
     assert!(
@@ -252,7 +248,7 @@ fn test_calibration_platt_coefficients_sanity() {
     // After calibration: raw=0.9 → calibrated≈0.852 (close to empirical ~85-90%)
     let cal_90 = ConfidenceEngine::calibrate(0.9);
     assert!(
-        cal_90 >= 0.8 && cal_90 <= 0.95,
+        (0.8..=0.95).contains(&cal_90),
         "Calibrated 90% raw should be in [80%, 95%], got {:.1}%",
         cal_90 * 100.0
     );

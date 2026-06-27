@@ -22,7 +22,7 @@ pub fn inject_code(
 ) -> Result<()> {
     let path = Path::new(file_path);
     if !path.exists() {
-        return Err(anyhow::anyhow!("File does not exist: {}", file_path));
+        return Err(anyhow::anyhow!("File does not exist: {file_path}"));
     }
 
     // Read the entire file lines
@@ -38,7 +38,7 @@ pub fn inject_code(
             if line.trim().is_empty() {
                 String::new()
             } else {
-                format!("{}{}", indentation, line)
+                format!("{indentation}{line}")
             }
         })
         .collect();

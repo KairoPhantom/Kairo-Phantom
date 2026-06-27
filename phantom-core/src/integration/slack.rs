@@ -54,10 +54,10 @@ impl IntegrationAdapter for SlackAdapter {
         match action {
             "post_message" => {
                 // Mock Slack API call to post message
-                println!("Slack: Posting message: {}", data);
+                println!("Slack: Posting message: {data}");
                 Ok(())
             }
-            _ => Err(anyhow!("Unsupported action: {}", action)),
+            _ => Err(anyhow!("Unsupported action: {action}")),
         }
     }
 }

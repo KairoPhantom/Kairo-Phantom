@@ -77,7 +77,7 @@ async fn mem_benchmark_semantic_recall_precision() {
     for (app, key, content) in &episodes {
         mm.remember(
             content,
-            Some(&format!("Episode about: {}", key)),
+            Some(&format!("Episode about: {key}")),
             app,
             Some(key),
             true,
@@ -104,8 +104,7 @@ async fn mem_benchmark_semantic_recall_precision() {
             || top.contains("quarterly")
             || top.contains("revenue")
             || top.contains("4.2M"),
-        "Top result must be Q3 revenue episode, got: {}",
-        top
+        "Top result must be Q3 revenue episode, got: {top}"
     );
 
     // ── Test 2: Excel financial query ─────────────────────────────────────
@@ -122,8 +121,7 @@ async fn mem_benchmark_semantic_recall_precision() {
     let excel_top = &excel_results[0];
     assert!(
         excel_top.contains("DCF") || excel_top.contains("IRR") || excel_top.contains("24%"),
-        "Excel top result must be DCF/IRR episode, got: {}",
-        excel_top
+        "Excel top result must be DCF/IRR episode, got: {excel_top}"
     );
 
     // ── Test 3: PPT query doesn't contaminate Word results ────────────────
@@ -138,8 +136,7 @@ async fn mem_benchmark_semantic_recall_precision() {
         ppt_top.contains("addressable")
             || ppt_top.contains("roadmap")
             || ppt_top.contains("milestone"),
-        "PPT top result must be presentation episode, got: {}",
-        ppt_top
+        "PPT top result must be presentation episode, got: {ppt_top}"
     );
 
     // ── Test 4: Semantic precision — all recalled episodes match the app ──

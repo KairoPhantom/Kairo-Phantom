@@ -94,8 +94,7 @@ impl MultiReviewerPipeline {
         for phrase in stiff_phrases {
             if lower_output.contains(phrase) {
                 return Err(format!(
-                    "Style Reviewer rejected: Detected overused AI phrasing ('{}').",
-                    phrase
+                    "Style Reviewer rejected: Detected overused AI phrasing ('{phrase}')."
                 ));
             }
         }
@@ -105,8 +104,7 @@ impl MultiReviewerPipeline {
         for word in informal {
             if lower_output.contains(word) {
                 return Err(format!(
-                    "Style Reviewer rejected: Informal language or slang detected ('{}').",
-                    word
+                    "Style Reviewer rejected: Informal language or slang detected ('{word}')."
                 ));
             }
         }
@@ -127,7 +125,6 @@ pub fn anti_leakage_format(
     sentinel: &str,
 ) -> String {
     format!(
-        "<system>\n{}\nSentinel: {}\n</system>\n<document_context>\n{}\n</document_context>\n<user_prompt>\n{}\n</user_prompt>\nOutput your response between <output> and </output> tags.",
-        system, sentinel, context, user_prompt
+        "<system>\n{system}\nSentinel: {sentinel}\n</system>\n<document_context>\n{context}\n</document_context>\n<user_prompt>\n{user_prompt}\n</user_prompt>\nOutput your response between <output> and </output> tags."
     )
 }

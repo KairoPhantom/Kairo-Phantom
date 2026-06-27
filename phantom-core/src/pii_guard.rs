@@ -95,7 +95,7 @@ impl PiiGuard {
         let mut findings = Vec::new();
         for (kind, pattern) in &self.patterns {
             if pattern.is_match(text) {
-                findings.push(format!("{:?}", kind));
+                findings.push(format!("{kind:?}"));
             }
         }
         findings

@@ -143,6 +143,6 @@ impl MemoryOptimizer {
             SemanticZone::Preference => "👤 USER PREFERENCE",
         };
 
-        format!("{}:\n{}", label, episode)
+        format!("{label}:\n{episode}")
     }
 }

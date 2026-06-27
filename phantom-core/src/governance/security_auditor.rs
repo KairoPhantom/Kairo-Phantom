@@ -55,9 +55,7 @@ impl SecurityAuditor {
                 );
                 if self.strict {
                     return Err(anyhow::anyhow!(
-                        "Sensitive keyword '{}' detected in {} (Strict Block Mode)",
-                        keyword,
-                        app_name
+                        "Sensitive keyword '{keyword}' detected in {app_name} (Strict Block Mode)"
                     ));
                 }
             }
@@ -78,7 +76,7 @@ impl SecurityAuditor {
             self.audit_logger.log_ghost_session(
                 AuditEvent::GhostSessionCompleted,
                 AuditOutcome::Error {
-                    message: format!("Leak detected: {:?}", findings),
+                    message: format!("Leak detected: {findings:?}"),
                 },
                 app_name,
                 "security_auditor",

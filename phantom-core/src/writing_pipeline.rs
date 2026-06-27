@@ -30,7 +30,7 @@ impl WritingPipeline {
                 user_prompt
             )
         } else {
-            format!("Task: {}", user_prompt)
+            format!("Task: {user_prompt}")
         };
         let plan = generate_fn(plan_prompt).await;
         info!(
@@ -145,7 +145,7 @@ impl WritingPipeline {
         let total = words.len();
         for (i, word) in words.iter().enumerate() {
             let token = if i < total - 1 {
-                format!("{} ", word) // add trailing space between words
+                format!("{word} ") // add trailing space between words
             } else {
                 word.to_string() // last word: no trailing space
             };

@@ -18,7 +18,7 @@ pub fn insert_after_heading(
 ) -> Result<()> {
     let path = Path::new(md_path);
     if !path.exists() {
-        bail!("Markdown file not found: {}", md_path);
+        bail!("Markdown file not found: {md_path}");
     }
 
     let original = std::fs::read_to_string(path)?;
@@ -144,7 +144,7 @@ pub fn replace_section(md_path: &str, heading_text: &str, new_content: &str) -> 
     }
 
     let (h_idx, h_level) = match target_idx {
-        None => bail!("Heading '{}' not found in {}", heading_text, md_path),
+        None => bail!("Heading '{heading_text}' not found in {md_path}"),
         Some(x) => x,
     };
 

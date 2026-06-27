@@ -240,7 +240,7 @@ impl MemMachine {
     ) -> Result<Vec<String>> {
         let mut results = Vec::new();
         let mut seen_ids: Vec<String> = Vec::new();
-        let query_pattern = format!("%{}%", query);
+        let query_pattern = format!("%{query}%");
 
         // ── Stage 1: Section-level (context_key) matches ─────────────────────
         for gran in &granularities {
@@ -400,17 +400,16 @@ impl MemMachine {
         let _ = self.update_strengths(&id, 0.05, 0.2);
         let neighbors = self.get_neighbors(&id, ts)?;
         let mut full_context = format!(
-            "--- Episode (ID: {}, RoutingWeight: {:.2}, Context: {}/{}) ---\n",
-            id, score, app, ctx
+            "--- Episode (ID: {id}, RoutingWeight: {score:.2}, Context: {app}/{ctx}) ---\n"
         );
         if !episode.is_empty() {
-            full_context.push_str(&format!("RAW EPISODE: {}\n", episode));
+            full_context.push_str(&format!("RAW EPISODE: {episode}\n"));
         }
-        full_context.push_str(&format!("SUMMARY: {}\n", content));
+        full_context.push_str(&format!("SUMMARY: {content}\n"));
         if !neighbors.is_empty() {
             full_context.push_str("\nNEARBY EVENTS:\n");
             for n in neighbors {
-                full_context.push_str(&format!("- {}\n", n));
+                full_context.push_str(&format!("- {n}\n"));
             }
         }
         Ok(full_context)

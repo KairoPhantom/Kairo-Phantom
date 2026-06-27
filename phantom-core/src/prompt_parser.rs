@@ -109,9 +109,7 @@ mod tests {
             let result = PromptParser::parse(text);
             assert!(
                 result.is_none(),
-                "PromptParser::parse({:?}) should return None but returned {:?}",
-                text,
-                result
+                "PromptParser::parse({text:?}) should return None but returned {result:?}"
             );
         }
     }
@@ -141,8 +139,7 @@ mod tests {
             let result = PromptParser::parse(text);
             assert!(
                 result.is_some(),
-                "PromptParser::parse({:?}) should return Some but returned None",
-                text
+                "PromptParser::parse({text:?}) should return Some but returned None"
             );
             let parsed = result.unwrap();
             assert_eq!(

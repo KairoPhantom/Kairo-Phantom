@@ -133,8 +133,7 @@ fn e2e_swarm_selects_correct_agent_for_powerpoint() {
     let agent_id = best.unwrap().id().to_string();
     assert_eq!(
         agent_id, "design",
-        "PowerPoint must route to design agent, got '{}'",
-        agent_id
+        "PowerPoint must route to design agent, got '{agent_id}'"
     );
 }
 
@@ -161,8 +160,7 @@ fn e2e_swarm_selects_correct_agent_for_code() {
     let agent_id = best.unwrap().id().to_string();
     assert_eq!(
         agent_id, "reasoning",
-        "Code context must route to reasoning agent, got '{}'",
-        agent_id
+        "Code context must route to reasoning agent, got '{agent_id}'"
     );
 }
 
@@ -226,7 +224,7 @@ async fn e2e_concurrent_sessions_no_deadlock() {
     let handles: Vec<_> = (0..20)
         .map(|i| {
             tokio::spawn(async move {
-                let prompt = format!("concurrent test prompt {}", i);
+                let prompt = format!("concurrent test prompt {i}");
                 let session = GhostSession::new(&prompt, prompt.len(), ConfidenceBand::High);
 
                 // Each task cancels its own session
@@ -241,7 +239,7 @@ async fn e2e_concurrent_sessions_no_deadlock() {
     // All 20 concurrent sessions must complete without deadlock
     let results = futures::future::join_all(handles).await;
     for (idx, res) in results.into_iter().enumerate() {
-        assert_eq!(res.unwrap(), idx, "Task {} must complete", idx);
+        assert_eq!(res.unwrap(), idx, "Task {idx} must complete");
     }
 }
 
@@ -348,8 +346,7 @@ async fn e2e_b3_parallel_swarm_select_best_response_filters_errors() {
     assert!(best.is_some(), "Must find a valid response");
     assert!(
         best.unwrap().starts_with("Here is") || best.unwrap().starts_with("The analysis"),
-        "Best response must not be an error message, got: {:?}",
-        best
+        "Best response must not be an error message, got: {best:?}"
     );
 }
 

@@ -48,10 +48,10 @@ impl ExtractedDocument {
     pub fn to_prompt_fragment(&self) -> String {
         let mut parts = Vec::new();
         if let Some(ref mime) = self.mime_type {
-            parts.push(format!("Format: {}", mime));
+            parts.push(format!("Format: {mime}"));
         }
         if let Some(n) = self.page_count {
-            parts.push(format!("Pages: {}", n));
+            parts.push(format!("Pages: {n}"));
         }
         parts.push(format!("Words: {}", self.word_count));
         if self.ocr_used {
@@ -91,7 +91,7 @@ impl KreuzbergExtractor {
     /// Extract text from a file using Kreuzberg.
     pub fn extract(file_path: &Path) -> Result<ExtractedDocument, String> {
         if !file_path.exists() {
-            return Err(format!("File not found: {:?}", file_path));
+            return Err(format!("File not found: {file_path:?}"));
         }
 
         let script = format!(
@@ -120,7 +120,7 @@ except Exception as e:
         let output = Command::new("python")
             .args(["-c", &script])
             .output()
-            .map_err(|e| format!("Python subprocess error: {}", e))?;
+            .map_err(|e| format!("Python subprocess error: {e}"))?;
 
         let stdout = String::from_utf8_lossy(&output.stdout);
         let result: serde_json::Value = serde_json::from_str(stdout.trim()).map_err(|e| {
@@ -216,7 +216,7 @@ impl PdfSpatialExtractor {
 
     pub fn extract(file_path: &Path) -> Result<ExtractedDocument, String> {
         if !file_path.exists() {
-            return Err(format!("File not found: {:?}", file_path));
+            return Err(format!("File not found: {file_path:?}"));
         }
 
         let script = format!(
@@ -247,11 +247,11 @@ except Exception as e:
         let output = Command::new("python")
             .args(["-c", &script])
             .output()
-            .map_err(|e| format!("Python error: {}", e))?;
+            .map_err(|e| format!("Python error: {e}"))?;
 
         let stdout = String::from_utf8_lossy(&output.stdout);
         let result: serde_json::Value =
-            serde_json::from_str(stdout.trim()).map_err(|e| format!("JSON error: {}", e))?;
+            serde_json::from_str(stdout.trim()).map_err(|e| format!("JSON error: {e}"))?;
 
         if let Some(err) = result.get("error") {
             return Err(err.as_str().unwrap_or("").to_string());
@@ -331,7 +331,7 @@ impl UniversalExtractor {
             });
         }
 
-        Err(format!("Could not extract text from {:?}", file_path))
+        Err(format!("Could not extract text from {file_path:?}"))
     }
 
     /// Try to extract the active document from a window title.

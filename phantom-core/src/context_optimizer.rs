@@ -21,7 +21,7 @@ impl ContextOptimizer {
 
         // 1. App-specific bias (Highest priority)
         if let Some(bias) = memory.app_bias.get(app_name) {
-            fragments.push((100, format!("- App-specific pattern: {}", bias)));
+            fragments.push((100, format!("- App-specific pattern: {bias}")));
         }
 
         // 2. High-weight user preferences
@@ -31,7 +31,7 @@ impl ContextOptimizer {
 
         // 3. User model (Persona info)
         for (k, v) in &memory.user_model.word_preferences {
-            fragments.push((80, format!("- Word Pref {}: {}", k, v)));
+            fragments.push((80, format!("- Word Pref {k}: {v}")));
         }
 
         // 4. Low-weight user preferences

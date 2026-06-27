@@ -76,7 +76,7 @@ impl GrpCuaPlanDisplay {
 
     /// Generate a blocked action message (for forbidden windows, rate limits, etc.)
     pub fn format_blocked(reason: &str) -> String {
-        format!("CUA blocked: {}\n[Esc: Dismiss]", reason)
+        format!("CUA blocked: {reason}\n[Esc: Dismiss]")
     }
 
     /// Check if user pressed Tab (approve) vs Esc (cancel)

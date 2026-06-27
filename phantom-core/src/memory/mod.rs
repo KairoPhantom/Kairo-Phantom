@@ -161,13 +161,9 @@ impl VaultV2 {
         fs::create_dir_all(&daily_dir).unwrap();
 
         let date_str = Utc::now().format("%Y-%m-%d").to_string();
-        let log_file = daily_dir.join(format!("{}.md", date_str));
+        let log_file = daily_dir.join(format!("{date_str}.md"));
 
-        fs::write(
-            &log_file,
-            format!("# Memory compilation for {}\n", date_str),
-        )
-        .unwrap();
+        fs::write(&log_file, format!("# Memory compilation for {date_str}\n")).unwrap();
 
         // Git commit
         Command::new("git")
@@ -178,7 +174,7 @@ impl VaultV2 {
 
         Command::new("git")
             .current_dir(&self.vault_dir)
-            .args(["commit", "-m", &format!("Memory update {}", date_str)])
+            .args(["commit", "-m", &format!("Memory update {date_str}")])
             .output()
             .ok();
 

@@ -41,7 +41,7 @@ impl PptAgent {
             outline,
         )
         .await
-        .map_err(|e| format!("DeepPresenter generation error: {}", e))?;
+        .map_err(|e| format!("DeepPresenter generation error: {e}"))?;
 
         info!("PptAgent: presentation generated via DeepPresenter sidecar.");
         Ok(result)
@@ -56,7 +56,7 @@ impl PptAgent {
 
         let result = sidecar_client::pptx_context_capture(presentation_id, slide_index)
             .await
-            .map_err(|e| format!("PPTX context capture error: {}", e))?;
+            .map_err(|e| format!("PPTX context capture error: {e}"))?;
 
         Ok(result)
     }
@@ -73,7 +73,7 @@ impl PptAgent {
         let result =
             sidecar_client::slide_image_generate(slide_content, slide_contents, backend, style)
                 .await
-                .map_err(|e| format!("Slide image generation error: {}", e))?;
+                .map_err(|e| format!("Slide image generation error: {e}"))?;
 
         Ok(result)
     }

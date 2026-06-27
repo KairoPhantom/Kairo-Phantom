@@ -51,9 +51,9 @@ mod tests {
 
     #[test]
     fn test_linux_atspi_inject_text_without_display_errors_loudly() {
-        /// CRITICAL: This test verifies that AT-SPI2 injection FAILS LOUDLY
-        /// when no display/a11y bus is available — it must NEVER silently succeed.
-        /// On a machine with a real display, this test is skipped.
+        // CRITICAL: This test verifies that AT-SPI2 injection FAILS LOUDLY
+        // when no display/a11y bus is available — it must NEVER silently succeed.
+        // On a machine with a real display, this test is skipped.
         #[cfg(target_os = "linux")]
         {
             if has_display() && has_atspi_bus() {
@@ -101,8 +101,8 @@ mod tests {
 
     #[test]
     fn test_cross_platform_de_detection() {
-        /// Verify display server detection logic is present and callable.
-        /// On headless Linux, it should return "unknown" or detect X11/Wayland.
+        // Verify display server detection logic is present and callable.
+        // On headless Linux, it should return "unknown" or detect X11/Wayland.
         #[cfg(target_os = "linux")]
         {
             // Check environment variables
@@ -115,10 +115,7 @@ mod tests {
             } else {
                 "unknown"
             };
-            eprintln!(
-                "DE detection: {} (X11={}, Wayland={})",
-                detected, has_x11, has_wayland
-            );
+            eprintln!("DE detection: {detected} (X11={has_x11}, Wayland={has_wayland})");
             // In headless sandbox, should be "unknown"
             if !has_display() {
                 assert_eq!(detected, "unknown");

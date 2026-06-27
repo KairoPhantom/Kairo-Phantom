@@ -87,7 +87,7 @@ impl AgentIdentity {
     pub fn sign(&self, data: &[u8]) -> Result<String, String> {
         use ed25519_dalek::{Signer, SigningKey};
         let key_bytes =
-            hex_decode(&self.private_key_hex).map_err(|e| format!("Key decode error: {}", e))?;
+            hex_decode(&self.private_key_hex).map_err(|e| format!("Key decode error: {e}"))?;
         let key_arr: [u8; 32] = key_bytes
             .try_into()
             .map_err(|_| "Invalid key length".to_string())?;
@@ -333,7 +333,7 @@ impl TamperEvidentAuditLog {
             .append(true)
             .open(&self.path)
         {
-            let _ = writeln!(file, "{}", line);
+            let _ = writeln!(file, "{line}");
         }
         tracing::debug!(
             "[AuditChain] Logged: {} → {} (hash: {}...)",
@@ -617,7 +617,7 @@ impl ReceiptLog {
             .append(true)
             .open(&self.path)
         {
-            let _ = writeln!(file, "{}", line);
+            let _ = writeln!(file, "{line}");
         }
         tracing::debug!(
             "[ReceiptLog] Emitted seq={} action={} outcome={} hash={}...",
@@ -815,7 +815,7 @@ fn sha256_hex(data: &[u8]) -> String {
 }
 
 fn hex_encode(bytes: &[u8]) -> String {
-    bytes.iter().map(|b| format!("{:02x}", b)).collect()
+    bytes.iter().map(|b| format!("{b:02x}")).collect()
 }
 
 fn hex_decode(hex: &str) -> Result<Vec<u8>, &'static str> {
@@ -842,7 +842,7 @@ impl SpiffeIdentity {
         let trust_domain = "kairo-phantom.io";
         Self {
             trust_domain: trust_domain.to_string(),
-            spiffe_id: format!("spiffe://{}/agent/{}", trust_domain, agent_name),
+            spiffe_id: format!("spiffe://{trust_domain}/agent/{agent_name}"),
             certificate_pem:
                 "-----BEGIN CERTIFICATE-----\nMOCK_SPIFFE_CERT...\n-----END CERTIFICATE-----"
                     .to_string(),
@@ -993,9 +993,9 @@ impl SignatureVault {
                 let _ = std::fs::create_dir_all(parent);
             }
             let json = serde_json::to_string_pretty(&tk)
-                .map_err(|e| format!("Failed to serialize trusted keys: {}", e))?;
+                .map_err(|e| format!("Failed to serialize trusted keys: {e}"))?;
             std::fs::write(&self.trusted_keys_path, json)
-                .map_err(|e| format!("Failed to write trusted keys: {}", e))?;
+                .map_err(|e| format!("Failed to write trusted keys: {e}"))?;
         }
         Ok(())
     }
@@ -1068,13 +1068,13 @@ impl AesGcmEncrypter {
         rand::thread_rng().fill_bytes(&mut nonce_bytes);
 
         let key_bytes = Self::derive_key(private_key_hex, &salt);
-        let cipher = Aes256Gcm::new_from_slice(&key_bytes)
-            .map_err(|e| format!("Cipher init error: {}", e))?;
+        let cipher =
+            Aes256Gcm::new_from_slice(&key_bytes).map_err(|e| format!("Cipher init error: {e}"))?;
 
         let nonce = Nonce::from_slice(&nonce_bytes);
         let ciphertext = cipher
             .encrypt(nonce, plaintext)
-            .map_err(|e| format!("Encryption error: {}", e))?;
+            .map_err(|e| format!("Encryption error: {e}"))?;
 
         let mut output = Vec::new();
         output.extend_from_slice(&salt);
@@ -1098,13 +1098,13 @@ impl AesGcmEncrypter {
         let ciphertext = &encrypted_data[28..];
 
         let key_bytes = Self::derive_key(private_key_hex, salt);
-        let cipher = Aes256Gcm::new_from_slice(&key_bytes)
-            .map_err(|e| format!("Cipher init error: {}", e))?;
+        let cipher =
+            Aes256Gcm::new_from_slice(&key_bytes).map_err(|e| format!("Cipher init error: {e}"))?;
 
         let nonce = Nonce::from_slice(nonce_bytes);
         let plaintext = cipher
             .decrypt(nonce, ciphertext)
-            .map_err(|e| format!("Decryption error: {}", e))?;
+            .map_err(|e| format!("Decryption error: {e}"))?;
 
         Ok(plaintext)
     }

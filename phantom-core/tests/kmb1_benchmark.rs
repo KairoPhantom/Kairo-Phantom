@@ -23,8 +23,7 @@ async fn kmb1_format_recall(mem: &MemMachine) -> f64 {
         let _ = mem
             .remember(
                 &format!(
-                    "User strongly prefers bullet points in executive summaries (session {})",
-                    i
+                    "User strongly prefers bullet points in executive summaries (session {i})"
                 ),
                 Some("• Point 1\n• Point 2\n• Point 3"),
                 app_ctx,
@@ -61,10 +60,7 @@ async fn kmb1_tone_recall(mem: &MemMachine) -> f64 {
     for i in 0..10 {
         let _ = mem
             .remember(
-                &format!(
-                    "User writes in strictly formal tone for legal documents (session {})",
-                    i
-                ),
+                &format!("User writes in strictly formal tone for legal documents (session {i})"),
                 Some("Pursuant to the agreement dated herein, the parties shall..."),
                 app_ctx,
                 Some("tone_preference"),
@@ -98,7 +94,7 @@ async fn kmb1_length_recall(mem: &MemMachine) -> f64 {
     let app_ctx = "Microsoft PowerPoint";
     for i in 0..10 {
         let _ = mem.remember(
-            &format!("User requires concise bullet points for slide content, max 25 words (session {})", i),
+            &format!("User requires concise bullet points for slide content, max 25 words (session {i})"),
             Some("• Key point\n• Brief takeaway\n• Action item"),
             app_ctx,
             Some("length_preference"),
@@ -183,8 +179,7 @@ async fn kmb1_full_benchmark() {
 
     assert!(
         passed,
-        "KMB-1 score {:.4} below target {:.2}. MemMachine recall needs improvement.",
-        kmb1_score, TARGET_SCORE
+        "KMB-1 score {kmb1_score:.4} below target {TARGET_SCORE:.2}. MemMachine recall needs improvement."
     );
 }
 
@@ -234,10 +229,7 @@ async fn kmb1_decay_resistance() {
     for i in 0..20 {
         let _ = mem
             .remember(
-                &format!(
-                    "Unrelated content about topic {} that should not interfere",
-                    i
-                ),
+                &format!("Unrelated content about topic {i} that should not interfere"),
                 None,
                 "Notepad",
                 None,

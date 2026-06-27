@@ -152,15 +152,15 @@ impl KairoMemory {
         }
 
         if let Some(bias) = self.app_bias.get(app_name) {
-            parts.push(format!("- App-specific pattern: {}", bias));
+            parts.push(format!("- App-specific pattern: {bias}"));
         }
 
         parts.push("\n## USER MODEL".to_string());
         for (k, v) in &self.user_model.word_preferences {
-            parts.push(format!("- Word Pref {}: {}", k, v));
+            parts.push(format!("- Word Pref {k}: {v}"));
         }
         for (k, v) in &self.user_model.ppt_preferences {
-            parts.push(format!("- PPT Pref {}: {}", k, v));
+            parts.push(format!("- PPT Pref {k}: {v}"));
         }
 
         if parts.len() <= 2 {
@@ -180,11 +180,11 @@ impl KairoMemory {
 
         if app_lower.contains("word") || app_lower.contains("winword") {
             if let Some(tone) = self.user_model.word_preferences.get("tone") {
-                hints.push(format!("User prefers {} tone in Word documents", tone));
+                hints.push(format!("User prefers {tone} tone in Word documents"));
             }
         } else if app_lower.contains("powerpnt") {
             if let Some(style) = self.user_model.ppt_preferences.get("style") {
-                hints.push(format!("User prefers {} slides in PowerPoint", style));
+                hints.push(format!("User prefers {style} slides in PowerPoint"));
             }
         }
 

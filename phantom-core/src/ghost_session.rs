@@ -254,8 +254,7 @@ impl GhostSession {
         let chars = buf.active_text().len();
 
         format!(
-            "👻 Kairo Ghost{} | {} chars | Confidence: {} | Tab=Accept  Esc=Cancel  Ctrl+/=Correct  Alt+]=Switch",
-            alt, chars, confidence
+            "👻 Kairo Ghost{alt} | {chars} chars | Confidence: {confidence} | Tab=Accept  Esc=Cancel  Ctrl+/=Correct  Alt+]=Switch"
         )
     }
 

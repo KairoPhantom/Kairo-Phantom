@@ -74,11 +74,11 @@ impl IntegrationAdapter for ObsidianAdapter {
 
         match action {
             "create_note" => {
-                let file_path = vault.join(format!("{}.md", data));
+                let file_path = vault.join(format!("{data}.md"));
                 fs::write(file_path, "# New Note\nCreated by Kairo Phantom").await?;
                 Ok(())
             }
-            _ => Err(anyhow!("Unsupported action: {}", action)),
+            _ => Err(anyhow!("Unsupported action: {action}")),
         }
     }
 }

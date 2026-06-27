@@ -34,13 +34,13 @@ impl ValidationResult {
         match self {
             Self::Valid => "OK".into(),
             Self::HallucinatedTurns { found } => {
-                format!("Hallucinated conversation turn detected: '{}'", found)
+                format!("Hallucinated conversation turn detected: '{found}'")
             }
             Self::Irrelevant { overlap_score } => {
                 format!("Low prompt-response overlap: {:.1}%", overlap_score * 100.0)
             }
             Self::Truncated => "Response appears truncated or empty".into(),
-            Self::ConstitutionViolation { rule } => format!("Constitution violation: '{}'", rule),
+            Self::ConstitutionViolation { rule } => format!("Constitution violation: '{rule}'"),
         }
     }
 }
@@ -148,28 +148,25 @@ impl ResponseValidator {
             } else {
                 let rule_lower = rule.to_lowercase();
                 // Specific check for "never fabricate a citation"
-                if rule_lower.contains("never fabricate a citation") {
-                    if response_lower.contains("fabricated citation")
-                        || response_lower.contains("fake citation")
-                    {
-                        return ValidationResult::ConstitutionViolation { rule: rule.clone() };
-                    }
+                if rule_lower.contains("never fabricate a citation")
+                    && (response_lower.contains("fabricated citation")
+                        || response_lower.contains("fake citation"))
+                {
+                    return ValidationResult::ConstitutionViolation { rule: rule.clone() };
                 }
                 // Specific check for "never weaken indemnity without flagging"
-                if rule_lower.contains("never weaken indemnity") {
-                    if response_lower.contains("weaken indemnity")
-                        || response_lower.contains("weakened indemnity")
-                    {
-                        return ValidationResult::ConstitutionViolation { rule: rule.clone() };
-                    }
+                if rule_lower.contains("never weaken indemnity")
+                    && (response_lower.contains("weaken indemnity")
+                        || response_lower.contains("weakened indemnity"))
+                {
+                    return ValidationResult::ConstitutionViolation { rule: rule.clone() };
                 }
                 // Specific check for "never send data off-device offline"
-                if rule_lower.contains("never send data off-device") {
-                    if response_lower.contains("send data off-device")
-                        || response_lower.contains("sending data off-device")
-                    {
-                        return ValidationResult::ConstitutionViolation { rule: rule.clone() };
-                    }
+                if rule_lower.contains("never send data off-device")
+                    && (response_lower.contains("send data off-device")
+                        || response_lower.contains("sending data off-device"))
+                {
+                    return ValidationResult::ConstitutionViolation { rule: rule.clone() };
                 }
 
                 let prefix = if rule_lower.starts_with("never ") {

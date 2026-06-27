@@ -42,6 +42,6 @@ impl WasmSandbox {
 
         // In a real WASI module, we'd capture stdout or have it write to a specific memory location/result
         // This is a stub returning a mocked WASM output.
-        Ok(format!("[WASM Output for Prompt: {}]", input_prompt))
+        Ok(format!("[WASM Output for Prompt: {input_prompt}]"))
     }
 }

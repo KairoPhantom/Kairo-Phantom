@@ -242,7 +242,7 @@ impl DocumentContext {
         }
 
         if let (Some(current), Some(total)) = (self.active_slide, self.total_slides) {
-            frag.push_str(&format!("Currently on slide {}/{}. ", current, total));
+            frag.push_str(&format!("Currently on slide {current}/{total}. "));
         }
 
         if !self.tables.is_empty() {
@@ -284,7 +284,7 @@ impl DocumentContext {
             frag.push_str("\n[CODE SYNTAX CONTEXT]\n");
             frag.push_str(&format!("Language: {}\n", cc.language));
             if let Some(ref class) = cc.enclosing_class {
-                frag.push_str(&format!("Enclosing Symbol/Class/Struct: {}\n", class));
+                frag.push_str(&format!("Enclosing Symbol/Class/Struct: {class}\n"));
             }
             if let Some(ref func) = cc.enclosing_function {
                 frag.push_str(&format!(
@@ -295,13 +295,13 @@ impl DocumentContext {
             if !cc.imports.is_empty() {
                 frag.push_str("Imports/Use declarations:\n");
                 for imp in cc.imports.iter().take(10) {
-                    frag.push_str(&format!("  - {}\n", imp));
+                    frag.push_str(&format!("  - {imp}\n"));
                 }
             }
             if !cc.nearby_symbols.is_empty() {
                 frag.push_str("Nearby symbols:\n");
                 for sym in cc.nearby_symbols.iter().take(10) {
-                    frag.push_str(&format!("  - {}\n", sym));
+                    frag.push_str(&format!("  - {sym}\n"));
                 }
             }
             frag.push_str(&format!(
@@ -527,7 +527,7 @@ impl OfficeExtractor {
 
         let mut full_text = String::new();
         for (num, text) in &slide_texts {
-            full_text.push_str(&format!("\n--- Slide {} ---\n{}", num, text));
+            full_text.push_str(&format!("\n--- Slide {num} ---\n{text}"));
         }
 
         Some(DocumentContext::from_parsed(

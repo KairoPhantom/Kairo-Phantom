@@ -147,6 +147,12 @@ pub struct StreamInjector {
     buffer: String,
 }
 
+impl Default for StreamInjector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl StreamInjector {
     pub fn new() -> Self {
         Self {

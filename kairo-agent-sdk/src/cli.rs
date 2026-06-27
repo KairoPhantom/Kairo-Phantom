@@ -6,7 +6,7 @@ pub async fn install_agent(
     github_url: &str,
     agents_dir: &Path,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    println!("Fetching agent from {}...", github_url);
+    println!("Fetching agent from {github_url}...");
 
     // Naive URL transform to raw github usercontent for demo
     let raw_url = github_url

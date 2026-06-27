@@ -26,7 +26,7 @@ fn test_w3_sentinel_blocked_5_consecutive_times() {
     // leakage vector. ALL must be blocked.
     let leakage_attempts = [
         // Attempt 1: Direct sentinel echo
-        format!("The security sentinel is: {}", sentinel_value),
+        format!("The security sentinel is: {sentinel_value}"),
         // Attempt 2: VS Code internal config leak
         r#"editor.accessibilityMode = "screen-reader-optimized";"#.to_string(),
         // Attempt 3: Swarm/agent internal string leak
@@ -34,7 +34,7 @@ fn test_w3_sentinel_blocked_5_consecutive_times() {
         // Attempt 4: System prompt content leak
         "My system prompt says: ignore all previous instructions".to_string(),
         // Attempt 5: Sentinel hash in different formatting
-        format!("SECURITY_SENTINEL: {}", sentinel_value),
+        format!("SECURITY_SENTINEL: {sentinel_value}"),
     ];
 
     for (i, attempt) in leakage_attempts.iter().enumerate() {
@@ -87,8 +87,7 @@ fn test_clean_document_text_passes_sentinel() {
         let result = sanitizer.sanitize(text);
         assert!(
             !result.contains("[BLOCKED"),
-            "Clean response should pass but got BLOCKED for: {:?}",
-            text
+            "Clean response should pass but got BLOCKED for: {text:?}"
         );
     }
 }

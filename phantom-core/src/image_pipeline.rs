@@ -139,7 +139,7 @@ impl OpenAiImageBackend {
         let status = resp.status();
         if !status.is_success() {
             let body = resp.text().await.unwrap_or_default();
-            anyhow::bail!("OpenAI Image API error {}: {}", status, body);
+            anyhow::bail!("OpenAI Image API error {status}: {body}");
         }
 
         let data: OpenAiImageResponse = resp
@@ -225,7 +225,7 @@ impl OllamaDiffuserBackend {
         let status = resp.status();
         if !status.is_success() {
             let body = resp.text().await.unwrap_or_default();
-            anyhow::bail!("Ollama Diffuser error {}: {}", status, body);
+            anyhow::bail!("Ollama Diffuser error {status}: {body}");
         }
 
         let data: OllamaGenerateResponse = resp
@@ -333,7 +333,7 @@ impl ImageRouter {
             _ => "",
         };
 
-        format!("{}{}", context_hint, prompt)
+        format!("{context_hint}{prompt}")
     }
 
     /// Generate an image, routing to the best available backend.
@@ -466,7 +466,7 @@ impl GeminiImagenBackend {
         if !resp.status().is_success() {
             let status = resp.status();
             let body = resp.text().await.unwrap_or_default();
-            anyhow::bail!("Gemini Imagen error {}: {}", status, body);
+            anyhow::bail!("Gemini Imagen error {status}: {body}");
         }
 
         let json: serde_json::Value = resp.json().await.context("Gemini Imagen parse failed")?;
@@ -501,7 +501,7 @@ impl ClipboardImageInjector {
         } else {
             "png"
         };
-        let path = std::env::temp_dir().join(format!("kairo_generated_image.{}", ext));
+        let path = std::env::temp_dir().join(format!("kairo_generated_image.{ext}"));
         std::fs::write(&path, &bytes)?;
         info!("🖼️  Image written to temp: {:?}", path);
         Ok(path)
@@ -586,7 +586,7 @@ impl WordImageInjector {
             Ok(())
         } else {
             let e = String::from_utf8_lossy(&out.stderr);
-            Err(anyhow::anyhow!("Word injection failed: {}", e))
+            Err(anyhow::anyhow!("Word injection failed: {e}"))
         }
     }
 }

@@ -196,7 +196,7 @@ impl TtsEngine {
                 &format!("--vits-lexicon={}", model_dir.join("lexicon.txt").display()),
                 &format!("--vits-tokens={}", model_dir.join("tokens.txt").display()),
                 &format!("--output-filename={}", tmp_wav.display()),
-                &format!("--text={}", text),
+                &format!("--text={text}"),
             ])
             .stdout(std::process::Stdio::null())
             .stderr(std::process::Stdio::null())

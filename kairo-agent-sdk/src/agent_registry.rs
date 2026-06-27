@@ -77,7 +77,7 @@ impl AgentRegistry {
                         let mut lock = agents_ref.write().unwrap();
                         *lock = new_agents;
                     }
-                    Err(e) => println!("watch error: {:?}", e),
+                    Err(e) => println!("watch error: {e:?}"),
                 }
             })
             .unwrap();

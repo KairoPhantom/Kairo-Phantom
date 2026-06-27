@@ -125,7 +125,7 @@ impl AuditLogger {
                 .open(path)
             {
                 let line = serde_json::to_string(&entry).unwrap_or_default();
-                let _ = writeln!(file, "{}", line);
+                let _ = writeln!(file, "{line}");
             }
         }
 
@@ -355,7 +355,7 @@ fn chrono_local_now() -> String {
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap_or_default()
         .as_secs();
-    format!("{}Z", secs) // Unix epoch as fallback — replace with chrono if needed
+    format!("{secs}Z") // Unix epoch as fallback — replace with chrono if needed
 }
 
 fn whoami_user() -> String {

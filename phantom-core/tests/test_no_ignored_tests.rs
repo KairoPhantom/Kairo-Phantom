@@ -10,7 +10,7 @@ fn scan_dir(dir: &Path, errors: &mut Vec<String>) {
         let path = entry.path();
         if path.is_dir() {
             scan_dir(&path, errors);
-        } else if path.extension().map_or(false, |ext| ext == "rs") {
+        } else if path.extension().is_some_and(|ext| ext == "rs") {
             let content = fs::read_to_string(&path).unwrap();
             let ignore_pattern = format!("{}[ignore]", '#');
             for (line_idx, line) in content.lines().enumerate() {

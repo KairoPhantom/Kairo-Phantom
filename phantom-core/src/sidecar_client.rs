@@ -281,7 +281,7 @@ async fn call_sidecar(req: SidecarRequest) -> Result<serde_json::Value> {
         if err_msg.starts_with("Domain ") {
             crate::toast_notification::show_error_toast(&err_msg);
         }
-        bail!("Sidecar error: {}", err_msg);
+        bail!("Sidecar error: {err_msg}");
     }
 
     Ok(resp.data.unwrap_or(serde_json::Value::Null))
@@ -991,7 +991,7 @@ pub fn resolve_document_path(window_title: &str, process_name: &str) -> Option<S
             let candidate = if ext.is_empty() || fname.contains('.') {
                 dir.join(&fname)
             } else {
-                dir.join(format!("{}{}", fname, ext))
+                dir.join(format!("{fname}{ext}"))
             };
             if candidate.exists() {
                 tracing::info!("📂 Resolved doc path: {:?}", candidate);

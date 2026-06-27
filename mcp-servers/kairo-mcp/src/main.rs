@@ -34,7 +34,7 @@ fn respond(id: Value, result: Option<Value>, error: Option<Value>) {
         error,
     };
     let line = serde_json::to_string(&resp).unwrap_or_default();
-    println!("{}", line);
+    println!("{line}");
     io::stdout().flush().ok();
 }
 
@@ -54,7 +54,7 @@ async fn kairo_read_context(id: Value, _args: &Value) {
             let text = r.text().await.unwrap_or_default();
             ok(id, json!({"context": text}));
         }
-        Err(e) => err(id, &format!("Failed to read context: {}", e)),
+        Err(e) => err(id, &format!("Failed to read context: {e}")),
     }
 }
 
@@ -79,7 +79,7 @@ async fn kairo_ghost_write(id: Value, args: &Value) {
             ok(id, json!({"status": "injected", "chars": text.len()}))
         }
         Ok(r) => err(id, &format!("Inject failed: HTTP {}", r.status())),
-        Err(e) => err(id, &format!("Inject error: {}", e)),
+        Err(e) => err(id, &format!("Inject error: {e}")),
     }
 }
 
@@ -91,7 +91,7 @@ async fn kairo_detect_app(id: Value, _args: &Value) {
             let data: Value = r.json().await.unwrap_or(json!({}));
             ok(id, data);
         }
-        Err(e) => err(id, &format!("Failed to detect app: {}", e)),
+        Err(e) => err(id, &format!("Failed to detect app: {e}")),
     }
 }
 
@@ -171,7 +171,7 @@ async fn kairo_ask(id: Value, args: &Value) {
             let data: Value = r.json().await.unwrap_or(json!({}));
             ok(id, data);
         }
-        Err(e) => err(id, &format!("Ask failed: {}", e)),
+        Err(e) => err(id, &format!("Ask failed: {e}")),
     }
 }
 
@@ -201,7 +201,7 @@ async fn kairo_generate_image(id: Value, args: &Value) {
             let data: Value = r.json().await.unwrap_or(json!({}));
             ok(id, data);
         }
-        Err(e) => err(id, &format!("Image generation failed: {}", e)),
+        Err(e) => err(id, &format!("Image generation failed: {e}")),
     }
 }
 
@@ -520,7 +520,7 @@ async fn main() {
         let req: JsonRpcRequest = match serde_json::from_str(&line) {
             Ok(r) => r,
             Err(e) => {
-                eprintln!("JSON parse error: {}", e);
+                eprintln!("JSON parse error: {e}");
                 continue;
             }
         };
@@ -589,8 +589,7 @@ async fn main() {
                             .strip_suffix("_process")
                             .unwrap_or("");
                         let prompt = format!(
-                            "Domain: {}\nFile: {}\nInstruction: {}",
-                            domain, file_path, instruction
+                            "Domain: {domain}\nFile: {file_path}\nInstruction: {instruction}"
                         );
                         let client = reqwest::Client::new();
                         match client
@@ -614,11 +613,11 @@ async fn main() {
                             }
                         }
                     }
-                    other => err(id, &format!("Unknown tool: {}", other)),
+                    other => err(id, &format!("Unknown tool: {other}")),
                 }
             }
             other => {
-                err(id, &format!("Unknown method: {}", other));
+                err(id, &format!("Unknown method: {other}"));
             }
         }
     }

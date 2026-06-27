@@ -475,7 +475,7 @@ pub fn show_clarification_toast(question: &str) {
 
 /// Show a completion overlay when Kairo finishes generating.
 pub fn show_completion_toast(chars_injected: usize, agent_name: &str) {
-    let body = format!("{} injected {} characters", agent_name, chars_injected);
+    let body = format!("{agent_name} injected {chars_injected} characters");
     show_overlay("Generation Complete ✅", &body, OverlayColor::Success, 4000);
 }
 
@@ -571,8 +571,7 @@ pub fn log_agent_selection(agent_id: &str, score: u8, doc_kind: &str, prompt_pre
         .replace('"', "'");
 
     let entry = format!(
-        r#"{{"ts":"{}","agent":"{}","score":{},"doc_kind":"{}","prompt":"{}"}}"#,
-        timestamp, agent_id, score, doc_kind, safe_prompt
+        r#"{{"ts":"{timestamp}","agent":"{agent_id}","score":{score},"doc_kind":"{doc_kind}","prompt":"{safe_prompt}"}}"#
     );
 
     if let Ok(mut file) = std::fs::OpenOptions::new()
@@ -581,7 +580,7 @@ pub fn log_agent_selection(agent_id: &str, score: u8, doc_kind: &str, prompt_pre
         .open(&log_path)
     {
         use std::io::Write;
-        let _ = writeln!(file, "{}", entry);
+        let _ = writeln!(file, "{entry}");
     }
 
     tracing::debug!("[AgentDebug] {}", entry);

@@ -295,7 +295,7 @@ fn extract_brace_context(
                                     .to_string();
                                 if !type_name.is_empty() {
                                     // Store as enclosing class hint via a nearby symbol
-                                    nearby_symbols.push(format!("impl:{}", type_name));
+                                    nearby_symbols.push(format!("impl:{type_name}"));
                                 }
                             }
                             let after_recv = &after_func[close_paren + 1..].trim();
@@ -434,63 +434,61 @@ fn extract_brace_context(
             if trimmed.starts_with("@import") {
                 imports.push(trimmed.to_string());
             }
-        } else {
-            if trimmed.contains("class ") {
-                is_cls = true;
-                let parts: Vec<&str> = trimmed.split("class ").collect();
-                if parts.len() > 1 {
-                    name = parts[1]
-                        .split_whitespace()
-                        .next()
-                        .unwrap_or("")
-                        .trim_end_matches('{')
-                        .trim()
-                        .to_string();
+        } else if trimmed.contains("class ") {
+            is_cls = true;
+            let parts: Vec<&str> = trimmed.split("class ").collect();
+            if parts.len() > 1 {
+                name = parts[1]
+                    .split_whitespace()
+                    .next()
+                    .unwrap_or("")
+                    .trim_end_matches('{')
+                    .trim()
+                    .to_string();
+            }
+        } else if trimmed.contains("interface ") {
+            is_cls = true;
+            let parts: Vec<&str> = trimmed.split("interface ").collect();
+            if parts.len() > 1 {
+                name = parts[1]
+                    .split_whitespace()
+                    .next()
+                    .unwrap_or("")
+                    .trim_end_matches('{')
+                    .trim()
+                    .to_string();
+            }
+        } else if trimmed.contains("function ") {
+            is_func = true;
+            let parts: Vec<&str> = trimmed.split("function ").collect();
+            if parts.len() > 1 {
+                name = parts[1]
+                    .split(|c: char| !c.is_alphanumeric() && c != '_')
+                    .next()
+                    .unwrap_or("")
+                    .to_string();
+            }
+        } else if trimmed.contains("=>") {
+            is_func = true;
+            let parts: Vec<&str> = trimmed.split('=').collect();
+            if parts.len() > 1 {
+                let var_parts: Vec<&str> = parts[0].split_whitespace().collect();
+                if let Some(&var_name) = var_parts.last() {
+                    name = var_name.to_string();
                 }
-            } else if trimmed.contains("interface ") {
-                is_cls = true;
-                let parts: Vec<&str> = trimmed.split("interface ").collect();
-                if parts.len() > 1 {
-                    name = parts[1]
-                        .split_whitespace()
-                        .next()
-                        .unwrap_or("")
-                        .trim_end_matches('{')
-                        .trim()
-                        .to_string();
-                }
-            } else if trimmed.contains("function ") {
-                is_func = true;
-                let parts: Vec<&str> = trimmed.split("function ").collect();
-                if parts.len() > 1 {
-                    name = parts[1]
-                        .split(|c: char| !c.is_alphanumeric() && c != '_')
-                        .next()
-                        .unwrap_or("")
-                        .to_string();
-                }
-            } else if trimmed.contains("=>") {
-                is_func = true;
-                let parts: Vec<&str> = trimmed.split('=').collect();
-                if parts.len() > 1 {
-                    let var_parts: Vec<&str> = parts[0].split_whitespace().collect();
-                    if let Some(&var_name) = var_parts.last() {
-                        name = var_name.to_string();
-                    }
-                }
-            } else if trimmed.contains('(')
-                && (trimmed.contains("public ")
-                    || trimmed.contains("private ")
-                    || trimmed.contains("protected ")
-                    || trimmed.contains("void ")
-                    || trimmed.contains("fn "))
-            {
-                is_func = true;
-                let parts: Vec<&str> = trimmed.split('(').collect();
-                let name_words: Vec<&str> = parts[0].split_whitespace().collect();
-                if let Some(&n) = name_words.last() {
-                    name = n.trim_start_matches('*').to_string();
-                }
+            }
+        } else if trimmed.contains('(')
+            && (trimmed.contains("public ")
+                || trimmed.contains("private ")
+                || trimmed.contains("protected ")
+                || trimmed.contains("void ")
+                || trimmed.contains("fn "))
+        {
+            is_func = true;
+            let parts: Vec<&str> = trimmed.split('(').collect();
+            let name_words: Vec<&str> = parts[0].split_whitespace().collect();
+            if let Some(&n) = name_words.last() {
+                name = n.trim_start_matches('*').to_string();
             }
         }
 
@@ -522,16 +520,14 @@ fn extract_brace_context(
                     min_class_span = span;
                     enclosing_class = Some(decl.name.clone());
                 }
-            } else {
-                if span < min_func_span {
-                    min_func_span = span;
-                    enclosing_function = Some(FunctionInfo {
-                        name: decl.name.clone(),
-                        signature: decl.signature.clone(),
-                        start_line: decl.start_line,
-                        end_line: decl.end_line,
-                    });
-                }
+            } else if span < min_func_span {
+                min_func_span = span;
+                enclosing_function = Some(FunctionInfo {
+                    name: decl.name.clone(),
+                    signature: decl.signature.clone(),
+                    start_line: decl.start_line,
+                    end_line: decl.end_line,
+                });
             }
         }
     }
@@ -635,16 +631,14 @@ fn extract_python_context(
                     min_class_span = span;
                     enclosing_class = Some(decl.name.clone());
                 }
-            } else {
-                if span < min_func_span {
-                    min_func_span = span;
-                    enclosing_function = Some(FunctionInfo {
-                        name: decl.name.clone(),
-                        signature: decl.signature.clone(),
-                        start_line: decl.start_line,
-                        end_line: decl.end_line,
-                    });
-                }
+            } else if span < min_func_span {
+                min_func_span = span;
+                enclosing_function = Some(FunctionInfo {
+                    name: decl.name.clone(),
+                    signature: decl.signature.clone(),
+                    start_line: decl.start_line,
+                    end_line: decl.end_line,
+                });
             }
         }
     }
@@ -685,7 +679,7 @@ fn extract_lexical_context(
 pub fn extract_code_context(file_path: &str, cursor_line: usize) -> Result<CodeContext> {
     let path = Path::new(file_path);
     if !path.exists() {
-        return Err(anyhow::anyhow!("File not found: {}", file_path));
+        return Err(anyhow::anyhow!("File not found: {file_path}"));
     }
 
     let mut file = File::open(path).context("Failed to open code file")?;

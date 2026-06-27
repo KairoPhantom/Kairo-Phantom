@@ -32,13 +32,13 @@ impl ConsistencyReport {
         } else {
             out.push_str("Issues found:\n");
             for issue in &self.issues {
-                out.push_str(&format!("  • {}\n", issue));
+                out.push_str(&format!("  • {issue}\n"));
             }
         }
         if !self.suggestions.is_empty() {
             out.push_str("\nSuggestions:\n");
             for s in &self.suggestions {
-                out.push_str(&format!("  → {}\n", s));
+                out.push_str(&format!("  → {s}\n"));
             }
         }
         out
@@ -111,8 +111,7 @@ impl ConsistencyEngine {
             past.iter().map(|ep| avg_sentence_len(ep)).sum::<f32>() / past.len() as f32;
         if (doc_avg_len - past_avg_len).abs() > 8.0 {
             issues.push(format!(
-                "Length shift: avg sentence is {:.0} words vs your usual {:.0} words.",
-                doc_avg_len, past_avg_len
+                "Length shift: avg sentence is {doc_avg_len:.0} words vs your usual {past_avg_len:.0} words."
             ));
         }
 
@@ -188,6 +187,6 @@ mod tests {
     fn test_bullet_ratio() {
         let t = "• Point one\n• Point two\nSome prose\n• Point three";
         let r = bullet_ratio(t);
-        assert!(r > 0.6, "Expected > 0.6, got {}", r);
+        assert!(r > 0.6, "Expected > 0.6, got {r}");
     }
 }

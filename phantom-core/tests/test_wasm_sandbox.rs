@@ -123,12 +123,11 @@ version = "0.1.0"
 description = "A mock unsigned skill"
 author = "Test"
 category = "general"
-skill_md_url = "http://127.0.0.1:{}/SKILL.md"
-wasm_url = "http://127.0.0.1:{}/plugin.wasm"
+skill_md_url = "http://127.0.0.1:{port}/SKILL.md"
+wasm_url = "http://127.0.0.1:{port}/plugin.wasm"
 requires_kairo = "0.3.0"
 tags = ["test"]
-"#,
-                        port, port
+"#
                     )
                 }),
             )
@@ -143,7 +142,7 @@ tags = ["test"]
         });
 
         let manager = WazaSkillManager::new();
-        let url = format!("http://127.0.0.1:{}/manifest.toml", port);
+        let url = format!("http://127.0.0.1:{port}/manifest.toml");
 
         // 1. block_unsigned = true (allow_unsigned = false). This must fail with the signature error.
         let res = manager.add_skill(&url, false).await;
@@ -152,8 +151,7 @@ tags = ["test"]
         assert!(
             err_msg.contains("WASM signature verification failed")
                 || err_msg.contains("signatures are required"),
-            "unexpected error message: {}",
-            err_msg
+            "unexpected error message: {err_msg}"
         );
 
         // 2. allow_unsigned = true. This must succeed.

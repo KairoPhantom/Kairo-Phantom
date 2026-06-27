@@ -44,7 +44,11 @@ pub static GLOBAL_WORLD_MODEL: Lazy<Mutex<HashMap<isize, AppWorldModel>>> =
 
 /// Computes a hash of the text value.
 pub fn compute_hash(s: &str) -> u64 {
-    fxhash::hash64(s)
+    use rustc_hash::FxHasher;
+    use std::hash::Hasher;
+    let mut hasher = FxHasher::default();
+    hasher.write(s.as_bytes());
+    hasher.finish()
 }
 
 #[cfg(test)]

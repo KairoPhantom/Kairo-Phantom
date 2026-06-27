@@ -173,7 +173,7 @@ Do NOT include any markdown code blocks (e.g. ```json). Output ONLY valid JSON."
 
         // Take first 4000 characters of the document text to avoid token limits
         let text_snippet: String = text.chars().take(4000).collect();
-        let user_prompt = format!("Document text:\n\"\"\"\n{}\n\"\"\"", text_snippet);
+        let user_prompt = format!("Document text:\n\"\"\"\n{text_snippet}\n\"\"\"");
 
         let response = self.backend.complete(system_prompt, &user_prompt).await?;
         let cleaned = response
@@ -234,7 +234,7 @@ Do NOT include any markdown code blocks (e.g. ```json). Output ONLY valid JSON."
                 row.get::<_, String>(1)?,
                 row.get::<_, String>(2)?,
             ),
-            None => return Ok(format!("Entity '{}' not found in document graph.", name)),
+            None => return Ok(format!("Entity '{name}' not found in document graph.")),
         };
 
         // Load graph in memory
@@ -243,7 +243,7 @@ Do NOT include any markdown code blocks (e.g. ```json). Output ONLY valid JSON."
         // Find target entity node in the DiGraph in memory
         let node_idx = match graph.node_indices().find(|&idx| graph[idx] == entity_id) {
             Some(idx) => idx,
-            None => return Ok(format!("Entity '{}' not found in document graph.", name)),
+            None => return Ok(format!("Entity '{name}' not found in document graph.")),
         };
 
         let mut connected = Vec::new();
@@ -256,10 +256,7 @@ Do NOT include any markdown code blocks (e.g. ```json). Output ONLY valid JSON."
             connected.push((graph[edge.source()].clone(), edge.weight().clone(), "in"));
         }
 
-        let mut out_str = format!(
-            "Entity: {} ({})\nRelationships:\n",
-            entity_name, entity_type
-        );
+        let mut out_str = format!("Entity: {entity_name} ({entity_type})\nRelationships:\n");
         let mut has_rels = false;
 
         // Look up metadata/content from SQLite database using those IDs only when needed
@@ -272,13 +269,11 @@ Do NOT include any markdown code blocks (e.g. ```json). Output ONLY valid JSON."
                 has_rels = true;
                 if dir == "out" {
                     out_str.push_str(&format!(
-                        "  - [{}] -> [{}] -> [{}] ({})\n",
-                        entity_name, relation, tgt_name, tgt_type
+                        "  - [{entity_name}] -> [{relation}] -> [{tgt_name}] ({tgt_type})\n"
                     ));
                 } else {
                     out_str.push_str(&format!(
-                        "  - [{}] -> [{}] -> [{}] ({})\n",
-                        tgt_name, relation, entity_name, entity_type
+                        "  - [{tgt_name}] -> [{relation}] -> [{entity_name}] ({entity_type})\n"
                     ));
                 }
             }
@@ -304,7 +299,7 @@ Do NOT include any markdown code blocks (e.g. ```json). Output ONLY valid JSON."
         for entity in rows.flatten() {
             count += 1;
             let (name, node_type) = entity;
-            out.push_str(&format!("  • {} ({})\n", name, node_type));
+            out.push_str(&format!("  • {name} ({node_type})\n"));
         }
         if count == 0 {
             out.push_str("  No entities indexed yet. Add documents to the Kairo folder.\n");
@@ -350,7 +345,7 @@ Do NOT include any markdown code blocks (e.g. ```json). Output ONLY valid JSON."
 
         let mut context_block = String::from("\n🕸️  [DOCUMENT GRAPH CONTEXT]\n");
         for (id, name, node_type) in matched_entities {
-            context_block.push_str(&format!("Entity: {} ({})\n", name, node_type));
+            context_block.push_str(&format!("Entity: {name} ({node_type})\n"));
 
             // Find target entity node in the DiGraph in memory
             let node_idx = match graph.node_indices().find(|&idx| graph[idx] == id) {
@@ -380,8 +375,7 @@ Do NOT include any markdown code blocks (e.g. ```json). Output ONLY valid JSON."
                     if node_type == "document" {
                         let snippet: String = doc_content.chars().take(500).collect();
                         context_block.push_str(&format!(
-                            "  From Document '{}':\n\"\"\"\n{}\n\"\"\"\n",
-                            doc_name, snippet
+                            "  From Document '{doc_name}':\n\"\"\"\n{snippet}\n\"\"\"\n"
                         ));
                     }
                 }

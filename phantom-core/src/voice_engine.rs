@@ -32,7 +32,7 @@ pub struct MoonshineEngine {
 impl MoonshineEngine {
     pub fn new(port: u16, confidence_threshold: f32) -> Self {
         MoonshineEngine {
-            service_url: format!("http://localhost:{}", port),
+            service_url: format!("http://localhost:{port}"),
             confidence_threshold,
         }
     }
@@ -367,7 +367,7 @@ if ($result) {{ $result.Text }} else {{ "" }}
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
-            bail!("whisper.cpp failed: {}", stderr);
+            bail!("whisper.cpp failed: {stderr}");
         }
 
         let transcription = String::from_utf8_lossy(&output.stdout).trim().to_string();
@@ -423,7 +423,7 @@ if ($result) {{ $result.Text }} else {{ "" }}
                 Ok((moonshine_text, confidence, language)) => {
                     // Low confidence or non-English — try whisper.cpp
                     let reason = if language != "en" {
-                        format!("non-English language: {}", language)
+                        format!("non-English language: {language}")
                     } else {
                         format!(
                             "low confidence: {:.2} < {:.2}",

@@ -51,9 +51,9 @@ impl MemoryVault {
 
     fn save_daily_log(&self, memory: &KairoMemory) {
         let date = Local::now().format("%Y-%m-%d").to_string();
-        let daily_path = self.base_path.join("daily").join(format!("{}.md", date));
+        let daily_path = self.base_path.join("daily").join(format!("{date}.md"));
 
-        let mut content = format!("# Daily Log: {}\n\n", date);
+        let mut content = format!("# Daily Log: {date}\n\n");
 
         let today_timestamp = chrono::Local::now()
             .date_naive()
@@ -91,18 +91,18 @@ impl MemoryVault {
             let node_path = self
                 .base_path
                 .join("knowledge/concepts")
-                .join(format!("{}.md", safe_node));
+                .join(format!("{safe_node}.md"));
 
-            let mut content = format!("# Concept: {}\n\n", node);
+            let mut content = format!("# Concept: {node}\n\n");
             content.push_str("## Relationships\n");
 
             for (from, to, rel) in &memory.graph.edges {
                 if let Some(from_node) = memory.graph.nodes.get(*from) {
                     if let Some(to_node) = memory.graph.nodes.get(*to) {
                         if from_node == node {
-                            content.push_str(&format!("- {} {}\n", rel, to_node));
+                            content.push_str(&format!("- {rel} {to_node}\n"));
                         } else if to_node == node {
-                            content.push_str(&format!("- {} (from {})\n", rel, from_node));
+                            content.push_str(&format!("- {rel} (from {from_node})\n"));
                         }
                     }
                 }
@@ -131,17 +131,17 @@ impl MemoryVault {
 
         content.push_str("\n## App Bias\n");
         for (app, bias) in &memory.app_bias {
-            content.push_str(&format!("- **{}**: {}\n", app, bias));
+            content.push_str(&format!("- **{app}**: {bias}\n"));
         }
 
         content.push_str("\n## Word Preferences\n");
         for (k, v) in &memory.user_model.word_preferences {
-            content.push_str(&format!("- **{}**: {}\n", k, v));
+            content.push_str(&format!("- **{k}**: {v}\n"));
         }
 
         content.push_str("\n## PowerPoint Preferences\n");
         for (k, v) in &memory.user_model.ppt_preferences {
-            content.push_str(&format!("- **{}**: {}\n", k, v));
+            content.push_str(&format!("- **{k}**: {v}\n"));
         }
 
         if let Err(e) = fs::write(&prefs_path, content) {

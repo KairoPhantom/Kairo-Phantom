@@ -136,8 +136,7 @@ impl VectorStore {
         // Create vec0 virtual table for 256-dim embeddings
         conn.execute(
             &format!(
-                "CREATE VIRTUAL TABLE IF NOT EXISTS memory_embeddings USING vec0(embedding float[{}], episode_id text)",
-                EMBED_DIM
+                "CREATE VIRTUAL TABLE IF NOT EXISTS memory_embeddings USING vec0(embedding float[{EMBED_DIM}], episode_id text)"
             ),
             [],
         )?;
@@ -154,8 +153,7 @@ impl VectorStore {
         Self::verify_vec_extension(&conn)?;
         conn.execute(
             &format!(
-                "CREATE VIRTUAL TABLE IF NOT EXISTS memory_embeddings USING vec0(embedding float[{}], episode_id text)",
-                EMBED_DIM
+                "CREATE VIRTUAL TABLE IF NOT EXISTS memory_embeddings USING vec0(embedding float[{EMBED_DIM}], episode_id text)"
             ),
             [],
         )?;
@@ -171,8 +169,15 @@ impl VectorStore {
 
         static INIT: Once = Once::new();
         INIT.call_once(|| unsafe {
-            sqlite3_auto_extension(Some(std::mem::transmute(
-                sqlite_vec::sqlite3_vec_init as *const (),
+            sqlite3_auto_extension(Some(std::mem::transmute::<
+                *const (),
+                unsafe extern "C" fn(
+                    *mut rusqlite::ffi::sqlite3,
+                    *mut *mut std::os::raw::c_char,
+                    *const rusqlite::ffi::sqlite3_api_routines,
+                ) -> std::os::raw::c_int,
+            >(
+                sqlite_vec::sqlite3_vec_init as *const ()
             )));
         });
     }
@@ -181,7 +186,7 @@ impl VectorStore {
     fn verify_vec_extension(conn: &Connection) -> Result<()> {
         let version: String = conn
             .query_row("SELECT vec_version()", [], |row| row.get(0))
-            .map_err(|e| anyhow!("sqlite-vec extension not loaded: {}", e))?;
+            .map_err(|e| anyhow!("sqlite-vec extension not loaded: {e}"))?;
         info!("sqlite-vec loaded: version {}", version);
         Ok(())
     }
@@ -327,8 +332,7 @@ mod tests {
         assert_eq!(
             vec.len(),
             EMBED_DIM,
-            "Embedding dimension must be {}",
-            EMBED_DIM
+            "Embedding dimension must be {EMBED_DIM}"
         );
     }
 
@@ -564,10 +568,7 @@ mod tests {
         // Under hash embeddings, semantically similar texts will have LOW similarity
         // (because hash is based on character content, not meaning).
         // This test documents that fact — it's NOT a failure, it's a known limitation.
-        println!(
-            "Hash embedding similarity for semantically-similar texts: {:.4}",
-            sim
-        );
+        println!("Hash embedding similarity for semantically-similar texts: {sim:.4}");
         println!("NOTE: This similarity is NOT meaningful — hash embeddings are non-semantic.");
         println!(
             "      Real semantic search requires --features local-embeddings (fastembed model)."
@@ -575,6 +576,9 @@ mod tests {
 
         // The test passes regardless of the similarity value — it's documentation,
         // not a gate. But it prints the value so we can see the limitation.
-        assert!(sim >= -1.0 && sim <= 1.0, "Cosine similarity out of range");
+        assert!(
+            (-1.0..=1.0).contains(&sim),
+            "Cosine similarity out of range"
+        );
     }
 }

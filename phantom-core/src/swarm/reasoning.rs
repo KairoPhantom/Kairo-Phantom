@@ -13,7 +13,7 @@ impl SwarmAgent for ReasoningAgent {
     fn build_system_prompt(&self, doc_ctx: &DocumentContext) -> String {
         let base = crate::ai::KAIRO_SYSTEM_PROMPT;
         let doc_fragment = doc_ctx.to_system_prompt_fragment();
-        format!("{}\n\n[DOCUMENT INTELLIGENCE]\n{}\n\n*** SWARM ROLE: REASONING & LOGIC AGENT ***\nBe precise. Output valid code or terminal commands. No fluff. Include error handling and edge cases.", base, doc_fragment)
+        format!("{base}\n\n[DOCUMENT INTELLIGENCE]\n{doc_fragment}\n\n*** SWARM ROLE: REASONING & LOGIC AGENT ***\nBe precise. Output valid code or terminal commands. No fluff. Include error handling and edge cases.")
     }
     fn match_score(&self, doc_ctx: &DocumentContext) -> u8 {
         if matches!(doc_ctx.doc_kind, DocKind::CodeFile | DocKind::Terminal) {

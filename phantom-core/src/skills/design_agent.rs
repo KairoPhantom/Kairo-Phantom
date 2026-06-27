@@ -22,7 +22,7 @@ impl DesignAgent {
         );
         sidecar_client::design_ghost_write(window_title, payload)
             .await
-            .map_err(|e| format!("Design ghost-write error: {}", e))
+            .map_err(|e| format!("Design ghost-write error: {e}"))
     }
 
     /// Asynchronously queues a ComfyUI generation or offline high-fidelity fallback asset.
@@ -34,7 +34,7 @@ impl DesignAgent {
         info!("DesignAgent: generating visual design asset...");
         sidecar_client::generate_design_asset(prompt, style, output_path)
             .await
-            .map_err(|e| format!("ComfyUI asset generation error: {}", e))
+            .map_err(|e| format!("ComfyUI asset generation error: {e}"))
     }
 
     /// Asynchronously modifies elements or flowcharts inside the infinite whiteboard tldraw canvas.
@@ -45,7 +45,7 @@ impl DesignAgent {
         );
         sidecar_client::tldraw_canvas(operation, payload)
             .await
-            .map_err(|e| format!("tldraw canvas error: {}", e))
+            .map_err(|e| format!("tldraw canvas error: {e}"))
     }
 
     /// Asynchronously transpiles Figma layer tree structures into clean HTML/Tailwind CSS.
@@ -53,7 +53,7 @@ impl DesignAgent {
         info!("DesignAgent: transpiling figma layers to Tailwind CSS...");
         sidecar_client::extract_design_code(root_id)
             .await
-            .map_err(|e| format!("Design-to-code transpilation error: {}", e))
+            .map_err(|e| format!("Design-to-code transpilation error: {e}"))
     }
 
     /// Asynchronously creates complex nodes/frames on Figma canvas.
@@ -61,6 +61,6 @@ impl DesignAgent {
         info!("DesignAgent: creating Figma canvas elements...");
         sidecar_client::figma_create(payload)
             .await
-            .map_err(|e| format!("Figma node creation error: {}", e))
+            .map_err(|e| format!("Figma node creation error: {e}"))
     }
 }

@@ -124,7 +124,7 @@ impl DeepPresenter {
         let mut slides = vec![SlideContent {
             title: topic.to_string(),
             bullets: vec![],
-            speaker_notes: Some(format!("Opening slide for: {}", topic)),
+            speaker_notes: Some(format!("Opening slide for: {topic}")),
             slide_type: "title".to_string(),
         }];
 
@@ -173,7 +173,7 @@ impl DeepPresenter {
                 } else {
                     bullet.clone()
                 };
-                output.push_str(&format!("• {}\n", trimmed));
+                output.push_str(&format!("• {trimmed}\n"));
             }
             output.push('\n');
         }

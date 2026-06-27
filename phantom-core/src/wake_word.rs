@@ -171,7 +171,7 @@ impl WakeWordDaemon {
             let mut child = match tokio::process::Command::new(&horchd_path)
                 .args([
                     "--sensitivity",
-                    &format!("{:.2}", sensitivity),
+                    &format!("{sensitivity:.2}"),
                     "--phrase",
                     &phrase,
                 ])

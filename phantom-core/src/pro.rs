@@ -12,6 +12,12 @@ pub struct KairoPro {
     last_validation: u64,
 }
 
+impl Default for KairoPro {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl KairoPro {
     pub fn new() -> Self {
         let mut pro = Self {
@@ -26,7 +32,7 @@ impl KairoPro {
         let id = std::env::var("COMPUTERNAME")
             .or_else(|_| std::env::var("HOSTNAME"))
             .unwrap_or_else(|_| "unknown-machine".to_string());
-        format!("MACHINE_{}", id)
+        format!("MACHINE_{id}")
     }
 
     pub fn validate_license_flow(&mut self) {
@@ -128,7 +134,7 @@ impl TolariaBridge {
             return true;
         } // Free tier ignores RBAC
           // Fetch Admin MDM RBAC config
-        let allowed_agents = vec!["corporate-strategist", "academic-researcher"];
+        let allowed_agents = ["corporate-strategist", "academic-researcher"];
         allowed_agents.contains(&agent_id)
     }
 }

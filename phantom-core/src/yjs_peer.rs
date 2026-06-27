@@ -172,10 +172,10 @@ impl DocSegment {
     }
 
     pub fn apply_update(&self, update: &[u8]) -> Result<(), String> {
-        let u = yrs::Update::decode_v1(update).map_err(|e| format!("Decode error: {:?}", e))?;
+        let u = yrs::Update::decode_v1(update).map_err(|e| format!("Decode error: {e:?}"))?;
         let mut txn = self.doc.transact_mut();
         txn.apply_update(u)
-            .map_err(|e| format!("Apply error: {:?}", e))?;
+            .map_err(|e| format!("Apply error: {e:?}"))?;
         Ok(())
     }
 }
@@ -447,7 +447,7 @@ impl YjsPeer {
         self.set_awareness("thinking...", p, None, "auto").await;
     }
     pub async fn broadcast_writing(&self, sec: &str, p: f32) {
-        self.set_awareness(&format!("writing {}...", sec), p, Some(sec), "auto")
+        self.set_awareness(&format!("writing {sec}..."), p, Some(sec), "auto")
             .await;
     }
     pub async fn broadcast_done(&self) {

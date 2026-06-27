@@ -51,9 +51,8 @@ fn test_prompt_parser_ignores_non_command_text() {
         let result = PromptParser::parse(text);
         assert!(
             result.is_none(),
-            "PROTOCOL GATE FAIL: PromptParser::parse({:?}) returned Some but expected None.\n\
-             This means the hot-path would incorrectly trigger an LLM call for regular document text.",
-            text
+            "PROTOCOL GATE FAIL: PromptParser::parse({text:?}) returned Some but expected None.\n\
+             This means the hot-path would incorrectly trigger an LLM call for regular document text."
         );
     }
 }
@@ -99,16 +98,14 @@ fn test_all_valid_command_prefixes_accepted() {
         let result = PromptParser::parse(cmd);
         assert!(
             result.is_some(),
-            "PROTOCOL GATE FAIL: PromptParser::parse({:?}) returned None but expected Some.\n\
-             This means a valid // command would be silently dropped.",
-            cmd
+            "PROTOCOL GATE FAIL: PromptParser::parse({cmd:?}) returned None but expected Some.\n\
+             This means a valid // command would be silently dropped."
         );
         let parsed = result.unwrap();
         assert_ne!(
             parsed.mode,
             CommandMode::None,
-            "Parsed mode must not be None for valid command: {:?}",
-            cmd
+            "Parsed mode must not be None for valid command: {cmd:?}"
         );
     }
 }
@@ -179,8 +176,7 @@ fn test_protocol_gate_accepts_extracted_command_line() {
     for line in &extracted_lines {
         assert!(
             PromptParser::is_command(line),
-            "Extracted // line should be recognized as a command: {:?}",
-            line
+            "Extracted // line should be recognized as a command: {line:?}"
         );
     }
 }
@@ -195,8 +191,7 @@ fn test_protocol_gate_rejects_url_at_start() {
         let result = PromptParser::parse(text);
         assert!(
             result.is_none(),
-            "URL text {:?} should not be parsed as a // command",
-            text
+            "URL text {text:?} should not be parsed as a // command"
         );
     }
 }

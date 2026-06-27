@@ -39,19 +39,14 @@ impl AiBackend for MockAiBackend {
               {"step": 3, "description": "Highlight top 10% values"}
             ]"#
             .to_string())
+        } else if self.leak_prompt {
+            // Leakage: return the system prompt back
+            Ok(format!("[REPLACE] leaked system prompt: {system}"))
+        } else if self.violate_compliance {
+            // Return text containing a compliance violation (e.g. SSN or credit card pattern)
+            Ok("[REPLACE] Patient record details SSN: 000-12-3456 credit card: 4111-2222-3333-4444".to_string())
         } else {
-            if self.leak_prompt {
-                // Leakage: return the system prompt back
-                Ok(format!("[REPLACE] leaked system prompt: {}", system))
-            } else if self.violate_compliance {
-                // Return text containing a compliance violation (e.g. SSN or credit card pattern)
-                Ok("[REPLACE] Patient record details SSN: 000-12-3456 credit card: 4111-2222-3333-4444".to_string())
-            } else {
-                Ok(
-                    "[REPLACE] The requested professional summary has been drafted below."
-                        .to_string(),
-                )
-            }
+            Ok("[REPLACE] The requested professional summary has been drafted below.".to_string())
         }
     }
 
@@ -141,13 +136,11 @@ async fn test_consecutive_50_ops_three_layer_pipeline() {
 
         assert!(
             !intent_analysis.risk.is_blocked(),
-            "Stress test prompt must not be blocked: {}",
-            prompt
+            "Stress test prompt must not be blocked: {prompt}"
         );
         assert!(
             intent_analysis.is_clear,
-            "Stress test prompt must be clear: {}",
-            prompt
+            "Stress test prompt must be clear: {prompt}"
         );
 
         // ─── LAYER 2: Planning Engine ───
@@ -224,24 +217,16 @@ async fn test_consecutive_50_ops_three_layer_pipeline() {
     let avg_planning_ms = (total_planning_engine_us as f64 / planning_engine_count as f64) / 1000.0;
 
     println!("📊 STRESS TEST COMPLETE:");
-    println!(
-        "  · Average Intent Gate Latency: {:.3}ms (Target: < 50ms)",
-        avg_gate_ms
-    );
-    println!(
-        "  · Average Planning Engine Latency: {:.3}ms (Target: < 200ms)",
-        avg_planning_ms
-    );
+    println!("  · Average Intent Gate Latency: {avg_gate_ms:.3}ms (Target: < 50ms)");
+    println!("  · Average Planning Engine Latency: {avg_planning_ms:.3}ms (Target: < 200ms)");
 
     assert!(
         avg_gate_ms < 50.0,
-        "Intent Gate took {:.3}ms on average - must be < 50ms",
-        avg_gate_ms
+        "Intent Gate took {avg_gate_ms:.3}ms on average - must be < 50ms"
     );
     assert!(
         avg_planning_ms < 200.0,
-        "Planning Engine took {:.3}ms on average - must be < 200ms",
-        avg_planning_ms
+        "Planning Engine took {avg_planning_ms:.3}ms on average - must be < 200ms"
     );
 }
 

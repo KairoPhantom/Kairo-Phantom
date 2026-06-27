@@ -246,8 +246,7 @@ async fn main() {
         }
 
         println!(
-            "{:<8} {:<14.3} {:<12.3} {:<14.3} {:<10.4} {}",
-            session, fmt_score, tone_score, len_score, composite, learned
+            "{session:<8} {fmt_score:<14.3} {tone_score:<12.3} {len_score:<14.3} {composite:<10.4} {learned}"
         );
 
         total_composite += composite;
@@ -258,13 +257,10 @@ async fn main() {
 
     println!("{}", "-".repeat(70));
     println!();
-    println!(
-        "Final Average Composite Score (30 sessions): {:.4}",
-        final_avg
-    );
+    println!("Final Average Composite Score (30 sessions): {final_avg:.4}");
 
     match first_learned_session {
-        Some(s) => println!("Memory converged to bullet preference at session {}", s),
+        Some(s) => println!("Memory converged to bullet preference at session {s}"),
         None => println!("⚠  Memory never converged — check recall/distil pipeline"),
     }
     println!();
@@ -272,15 +268,11 @@ async fn main() {
     if final_avg >= 0.95 {
         println!("✅ TARGET ACHIEVED: Kairo Phantom memory intelligence is production-ready.");
     } else if final_avg >= 0.90 {
-        println!(
-            "🟡 NEAR TARGET ({:.4}): One more tuning pass should push past 0.95.",
-            final_avg
-        );
+        println!("🟡 NEAR TARGET ({final_avg:.4}): One more tuning pass should push past 0.95.");
         println!("   Hint: check Alaya decay rate; early corrections may be forgotten.");
     } else {
         println!(
-            "❌ TARGET NOT MET ({:.4}): recall_contextualized may be returning empty results.",
-            final_avg
+            "❌ TARGET NOT MET ({final_avg:.4}): recall_contextualized may be returning empty results."
         );
         println!(
             "   Debug: add eprintln! inside simulate_llm to verify memory_context is populated."

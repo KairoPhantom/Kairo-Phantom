@@ -63,10 +63,10 @@ impl LanSync {
         let hostname = std::env::var("COMPUTERNAME")
             .or_else(|_| std::env::var("HOSTNAME"))
             .unwrap_or_else(|_| "kairo-node".into());
-        let announce = format!("KAIRO_DISCOVER:{}", hostname);
+        let announce = format!("KAIRO_DISCOVER:{hostname}");
         let _ = sock.send_to(
             announce.as_bytes(),
-            format!("255.255.255.255:{}", DISCOVERY_PORT),
+            format!("255.255.255.255:{DISCOVERY_PORT}"),
         );
 
         // Listen for responses
@@ -99,13 +99,13 @@ impl LanSync {
         // UDP discovery responder
         let hn = hostname.clone();
         std::thread::spawn(move || {
-            if let Ok(sock) = UdpSocket::bind(format!("0.0.0.0:{}", DISCOVERY_PORT)) {
+            if let Ok(sock) = UdpSocket::bind(format!("0.0.0.0:{DISCOVERY_PORT}")) {
                 let mut buf = [0u8; 512];
                 loop {
                     if let Ok((n, src)) = sock.recv_from(&mut buf) {
                         let msg = String::from_utf8_lossy(&buf[..n]);
                         if msg.starts_with("KAIRO_DISCOVER:") {
-                            let resp = format!("KAIRO_PEER:{}:{}", hn, entry_count);
+                            let resp = format!("KAIRO_PEER:{hn}:{entry_count}");
                             let _ = sock.send_to(resp.as_bytes(), src);
                         }
                     }
@@ -114,7 +114,7 @@ impl LanSync {
         });
 
         // TCP sync server
-        let listener = TcpListener::bind(format!("0.0.0.0:{}", SYNC_PORT))?;
+        let listener = TcpListener::bind(format!("0.0.0.0:{SYNC_PORT}"))?;
         tracing::info!("🌐 LAN sync server listening on :{}", SYNC_PORT);
         for stream in listener.incoming().flatten() {
             let db = db_path.clone();
@@ -140,7 +140,7 @@ impl LanSync {
             return Ok(0);
         }
         let packet: SyncPacket = bincode::deserialize(&data)
-            .map_err(|e| anyhow::anyhow!("Deserialization failed: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Deserialization failed: {e}"))?;
 
         if packet.magic != MAGIC {
             return Ok(0);
@@ -272,10 +272,10 @@ pub async fn run_lan_sync_command(args: &[String]) -> Result<()> {
                 return Ok(());
             }
             let n = sync.pull_from_peer(peer)?;
-            println!("✅ Merged {} new preference entries from {}", n, peer);
+            println!("✅ Merged {n} new preference entries from {peer}");
         }
         "serve" => {
-            println!("🌐 Starting LAN sync server on port {}...", SYNC_PORT);
+            println!("🌐 Starting LAN sync server on port {SYNC_PORT}...");
             sync.start_server()?;
         }
         _ => println!("Usage: kairo memory sync <discover|pull <peer>|serve>"),

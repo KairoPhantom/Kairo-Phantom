@@ -54,10 +54,10 @@ impl IntegrationAdapter for NotionAdapter {
         match action {
             "append_block" => {
                 // Mock Notion API call to append block
-                println!("Notion: Appending block with data: {}", data);
+                println!("Notion: Appending block with data: {data}");
                 Ok(())
             }
-            _ => Err(anyhow!("Unsupported action: {}", action)),
+            _ => Err(anyhow!("Unsupported action: {action}")),
         }
     }
 }

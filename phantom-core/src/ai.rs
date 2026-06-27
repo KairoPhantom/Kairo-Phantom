@@ -295,8 +295,7 @@ pub fn build_single_backend(config: &ModelConfig) -> Result<Arc<dyn AiBackend>> 
             ))
         }
         unknown => anyhow::bail!(
-            "Unknown AI provider: '{}'. Supported: ollama, openai, nim, anthropic, gemini",
-            unknown
+            "Unknown AI provider: '{unknown}'. Supported: ollama, openai, nim, anthropic, gemini"
         ),
     };
     Ok(inner)
@@ -398,7 +397,7 @@ impl OpenAiBackend {
             base_url
         } else {
             let trimmed = base_url.trim_end_matches('/');
-            format!("{}/chat/completions", trimmed)
+            format!("{trimmed}/chat/completions")
         };
         OpenAiBackend {
             client,
@@ -438,7 +437,7 @@ impl AiBackend for OpenAiBackend {
         let status = resp.status();
         let body = resp.text().await?;
         if !status.is_success() {
-            anyhow::bail!("OpenAI error {}: {}", status, body);
+            anyhow::bail!("OpenAI error {status}: {body}");
         }
 
         let parsed: OpenAiResponse =
