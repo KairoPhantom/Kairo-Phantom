@@ -138,3 +138,5 @@ pub mod app_watcher; // Win32 foreground window polling → AppChangedEvent
 // Implementation modules (cua_gate, cua_executor, cua_planner, config) are gated
 // behind #[cfg(feature = "cua")] — default builds have zero CUA code.
 pub mod cua;
+
+pub mod monitor;

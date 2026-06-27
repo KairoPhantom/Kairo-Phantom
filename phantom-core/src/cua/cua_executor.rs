@@ -155,8 +155,7 @@ fn execute_enigo(action: &CuaAction, ctx: &CuaContext) -> Result<(), ExecutorErr
         CuaAction::MouseClick { x, y, .. }
         | CuaAction::MouseDoubleClick { x, y, .. }
         | CuaAction::MouseMove { x, y } => {
-            let scaled_x = (*x as f32 * ctx.dpi_scale) as i32;
-            let scaled_y = (*y as f32 * ctx.dpi_scale) as i32;
+            let (scaled_x, scaled_y) = scale_to_physical(ctx, *x, *y);
             if let Ok(mut guard) = LAST_MOUSE_MOVE.lock() {
                 *guard = Some((scaled_x, scaled_y));
             }
@@ -178,8 +177,7 @@ fn execute_enigo(action: &CuaAction, ctx: &CuaContext) -> Result<(), ExecutorErr
     match action {
         CuaAction::MouseClick { x, y, button, .. } => {
             // Scale logical coordinates to physical pixels
-            let scaled_x = (*x as f32 * ctx.dpi_scale) as i32;
-            let scaled_y = (*y as f32 * ctx.dpi_scale) as i32;
+            let (scaled_x, scaled_y) = scale_to_physical(ctx, *x, *y);
 
             enigo
                 .move_mouse(scaled_x, scaled_y, Coordinate::Abs)
@@ -199,8 +197,7 @@ fn execute_enigo(action: &CuaAction, ctx: &CuaContext) -> Result<(), ExecutorErr
         }
 
         CuaAction::MouseDoubleClick { x, y, button } => {
-            let scaled_x = (*x as f32 * ctx.dpi_scale) as i32;
-            let scaled_y = (*y as f32 * ctx.dpi_scale) as i32;
+            let (scaled_x, scaled_y) = scale_to_physical(ctx, *x, *y);
 
             enigo
                 .move_mouse(scaled_x, scaled_y, Coordinate::Abs)
@@ -222,8 +219,7 @@ fn execute_enigo(action: &CuaAction, ctx: &CuaContext) -> Result<(), ExecutorErr
         }
 
         CuaAction::MouseMove { x, y } => {
-            let scaled_x = (*x as f32 * ctx.dpi_scale) as i32;
-            let scaled_y = (*y as f32 * ctx.dpi_scale) as i32;
+            let (scaled_x, scaled_y) = scale_to_physical(ctx, *x, *y);
             enigo
                 .move_mouse(scaled_x, scaled_y, Coordinate::Abs)
                 .map_err(|e| ExecutorError::EnigoAction(e.to_string()))?;
@@ -610,3 +606,24 @@ async fn audit_log(
 
 // Needed import for scroll axis — enigo 0.2 uses Axis enum
 use enigo::Axis;
+
+/// Map a planner logical coordinate to a physical virtual-desktop pixel.
+/// On Windows this routes through the monitor under the active window
+/// (per-monitor origin + DPI, with dead-space clamping). On other platforms it
+/// preserves the legacy single global `dpi_scale` behaviour until per-platform
+/// enumeration lands.
+fn scale_to_physical(ctx: &CuaContext, x: i32, y: i32) -> (i32, i32) {
+    #[cfg(target_os = "windows")]
+    {
+        let layout = crate::platform::enumerate_monitors();
+        let center = (
+            (ctx.window_rect.left + ctx.window_rect.right) / 2,
+            (ctx.window_rect.top + ctx.window_rect.bottom) / 2,
+        );
+        crate::monitor::resolve_click(&layout, center, ctx.dpi_scale, x, y)
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        ((x as f32 * ctx.dpi_scale) as i32, (y as f32 * ctx.dpi_scale) as i32)
+    }
+}
