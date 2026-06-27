@@ -515,8 +515,7 @@ impl ClipboardImageInjector {
         let script = format!(
             "Add-Type -AssemblyName System.Windows.Forms; \
              [System.Windows.Forms.Clipboard]::SetImage(\
-             [System.Drawing.Image]::FromFile('{}'))",
-            path_str
+             [System.Drawing.Image]::FromFile('{path_str}'))"
         );
         let status = std::process::Command::new("powershell")
             .args(["-NoProfile", "-NonInteractive", "-Command", &script])

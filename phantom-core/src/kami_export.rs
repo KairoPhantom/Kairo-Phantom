@@ -428,7 +428,7 @@ impl KamiExporter {
         {
             use std::process::Command;
             // Use PowerShell here-string to avoid escaping issues with double-quotes inside text.
-            let ps_script = format!("Set-Clipboard -Value @\"\n{}\n\"@", text);
+            let ps_script = format!("Set-Clipboard -Value @\"\n{text}\n\"@");
             let _ = Command::new("powershell")
                 .args(["-NoProfile", "-NonInteractive", "-Command", &ps_script])
                 .output();

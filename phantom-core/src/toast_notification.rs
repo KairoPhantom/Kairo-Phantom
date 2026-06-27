@@ -526,8 +526,7 @@ pub fn start_streaming_indicator(agent_id: &str, timeout_secs: u64) -> Arc<Atomi
                         "Hidden",
                         "-Command",
                         &format!(
-                            "$Host.UI.RawUI.WindowTitle = '{} Kairo Phantom — {} generating…'",
-                            icon, agent_label
+                            "$Host.UI.RawUI.WindowTitle = '{icon} Kairo Phantom — {agent_label} generating…'"
                         ),
                     ])
                     .spawn();

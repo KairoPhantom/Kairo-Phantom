@@ -217,10 +217,7 @@ impl TtsEngine {
         #[cfg(windows)]
         {
             let path_str = wav_path.to_str().unwrap_or("").replace('\\', "/");
-            let ps_cmd = format!(
-                "(New-Object Media.SoundPlayer '{path_str}').PlaySync()",
-                path_str = path_str
-            );
+            let ps_cmd = format!("(New-Object Media.SoundPlayer '{path_str}').PlaySync()");
             let _ = tokio::process::Command::new("powershell")
                 .args(["-NoProfile", "-Command", &ps_cmd])
                 .stdout(std::process::Stdio::null())
@@ -305,8 +302,7 @@ impl TtsEngine {
                 let fallback_cmd = format!(
                     "Add-Type -AssemblyName System.Speech; \
                      $synth = New-Object System.Speech.Synthesis.SpeechSynthesizer; \
-                     $synth.Speak('{}')",
-                    escaped
+                     $synth.Speak('{escaped}')"
                 );
                 let _ = tokio::process::Command::new("powershell")
                     .args(["-NoProfile", "-Command", &fallback_cmd])

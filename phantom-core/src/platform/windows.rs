@@ -620,7 +620,7 @@ impl PlatformCuaDriver for WindowsPlatformCuaDriver {
             Ok(output) if output.status.success() => Ok(()),
             Ok(output) => Err(anyhow::anyhow!(
                 "cua-driver failed: {}",
-                String::from_utf8_lossy(&output.stderr).to_string(),
+                String::from_utf8_lossy(&output.stderr),
             )),
             Err(e) => Err(anyhow::anyhow!(e)),
         }

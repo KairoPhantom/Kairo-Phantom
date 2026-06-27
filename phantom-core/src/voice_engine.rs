@@ -259,12 +259,11 @@ $recognizer = New-Object System.Speech.Recognition.SpeechRecognitionEngine
 $recognizer.SetInputToDefaultAudioDevice()
 $grammar = New-Object System.Speech.Recognition.DictationGrammar
 $recognizer.LoadGrammar($grammar)
-$recognizer.InitialSilenceTimeout = [TimeSpan]::FromSeconds({duration})
-$recognizer.BabbleTimeout = [TimeSpan]::FromSeconds({duration})
-$result = $recognizer.Recognize([TimeSpan]::FromSeconds({duration}))
+$recognizer.InitialSilenceTimeout = [TimeSpan]::FromSeconds({duration_secs})
+$recognizer.BabbleTimeout = [TimeSpan]::FromSeconds({duration_secs})
+$result = $recognizer.Recognize([TimeSpan]::FromSeconds({duration_secs}))
 if ($result) {{ $result.Text }} else {{ "" }}
-"#,
-                duration = duration_secs
+"#
             );
 
             // Alternative: use ffmpeg if available (better quality)

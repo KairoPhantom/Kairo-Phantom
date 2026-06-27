@@ -241,7 +241,7 @@ impl AppWatcher {
                     if let Some(home) = dirs::home_dir() {
                         let dir = home.join(".kairo-phantom").join("workflows");
                         let _ = std::fs::create_dir_all(&dir);
-                        let path = dir.join(format!("{}.toml", name));
+                        let path = dir.join(format!("{name}.toml"));
 
                         #[derive(serde::Serialize)]
                         struct TomlWorkflow {

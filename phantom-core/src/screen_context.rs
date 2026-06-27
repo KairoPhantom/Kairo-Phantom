@@ -148,7 +148,7 @@ impl ScreenContextEngine {
             let height = rect.bottom - rect.top;
 
             if width <= 0 || height <= 0 {
-                bail!("Invalid window dimensions: {}x{}", width, height);
+                bail!("Invalid window dimensions: {width}x{height}");
             }
 
             let hdc_window = GetDC(hwnd);
