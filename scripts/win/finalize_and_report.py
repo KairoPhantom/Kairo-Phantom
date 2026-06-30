@@ -20,6 +20,19 @@ def generate_report():
     result_files = glob.glob(os.path.join(results_dir, "*_results.json"))
     if not result_files:
         print(f"Error: No *_results.json files found in {results_dir}")
+        # Write a minimal report so the downstream PowerShell step can read it
+        # instead of crashing on a missing file.
+        master_report_file = os.path.join(results_dir, "MASTER_GAUNTLET_REPORT.json")
+        with open(master_report_file, 'w') as f:
+            json.dump({
+                "total_scenarios": 0,
+                "passed": 0,
+                "failed": 0,
+                "first_attempt_pass_rate": 0,
+                "system_prompt_leakage_events": 0,
+                "production_ready": False,
+                "components": {},
+            }, f, indent=2)
         return
 
     total_scenarios = 0
