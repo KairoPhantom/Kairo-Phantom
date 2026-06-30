@@ -1,3 +1,4 @@
+pub use phantom_core::monitor;
 mod ai;
 mod api;
 mod command_protocol;
