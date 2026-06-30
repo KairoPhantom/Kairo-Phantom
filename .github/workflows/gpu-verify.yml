@@ -411,7 +411,8 @@ jobs:
           failed = []
           for job, info in needs.items():
               if info.get("result") != "success":
-                  failed.append(f"{job}: {info.get(\"result\")}")
+                  result = info.get("result") or "unknown"
+                  failed.append(f"{job}: {result}")
           if failed:
               print("❌ GPU verification jobs did not succeed:")
               for f in failed:
