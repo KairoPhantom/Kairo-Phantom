@@ -624,6 +624,9 @@ fn scale_to_physical(ctx: &CuaContext, x: i32, y: i32) -> (i32, i32) {
     }
     #[cfg(not(target_os = "windows"))]
     {
-        ((x as f32 * ctx.dpi_scale) as i32, (y as f32 * ctx.dpi_scale) as i32)
+        (
+            (x as f32 * ctx.dpi_scale) as i32,
+            (y as f32 * ctx.dpi_scale) as i32,
+        )
     }
 }
