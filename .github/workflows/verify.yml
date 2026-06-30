@@ -119,9 +119,11 @@ jobs:
           fetch-depth: 0
 
       - name: Install gitleaks (license-free CLI)
-        uses: taiki-e/install-action@682e7d9e49c5e653d371fc6adbda67653461378a # v2
-        with:
-          tool: gitleaks@8.21.2
+        run: |
+          GITLEAKS_VERSION=8.21.2
+          curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+            | tar xz -C /usr/local/bin gitleaks
+          gitleaks version
 
       - name: Run gitleaks (blocking)
         run: gitleaks dir --config .gitleaks.toml --no-banner --redact --exit-code 1 .
@@ -354,6 +356,7 @@ jobs:
         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: "1.88.0"
+          components: clippy
 
       - name: Install cargo-deny (advisory + license check — reads deny.toml)
         uses: taiki-e/install-action@682e7d9e49c5e653d371fc6adbda67653461378a # v2
@@ -459,7 +462,8 @@ jobs:
           failed = []
           for job, info in needs.items():
               if info.get("result") != "success":
-                  failed.append(f"{job}: {info.get(\"result\")}")
+                  result = info.get("result") or "unknown"
+                  failed.append(f"{job}: {result}")
           if failed:
               print("❌ Required jobs did not succeed:")
               for f in failed:
