@@ -212,23 +212,17 @@ impl MacOsAccessibilityReader {
 #[cfg(target_os = "macos")]
 impl AccessibilityReader for MacOsAccessibilityReader {
     fn get_focused_text(&self) -> Result<String> {
-        use macos_accessibility_client::accessibility::{
-            application::Application, element::AXUIElement,
-        };
-
-        let app =
-            Application::frontmost().ok_or_else(|| anyhow!("No frontmost application found"))?;
-
-        let focused_element = app
-            .focused_element()
-            .ok_or_else(|| anyhow!("No focused element found in frontmost app"))?;
-
-        let text = focused_element
-            .value()
-            .or_else(|| focused_element.title())
-            .ok_or_else(|| anyhow!("Failed to extract text from focused AXUIElement"))?;
-
-        Ok(text)
+        // macos-accessibility-client 0.0.2 only exposes application_is_trusted_with_prompt();
+        // use AppleScript to read the frontmost app's selected text as a fallback.
+        let output = std::process::Command::new("osascript")
+            .args(["-e", "tell application \"System Events\" to get value of UI element 1 of text area 1 of window 1 of (first process whose frontmost is true)"])
+            .output();
+        match output {
+            Ok(o) if o.status.success() => {
+                Ok(String::from_utf8_lossy(&o.stdout).trim().to_string())
+            }
+            _ => Err(anyhow!("Could not read focused text via AppleScript")),
+        }
     }
 
     fn get_clipboard_text(&self) -> Result<String> {
@@ -300,6 +294,94 @@ impl PlatformInjector for MacOsPlatformInjector {
     fn select_backward(&self, _count: usize) {}
     fn focus_window(&self, _hwnd: isize) -> bool {
         false
+    }
+    fn inject_replace_line(&self) {
+        // macOS: Cmd+Left (Home) + Shift+Cmd+Right (End) + Cmd+V
+        if let Some(pid) = macos_impl::get_focused_pid() {
+            let source = core_graphics::event_source::CGEventSource::new(
+                core_graphics::event_source::CGEventSourceStateID::HIDSystemState,
+            )
+            .ok();
+            if let Some(source) = source {
+                // Cmd+Left
+                let mut home_down = core_graphics::event::CGEvent::new_keyboard_event(
+                    source.clone(),
+                    0x7B,
+                    true,
+                )
+                .ok();
+                if let Some(e) = home_down.as_mut() {
+                    e.set_flags(core_graphics::event::CGEventFlags::CGEventFlagCommand);
+                    e.post_to_pid(pid);
+                }
+                let mut home_up = core_graphics::event::CGEvent::new_keyboard_event(
+                    source.clone(),
+                    0x7B,
+                    false,
+                )
+                .ok();
+                if let Some(e) = home_up.as_mut() {
+                    e.set_flags(core_graphics::event::CGEventFlags::CGEventFlagCommand);
+                    e.post_to_pid(pid);
+                }
+                std::thread::sleep(std::time::Duration::from_millis(30));
+                // Shift+Cmd+Right
+                let mut end_down = core_graphics::event::CGEvent::new_keyboard_event(
+                    source.clone(),
+                    0x7C,
+                    true,
+                )
+                .ok();
+                if let Some(e) = end_down.as_mut() {
+                    e.set_flags(
+                        core_graphics::event::CGEventFlags::CGEventFlagCommand
+                            | core_graphics::event::CGEventFlags::CGEventFlagShift,
+                    );
+                    e.post_to_pid(pid);
+                }
+                let mut end_up = core_graphics::event::CGEvent::new_keyboard_event(
+                    source.clone(),
+                    0x7C,
+                    false,
+                )
+                .ok();
+                if let Some(e) = end_up.as_mut() {
+                    e.set_flags(
+                        core_graphics::event::CGEventFlags::CGEventFlagCommand
+                            | core_graphics::event::CGEventFlags::CGEventFlagShift,
+                    );
+                    e.post_to_pid(pid);
+                }
+                std::thread::sleep(std::time::Duration::from_millis(30));
+                // Cmd+V
+                let mut v_down = core_graphics::event::CGEvent::new_keyboard_event(
+                    source.clone(),
+                    0x09,
+                    true,
+                )
+                .ok();
+                if let Some(e) = v_down.as_mut() {
+                    e.set_flags(core_graphics::event::CGEventFlags::CGEventFlagCommand);
+                    e.post_to_pid(pid);
+                }
+                let mut v_up = core_graphics::event::CGEvent::new_keyboard_event(
+                    source,
+                    0x09,
+                    false,
+                )
+                .ok();
+                if let Some(e) = v_up.as_mut() {
+                    e.set_flags(core_graphics::event::CGEventFlags::CGEventFlagCommand);
+                    e.post_to_pid(pid);
+                }
+            }
+        }
+    }
+    fn erase_prompt(&self, count: usize) {
+        if count == 0 {
+            return;
+        }
+        macos_impl::erase_chars(count);
     }
 }
 
