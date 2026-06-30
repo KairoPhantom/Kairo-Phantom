@@ -117,7 +117,7 @@ pub mod linux;
 
 #[cfg(target_os = "windows")]
 mod win_monitors {
-    use phantom_core::monitor::{MonitorInfo, MonitorLayout};
+    use crate::monitor::{MonitorInfo, MonitorLayout};
     use std::cell::RefCell;
     use windows::Win32::Foundation::{BOOL, LPARAM, RECT, TRUE};
     use windows::Win32::Graphics::Gdi::{
@@ -175,6 +175,6 @@ mod win_monitors {
 /// Enumerate connected monitors (origin, size, per-monitor effective DPI scale)
 /// via `EnumDisplayMonitors` + `GetMonitorInfoW` + `GetDpiForMonitor`.
 #[cfg(target_os = "windows")]
-pub fn enumerate_monitors() -> phantom_core::monitor::MonitorLayout {
+pub fn enumerate_monitors() -> crate::monitor::MonitorLayout {
     win_monitors::enumerate()
 }
