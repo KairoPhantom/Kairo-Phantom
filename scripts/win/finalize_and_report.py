@@ -45,10 +45,10 @@ def generate_report():
     for rf in sorted(result_files):
         with open(rf, 'r') as f:
             data = json.load(f)
-        agent = data.get("agent_id", os.path.basename(rf).replace("_results.json", ""))
+        agent = data.get("agent", data.get("agent_id", os.path.basename(rf).replace("_results.json", "")))
         passed = data.get("passed", 0)
         failed = data.get("failed", 0)
-        total = data.get("total_scenarios", passed + failed)
+        total = data.get("total_scenarios", data.get("totalScenarios", passed + failed))
         first_attempt = data.get("first_attempt_passes", passed)
         leakage = data.get("system_prompt_leakage_events", 0)
         total_scenarios += total

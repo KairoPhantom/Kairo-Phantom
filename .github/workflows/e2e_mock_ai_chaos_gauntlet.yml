@@ -25,6 +25,8 @@ permissions:
 env:
   MANIFEST: roadmaptoshow/output/kairo_gauntlet_graph.json
   KAIRO_LOG_LEVEL: info
+  # P4: Set at workflow level so all steps can see it (including Ollama install gate)
+  KAIRO_CI_STUB_MODE: "1"
 
 jobs:
   # ===================================================================
@@ -96,7 +98,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install Python dependencies
-        run: pip install python-docx openpyxl pyautogui pywinauto playwright requests
+        run: pip install python-docx openpyxl pyautogui pywinauto playwright requests pyscreeze Pillow
 
       - name: Generate all test fixtures
         shell: pwsh

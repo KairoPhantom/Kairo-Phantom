@@ -72,6 +72,13 @@ pub struct AskRequest {
     pub prompt: String,
 }
 
+#[derive(Deserialize)]
+pub struct CompleteRequest {
+    pub prompt: String,
+    #[serde(default)]
+    pub context: String,
+}
+
 #[derive(Serialize)]
 pub struct AskResponse {
     pub response: String,
@@ -262,6 +269,48 @@ async fn ask(
     Ok(Json(AskResponse {
         response: clean_resp,
     }))
+}
+
+/// POST /api/complete — CI orchestrator endpoint
+/// Called by kairo_test_utils.call_kairo() in stub mode.
+/// Uses the same AI backend pipeline as /ask but accepts {prompt, context}
+/// and returns {text: ...} without injecting keystrokes.
+async fn complete(
+    State(state): State<ApiState>,
+    Json(req): Json<CompleteRequest>,
+) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+    // Build a document context from the request
+    let doc_ctx = DocumentContext::from_raw_text(
+        &req.prompt,
+        &req.context,
+        crate::document_context::DocKind::PlainText,
+    );
+
+    let (mode, _prompt) = CommandMode::from_prompt(&doc_ctx.prompt_text);
+    let (target_backend, profile) = state.swarm_engine.route(&doc_ctx, &mode).await;
+
+    let api_system = format!(
+        "{} You are a helpful AI assistant. Answer the user's request directly and completely. \
+         Output only the requested content — no meta-commentary, no preamble.",
+        profile.system_directive
+    );
+
+    let resp = target_backend
+        .complete(&api_system, &req.prompt)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    let clean_resp = resp
+        .strip_prefix("[REPLACE]")
+        .unwrap_or(&resp)
+        .trim()
+        .to_string();
+
+    Ok(Json(serde_json::json!({
+        "text": clean_resp,
+        "response": clean_resp,
+        "content": clean_resp,
+    })))
 }
 
 /// GET /app — MCP Tool: detect app
@@ -542,6 +591,7 @@ pub async fn start_api_server(state: ApiState) {
         .route("/context", get(get_context))
         .route("/inject", post(inject))
         .route("/ask", post(ask))
+        .route("/api/complete", post(complete))
         .route("/app", get(get_app))
         .route("/agent", post(set_agent))
         .route("/generate_image", post(generate_image))

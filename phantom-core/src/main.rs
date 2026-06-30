@@ -779,7 +779,18 @@ async fn async_main() -> Result<()> {
         config.model.model_name.as_deref().unwrap_or("default")
     );
 
-    if std::env::var("KAIRO_OFFLINE").unwrap_or_default() == "1" {
+    // ── --mock-ai flag: use deterministic mock backend for CI stub mode ──
+    // When --mock-ai is passed, skip Ollama health checks and use a local
+    // deterministic MockAiBackend instead of the real AI backend chain.
+    // The full SafeAiBackend sentinel/sanitizer pipeline still runs.
+    let mock_ai = args.iter().any(|a| a == "--mock-ai");
+    if mock_ai {
+        info!("🤖 --mock-ai flag detected: using MockAiBackend (CI stub mode)");
+    }
+
+    if mock_ai {
+        // Skip offline bootstrap and Ollama health check in mock mode
+    } else if std::env::var("KAIRO_OFFLINE").unwrap_or_default() == "1" {
         let is_running = ollama_bootstrap::OllamaBootstrap::is_running().await;
         let configured_model = config
             .model
@@ -814,8 +825,8 @@ async fn async_main() -> Result<()> {
         }
     }
 
-    // Phase 3: Ollama Health Check
-    if config.model.provider == "ollama" {
+    // Phase 3: Ollama Health Check (skip in mock-ai mode)
+    if !mock_ai && config.model.provider == "ollama" {
         let base_url = config
             .model
             .base_url
@@ -835,8 +846,12 @@ async fn async_main() -> Result<()> {
         }
     }
 
-    // Initialize Core Components
-    let fallback_backend = build_backend(&config.model)?;
+    // Initialize Core Components — use mock backend in --mock-ai mode
+    let fallback_backend = if mock_ai {
+        crate::ai::build_mock_backend()
+    } else {
+        build_backend(&config.model)?
+    };
 
     let skill_factory = std::sync::Arc::new(crate::skill_factory::SkillFactory::new(
         fallback_backend.clone(),

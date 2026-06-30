@@ -261,7 +261,7 @@ impl ConfidenceEngine {
     /// Setup the floating Tauri window for the confidence band
     #[cfg(feature = "tauri")]
     pub fn show_confidence_band(app_handle: &tauri::AppHandle, score: &ConfidenceScore) {
-        use tauri::Manager;
+        use tauri::{Emitter, Manager};
         if let Some(window) = app_handle.get_webview_window("confidence_band") {
             let _ = window.emit("confidence_update", score);
             let _ = window.show();

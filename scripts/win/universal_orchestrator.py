@@ -334,6 +334,23 @@ class ScenarioOrchestrator:
             if len(response_lower) < 10:
                 return False, f"{scenario_id}: AI response too short ({len(response_lower)} chars)"
 
+            # P6: Reject prompt-echo responses (fake green prevention).
+            # The response must NOT be a near-verbatim copy of the prompt —
+            # it must be a real generated answer from the daemon/mock pipeline.
+            prompt_lower = prompt.lower().strip()
+            # Check for high overlap between prompt and response
+            prompt_words = set(prompt_lower.split())
+            response_words = set(response_lower.split())
+            if prompt_words and response_words:
+                overlap = len(prompt_words & response_words) / len(prompt_words)
+                # If >80% of prompt words appear in the response AND the response
+                # is shorter than 2x the prompt, it's likely an echo, not a real answer
+                if overlap > 0.80 and len(response_lower) < len(prompt_lower) * 2:
+                    return False, (
+                        f"{scenario_id}: AI response appears to be prompt echo "
+                        f"(overlap={overlap:.0%}), not a real generated response"
+                    )
+
             # Domain-specific assertions (same as passing domains do)
             scenario_lower = scenario_name.lower()
             if any(kw in scenario_lower for kw in ["summar", "rewrite", "format", "draft", "create", "generate", "explain", "convert", "extract", "analyze"]):
