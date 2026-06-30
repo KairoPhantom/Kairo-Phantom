@@ -82,9 +82,9 @@ mod tests {
 
     #[test]
     fn test_macos_ghost_typing_compiles() {
-        /// macOS CGEventPostToPid code is behind #[cfg(target_os = "macos")]
-        /// This test verifies the code compiles on non-macOS (stub mod)
-        /// On real macOS, it would test actual CGEvent injection.
+        // macOS CGEventPostToPid code is behind #[cfg(target_os = "macos")]
+        // This test verifies the code compiles on non-macOS (stub mod)
+        // On real macOS, it would test actual CGEvent injection.
         #[cfg(target_os = "macos")]
         {
             eprintln!("SKIP: macOS test needs real macOS machine with Accessibility permissions");
