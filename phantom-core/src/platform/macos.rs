@@ -40,10 +40,7 @@ mod macos_impl {
     fn char_to_keycode(c: char) -> Option<(CGKeyCode, CGEventFlags)> {
         match c {
             'a'..='z' => Some(((c as u16) - ('a' as u16), CGEventFlags::empty())),
-            'A'..='Z' => Some((
-                (c as u16) - ('A' as u16),
-                CGEventFlags::CGEventFlagShift,
-            )),
+            'A'..='Z' => Some(((c as u16) - ('A' as u16), CGEventFlags::CGEventFlagShift)),
             ' ' => Some((0x31, CGEventFlags::empty())),
             '\n' => Some((0x24, CGEventFlags::empty())),
             _ => None,
@@ -316,34 +313,25 @@ impl PlatformInjector for MacOsPlatformInjector {
             .ok();
             if let Some(source) = source {
                 // Cmd+Left
-                let mut home_down = core_graphics::event::CGEvent::new_keyboard_event(
-                    source.clone(),
-                    0x7B,
-                    true,
-                )
-                .ok();
+                let mut home_down =
+                    core_graphics::event::CGEvent::new_keyboard_event(source.clone(), 0x7B, true)
+                        .ok();
                 if let Some(e) = home_down.as_mut() {
                     e.set_flags(core_graphics::event::CGEventFlags::CGEventFlagCommand);
                     e.post_to_pid(pid);
                 }
-                let mut home_up = core_graphics::event::CGEvent::new_keyboard_event(
-                    source.clone(),
-                    0x7B,
-                    false,
-                )
-                .ok();
+                let mut home_up =
+                    core_graphics::event::CGEvent::new_keyboard_event(source.clone(), 0x7B, false)
+                        .ok();
                 if let Some(e) = home_up.as_mut() {
                     e.set_flags(core_graphics::event::CGEventFlags::CGEventFlagCommand);
                     e.post_to_pid(pid);
                 }
                 std::thread::sleep(std::time::Duration::from_millis(30));
                 // Shift+Cmd+Right
-                let mut end_down = core_graphics::event::CGEvent::new_keyboard_event(
-                    source.clone(),
-                    0x7C,
-                    true,
-                )
-                .ok();
+                let mut end_down =
+                    core_graphics::event::CGEvent::new_keyboard_event(source.clone(), 0x7C, true)
+                        .ok();
                 if let Some(e) = end_down.as_mut() {
                     e.set_flags(
                         core_graphics::event::CGEventFlags::CGEventFlagCommand
@@ -351,12 +339,9 @@ impl PlatformInjector for MacOsPlatformInjector {
                     );
                     e.post_to_pid(pid);
                 }
-                let mut end_up = core_graphics::event::CGEvent::new_keyboard_event(
-                    source.clone(),
-                    0x7C,
-                    false,
-                )
-                .ok();
+                let mut end_up =
+                    core_graphics::event::CGEvent::new_keyboard_event(source.clone(), 0x7C, false)
+                        .ok();
                 if let Some(e) = end_up.as_mut() {
                     e.set_flags(
                         core_graphics::event::CGEventFlags::CGEventFlagCommand
@@ -366,22 +351,15 @@ impl PlatformInjector for MacOsPlatformInjector {
                 }
                 std::thread::sleep(std::time::Duration::from_millis(30));
                 // Cmd+V
-                let mut v_down = core_graphics::event::CGEvent::new_keyboard_event(
-                    source.clone(),
-                    0x09,
-                    true,
-                )
-                .ok();
+                let mut v_down =
+                    core_graphics::event::CGEvent::new_keyboard_event(source.clone(), 0x09, true)
+                        .ok();
                 if let Some(e) = v_down.as_mut() {
                     e.set_flags(core_graphics::event::CGEventFlags::CGEventFlagCommand);
                     e.post_to_pid(pid);
                 }
-                let mut v_up = core_graphics::event::CGEvent::new_keyboard_event(
-                    source,
-                    0x09,
-                    false,
-                )
-                .ok();
+                let mut v_up =
+                    core_graphics::event::CGEvent::new_keyboard_event(source, 0x09, false).ok();
                 if let Some(e) = v_up.as_mut() {
                     e.set_flags(core_graphics::event::CGEventFlags::CGEventFlagCommand);
                     e.post_to_pid(pid);
