@@ -4,7 +4,15 @@
 use phantom_core::monitor::{MonitorInfo, MonitorLayout};
 
 fn mon(id: &str, x: i32, y: i32, w: i32, h: i32, scale: f64, primary: bool) -> MonitorInfo {
-    MonitorInfo { id: id.to_string(), x, y, width: w, height: h, scale, primary }
+    MonitorInfo {
+        id: id.to_string(),
+        x,
+        y,
+        width: w,
+        height: h,
+        scale,
+        primary,
+    }
 }
 
 fn dual_1080p() -> MonitorLayout {
@@ -39,8 +47,14 @@ fn logical_to_physical_on_secondary_monitor() {
 #[test]
 fn logical_to_physical_applies_per_monitor_scale() {
     let l = mixed_dpi();
-    assert_eq!(l.logical_to_physical("primary", 200.0, 200.0).unwrap(), (300, 300));
-    assert_eq!(l.logical_to_physical("secondary", 200.0, 200.0).unwrap(), (-1720, 200));
+    assert_eq!(
+        l.logical_to_physical("primary", 200.0, 200.0).unwrap(),
+        (300, 300)
+    );
+    assert_eq!(
+        l.logical_to_physical("secondary", 200.0, 200.0).unwrap(),
+        (-1720, 200)
+    );
 }
 
 #[test]
@@ -79,7 +93,9 @@ fn clamp_handles_out_of_bounds_point() {
         mon("small", 0, 1440, 1280, 720, 1.0, false),
     ]);
     let (cx, cy) = l.clamp_to_nearest(5000, 5000);
-    let m = l.monitor_at(cx, cy).expect("clamped point must be on a monitor");
+    let m = l
+        .monitor_at(cx, cy)
+        .expect("clamped point must be on a monitor");
     assert!(cx >= m.x && cx < m.right() && cy >= m.y && cy < m.bottom());
 }
 
@@ -122,7 +138,7 @@ fn resolve_click_uses_active_monitor_origin_and_scale() {
         mon("right", 1920, 0, 3840, 2160, 1.5, false), // 4K @150% to the right
     ]);
     let window_center = (1920 + 1000, 500); // active window on the right monitor
-    // logical (100,100) -> origin 1920 + 100*1.5 = 2070 ; 0 + 150 = 150
+                                            // logical (100,100) -> origin 1920 + 100*1.5 = 2070 ; 0 + 150 = 150
     assert_eq!(resolve_click(&l, window_center, 1.0, 100, 100), (2070, 150));
 }
 
