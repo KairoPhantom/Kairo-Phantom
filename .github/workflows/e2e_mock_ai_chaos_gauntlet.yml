@@ -197,7 +197,7 @@ jobs:
         if: steps.filter.outputs.SKIP != 'true'
         shell: pwsh
         run: |
-          pip install pywinauto pyautogui python-docx openpyxl playwright requests
+          pip install pywinauto pyautogui python-docx openpyxl playwright requests pyscreeze Pillow
           playwright install chromium
 
       - name: Install Rust
@@ -219,8 +219,24 @@ jobs:
         run: cargo build --release
         working-directory: phantom-core
 
-      - name: Install Ollama (local inference, no model pull in CI)
+      - name: Verify built binary location
         if: steps.filter.outputs.SKIP != 'true'
+        shell: pwsh
+        run: |
+          Write-Host "Searching for kairo-phantom.exe..."
+          Get-ChildItem -Path "target\release", "phantom-core\target\release" -Filter "kairo-phantom.exe" -ErrorAction SilentlyContinue |
+            ForEach-Object { Write-Host "Found: $($_.FullName)" }
+
+      - name: Start mock Ollama server
+        if: steps.filter.outputs.SKIP != 'true'
+        shell: pwsh
+        run: |
+          Start-Process -FilePath "python" -ArgumentList "scripts/win/mock_ollama.py" -WindowStyle Hidden
+          Start-Sleep -Seconds 2
+          Write-Host "Mock Ollama started on port 11435"
+
+      - name: Install Ollama (local inference, no model pull in CI)
+        if: ${{ steps.filter.outputs.SKIP != 'true' && env.KAIRO_CI_STUB_MODE != '1' }}
         shell: pwsh
         continue-on-error: true
         timeout-minutes: 4
@@ -241,8 +257,17 @@ jobs:
         shell: pwsh
         timeout-minutes: 2
         run: |
-          $exe = "phantom-core\target\release\kairo-phantom.exe"
-          if (Test-Path $exe) {
+          # Workspace root target/ is where cargo places binaries for workspace members
+          $candidates = @(
+            "target\release\kairo-phantom.exe",
+            "phantom-core\target\release\kairo-phantom.exe"
+          )
+          $exe = $null
+          foreach ($p in $candidates) {
+            if (Test-Path $p) { $exe = $p; break }
+          }
+          if ($exe) {
+            Write-Host "Found Kairo Phantom binary at: $exe"
             $daemon = Start-Process -FilePath $exe `
               -ArgumentList "--daemon", "--mock-ai" `
               -PassThru -WindowStyle Hidden
