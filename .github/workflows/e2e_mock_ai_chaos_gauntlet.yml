@@ -100,6 +100,8 @@ jobs:
 
       - name: Generate all test fixtures
         shell: pwsh
+        env:
+          PYTHONUTF8: "1"
         run: python scripts/setup_fixtures.py
 
       - name: Upload fixtures as artifact
