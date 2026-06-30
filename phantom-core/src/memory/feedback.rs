@@ -96,7 +96,7 @@ pub const ABSTENTION_THRESHOLD: f32 = 0.60;
 pub struct ConfidenceEngine;
 
 impl ConfidenceEngine {
-    // ─── Unified Confidence Interface (Item 20) ───────────────────────────────
+    // ── Unified Confidence Interface (Item 20) ────────────────────────────
 
     /// **The single confidence interface for the entire system.**
     ///
@@ -210,7 +210,7 @@ impl ConfidenceEngine {
         }
     }
 
-    // ─── Calibration (Item 27) ────────────────────────────────────────────────
+    // ── Calibration (Item 27) ─────────────────────────────────────────────
 
     /// Platt-scaling calibration: maps raw [0,1] score to calibrated probability.
     ///
@@ -226,7 +226,7 @@ impl ConfidenceEngine {
         calibrated_score < ABSTENTION_THRESHOLD
     }
 
-    // ─── Legacy compatibility shims ───────────────────────────────────────────
+    // ── Legacy compatibility shims ────────────────────────────────────────
     //
     // These delegate to `unified_confidence` so that existing callers continue
     // to compile without change. They are intentionally kept but marked
@@ -262,14 +262,14 @@ impl ConfidenceEngine {
     #[cfg(feature = "tauri")]
     pub fn show_confidence_band(app_handle: &tauri::AppHandle, score: &ConfidenceScore) {
         use tauri::Manager;
-        if let Some(window) = app_handle.get_window("confidence_band") {
+        if let Some(window) = app_handle.get_webview_window("confidence_band") {
             let _ = window.emit("confidence_update", score);
             let _ = window.show();
         } else {
-            tauri::WindowBuilder::new(
+            tauri::WebviewWindowBuilder::new(
                 app_handle,
                 "confidence_band",
-                tauri::WindowUrl::App("confidence.html".into()),
+                tauri::WebviewUrl::App("confidence.html".into()),
             )
             .inner_size(280.0, 36.0)
             .decorations(false)
@@ -282,7 +282,7 @@ impl ConfidenceEngine {
     }
 }
 
-// ─── Unit Tests ───────────────────────────────────────────────────────────────
+// ── Unit Tests ────────────────────────────────────────────────────────────
 
 #[cfg(test)]
 mod tests {
