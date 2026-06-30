@@ -39,9 +39,9 @@ mod macos_impl {
     /// Map a character to a CGKeyCode and flags.
     fn char_to_keycode(c: char) -> Option<(CGKeyCode, CGEventFlags)> {
         match c {
-            'a'..='z' => Some(((c as u16) - ('a' as u16) + 0x00, CGEventFlags::empty())),
+            'a'..='z' => Some(((c as u16) - ('a' as u16), CGEventFlags::empty())),
             'A'..='Z' => Some((
-                (c as u16) - ('A' as u16) + 0x00,
+                (c as u16) - ('A' as u16),
                 CGEventFlags::CGEventFlagShift,
             )),
             ' ' => Some((0x31, CGEventFlags::empty())),
@@ -182,6 +182,12 @@ pub use macos_impl::*;
 /// macOS-specific injector that wraps all platform capabilities.
 pub struct MacOsInjector;
 
+impl Default for MacOsInjector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MacOsInjector {
     pub fn new() -> Self {
         Self
@@ -202,6 +208,12 @@ impl MacOsInjector {
 
 /// macOS implementation of the AccessibilityReader trait using AXUIElement.
 pub struct MacOsAccessibilityReader;
+
+impl Default for MacOsAccessibilityReader {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl MacOsAccessibilityReader {
     pub fn new() -> Self {
