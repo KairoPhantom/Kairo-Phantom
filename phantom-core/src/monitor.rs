@@ -231,7 +231,10 @@ pub fn resolve_click(
     let (px, py) = match layout.monitor_at(window_center.0, window_center.1) {
         Some(m) => {
             let s = m.safe_scale();
-            (m.x + (x as f64 * s).round() as i32, m.y + (y as f64 * s).round() as i32)
+            (
+                m.x + (x as f64 * s).round() as i32,
+                m.y + (y as f64 * s).round() as i32,
+            )
         }
         None => ((x as f32 * dpi_scale) as i32, (y as f32 * dpi_scale) as i32),
     };
