@@ -168,7 +168,7 @@ uiautomation = "0.25"
 # Advancement 2: macOS background injection
 [target.'cfg(target_os = "macos")'.dependencies]
 core-foundation = "0.10"
-core-graphics = "0.23"
+core-graphics = { version = "0.23", features = ["elcapitan"] }
 macos-accessibility-client = "0.0.2"
 
 
