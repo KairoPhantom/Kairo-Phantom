@@ -112,12 +112,11 @@ impl std::fmt::Display for VlmBridgeError {
             VlmBridgeError::ModelNotDownloaded { progress } => {
                 write!(
                     f,
-                    "VLM model downloading ({:.0}%) — CUA in keyboard-only mode",
-                    progress
+                    "VLM model downloading ({progress:.0}%) — CUA in keyboard-only mode",
                 )
             }
-            VlmBridgeError::IpcError(msg) => write!(f, "VLM bridge IPC error: {}", msg),
-            VlmBridgeError::ParseError(msg) => write!(f, "VLM response parse error: {}", msg),
+            VlmBridgeError::IpcError(msg) => write!(f, "VLM bridge IPC error: {msg}"),
+            VlmBridgeError::ParseError(msg) => write!(f, "VLM response parse error: {msg}"),
             VlmBridgeError::Timeout => write!(f, "VLM inference timed out (60s)"),
         }
     }
@@ -308,7 +307,7 @@ impl VlmBridge {
 
         let timeout = self.timeout;
         let pipe_name = self.pipe_name.clone();
-        let request = format!("{}\n", request_json);
+        let request = format!("{request_json}\n");
 
         // Run pipe communication in a blocking thread to avoid blocking async runtime
         let result = tokio::task::spawn_blocking(move || {
@@ -363,7 +362,7 @@ impl VlmBridge {
             }
         })
         .await
-        .map_err(|e| VlmBridgeError::IpcError(format!("Task join error: {}", e)))?;
+        .map_err(|e| VlmBridgeError::IpcError(format!("Task join error: {e}")))?;
 
         // Apply timeout
         tokio::time::timeout(timeout, async { result })

@@ -33,11 +33,10 @@ impl std::fmt::Display for PlannerError {
             } => {
                 write!(
                     f,
-                    "Cannot plan for '{}': {} — Manual: {}",
-                    goal, reason, manual_instruction
+                    "Cannot plan for '{goal}': {reason} — Manual: {manual_instruction}",
                 )
             }
-            PlannerError::UiaUnavailable(e) => write!(f, "UIA unavailable: {}", e),
+            PlannerError::UiaUnavailable(e) => write!(f, "UIA unavailable: {e}"),
         }
     }
 }
@@ -77,7 +76,7 @@ impl CuaPlanner {
                 actions: template.actions.clone(),
                 source: PlanSource::Template,
                 estimated_risk: template.risk.clone(),
-                description: format!("Using keyboard shortcut sequence for: {}", goal),
+                description: format!("Using keyboard shortcut sequence for: {goal}"),
                 step_descriptions: template.step_descriptions.clone(),
                 step_confidences: vec![1.0; template.step_descriptions.len()],
                 step_sources: vec![
@@ -94,7 +93,7 @@ impl CuaPlanner {
                     actions,
                     source: PlanSource::UIA,
                     estimated_risk: Risk::Low,
-                    description: format!("Located UI element by accessibility name for: {}", goal),
+                    description: format!("Located UI element by accessibility name for: {goal}"),
                     step_descriptions: descs.clone(),
                     step_confidences: vec![0.99; descs.len()],
                     step_sources: vec![super::TargetingSource::UIA; descs.len()],
@@ -112,7 +111,7 @@ impl CuaPlanner {
                 actions,
                 source: PlanSource::Visual,
                 estimated_risk: Risk::Medium,
-                description: format!("Located UI element via VLM visual grounding for: {}", goal),
+                description: format!("Located UI element via VLM visual grounding for: {goal}"),
                 step_descriptions: descs.clone(),
                 step_confidences: vec![confidence; descs.len()],
                 step_sources: vec![super::TargetingSource::VLM; descs.len()],
@@ -125,7 +124,7 @@ impl CuaPlanner {
                 actions,
                 source: PlanSource::Visual,
                 estimated_risk: Risk::Medium,
-                description: format!("Using visual element detection for: {}", goal),
+                description: format!("Using visual element detection for: {goal}"),
                 step_descriptions: descs.clone(),
                 step_confidences: vec![0.70; descs.len()],
                 step_sources: vec![super::TargetingSource::OCR; descs.len()],
@@ -786,7 +785,7 @@ impl CuaPlanner {
                                                 actions.push(CuaAction::KeyboardType {
                                                     text: text.clone(),
                                                 });
-                                                step_descriptions.push(format!("Type: {}", text));
+                                                step_descriptions.push(format!("Type: {text}"));
                                             }
                                         }
                                         "keyboard_shortcut" => {
@@ -810,13 +809,13 @@ impl CuaPlanner {
                                                     shortcut: shortcut.clone(),
                                                 });
                                                 step_descriptions
-                                                    .push(format!("Trigger {:?}", shortcut));
+                                                    .push(format!("Trigger {shortcut:?}"));
                                             }
                                         }
                                         "delay_ms" => {
                                             if let Some(ms) = action_toml.ms {
                                                 actions.push(CuaAction::Delay { ms });
-                                                step_descriptions.push(format!("Wait {}ms", ms));
+                                                step_descriptions.push(format!("Wait {ms}ms"));
                                             }
                                         }
                                         _ => {}

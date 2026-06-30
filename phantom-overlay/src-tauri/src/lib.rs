@@ -31,7 +31,7 @@ async fn trigger_materialize(app: AppHandle) -> Result<String, String> {
         Err(e) => {
             app.emit("phantom:status", "error")
                 .map_err(|e| e.to_string())?;
-            Err(format!("Phantom error: {}", e))
+            Err(format!("Phantom error: {e}"))
         }
     }
 }

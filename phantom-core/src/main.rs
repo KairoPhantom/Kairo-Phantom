@@ -5150,18 +5150,15 @@ Do NOT include any markdown formatting. Output ONLY the GAP instruction or VERIF
 
                             if success {
                                 crate::toast_notification::show_completion_toast(0, "Kairo CUA");
+                            } else if ctx.app_name.to_lowercase().contains("canva") {
+                                info!("📋 CUA failed in Canva, falling back to clipboard copy");
+                                crate::toast_notification::show_error_toast(
+                                    "CUA execution failed — copied to clipboard",
+                                );
                             } else {
-                                if ctx.app_name.to_lowercase().contains("canva") {
-                                    info!("📋 CUA failed in Canva, falling back to clipboard copy");
-                                    crate::toast_notification::show_error_toast(
-                                        "CUA execution failed — copied to clipboard",
-                                    );
-                                } else {
-                                    crate::toast_notification::show_error_toast(&format!(
-                                        "CUA execution failed: {}",
-                                        error_msg
-                                    ));
-                                }
+                                crate::toast_notification::show_error_toast(&format!(
+                                    "CUA execution failed: {error_msg}"
+                                ));
                             }
                         });
                     }

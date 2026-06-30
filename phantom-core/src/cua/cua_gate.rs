@@ -208,26 +208,23 @@ impl std::fmt::Display for CuaGateError {
             CuaGateError::ForbiddenWindow(title) => {
                 write!(
                     f,
-                    "CUA blocked — '{}' is a forbidden window (security policy)",
-                    title
+                    "CUA blocked — '{title}' is a forbidden window (security policy)",
                 )
             }
             CuaGateError::OutOfBounds { x, y } => {
                 write!(
                     f,
-                    "CUA blocked — coordinates ({}, {}) are outside the target window",
-                    x, y
+                    "CUA blocked — coordinates ({x}, {y}) are outside the target window",
                 )
             }
             CuaGateError::RateLimited { current, max } => {
                 write!(
                     f,
-                    "CUA rate limit reached ({}/{} actions/min) — wait and try again",
-                    current, max
+                    "CUA rate limit reached ({current}/{max} actions/min) — wait and try again",
                 )
             }
             CuaGateError::ScreenshotFailed(msg) => {
-                write!(f, "CUA gate: before-screenshot failed: {}", msg)
+                write!(f, "CUA gate: before-screenshot failed: {msg}")
             }
             CuaGateError::VlmUnavailable => {
                 write!(

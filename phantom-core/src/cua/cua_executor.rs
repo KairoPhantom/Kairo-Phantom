@@ -26,11 +26,11 @@ pub enum ExecutorError {
 impl std::fmt::Display for ExecutorError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ExecutorError::EnigoInit(e) => write!(f, "enigo init failed: {}", e),
-            ExecutorError::EnigoAction(e) => write!(f, "enigo action failed: {}", e),
+            ExecutorError::EnigoInit(e) => write!(f, "enigo init failed: {e}"),
+            ExecutorError::EnigoAction(e) => write!(f, "enigo action failed: {e}"),
             ExecutorError::CuaDriverNotFound => write!(f, "cua-driver binary not found"),
-            ExecutorError::CuaDriverFailed(e) => write!(f, "cua-driver failed: {}", e),
-            ExecutorError::VerificationFailed(e) => write!(f, "farscry verification failed: {}", e),
+            ExecutorError::CuaDriverFailed(e) => write!(f, "cua-driver failed: {e}"),
+            ExecutorError::VerificationFailed(e) => write!(f, "farscry verification failed: {e}"),
         }
     }
 }
@@ -422,9 +422,9 @@ async fn verify_action(
                         super::WellKnownShortcut::NextField => "focus moved to next field",
                     },
                     CuaAction::KeyboardCombo { keys } => {
-                        &format!("keyboard combo {:?} executed", keys)
+                        &format!("keyboard combo {keys:?} executed")
                     }
-                    CuaAction::KeyboardType { text } => &format!("text '{}' typed", text),
+                    CuaAction::KeyboardType { text } => &format!("text '{text}' typed"),
                     CuaAction::MouseClick { .. } => "element clicked and UI state updated",
                     CuaAction::MouseDoubleClick { .. } => "element double-clicked",
                     CuaAction::MouseMove { .. } => "mouse moved to element",
@@ -491,7 +491,7 @@ async fn capture_screenshot() -> Option<String> {
     let kairo_dir = dirs::home_dir()?.join(".kairo-phantom").join("screenshots");
     std::fs::create_dir_all(&kairo_dir).ok()?;
 
-    let path = kairo_dir.join(format!("cua_after_{}.png", timestamp));
+    let path = kairo_dir.join(format!("cua_after_{timestamp}.png"));
 
     // Try farscry first
     let result = std::process::Command::new("farscry")
@@ -514,7 +514,7 @@ async fn capture_before_screenshot() -> Option<String> {
     let kairo_dir = dirs::home_dir()?.join(".kairo-phantom").join("screenshots");
     std::fs::create_dir_all(&kairo_dir).ok()?;
 
-    let path = kairo_dir.join(format!("cua_before_{}.png", timestamp));
+    let path = kairo_dir.join(format!("cua_before_{timestamp}.png"));
 
     // Try farscry first
     let result = std::process::Command::new("farscry")
@@ -590,7 +590,7 @@ async fn audit_log(
         success,
         before_hash,
         after_hash,
-        error.map(|e| format!(" error=\"{}\"", e)).unwrap_or_default()
+        error.map(|e| format!(" error=\"{e}\"")).unwrap_or_default()
     );
 
     // Append-only — O_APPEND flag ensures atomicity

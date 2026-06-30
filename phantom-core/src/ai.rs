@@ -236,95 +236,82 @@ impl MockAiBackend {
         // Detect common scenario patterns and produce structured output
         // that satisfies the orchestrator's domain-specific assertions.
         if prompt_lower.contains("summar") {
-            format!(
-                "Summary: Based on the provided content, here is a concise overview. \
+            "Summary: Based on the provided content, here is a concise overview. \
                  Key points include the main objectives, timeline considerations, and \
                  success metrics. This summary captures the essential information."
-            )
+                .to_string()
         } else if prompt_lower.contains("rewrite") || prompt_lower.contains("format") {
-            format!(
-                "Rewritten content: The text has been reformatted for clarity and \
+            "Rewritten content: The text has been reformatted for clarity and \
                  professionalism. Objectives, timeline, team, risks, and success \
                  metrics are now organized in a structured manner with proper headings."
-            )
+                .to_string()
         } else if prompt_lower.contains("deprecat") || prompt_lower.contains("v3") {
-            format!(
-                "Deprecation Notice: API v2 has been deprecated and replaced with v3. \
+            "Deprecation Notice: API v2 has been deprecated and replaced with v3. \
                  Please update all references to use the new v3 endpoint. \
                  Migration guide: review the updated documentation for breaking changes."
-            )
+                .to_string()
         } else if prompt_lower.contains("database") || prompt_lower.contains("entry") {
-            format!(
-                "Database entry created: 'Review Q3 vendor contracts', assigned to Legal Team, \
+            "Database entry created: 'Review Q3 vendor contracts', assigned to Legal Team, \
                  due next Friday, High priority, Not started. All fields populated correctly."
-            )
+                .to_string()
         } else if prompt_lower.contains("meeting") || prompt_lower.contains("notes") {
-            format!(
-                "Meeting Notes structured:\n\
+            "Meeting Notes structured:\n\
                  ## Discussion Points\n- API migration Q3, REST over GraphQL\n\
                  ## Decisions Made\n- REST chosen over GraphQL\n\
                  ## Action Items\n- @Alice: backend\n- @Bob: docs"
-            )
+                .to_string()
         } else if prompt_lower.contains("annotation") {
-            format!(
-                "Q: What is the main argument of this section?\n\
+            "Q: What is the main argument of this section?\n\
                  Connection: This relates to the broader theme of system design.\n\
                  Key: The key takeaway is that structured approaches improve reliability."
-            )
+                .to_string()
         } else if prompt_lower.contains("csv") || prompt_lower.contains("extract") {
-            format!(
-                "name,value,date\n\
+            "name,value,date\n\
                  Alpha,100,2024-01-15\n\
                  Beta,250,2024-02-20\n\
                  Gamma,175,2024-03-10"
-            )
+                .to_string()
         } else if prompt_lower.contains("slide") || prompt_lower.contains("presentation") {
-            format!(
-                "Slide 1: Architecture Overview\n\
+            "Slide 1: Architecture Overview\n\
                  • Rust core daemon process\n\
                  • Low-latency keypress hook\n\
                  • Local Ollama/Qwen model pipeline\n\
                  Slide 2: Future Work\n\
                  • Cross-platform Linux daemon\n\
                  • Multi-modal screenshot indexing"
-            )
+                .to_string()
         } else if prompt_lower.contains("contract") || prompt_lower.contains("legal") {
-            format!(
-                "CONTRACT AGREEMENT\n\n\
+            "CONTRACT AGREEMENT\n\n\
                  This agreement is made between the parties identified herein. \
                  Terms and conditions apply. All clauses are binding upon signature. \
                  The contract includes scope of work, payment terms, and dispute resolution."
-            )
+                .to_string()
         } else if prompt_lower.contains("resume") || prompt_lower.contains("cover letter") {
-            format!(
-                "Professional Summary: Experienced professional with proven track record. \
+            "Professional Summary: Experienced professional with proven track record. \
                  Skills include project management, team leadership, and strategic planning. \
                  Education and certifications are listed below. \
                  Work experience demonstrates consistent growth and achievement."
-            )
+                .to_string()
         } else if prompt_lower.contains("soap") || prompt_lower.contains("medical") {
-            format!(
-                "S: Patient reports symptoms consistent with routine checkup.\n\
+            "S: Patient reports symptoms consistent with routine checkup.\n\
                  O: Vital signs within normal limits. Examination unremarkable.\n\
                  A: Assessment indicates healthy status with minor observations.\n\
                  P: Plan: follow-up in 3 months, continue current medications."
-            )
+                .to_string()
         } else if prompt_lower.contains("proposal") {
-            format!(
-                "PROPOSAL\n\n\
+            "PROPOSAL\n\n\
                  Executive Summary: This proposal outlines the approach for the project. \
                  Objectives: Deliver high-quality results on time and within budget. \
                  Methodology: Agile development with regular milestones. \
                  Timeline: 12 weeks with phased delivery."
-            )
+                .to_string()
         } else if prompt_lower.contains("technical") || prompt_lower.contains("documentation") {
-            format!(
-                "Technical Documentation\n\n\
+            "Technical Documentation\n\n\
                  Overview: This document describes the system architecture and APIs. \
                  Installation: Follow the setup guide for dependencies. \
                  Usage: Command-line interface with comprehensive options. \
                  Configuration: Environment variables and config files supported."
-            )
+                .to_string()
         } else {
             // Generic substantive response — always non-empty, always > 10 chars
             format!(
@@ -338,6 +325,12 @@ impl MockAiBackend {
                 }
             )
         }
+    }
+}
+
+impl Default for MockAiBackend {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
