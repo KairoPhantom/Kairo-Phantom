@@ -43,7 +43,7 @@ jobs:
       - name: Install Linux deps
         run: |
           sudo apt-get update -q
-          sudo apt-get install -y xdotool xclip at-spi2-core libx11-dev libxtst-dev libxi-dev libxrandr-dev libxinerama-dev libxcursor-dev libxkbcommon-dev libxdo-dev pkg-config
+          sudo apt-get install -y xdotool xclip at-spi2-core libx11-dev libxtst-dev libxi-dev libxrandr-dev libxinerama-dev libxcursor-dev libxkbcommon-dev libxdo-dev pkg-config libglib2.0-dev libgtk-3-dev libcairo2-dev libpango1.0-dev libgdk-pixbuf2.0-dev
 
       - name: Run Clippy (static analysis)
         working-directory: phantom-core
@@ -163,7 +163,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update -q
-          sudo apt-get install -y xdotool xclip at-spi2-core libx11-dev libxtst-dev libxi-dev libxrandr-dev libxinerama-dev libxcursor-dev libxkbcommon-dev libxdo-dev pkg-config
+          sudo apt-get install -y xdotool xclip at-spi2-core libx11-dev libxtst-dev libxi-dev libxrandr-dev libxinerama-dev libxcursor-dev libxkbcommon-dev libxdo-dev pkg-config libglib2.0-dev libgtk-3-dev libcairo2-dev libpango1.0-dev libgdk-pixbuf2.0-dev
 
       - name: Build Release
         working-directory: phantom-core
