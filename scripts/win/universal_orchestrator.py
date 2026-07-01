@@ -294,38 +294,22 @@ class ScenarioOrchestrator:
             except Exception:
                 pass
 
-            # Call the real daemon -> mock ollama pipeline
-            self.logger.info("[STUB] Calling Kairo daemon/mock-ollama pipeline...")
+            # Call the real daemon pipeline (single source of truth: KAIRO_DAEMON_URL)
+            self.logger.info("[STUB] Calling Kairo daemon pipeline...")
             ai_response = kairo_test_utils.call_kairo(prompt, context="", timeout=15)
 
             if not ai_response:
-                # If daemon not running, try mock ollama directly
-                self.logger.warning("[STUB] Daemon not responding - trying mock ollama directly")
-                try:
-                    import urllib.request
-                    payload = json.dumps({
-                        "model": "qwen2.5-coder:14b",
-                        "prompt": prompt,
-                        "stream": False
-                    }).encode("utf-8")
-                    req = urllib.request.Request(
-                        "http://127.0.0.1:11435/api/generate",
-                        data=payload,
-                        headers={"Content-Type": "application/json"},
-                        method="POST"
-                    )
-                    with urllib.request.urlopen(req, timeout=15) as resp:
-                        data = json.loads(resp.read())
-                        ai_response = data.get("response", "")
-                except Exception as e2:
-                    self.logger.error(f"[STUB] Mock ollama also unavailable: {e2}")
-                    ai_response = ""
-
-            if not ai_response:
-                # Infrastructure gap - daemon and mock ollama both unavailable
-                # This is an honest infra gap, not a fake pass
-                self.logger.warning(f"[STUB] No AI response for {scenario_id} - infrastructure gap")
-                return False, f"{scenario_id}: No AI response (daemon and mock ollama unavailable)"
+                # Daemon unavailable — this is an honest infra failure.
+                # Do NOT fall back to external mock ollama; the daemon IS the
+                # mock-AI provider in CI stub mode.  Failing here is correct.
+                self.logger.error(
+                    f"[STUB] Daemon did not respond for {scenario_id} "
+                    f"(URL={kairo_test_utils.KAIRO_API}) — infrastructure failure"
+                )
+                return False, (
+                    f"{scenario_id}: No AI response — daemon unreachable at "
+                    f"{kairo_test_utils.KAIRO_API}"
+                )
 
             self.logger.info(f"[STUB] AI response: {ai_response[:120]}...")
 
