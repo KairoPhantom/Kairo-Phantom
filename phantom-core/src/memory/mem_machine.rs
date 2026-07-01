@@ -240,7 +240,29 @@ impl MemMachine {
     ) -> Result<Vec<String>> {
         let mut results = Vec::new();
         let mut seen_ids: Vec<String> = Vec::new();
+        // Build word-level LIKE patterns so "quarterly revenue results"
+        // matches episodes containing any of those words (not just the
+        // exact contiguous phrase).  This is a simple lexical pre-filter;
+        // Stage 4 (cosine similarity re-ranking) does the real semantic work.
+        let query_words: Vec<String> = query
+            .split_whitespace()
+            .filter(|w| w.len() > 2) // skip short noise words
+            .map(|w| format!("%{w}%"))
+            .collect();
         let query_pattern = format!("%{query}%");
+        let word_clauses: Vec<String> = query_words
+            .iter()
+            .map(|w| {
+                format!(
+                    "(CASE WHEN (content LIKE '{w}' OR full_episode LIKE '{w}') THEN 1 ELSE 0 END)"
+                )
+            })
+            .collect();
+        let match_score = if word_clauses.is_empty() {
+            "0".to_string()
+        } else {
+            word_clauses.join(" + ")
+        };
 
         // ── Stage 1: Section-level (context_key) matches ─────────────────────
         for gran in &granularities {
@@ -249,16 +271,18 @@ impl MemMachine {
             }
             let batch: Vec<(String, String, i64, String, String, String)> = {
                 let conn = self.conn.lock().unwrap();
-                let mut stmt = conn.prepare(
+                let sql = format!(
                     "SELECT id, content, timestamp, full_episode, app_context, context_key
                      FROM semantic_memory
                      WHERE context_key = ?1
                      ORDER BY
+                       ({match_score}) DESC,
                        CASE WHEN (content LIKE ?2 OR full_episode LIKE ?2) THEN 0 ELSE 1 END,
                        storage_strength DESC,
                        timestamp DESC
-                     LIMIT ?3",
-                )?;
+                     LIMIT ?3"
+                );
+                let mut stmt = conn.prepare(&sql)?;
                 let rows = stmt.query_map(params![gran, query_pattern, limit], |row| {
                     Ok((
                         row.get::<_, String>(0)?,
@@ -287,16 +311,18 @@ impl MemMachine {
             let remaining = limit - results.len();
             let batch: Vec<(String, String, i64, String, String, String)> = {
                 let conn = self.conn.lock().unwrap();
-                let mut stmt = conn.prepare(
+                let sql2 = format!(
                     "SELECT id, content, timestamp, full_episode, app_context, context_key
                      FROM semantic_memory
                      WHERE app_context = ?1
                      ORDER BY
+                       ({match_score}) DESC,
                        CASE WHEN (content LIKE ?2 OR full_episode LIKE ?2) THEN 0 ELSE 1 END,
                        storage_strength DESC,
                        timestamp DESC
-                     LIMIT ?3",
-                )?;
+                     LIMIT ?3"
+                );
+                let mut stmt = conn.prepare(&sql2)?;
                 let rows = stmt.query_map(params![gran, query_pattern, remaining], |row| {
                     Ok((
                         row.get::<_, String>(0)?,
