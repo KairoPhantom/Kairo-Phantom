@@ -619,7 +619,21 @@ fn scale_to_physical(ctx: &CuaContext, x: i32, y: i32) -> (i32, i32) {
             (ctx.window_rect.left + ctx.window_rect.right) / 2,
             (ctx.window_rect.top + ctx.window_rect.bottom) / 2,
         );
-        crate::monitor::resolve_click(&layout, center, ctx.dpi_scale, x, y)
+        // Apply the application-level dpi_scale (from CuaContext) to get
+        // physical pixels, then use the monitor layout for virtual-desktop
+        // offset and clamping. We do NOT use resolve_click here because that
+        // function applies the monitor's OS-reported scale, which would
+        // double-scale when ctx.dpi_scale already reflects the DPI.
+        let scaled_x = (x as f32 * ctx.dpi_scale) as i32;
+        let scaled_y = (y as f32 * ctx.dpi_scale) as i32;
+        match layout.monitor_at(center.0, center.1) {
+            Some(m) => {
+                let px = m.x + scaled_x;
+                let py = m.y + scaled_y;
+                layout.clamp_to_nearest(px, py)
+            }
+            None => layout.clamp_to_nearest(scaled_x, scaled_y),
+        }
     }
     #[cfg(not(target_os = "windows"))]
     {

@@ -233,12 +233,14 @@ pub fn resolve_click(
     // used here because ctx.dpi_scale is the authoritative per-window value that
     // the executor was configured with. The monitor layout is still used for
     // offset (virtual-desktop origin) and clamping.
-    let s = dpi_scale as f64;
     let (px, py) = match layout.monitor_at(window_center.0, window_center.1) {
-        Some(m) => (
-            m.x + (x as f64 * s).round() as i32,
-            m.y + (y as f64 * s).round() as i32,
-        ),
+        Some(m) => {
+            let s = m.safe_scale();
+            (
+                m.x + (x as f64 * s).round() as i32,
+                m.y + (y as f64 * s).round() as i32,
+            )
+        }
         None => ((x as f32 * dpi_scale) as i32, (y as f32 * dpi_scale) as i32),
     };
     layout.clamp_to_nearest(px, py)
