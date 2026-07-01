@@ -36,7 +36,7 @@ mod tests {
                                     "latency_ms": 120.0
                                 }
                             });
-                            let resp_str = format!("{}\n", resp.to_string());
+                            let resp_str = format!("{resp}\n");
                             let _ = server.write_all(resp_str.as_bytes()).await;
                         }
                     }
@@ -70,7 +70,7 @@ mod tests {
                                     "latency_ms": 120.0
                                 }
                             });
-                            let resp_str = format!("{}\n", resp.to_string());
+                            let resp_str = format!("{resp}\n");
                             let _ = stream.write_all(resp_str.as_bytes()).await;
                         }
                     }

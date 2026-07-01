@@ -126,11 +126,7 @@ async fn test_gate_rate_limits() {
     // First 10 should all pass
     for i in 1..=10 {
         let result = validate_action(&action, &ctx, true, &mut rl).await;
-        assert!(
-            result.is_ok(),
-            "Action {} should pass (under rate limit)",
-            i
-        );
+        assert!(result.is_ok(), "Action {i} should pass (under rate limit)",);
     }
 
     // 11th must be rate limited
@@ -398,7 +394,7 @@ async fn test_executor_fails_closed_when_verification_unavailable() {
         phantom_core::cua::cua_executor::execute(&action, &ctx, &CuaBackend::Enigo, &cancellation)
             .await;
 
-    println!("DEBUG RESULT: {:?}", result);
+    println!("DEBUG RESULT: {result:?}");
 
     assert!(
         matches!(result, CuaResult::Failed(ref e) if e == "Unverified"),

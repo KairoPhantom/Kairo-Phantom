@@ -51,19 +51,6 @@ pub fn compute_hash(s: &str) -> u64 {
     hasher.finish()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_compute_hash_deterministic() {
-        let input = "Kairo Hashing";
-        let h1 = compute_hash(input);
-        let h2 = compute_hash(input);
-        assert_eq!(h1, h2);
-    }
-}
-
 /// Recursively traverses a UIA element and builds a UiNode tree.
 #[cfg(target_os = "windows")]
 pub fn build_tree(element: &uiautomation::core::UIElement, depth: usize) -> Result<UiNode, String> {
@@ -198,5 +185,18 @@ pub fn get_vlm_call_rate() -> f32 {
         0.0
     } else {
         VLM_INVOCATIONS.load(Ordering::SeqCst) as f32 / total as f32
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_compute_hash_deterministic() {
+        let input = "Kairo Hashing";
+        let h1 = compute_hash(input);
+        let h2 = compute_hash(input);
+        assert_eq!(h1, h2);
     }
 }

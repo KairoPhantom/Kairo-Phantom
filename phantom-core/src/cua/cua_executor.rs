@@ -580,8 +580,7 @@ async fn audit_log(
 
     let timestamp = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
     let action_type = format!("{:?}", std::mem::discriminant(action));
-    let entry =
-        format!(
+    let entry = format!(
         "[{}] CUA action={} window=\"{}\" app=\"{}\" success={} before_hash={} after_hash={}{}\n",
         timestamp,
         action_type,
