@@ -44,12 +44,12 @@ class SyntheticPersona:
                 import pyautogui
 
                 gui_tool = "pyautogui"
-            except ImportError:
+            except (ImportError, KeyError):
                 try:
                     import pywinauto  # noqa: F401
 
                     gui_tool = "pywinauto"
-                except ImportError:
+                except (ImportError, KeyError):
                     pass
 
         # Check display availability
@@ -139,20 +139,23 @@ class SyntheticPersona:
                     gui_mode = "playwright"
 
                 elif gui_tool == "pyautogui":
-                    import pyautogui
+                    try:
+                        import pyautogui
 
-                    actions_taken.append("Acquiring screen information via PyAutoGUI...")
-                    w, h = pyautogui.size()
-                    actions_taken.append(f"Screen size detected: {w}x{h}")
-                    if persona_lower == "messy":
-                        for char in actual_prompt_to_type:
-                            time.sleep(random.uniform(0.05, 0.25))
-                    else:
-                        time.sleep(typing_delay * len(actual_prompt_to_type))
-                    actions_taken.append(
-                        "Simulated keystroke sequence using PyAutoGUI typing speed."
-                    )
-                    gui_mode = "pyautogui"
+                        actions_taken.append("Acquiring screen information via PyAutoGUI...")
+                        w, h = pyautogui.size()
+                        actions_taken.append(f"Screen size detected: {w}x{h}")
+                        if persona_lower == "messy":
+                            for char in actual_prompt_to_type:
+                                time.sleep(random.uniform(0.05, 0.25))
+                        else:
+                            time.sleep(typing_delay * len(actual_prompt_to_type))
+                        actions_taken.append(
+                            "Simulated keystroke sequence using PyAutoGUI typing speed."
+                        )
+                        gui_mode = "pyautogui"
+                    except (ImportError, KeyError, Exception):
+                        gui_tool = None  # fall through to headless_fallback
 
                 elif gui_tool == "pywinauto":
                     actions_taken.append("Initializing pywinauto application handle...")
