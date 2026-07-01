@@ -15,11 +15,20 @@ def generate_report():
 
     print("Aggregating results into report...")
 
-    # Aggregate per-agent *_results.json files downloaded from matrix jobs
+    # Aggregate per-agent *_results.json files downloaded from matrix jobs.
+    # download-artifact with merge-multiple may place files in nested subdirs
+    # (e.g. C:\tests\results\results\agent_word_results.json) because the
+    # upload step includes multiple paths (results/, logs/, screenshots/).
+    # Search recursively to find them regardless of nesting depth.
     import glob
-    result_files = glob.glob(os.path.join(results_dir, "*_results.json"))
+    result_files = glob.glob(
+        os.path.join(results_dir, "**", "*_results.json"),
+        recursive=True,
+    )
+    # Exclude any master report that might already exist
+    result_files = [f for f in result_files if "MASTER_GAUNTLET_REPORT" not in f]
     if not result_files:
-        print(f"Error: No *_results.json files found in {results_dir}")
+        print(f"Error: No *_results.json files found under {results_dir} (searched recursively)")
         # Write a minimal report so the downstream PowerShell step can read it
         # instead of crashing on a missing file.
         master_report_file = os.path.join(results_dir, "MASTER_GAUNTLET_REPORT.json")
