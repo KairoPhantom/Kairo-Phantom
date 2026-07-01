@@ -365,7 +365,9 @@ async fn async_main() -> Result<()> {
     // Set up file-based logging to ~/.kairo-phantom/daemon.log
     let kairo_dir = dirs::home_dir()
         .map(|h| h.join(".kairo-phantom"))
-        .unwrap_or_else(|| std::path::PathBuf::from("."));
+        .unwrap_or_else(|| std::path::PathBuf::from(".kairo-phantom"));
+    // Ensure the directory exists (CI runners may not have ~/.kairo-phantom yet)
+    let _ = std::fs::create_dir_all(&kairo_dir);
     let log_file_path = kairo_dir.join("daemon.log");
     let log_file = std::fs::OpenOptions::new()
         .create(true)
