@@ -3,7 +3,7 @@ import sqlite3
 import logging
 import time
 from typing import Optional, List, Dict, Any
-from pathlib import Path
+from sidecar.observability.opik_tracer import track
 
 log = logging.getLogger("kairo-sidecar.mem_machine")
 
@@ -35,6 +35,7 @@ CREATE INDEX IF NOT EXISTS idx_domain_user ON interactions(user_id, domain);
 CREATE INDEX IF NOT EXISTS idx_created_at ON interactions(created_at);
 """
 
+
 class MemMachineClient:
     """
     Local SQLite-backed memory for Kairo domain interactions.
@@ -43,7 +44,12 @@ class MemMachineClient:
     """
 
     def __init__(self, db_path: Optional[str] = None):
-        self.db_path = db_path or os.environ.get("KAIRO_DB_PATH") or self._load_db_path_from_config() or DEFAULT_DB_PATH
+        self.db_path = (
+            db_path
+            or os.environ.get("KAIRO_DB_PATH")
+            or self._load_db_path_from_config()
+            or DEFAULT_DB_PATH
+        )
         self._ensure_db()
 
     def _load_db_path_from_config(self) -> Optional[str]:
@@ -61,6 +67,7 @@ class MemMachineClient:
                         content = f.read()
                     # Simple TOML key extraction (no toml library dependency)
                     import re
+
                     m = re.search(r'db_path\s*=\s*["\']([^"\']+)["\']', content)
                     if m:
                         return m.group(1)
@@ -78,14 +85,14 @@ class MemMachineClient:
             conn.execute("PRAGMA journal_mode=WAL")
             conn.execute("PRAGMA synchronous=NORMAL")  # Safe + faster with WAL
             conn.executescript(DDL)
-            
+
             # Migration check: if style_vector column does not exist, add it
             try:
                 conn.execute("ALTER TABLE interactions ADD COLUMN style_vector TEXT")
                 conn.commit()
             except Exception:
                 pass
-                
+
             conn.commit()
             log.debug(f"MemMachineClient: DB ready at {self.db_path} (WAL mode)")
         except Exception as e:
@@ -103,6 +110,61 @@ class MemMachineClient:
         conn.execute("PRAGMA journal_mode=WAL")
         return conn
 
+    def recall_contextualized(self, query_text: str, domain: str = "", limit: int = 5) -> str:
+        """
+        Semantic recall using model2vec embeddings.
+
+        Finds interactions with semantically similar user_prompt/style_notes,
+        not just keyword matches. Uses cosine similarity over model2vec embeddings.
+
+        Falls back to keyword-based query() if model2vec is not available.
+        """
+        try:
+            import numpy as np
+            from sidecar.embeddings import embed_text, embed_texts
+        except ImportError:
+            return self.query(domain=domain, limit=limit)
+
+        # Encode the query using the existing embeddings module
+        query_emb = np.array(embed_text(query_text))
+
+        # Get all interactions from the database
+        conn = self._connect()
+        rows = conn.execute(
+            "SELECT domain, task_type, user_prompt, style_notes FROM interactions ORDER BY created_at DESC LIMIT 1000"
+        ).fetchall()
+        conn.close()
+
+        if not rows:
+            return ""
+
+        # Encode all stored prompts using the existing embeddings module
+        texts = [f"{r['user_prompt']} {r['style_notes']}" for r in rows]
+        stored_embs = np.array(embed_texts(texts))
+
+        # Compute cosine similarity
+        query_norm = query_emb / (np.linalg.norm(query_emb) + 1e-8)
+        stored_norms = stored_embs / (np.linalg.norm(stored_embs, axis=1, keepdims=True) + 1e-8)
+        similarities = stored_norms @ query_norm
+
+        # Filter by domain if specified
+        if domain:
+            domain_mask = np.array([1 if r["domain"] == domain else 0 for r in rows])
+            similarities = similarities * domain_mask
+
+        # Get top-k results
+        top_indices = np.argsort(similarities)[::-1][:limit]
+
+        # Build context string from top results
+        context_parts = []
+        for idx in top_indices:
+            if similarities[idx] > 0.1:  # Minimum similarity threshold
+                row = rows[idx]
+                context_parts.append(row["style_notes"])
+
+        return " ".join(context_parts) if context_parts else ""
+
+    @track("memory", "query")
     def query(
         self,
         user_id: str = "local",
@@ -125,7 +187,7 @@ class MemMachineClient:
                 WHERE user_id=? AND domain=?
                 ORDER BY created_at DESC LIMIT ?
                 """,
-                (user_id, domain, limit)
+                (user_id, domain, limit),
             ).fetchall()
 
             if not rows:
@@ -160,6 +222,7 @@ class MemMachineClient:
         conn = None
         try:
             import json
+
             vector_json = json.dumps(style_vector) if style_vector else None
             conn = self._connect()
             conn.execute(
@@ -168,7 +231,17 @@ class MemMachineClient:
                 (user_id, domain, task_type, user_prompt, output_preview, confidence, style_notes, created_at, style_vector)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (user_id, domain, task_type, user_prompt[:500], output_preview[:500], confidence, style_notes[:500], time.time(), vector_json)
+                (
+                    user_id,
+                    domain,
+                    task_type,
+                    user_prompt[:500],
+                    output_preview[:500],
+                    confidence,
+                    style_notes[:500],
+                    time.time(),
+                    vector_json,
+                ),
             )
             conn.commit()
             log.debug(f"MemMachineClient: recorded {domain}/{task_type} interaction")
@@ -180,11 +253,14 @@ class MemMachineClient:
             if conn is not None:
                 conn.close()
 
-    def get_style_centroid(self, user_id: str = "local", domain: str = "", limit: int = 10) -> Optional[List[float]]:
+    def get_style_centroid(
+        self, user_id: str = "local", domain: str = "", limit: int = 10
+    ) -> Optional[List[float]]:
         """Compute style centroid as element-wise mean of recent style vectors."""
         conn = None
         try:
             import json
+
             conn = self._connect()
             rows = conn.execute(
                 """
@@ -192,12 +268,12 @@ class MemMachineClient:
                 WHERE user_id=? AND domain=? AND style_vector IS NOT NULL AND style_vector != ''
                 ORDER BY created_at DESC LIMIT ?
                 """,
-                (user_id, domain, limit)
+                (user_id, domain, limit),
             ).fetchall()
-            
+
             if not rows:
                 return None
-                
+
             vectors = []
             for r in rows:
                 try:
@@ -206,10 +282,10 @@ class MemMachineClient:
                         vectors.append(v)
                 except Exception:
                     continue
-                    
+
             if not vectors:
                 return None
-                
+
             dim = len(vectors[0])
             centroid = [0.0] * dim
             for v in vectors:
@@ -217,7 +293,7 @@ class MemMachineClient:
                     centroid[idx] += v[idx]
             for idx in range(dim):
                 centroid[idx] /= len(vectors)
-                
+
             return centroid
         except Exception as e:
             log.warning(f"MemMachineClient.get_style_centroid failed: {e}")
@@ -239,15 +315,19 @@ class MemMachineClient:
                 GROUP BY task_type
                 ORDER BY count DESC
                 """,
-                (user_id, domain)
+                (user_id, domain),
             ).fetchall()
             return {
                 "user_id": user_id,
                 "domain": domain,
                 "task_frequencies": [
-                    {"task_type": r["task_type"], "count": r["count"], "avg_confidence": r["avg_conf"]}
+                    {
+                        "task_type": r["task_type"],
+                        "count": r["count"],
+                        "avg_confidence": r["avg_conf"],
+                    }
                     for r in rows
-                ]
+                ],
             }
         except Exception as e:
             log.warning(f"MemMachineClient.get_style_profile failed: {e}")
@@ -262,8 +342,7 @@ class MemMachineClient:
         try:
             conn = self._connect()
             cursor = conn.execute(
-                "DELETE FROM interactions WHERE user_id=? AND domain=?",
-                (user_id, domain)
+                "DELETE FROM interactions WHERE user_id=? AND domain=?", (user_id, domain)
             )
             deleted = cursor.rowcount
             conn.commit()
@@ -328,6 +407,7 @@ class MemSyncManager:
     Exposes MemSyncManager in sidecar wrapping MemMachineClient's record_interaction and query.
     Used for federated DP sync and interaction recall.
     """
+
     def __init__(self, db_path: Optional[str] = None):
         self.client = MemMachineClient(db_path=db_path)
 
@@ -366,5 +446,3 @@ class MemSyncManager:
             task_type=task_type,
             limit=limit,
         )
-
-

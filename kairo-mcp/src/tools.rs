@@ -107,6 +107,148 @@ pub fn get_tools() -> Value {
                 },
                 "required": ["query"]
             }
+        },
+        {
+            "name": "kairo_word_process",
+            "description": "Word/DOCX domain: extract context, generate response, apply operations to a Word document.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "file_path": { "type": "string", "description": "Path to the .docx file" },
+                    "instruction": { "type": "string", "description": "User instruction for the Word master" }
+                },
+                "required": ["instruction"]
+            }
+        },
+        {
+            "name": "kairo_excel_process",
+            "description": "Excel/spreadsheet domain: extract context, generate formulas, validate and apply operations.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "file_path": { "type": "string", "description": "Path to the .xlsx file" },
+                    "instruction": { "type": "string", "description": "User instruction for the Excel master" }
+                },
+                "required": ["instruction"]
+            }
+        },
+        {
+            "name": "kairo_pptx_process",
+            "description": "PowerPoint domain: extract slide context, generate slide content, apply operations.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "file_path": { "type": "string", "description": "Path to the .pptx file" },
+                    "instruction": { "type": "string", "description": "User instruction for the PPTX master" }
+                },
+                "required": ["instruction"]
+            }
+        },
+        {
+            "name": "kairo_pdf_process",
+            "description": "PDF domain: extract text, tables, and form fields from PDF documents.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "file_path": { "type": "string", "description": "Path to the PDF file" },
+                    "instruction": { "type": "string", "description": "User instruction for the PDF master" }
+                },
+                "required": ["file_path"]
+            }
+        },
+        {
+            "name": "kairo_legal_process",
+            "description": "Legal domain: CUAD clause extraction, citation graph, redline comparison.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "file_path": { "type": "string", "description": "Path to the legal document" },
+                    "instruction": { "type": "string", "description": "User instruction for the Legal master" }
+                },
+                "required": ["instruction"]
+            }
+        },
+        {
+            "name": "kairo_design_process",
+            "description": "Design domain: Figma/tldraw bridge, canvas operations, design generation.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "file_path": { "type": "string", "description": "Path to the design file" },
+                    "instruction": { "type": "string", "description": "User instruction for the Design master" }
+                },
+                "required": ["instruction"]
+            }
+        },
+        {
+            "name": "kairo_code_process",
+            "description": "Code domain: tree-sitter parsing, code graph, code generation and analysis.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "file_path": { "type": "string", "description": "Path to the code file" },
+                    "instruction": { "type": "string", "description": "User instruction for the Code master" }
+                },
+                "required": ["instruction"]
+            }
+        },
+        {
+            "name": "kairo_media_process",
+            "description": "Media domain: image processing, embeddings, transcription.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "file_path": { "type": "string", "description": "Path to the media file" },
+                    "instruction": { "type": "string", "description": "User instruction for the Media master" }
+                },
+                "required": ["instruction"]
+            }
+        },
+        {
+            "name": "kairo_browser_process",
+            "description": "Browser domain: web page context extraction, browser automation guidance.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "url": { "type": "string", "description": "URL of the web page" },
+                    "instruction": { "type": "string", "description": "User instruction for the Browser master" }
+                },
+                "required": ["instruction"]
+            }
+        },
+        {
+            "name": "kairo_terminal_process",
+            "description": "Terminal domain: safe command generation, shell context awareness.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "instruction": { "type": "string", "description": "User instruction for the Terminal master" }
+                },
+                "required": ["instruction"]
+            }
+        },
+        {
+            "name": "kairo_email_process",
+            "description": "Email domain: email drafting, subject validation, PII redaction.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "instruction": { "type": "string", "description": "User instruction for the Email master" }
+                },
+                "required": ["instruction"]
+            }
+        },
+        {
+            "name": "kairo_notes_process",
+            "description": "Notes domain: Obsidian/Logseq/Markdown note management and generation.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "file_path": { "type": "string", "description": "Path to the notes file" },
+                    "instruction": { "type": "string", "description": "User instruction for the Notes master" }
+                },
+                "required": ["instruction"]
+            }
         }
     ])
 }
@@ -162,6 +304,27 @@ pub async fn handle_tool_call(name: &str, args: Option<Value>, client: &PhantomC
             let query = args.get("query").and_then(|v| v.as_str()).unwrap_or("");
             let search_results = call_docsagent_search(query).await?;
             Ok(json!([{ "type": "text", "text": search_results }]))
+        }
+        // 12 Domain Tools — route through sidecar HTTP API
+        "kairo_word_process" | "kairo_excel_process" | "kairo_pptx_process" |
+        "kairo_pdf_process" | "kairo_legal_process" | "kairo_design_process" |
+        "kairo_code_process" | "kairo_media_process" | "kairo_browser_process" |
+        "kairo_terminal_process" | "kairo_email_process" | "kairo_notes_process" => {
+            let args = args.unwrap_or(json!({}));
+            let instruction = args.get("instruction").and_then(|v| v.as_str()).unwrap_or("");
+            let file_path = args.get("file_path").or(args.get("url")).and_then(|v| v.as_str()).unwrap_or("");
+
+            // Route through the sidecar ask endpoint with domain-specific context
+            let domain = name.strip_prefix("kairo_").unwrap_or("").strip_suffix("_process").unwrap_or("");
+            let prompt = format!("Domain: {}\nFile: {}\nInstruction: {}", domain, file_path, instruction);
+
+            match client.ask(&prompt).await {
+                Ok(response) => Ok(json!([{ "type": "text", "text": format!("Domain '{}' tool executed.\nResponse: {}", domain, response["response"]) }])),
+                Err(e) => {
+                    // Sidecar not running — return structured error (not a crash)
+                    Ok(json!([{ "type": "text", "text": format!("Domain '{}' tool called but sidecar not reachable: {}. Start sidecar with: cd kairo-sidecar && python sidecar.py", domain, e) }]))
+                }
+            }
         }
         _ => Err(anyhow::anyhow!("Unknown tool: {}", name))
     }

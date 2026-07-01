@@ -13,10 +13,15 @@ from typing import Dict, List, Any, Optional
 import docx
 import openpyxl
 import pptx
-import fitz  # PyMuPDF
 import pdfplumber
 from PIL import Image
 import imagehash
+
+try:
+    import fitz  # PyMuPDF — AGPL, lazy import to preserve licensing boundary
+    HAS_FITZ = True
+except ImportError:
+    HAS_FITZ = False
 
 try:
     import scapy.all as scapy
@@ -197,6 +202,8 @@ def verify_pptx(path: str, expected_slide_count: Optional[int] = None, check_pla
 
 def verify_pdf(path: str, expected_substrings: Optional[List[str]] = None) -> bool:
     """Verifies PDF content by reading it back using both pdfplumber and PyMuPDF."""
+    if not HAS_FITZ:
+        raise ImportError("PyMuPDF (fitz) is not installed — cannot verify PDF content")
     # 1. PyMuPDF (fitz) text extraction
     extracted_fitz = []
     with fitz.open(path) as doc:

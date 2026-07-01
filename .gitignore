@@ -43,6 +43,14 @@ build/
 *.deb
 *.rpm
 
+# ── Build artifacts that should NOT be in git ────────────────────────────────
+target_check_tmp/
+playground/target/
+graphify-out/graph.json
+mutants.out/
+mutants.out.old/
+mutants_real.out/
+
 # ── Runtime data (not source) ─────────────────────────────────
 .kairo/
 .kairo-phantom/
@@ -67,3 +75,6 @@ session_report_*.md
 clippy_*.txt
 gauntlet_*.txt
 stress_results.json
+
+# Oracle signing private key (never commit)
+kairo-sidecar/sidecar/oracles.py.private
