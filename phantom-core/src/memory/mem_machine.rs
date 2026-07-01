@@ -240,29 +240,7 @@ impl MemMachine {
     ) -> Result<Vec<String>> {
         let mut results = Vec::new();
         let mut seen_ids: Vec<String> = Vec::new();
-        // Build word-level LIKE patterns so "quarterly revenue results"
-        // matches episodes containing any of those words (not just the
-        // exact contiguous phrase).  This is a simple lexical pre-filter;
-        // Stage 4 (cosine similarity re-ranking) does the real semantic work.
-        let query_words: Vec<String> = query
-            .split_whitespace()
-            .filter(|w| w.len() > 2) // skip short noise words
-            .map(|w| format!("%{w}%"))
-            .collect();
         let query_pattern = format!("%{query}%");
-        let word_clauses: Vec<String> = query_words
-            .iter()
-            .map(|w| {
-                format!(
-                    "(CASE WHEN (content LIKE '{w}' OR full_episode LIKE '{w}') THEN 1 ELSE 0 END)"
-                )
-            })
-            .collect();
-        let match_score = if word_clauses.is_empty() {
-            "0".to_string()
-        } else {
-            word_clauses.join(" + ")
-        };
 
         // ── Stage 1: Section-level (context_key) matches ─────────────────────
         for gran in &granularities {
@@ -271,18 +249,26 @@ impl MemMachine {
             }
             let batch: Vec<(String, String, i64, String, String, String)> = {
                 let conn = self.conn.lock().unwrap();
-                let sql = format!(
+                let mut stmt = conn.prepare(
                     "SELECT id, content, timestamp, full_episode, app_context, context_key
                      FROM semantic_memory
                      WHERE context_key = ?1
                      ORDER BY
-                       ({match_score}) DESC,
                        CASE WHEN (content LIKE ?2 OR full_episode LIKE ?2) THEN 0 ELSE 1 END,
                        storage_strength DESC,
                        timestamp DESC
-                     LIMIT ?3"
-                );
-                let mut stmt = conn.prepare(&sql)?;
+                     LIMIT ?3",
+                )?;
+                let mut stmt = conn.prepare(
+                    "SELECT id, content, timestamp, full_episode, app_context, context_key
+                     FROM semantic_memory
+                     WHERE context_key = ?1
+                     ORDER BY
+                       CASE WHEN (content LIKE ?2 OR full_episode LIKE ?2) THEN 0 ELSE 1 END,
+                       storage_strength DESC,
+                       timestamp DESC
+                     LIMIT ?3",
+                )?;
                 let rows = stmt.query_map(params![gran, query_pattern, limit], |row| {
                     Ok((
                         row.get::<_, String>(0)?,
@@ -311,18 +297,16 @@ impl MemMachine {
             let remaining = limit - results.len();
             let batch: Vec<(String, String, i64, String, String, String)> = {
                 let conn = self.conn.lock().unwrap();
-                let sql2 = format!(
+                let mut stmt = conn.prepare(
                     "SELECT id, content, timestamp, full_episode, app_context, context_key
                      FROM semantic_memory
                      WHERE app_context = ?1
                      ORDER BY
-                       ({match_score}) DESC,
                        CASE WHEN (content LIKE ?2 OR full_episode LIKE ?2) THEN 0 ELSE 1 END,
                        storage_strength DESC,
                        timestamp DESC
-                     LIMIT ?3"
-                );
-                let mut stmt = conn.prepare(&sql2)?;
+                     LIMIT ?3",
+                )?;
                 let rows = stmt.query_map(params![gran, query_pattern, remaining], |row| {
                     Ok((
                         row.get::<_, String>(0)?,
@@ -373,6 +357,27 @@ impl MemMachine {
                     results.push(self.format_memory(id, content, ts, episode, app, ctx, 1.0)?);
                 }
             }
+        }
+
+        // ── Stage 3.5: Word-level lexical re-ranking ──────────────────────────
+        // Boost results that share more words with the query.  This runs
+        // before the cosine similarity stage and provides a deterministic
+        // lexical signal that complements the embedding-based ranking.
+        if !results.is_empty() {
+            let query_words: Vec<&str> = query.split_whitespace().filter(|w| w.len() > 2).collect();
+            let mut scored: Vec<(usize, String)> = results
+                .into_iter()
+                .map(|text| {
+                    let text_lower = text.to_lowercase();
+                    let count = query_words
+                        .iter()
+                        .filter(|w| text_lower.contains(&w.to_lowercase()))
+                        .count();
+                    (count, text)
+                })
+                .collect();
+            scored.sort_by(|a, b| b.0.cmp(&a.0));
+            results = scored.into_iter().map(|(_, t)| t).collect();
         }
 
         // ── Stage 4: Semantic re-ranking via cosine similarity ──────────────
