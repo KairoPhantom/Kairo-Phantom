@@ -1,19 +1,21 @@
 """
 Local Retrieval Index — offline semantic search over ingested PDF chunks.
 
-Uses the kernel's deterministic embedding (word-frequency hashing vector)
-for fully offline operation. No network calls, no model downloads required.
+Uses the SAME local embedding MemMachine v2 uses: model2vec potion-base-8M
+(256-dim, offline, bundled/cached). This enables real semantic retrieval —
+paraphrased questions retrieve the correct chunks even when no words overlap.
 
-The embedding is REAL — it produces deterministic 384-dim vectors that
-capture word-level semantics. Cosine similarity retrieves the most relevant
-chunks for a given question. This is NOT a mock — it is a real, if simple,
-semantic search that works completely offline.
+If model2vec is not available (model file absent), falls back to the kernel's
+deterministic hash-based embedding (384-dim). The fallback is clearly logged.
+
+No network calls. No runtime downloads. Fully offline.
 """
 
 from __future__ import annotations
 
 import logging
 import math
+import os
 from dataclasses import dataclass, field
 from typing import List, Optional
 
@@ -34,32 +36,80 @@ class RetrievalIndex:
     """
     Local in-memory retrieval index over PDF chunks.
 
-    Embeds chunks using the kernel's deterministic embedding function
-    and retrieves via cosine similarity. Fully offline.
-    """
+    Embeds chunks using model2vec potion-base-8M (the same model used by
+    MemMachine v2 / sidecar.embeddings) for real semantic retrieval.
+    Falls back to kernel hash embeddings if the model is unavailable.
 
-    EMBED_DIM = 384
+    Fully offline — no network calls, no runtime downloads.
+    """
 
     def __init__(self) -> None:
         self._chunks: List[ChunkMeta] = []
         self._embeddings: List[List[float]] = []
         self._doc_ids: List[str] = []
+        self._embed_dim: int = 256  # model2vec default
+        self._embed_backend: str = ""  # "model2vec" or "hash"
+        self._embed_fn = None
+
+    def _init_embedding(self) -> None:
+        """Initialize the embedding backend. Tries model2vec first, hash fallback."""
+        if self._embed_fn is not None:
+            return
+
+        # Try model2vec (same as sidecar.embeddings / MemMachine v2)
+        try:
+            # Set offline mode to prevent any network calls
+            os.environ.setdefault("HF_HUB_OFFLINE", "1")
+            os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+
+            from model2vec import StaticModel
+            model = StaticModel.from_pretrained("minishlab/potion-base-8M")
+
+            def model2vec_embed(text: str) -> List[float]:
+                emb = model.encode([text])
+                return list(map(float, emb[0]))
+
+            self._embed_fn = model2vec_embed
+            self._embed_dim = 256
+            self._embed_backend = "model2vec"
+            logger.info("Using model2vec potion-base-8M (256-dim) for semantic retrieval")
+            return
+
+        except Exception as e:
+            logger.warning(
+                "model2vec unavailable (%s) — falling back to hash embedding. "
+                "Paraphrase retrieval quality will be reduced.",
+                type(e).__name__,
+            )
+
+        # Fallback: kernel hash embedding
+        from kernel.core.embeddings import get_embedding
+
+        self._embed_dim = 384
+        self._embed_backend = "hash"
+
+        def hash_embed(text: str) -> List[float]:
+            return get_embedding(text, dim=384)
+
+        self._embed_fn = hash_embed
+        logger.info("Using hash embedding (384-dim) — fallback mode")
 
     def add_document(self, result: IngestResult) -> None:
         """Add all chunks from an ingested document to the index."""
-        from kernel.core.embeddings import get_embedding
+        self._init_embedding()
 
         for chunk in result.chunks:
-            emb = get_embedding(chunk.text, dim=self.EMBED_DIM)
+            emb = self._embed_fn(chunk.text)
             self._chunks.append(chunk)
             self._embeddings.append(emb)
             self._doc_ids.append(result.doc_id)
 
         logger.info(
-            "Added %d chunks from doc %s to retrieval index (total: %d)",
+            "Added %d chunks from doc %s to retrieval index (total: %d, backend: %s)",
             len(result.chunks),
             result.doc_id,
             len(self._chunks),
+            self._embed_backend,
         )
 
     def retrieve(
@@ -75,9 +125,8 @@ class RetrievalIndex:
         if not self._chunks:
             return []
 
-        from kernel.core.embeddings import get_embedding
-
-        query_emb = get_embedding(question, dim=self.EMBED_DIM)
+        self._init_embedding()
+        query_emb = self._embed_fn(question)
 
         scores: List[tuple[float, int]] = []
         for i, chunk_emb in enumerate(self._embeddings):
@@ -113,3 +162,8 @@ class RetrievalIndex:
     def size(self) -> int:
         """Number of chunks in the index."""
         return len(self._chunks)
+
+    @property
+    def embed_backend(self) -> str:
+        """Which embedding backend is in use ('model2vec' or 'hash')."""
+        return self._embed_backend
